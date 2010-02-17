@@ -1,4 +1,4 @@
-#include "mexpression.h"
+#include "gexpression.h"
 
 //==============================================================
 //================== One Argument  =============================
@@ -14,9 +14,9 @@ template<
   template<int> class ACheckingPolicy,
   template<typename, int> class AStoragePolicy
 >
-const IndexedMatrix<T,1,CheckingPolicy,StoragePolicy>& 
-  IndexedMatrix<T,1,CheckingPolicy,StoragePolicy>::assign(
-    const IndexedMatrix<T,rank,ACheckingPolicy,AStoragePolicy>& RHS
+const IndexedGrid<T,1,CheckingPolicy,StoragePolicy>& 
+  IndexedGrid<T,1,CheckingPolicy,StoragePolicy>::assign(
+    const IndexedGrid<T,rank,ACheckingPolicy,AStoragePolicy>& RHS
   ) const
 {
   i1.setLow(M.getLow()[0]);
@@ -41,9 +41,9 @@ template<
   template<int> class ACheckingPolicy,
   template<typename, int> class AStoragePolicy
 >
-const IndexedMatrix<T,1,CheckingPolicy,StoragePolicy>& 
-  IndexedMatrix<T,1,CheckingPolicy,StoragePolicy>::operator=(
-    const IndexedMatrix<T,rank,ACheckingPolicy,AStoragePolicy>& RHS
+const IndexedGrid<T,1,CheckingPolicy,StoragePolicy>& 
+  IndexedGrid<T,1,CheckingPolicy,StoragePolicy>::operator=(
+    const IndexedGrid<T,rank,ACheckingPolicy,AStoragePolicy>& RHS
   ) const
 {
   return assign(RHS);
@@ -54,9 +54,9 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-const IndexedMatrix<T,1,CheckingPolicy,StoragePolicy>& 
-  IndexedMatrix<T,1,CheckingPolicy,StoragePolicy>::operator=(
-    const IndexedMatrix<T,1,CheckingPolicy,StoragePolicy>& RHS
+const IndexedGrid<T,1,CheckingPolicy,StoragePolicy>& 
+  IndexedGrid<T,1,CheckingPolicy,StoragePolicy>::operator=(
+    const IndexedGrid<T,1,CheckingPolicy,StoragePolicy>& RHS
   ) const
 {
   return assign(RHS);
@@ -76,9 +76,9 @@ template<
   template<int> class ACheckingPolicy,
   template<typename, int> class AStoragePolicy
 >
-const IndexedMatrix<T,2,CheckingPolicy,StoragePolicy>& 
-  IndexedMatrix<T,2,CheckingPolicy,StoragePolicy>::assign(
-    const IndexedMatrix<T,rank,ACheckingPolicy,AStoragePolicy>& RHS
+const IndexedGrid<T,2,CheckingPolicy,StoragePolicy>& 
+  IndexedGrid<T,2,CheckingPolicy,StoragePolicy>::assign(
+    const IndexedGrid<T,rank,ACheckingPolicy,AStoragePolicy>& RHS
   ) const
 {
   i1.setLow(M.getLow()[0]);
@@ -108,9 +108,9 @@ template<
   template<int> class ACheckingPolicy,
   template<typename, int> class AStoragePolicy
 >
-const IndexedMatrix<T,2,CheckingPolicy,StoragePolicy>& 
-  IndexedMatrix<T,2,CheckingPolicy,StoragePolicy>::operator=(
-    const IndexedMatrix<T,rank,ACheckingPolicy,AStoragePolicy>& RHS
+const IndexedGrid<T,2,CheckingPolicy,StoragePolicy>& 
+  IndexedGrid<T,2,CheckingPolicy,StoragePolicy>::operator=(
+    const IndexedGrid<T,rank,ACheckingPolicy,AStoragePolicy>& RHS
   ) const
 {
   return assign(RHS);
@@ -121,9 +121,9 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-const IndexedMatrix<T,2,CheckingPolicy,StoragePolicy>& 
-  IndexedMatrix<T,2,CheckingPolicy,StoragePolicy>::operator=(
-    const IndexedMatrix<T,2,CheckingPolicy,StoragePolicy>& RHS
+const IndexedGrid<T,2,CheckingPolicy,StoragePolicy>& 
+  IndexedGrid<T,2,CheckingPolicy,StoragePolicy>::operator=(
+    const IndexedGrid<T,2,CheckingPolicy,StoragePolicy>& RHS
   ) const
 {
   return assign(RHS);

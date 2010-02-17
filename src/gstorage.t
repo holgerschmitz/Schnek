@@ -3,7 +3,7 @@
 namespace schnek {
 
 template<typename T, int rank>
-SingleArrayMatrixStorage<T, rank>::SingleArrayMatrixStorage()
+SingleArrayGridStorage<T, rank>::SingleArrayGridStorage()
 {
   data = NULL;
   data_fast = NULL;
@@ -12,7 +12,7 @@ SingleArrayMatrixStorage<T, rank>::SingleArrayMatrixStorage()
 
 
 template<typename T, int rank>
-SingleArrayMatrixStorage<T, rank>::SingleArrayMatrixStorage(
+SingleArrayGridStorage<T, rank>::SingleArrayGridStorage(
   const IndexType &low_, 
   const IndexType &high_
 )
@@ -24,14 +24,14 @@ SingleArrayMatrixStorage<T, rank>::SingleArrayMatrixStorage(
 
 
 template<class T, int rank> 
-SingleArrayMatrixStorage<T, rank>::~SingleArrayMatrixStorage()
+SingleArrayGridStorage<T, rank>::~SingleArrayGridStorage()
 {
   deleteData();
 }
 
 
 template<typename T, int rank>
-inline T& SingleArrayMatrixStorage<T, rank>::get(const IndexType &index)
+inline T& SingleArrayGridStorage<T, rank>::get(const IndexType &index)
 {
   int pos = index[rank-1];
   for (int i=rank-2; i>=0; --i)
@@ -42,7 +42,7 @@ inline T& SingleArrayMatrixStorage<T, rank>::get(const IndexType &index)
 }
 
 template<typename T, int rank>
-inline const T& SingleArrayMatrixStorage<T, rank>::get(const IndexType &index) const
+inline const T& SingleArrayGridStorage<T, rank>::get(const IndexType &index) const
 {
   int pos = index[rank-1];
   for (int i=rank-2; i>=0; --i)
@@ -53,7 +53,7 @@ inline const T& SingleArrayMatrixStorage<T, rank>::get(const IndexType &index) c
 }
 
 template<typename T, int rank>
-void SingleArrayMatrixStorage<T, rank>::resize(const IndexType &low_, const IndexType &high_)
+void SingleArrayGridStorage<T, rank>::resize(const IndexType &low_, const IndexType &high_)
 {
 //  if ( (low != low_) || (high != high_) )
 //  {
@@ -63,7 +63,7 @@ void SingleArrayMatrixStorage<T, rank>::resize(const IndexType &low_, const Inde
 }
 
 template<typename T, int rank>
-void SingleArrayMatrixStorage<T, rank>::deleteData()
+void SingleArrayGridStorage<T, rank>::deleteData()
 {
   if (data)
     delete[] data;
@@ -72,7 +72,7 @@ void SingleArrayMatrixStorage<T, rank>::deleteData()
 }
 
 template<typename T, int rank>
-void SingleArrayMatrixStorage<T, rank>::newData(
+void SingleArrayGridStorage<T, rank>::newData(
   const IndexType &low_, 
   const IndexType &high_
 )

@@ -18,9 +18,9 @@ template<
 >
 std::ostream &operator<<(
   std::ostream& out, 
-  const schnek::Matrix<T, 1, CheckingPolicy, StoragePolicy>&M)
+  const schnek::Grid<T, 1, CheckingPolicy, StoragePolicy>&M)
 {
-  typedef typename schnek::Matrix<T, 1, CheckingPolicy, StoragePolicy>::IndexType IndexType;
+  typedef typename schnek::Grid<T, 1, CheckingPolicy, StoragePolicy>::IndexType IndexType;
   
   const IndexType &low = M.getLow();
   const IndexType &high = M.getHigh();
@@ -39,10 +39,10 @@ template<
 >
 std::ostream &operator<<(
   std::ostream& out, 
-  const schnek::Matrix<T, 2, CheckingPolicy, StoragePolicy> &M
+  const schnek::Grid<T, 2, CheckingPolicy, StoragePolicy> &M
 )
 {
-  typedef typename schnek::Matrix<T, 2, CheckingPolicy, StoragePolicy>::IndexType IndexType;
+  typedef typename schnek::Grid<T, 2, CheckingPolicy, StoragePolicy>::IndexType IndexType;
   
   const IndexType &low = M.getLow();
   const IndexType &high = M.getHigh();
@@ -65,10 +65,10 @@ template<
 >
 std::ostream &operator<<(
   std::ostream& out, 
-  const schnek::Matrix<T, 3, CheckingPolicy, StoragePolicy> &M
+  const schnek::Grid<T, 3, CheckingPolicy, StoragePolicy> &M
 )
 {
-  typedef typename schnek::Matrix<T, 3, CheckingPolicy, StoragePolicy>::IndexType IndexType;
+  typedef typename schnek::Grid<T, 3, CheckingPolicy, StoragePolicy>::IndexType IndexType;
   
   const IndexType &low = M.getLow();
   const IndexType &high = M.getHigh();
@@ -95,10 +95,10 @@ template<
 >
 std::ostream &operator<<(
   std::ostream& out, 
-  const schnek::Matrix<T, 4, CheckingPolicy, StoragePolicy> &M
+  const schnek::Grid<T, 4, CheckingPolicy, StoragePolicy> &M
 )
 {
-  typedef typename schnek::Matrix<T, 4, CheckingPolicy, StoragePolicy>::IndexType IndexType;
+  typedef typename schnek::Grid<T, 4, CheckingPolicy, StoragePolicy>::IndexType IndexType;
   
   const IndexType &low = M.getLow();
   const IndexType &high = M.getHigh();
@@ -128,10 +128,10 @@ template<
 >
 std::ostream &operator<<(
   std::ostream& out, 
-  const schnek::Matrix<T, 5, CheckingPolicy, StoragePolicy> &M
+  const schnek::Grid<T, 5, CheckingPolicy, StoragePolicy> &M
 )
 {
-  typedef typename schnek::Matrix<T, 5, CheckingPolicy, StoragePolicy>::IndexType IndexType;
+  typedef typename schnek::Grid<T, 5, CheckingPolicy, StoragePolicy>::IndexType IndexType;
   
   const IndexType &low = M.getLow();
   const IndexType &high = M.getHigh();

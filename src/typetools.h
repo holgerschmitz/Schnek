@@ -13,7 +13,7 @@
 #ifndef SCHNEK_TYPETOOLS_H
 #define SCHNEK_TYPETOOLS_H
 
-namespace rigger
+namespace schnek
 {
 
   struct NullType {};
@@ -68,8 +68,8 @@ namespace rigger
 
 }
 
-#define TYPELIST_0 rigger::NullType
-#define TYPELIST_1(T1) rigger::Typelist<T1, rigger::NullType>
-#define TYPELIST_2(T1, T2) rigger::Typelist<T1, TYPELIST_1(T2)>
+#define TYPELIST_0 NullType
+#define TYPELIST_1(T1) schnek::Typelist<T1, schnek::NullType>
+#define TYPELIST_2(T1, T2) schnek::Typelist<T1, TYPELIST_1(T2)>
 
 #endif

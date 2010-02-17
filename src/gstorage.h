@@ -1,11 +1,11 @@
-#ifndef SCHNEK_MSTORAGE_H
-#define SCHNEK_MSTORAGE_H
+#ifndef SCHNEK_GSTORAGE_H
+#define SCHNEK_GSTORAGE_H
 
 namespace schnek {
 
 
 template<typename T, int rank>
-class SingleArrayMatrixStorage {
+class SingleArrayGridStorage {
   public:  
     typedef FixedArray<int,rank> IndexType;
     
@@ -24,7 +24,7 @@ class SingleArrayMatrixStorage {
         T* element;
         storage_iterator(T* element_) : element(element_) {}
 
-        friend class SingleArrayMatrixStorage;
+        friend class SingleArrayGridStorage;
 
       public:
         T& operator*() { return *element;}
@@ -40,7 +40,7 @@ class SingleArrayMatrixStorage {
         const T* element;
         const_storage_iterator(const T* element_) : element(element_) {}
 
-        friend class SingleArrayMatrixStorage;
+        friend class SingleArrayGridStorage;
 
       public:
         const T& operator*() { return *element;}
@@ -51,13 +51,13 @@ class SingleArrayMatrixStorage {
           { return element != SI.element; }
     };
     
-    SingleArrayMatrixStorage();
+    SingleArrayGridStorage();
     
-    SingleArrayMatrixStorage(const IndexType &low_, const IndexType &high_);
+    SingleArrayGridStorage(const IndexType &low_, const IndexType &high_);
 
-    virtual ~SingleArrayMatrixStorage();
+    virtual ~SingleArrayGridStorage();
 
-    /** resizes to matrix with lower indices low[0],...,low[rank-1]
+    /** resizes to grid with lower indices low[0],...,low[rank-1]
      *  and upper indices high[0],...,high[rank-1] */
     void resize(const IndexType &low_, const IndexType &high_);
 
@@ -88,7 +88,7 @@ class SingleArrayMatrixStorage {
 } // namespace schnek
 
 
-#include "mstorage.t"
+#include "gstorage.t"
 
 
 #endif

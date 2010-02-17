@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_INIT([Schnek],[0.1])
-AC_CONFIG_SRCDIR([src/matrix.h])
+AC_CONFIG_SRCDIR([src/grid.h])
 AM_INIT_AUTOMAKE
 # VERSION="0.1"
 # PACKAGE="schnek"

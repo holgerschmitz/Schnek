@@ -4,7 +4,7 @@
 #define SCHNEK_DATASTREAM_H
 
 #include "fixedarray.h"
-#include "matrix.h"
+#include "grid.h"
 
 template<
   class T, 
@@ -18,35 +18,35 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-    std::ostream &operator<<(std::ostream&, const schnek::Matrix<T, 1, CheckingPolicy, StoragePolicy>&);
+    std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 1, CheckingPolicy, StoragePolicy>&);
 
 template<
   typename T,
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-    std::ostream &operator<<(std::ostream&, const schnek::Matrix<T, 2, CheckingPolicy, StoragePolicy>&);
+    std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 2, CheckingPolicy, StoragePolicy>&);
 
 template<
   typename T,
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-    std::ostream &operator<<(std::ostream&, const schnek::Matrix<T, 3, CheckingPolicy, StoragePolicy>&);
+    std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 3, CheckingPolicy, StoragePolicy>&);
 
 template<
   typename T,
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-    std::ostream &operator<<(std::ostream&, const schnek::Matrix<T, 4, CheckingPolicy, StoragePolicy>&);
+    std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 4, CheckingPolicy, StoragePolicy>&);
 
 template<
   typename T,
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-    std::ostream &operator<<(std::ostream&, const schnek::Matrix<T, 5, CheckingPolicy, StoragePolicy>&);
+    std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 5, CheckingPolicy, StoragePolicy>&);
 
 #include "datastream.t"
 

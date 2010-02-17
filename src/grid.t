@@ -1,6 +1,6 @@
 
 #include "farrexpression.h"
-#include "mindex.h"
+#include "gindex.h"
 
 // --------------------------------------------------------------
 // implementation
@@ -14,7 +14,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-Matrix<T, rank, CheckingPolicy, StoragePolicy>::Matrix() : StoragePolicy<T,rank>()
+Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid() : StoragePolicy<T,rank>()
 {}
 
 template<
@@ -23,7 +23,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-Matrix<T, rank, CheckingPolicy, StoragePolicy>::Matrix(const IndexType &size)
+Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &size)
   : StoragePolicy<T,rank>(IndexType::Zero(), size-IndexType::Unity())
 {}
 
@@ -33,7 +33,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-Matrix<T, rank, CheckingPolicy, StoragePolicy>::Matrix(const IndexType &low, const IndexType &high)
+Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &low, const IndexType &high)
   : StoragePolicy<T,rank>(low,high)
 {}
 
@@ -43,11 +43,11 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-Matrix<T, rank, CheckingPolicy, StoragePolicy>
-  ::Matrix(const Matrix<T, rank, CheckingPolicy, StoragePolicy>& matr) 
+Grid<T, rank, CheckingPolicy, StoragePolicy>
+  ::Grid(const Grid<T, rank, CheckingPolicy, StoragePolicy>& matr) 
   : StoragePolicy<T,rank>(matr.getLow(), matr.getHigh())
 {
-  this->copyFromMatrix(matr);  
+  this->copyFromGrid(matr);  
 }
 
 template<
@@ -56,12 +56,12 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-Matrix<T, rank, CheckingPolicy, StoragePolicy>& 
-  Matrix<T, rank, CheckingPolicy, StoragePolicy>
-    ::operator=(const Matrix<T, rank, CheckingPolicy, StoragePolicy> &matr)
+Grid<T, rank, CheckingPolicy, StoragePolicy>& 
+  Grid<T, rank, CheckingPolicy, StoragePolicy>
+    ::operator=(const Grid<T, rank, CheckingPolicy, StoragePolicy> &matr)
 {
   this->resize(matr);
-  this->copyFromMatrix(matr);
+  this->copyFromGrid(matr);
   return *this;
 }
 
@@ -71,8 +71,8 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-Matrix<T, rank, CheckingPolicy, StoragePolicy>& 
-  Matrix<T, rank, CheckingPolicy, StoragePolicy>
+Grid<T, rank, CheckingPolicy, StoragePolicy>& 
+  Grid<T, rank, CheckingPolicy, StoragePolicy>
     ::operator=(const T &val)
 {
   typedef typename StoragePolicy<T,rank>::storage_iterator Iterator;
@@ -97,7 +97,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline T& Matrix<T, rank, CheckingPolicy, StoragePolicy>
+inline T& Grid<T, rank, CheckingPolicy, StoragePolicy>
   ::operator[](const IndexType& pos)
 {
   return get(this->check(pos,this->getLow(),this->getHigh()));
@@ -109,7 +109,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline T Matrix<T, rank, CheckingPolicy, StoragePolicy>
+inline T Grid<T, rank, CheckingPolicy, StoragePolicy>
   ::operator[](const IndexType& pos) const
 {
   return get(this->check(pos,this->getLow(),this->getHigh()));
@@ -121,7 +121,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline  T& Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i)
+inline  T& Grid<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i)
 {
   return get(this->check(IndexType(i),this->getLow(),this->getHigh()));
 }
@@ -132,7 +132,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline  T Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i) const
+inline  T Grid<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i) const
 {
   return get(this->check(IndexType(i),this->getLow(),this->getHigh()));
 }
@@ -143,7 +143,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline  T& Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j)
+inline  T& Grid<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j)
 {
   return get(this->check(IndexType(i,j),this->getLow(),this->getHigh()));
 }
@@ -154,7 +154,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline  T Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j) const
+inline  T Grid<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j) const
 {
   return get(this->check(IndexType(i,j),this->getLow(),this->getHigh()));
 }
@@ -165,7 +165,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline  T& Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k) 
+inline  T& Grid<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k) 
 {
   return get(this->check(IndexType(i,j,k),this->getLow(),this->getHigh()));
 }
@@ -176,7 +176,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline  T Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k) const
+inline  T Grid<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k) const
 {
   return get(this->check(IndexType(i,j,k),this->getLow(),this->getHigh()));
 }
@@ -187,7 +187,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline  T& Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l) 
+inline  T& Grid<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l) 
 {
   return get(this->check(IndexType(i,j,k,l),this->getLow(),this->getHigh()));
 }
@@ -198,7 +198,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline  T Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l) const
+inline  T Grid<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l) const
 {
   return get(this->check(IndexType(i,j,k,l),this->getLow(),this->getHigh()));
 }
@@ -209,7 +209,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline  T& Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m) 
+inline  T& Grid<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m) 
 {
   return get(this->check(IndexType(i,j,k,l,m),this->getLow(),this->getHigh()));
 }
@@ -220,7 +220,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-inline  T Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m) const
+inline  T Grid<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m) const
 {
   return get(this->check(IndexType(i,j,k,l,m),this->getLow(),this->getHigh()));
 }
@@ -233,15 +233,15 @@ template<
   template<typename, int> class StoragePolicy
 >
 template<typename Arg0>
-IndexedMatrix<
-  Matrix<T, rank, CheckingPolicy, StoragePolicy>,
+IndexedGrid<
+  Grid<T, rank, CheckingPolicy, StoragePolicy>,
   TYPELIST_1(Arg0)
 >
-Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator()(
+Grid<T, rank, CheckingPolicy, StoragePolicy>::operator()(
   const Arg0 &i0
 )
 {
-  return IndexedMatrix<MatrixType,TYPELIST_1(Arg0)> (i0);
+  return IndexedGrid<GridType,TYPELIST_1(Arg0)> (i0);
 }
 
 template<
@@ -251,15 +251,15 @@ template<
   template<typename, int> class StoragePolicy
 >
 template<typename Arg0, typename Arg1>
-IndexedMatrix<
-  Matrix<T, rank, CheckingPolicy, StoragePolicy>,
+IndexedGrid<
+  Grid<T, rank, CheckingPolicy, StoragePolicy>,
   TYPELIST_2(Arg0, Arg1)
 >
-Matrix<T, rank, CheckingPolicy, StoragePolicy>::operator()(
+Grid<T, rank, CheckingPolicy, StoragePolicy>::operator()(
   const Arg0 &i0, const Arg1 &i1
 )
 {
-  return IndexedMatrix<MatrixType,TYPELIST_2(Arg0, Arg1)> (i0, i1);
+  return IndexedGrid<GridType,TYPELIST_2(Arg0, Arg1)> (i0, i1);
 }
 
 template<
@@ -268,7 +268,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-void Matrix<T, rank, CheckingPolicy, StoragePolicy>::resize(const IndexType &d)
+void Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(const IndexType &d)
 {
   IndexType high;
   high = d-IndexType::Unity();
@@ -281,7 +281,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-void Matrix<T, rank, CheckingPolicy, StoragePolicy>::resize(const IndexType &low, const IndexType &high)
+void Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(const IndexType &low, const IndexType &high)
 {
   StoragePolicy<T,rank>::resize(low, high);
 }
@@ -292,7 +292,7 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-void Matrix<T, rank, CheckingPolicy, StoragePolicy>::resize(const Matrix<T, rank>& matr)
+void Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(const Grid<T, rank>& matr)
 {
   StoragePolicy<T,rank>::resize(matr.getLow(), matr.getHigh());
 }
@@ -303,8 +303,8 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-void Matrix<T, rank, CheckingPolicy, StoragePolicy>
-  ::copyFromMatrix(const Matrix<T, rank, CheckingPolicy, StoragePolicy>& matr)
+void Grid<T, rank, CheckingPolicy, StoragePolicy>
+  ::copyFromGrid(const Grid<T, rank, CheckingPolicy, StoragePolicy>& matr)
 {
   typedef typename StoragePolicy<T,rank>::const_storage_iterator CIterator;
   typedef typename StoragePolicy<T,rank>::storage_iterator Iterator;

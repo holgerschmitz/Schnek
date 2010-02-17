@@ -1,5 +1,5 @@
-#include "ctassert.h"
 #include "farrexpression.h"
+#include <boost/static_assert.hpp>
 
 namespace schnek
 {
@@ -18,7 +18,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(const FixedArray &fixarr)
 template<class T, int length, template <int> class CheckingPolicy>
 inline FixedArray<T,length,CheckingPolicy>::FixedArray(const T& v0)
 {
-  CTASSERT(1==length,NUMBER_OF_ARGUMENTS_DOESNT_MATCH_ARRAY_LENGTH)
+  BOOST_STATIC_ASSERT(1==length);
   data[0] = v0;
 }
 
@@ -27,7 +27,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
                   const T& v0, const T& v1
 )
 {
-  CTASSERT(2==length,NUMBER_OF_ARGUMENTS_DOESNT_MATCH_ARRAY_LENGTH)
+  BOOST_STATIC_ASSERT(2==length);
   data[0] = v0;
   data[1] = v1;
 }
@@ -37,7 +37,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
                   const T& v0, const T& v1, const T& v2
 )
 {
-  CTASSERT(3==length,NUMBER_OF_ARGUMENTS_DOESNT_MATCH_ARRAY_LENGTH)
+  BOOST_STATIC_ASSERT(3==length);
   data[0] = v0;
   data[1] = v1;
   data[2] = v2;
@@ -48,7 +48,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
                   const T& v0, const T& v1, const T& v2, const T& v3
 )
 {
-  CTASSERT(4==length,NUMBER_OF_ARGUMENTS_DOESNT_MATCH_ARRAY_LENGTH)
+  BOOST_STATIC_ASSERT(4==length);
   data[0] = v0;
   data[1] = v1;
   data[2] = v2;
@@ -60,7 +60,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4
 )
 {
-  CTASSERT(5==length,NUMBER_OF_ARGUMENTS_DOESNT_MATCH_ARRAY_LENGTH)
+  BOOST_STATIC_ASSERT(5==length);
   data[0] = v0;
   data[1] = v1;
   data[2] = v2;
@@ -74,7 +74,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
                   const T& v5
 )
 {
-  CTASSERT(6==length,NUMBER_OF_ARGUMENTS_DOESNT_MATCH_ARRAY_LENGTH)
+  BOOST_STATIC_ASSERT(6==length);
   data[0] = v0;
   data[1] = v1;
   data[2] = v2;
@@ -89,7 +89,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
                   const T& v5, const T& v6
 )
 {
-  CTASSERT(7==length,NUMBER_OF_ARGUMENTS_DOESNT_MATCH_ARRAY_LENGTH)
+  BOOST_STATIC_ASSERT(7==length);
   data[0] = v0;
   data[1] = v1;
   data[2] = v2;
@@ -105,7 +105,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
                   const T& v5, const T& v6, const T& v7
 )
 {
-  CTASSERT(8==length,NUMBER_OF_ARGUMENTS_DOESNT_MATCH_ARRAY_LENGTH)
+  BOOST_STATIC_ASSERT(8==length);
   data[0] = v0;
   data[1] = v1;
   data[2] = v2;
@@ -122,7 +122,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
                   const T& v5, const T& v6, const T& v7, const T& v8
 )
 {
-  CTASSERT(9==length,NUMBER_OF_ARGUMENTS_DOESNT_MATCH_ARRAY_LENGTH)
+  BOOST_STATIC_ASSERT(9==length);
   data[0] = v0;
   data[1] = v1;
   data[2] = v2;
@@ -140,7 +140,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
                   const T& v5, const T& v6, const T& v7, const T& v8, const T& v9
 )
 {
-  CTASSERT(10==length,NUMBER_OF_ARGUMENTS_DOESNT_MATCH_ARRAY_LENGTH)
+  BOOST_STATIC_ASSERT(10==length);
   data[0] = v0;
   data[1] = v1;
   data[2] = v2;
