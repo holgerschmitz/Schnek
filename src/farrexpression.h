@@ -26,7 +26,7 @@ class FArrExpression {
     /**Construct the expression by passing a reference*/
     FArrExpression(const Operator Op_) : Op(Op_) {}
 
-    /**Construct the expression by passing a reference*/
+    /**Copy constructor*/
     FArrExpression(const FArrExpression &Expr) : Op(Expr.Op) {}
 
     /**Return the i-th element of the expression*/
@@ -55,7 +55,7 @@ class FArrBinaryOp {
     /**Construct passing the two references to the expressions*/
     FArrBinaryOp(const Exp1 &A_, const Exp2 &B_) : A(A_), B(B_) {}
 
-    /**Construct passing the two references to the expressions*/
+    /**Copy constructor*/
     FArrBinaryOp(const FArrBinaryOp &Op) : A(Op.A), B(Op.B) {}
 
     /**Return the i-th element of the operator expression

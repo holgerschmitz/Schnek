@@ -71,27 +71,6 @@ void testmatrix()
     std::cout << *it << " ";
   }
   std::cout << "\n";
-  
-  std::cout << "Testing Grid GIndex expressions\n";
-    
-  Grid2 G2a(Ind2(0,0),Ind2(5,5)), G2b(Ind2(0,0),Ind2(5,5));
-
-  for (i=0; i<=5; ++i)
-    for (j=0; j<=5; ++j) G2a(i,j) = i+j*j;
-
-/*  MIndex s,t;
-
-  M2b(s,t);
-  std::cout << "Grid 2a:\n" << M2a << "\n============\n";
-  std::cout << "Grid 2b:\n" << M2b << "\n============\n";
-  
-  Grid1 M1b(Ind1(0),Ind1(5));
-  
-  t() = 2;
-  M1b(s) = M2a(s,2);
-  std::cout << "Grid 1b:\n" << M1b << "\n============\n";
-*/
-  
 } 
 
 int main()

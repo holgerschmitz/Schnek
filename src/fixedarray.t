@@ -161,7 +161,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(const FArrExpression<Oper
   for (int i=0; i<length; ++i)
     data[i] = expr[i];
 }
-      
+
 template<class T, int length, template <int> class CheckingPolicy>
 inline T& FixedArray<T,length,CheckingPolicy>::operator[](int pos)
 {
