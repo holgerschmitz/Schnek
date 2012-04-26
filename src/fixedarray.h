@@ -1,3 +1,11 @@
+/*
+ * fixedarray.h
+ *
+ *  Created on: 26 Apr 2009
+ *      Author: Holger Schmitz
+ *       Email: h.schmitz@imperial.ac.uk
+ */
+
 #ifndef SCHNEK_FIXEDARRAY_H
 #define SCHNEK_FIXEDARRAY_H
 
@@ -28,6 +36,7 @@ class FixedArray : public CheckingPolicy<length> {
     typedef FixedArray<T,length,CheckingPolicy> ThisType;
   public:
     typedef T value_type;
+    enum {Length = length};
     
     /// The default constructor
     FixedArray();
@@ -84,7 +93,6 @@ class FixedArray : public CheckingPolicy<length> {
      */
     template<class Operator>
     FixedArray<T,length,CheckingPolicy>& operator=(const FArrExpression<Operator>&);
-    
 
   public:
     /// Sets all fields to zero

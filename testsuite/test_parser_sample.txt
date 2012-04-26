@@ -1,0 +1,15 @@
+float var = 2/1.9;
+string hello = "Hello";
+string greet = hello + " world!";
+int n = 7^3;
+int a = n/6;
+string assembled = a + "." + n;
+greet = greet + " Again!";
+
+float e = exp(a);
+float s = sin(var);
+
+Collection Globals {
+  int e = 3;
+  float a = cos(e);
+}

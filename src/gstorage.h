@@ -4,6 +4,10 @@
 namespace schnek {
 
 
+/** Stores the grid data in a single array
+ *
+ *  Layout of the data is in FORTRAN ordering.
+ */
 template<typename T, int rank>
 class SingleArrayGridStorage {
   public:  
@@ -64,12 +68,21 @@ class SingleArrayGridStorage {
     T &get(const IndexType &index);
     const T &get(const IndexType &index) const;
     
+    T* getRawData() const { return data; }
+
     /** */
     const IndexType& getLow() const { return low; }
     /** */
     const IndexType& getHigh() const { return high; }
     /** */
     const IndexType& getDims() const { return dims; }
+
+    /** */
+    int getLow(int k) const { return low[k]; }
+    /** */
+    int getHigh(int k) const { return high[k]; }
+    /** */
+    int getDims(int k) const { return dims[k]; }
 
     storage_iterator begin() { return storage_iterator(data); }
     storage_iterator end() { return storage_iterator(data + size); }

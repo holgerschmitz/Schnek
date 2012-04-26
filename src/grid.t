@@ -1,6 +1,5 @@
 
 #include "farrexpression.h"
-#include "gindex.h"
 
 // --------------------------------------------------------------
 // implementation
@@ -87,6 +86,65 @@ Grid<T, rank, CheckingPolicy, StoragePolicy>&
   return *this;
 }
 
+
+template<
+  typename T,
+  int rank,
+  template<int> class CheckingPolicy,
+  template<typename, int> class StoragePolicy
+>
+template<
+  template<int> class CheckingPolicy2,
+  template<typename, int> class StoragePolicy2
+>
+Grid<T, rank, CheckingPolicy, StoragePolicy>&
+  Grid<T, rank, CheckingPolicy, StoragePolicy>
+    ::operator-=(Grid<T, rank, CheckingPolicy2, StoragePolicy2>& grid)
+{
+  typedef typename StoragePolicy<T,rank>::storage_iterator Iterator;
+  typedef typename StoragePolicy2<T,rank>::storage_iterator Iterator2;
+  Iterator dest = this->begin();
+  Iterator2 src = grid.begin();
+  Iterator2 end = grid.end();
+  while (src != end)
+  {
+    *dest -= *src;
+    ++dest;
+    ++src;
+  }
+
+  return *this;
+}
+
+
+template<
+  typename T,
+  int rank,
+  template<int> class CheckingPolicy,
+  template<typename, int> class StoragePolicy
+>
+template<
+  template<int> class CheckingPolicy2,
+  template<typename, int> class StoragePolicy2
+>
+Grid<T, rank, CheckingPolicy, StoragePolicy>&
+  Grid<T, rank, CheckingPolicy, StoragePolicy>
+    ::operator+=(Grid<T, rank, CheckingPolicy2, StoragePolicy2>& grid)
+{
+  typedef typename StoragePolicy<T,rank>::storage_iterator Iterator;
+  typedef typename StoragePolicy2<T,rank>::storage_iterator Iterator2;
+  Iterator dest = this->begin();
+  Iterator2 src = grid.begin();
+  Iterator2 end = grid.end();
+  while (src != end)
+  {
+    *dest += *src;
+    ++dest;
+    ++src;
+  }
+
+  return *this;
+}
 
 // -------------------------------------------------------------
 // inline functions

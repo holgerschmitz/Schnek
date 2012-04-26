@@ -1,3 +1,11 @@
+/*
+ * grid.h
+ *
+ *  Created on: 26 Apr 2010
+ *      Author: Holger Schmitz
+ *       Email: h.schmitz@imperial.ac.uk
+ */
+
 #ifndef SCHNEK_GRID_H
 #define SCHNEK_GRID_H
 
@@ -26,10 +34,10 @@ template<
 class Grid : public StoragePolicy<T,rank>, public CheckingPolicy<rank> {
 
   public:
-  
+    typedef T value_type;
     typedef FixedArray<int,rank> IndexType;
-    
     typedef Grid<T,rank,CheckingPolicy,StoragePolicy> GridType;
+    enum {Rank = rank};
   
     /** default constructor creates an empty grid */
     Grid();
@@ -106,6 +114,20 @@ class Grid : public StoragePolicy<T,rank>, public CheckingPolicy<rank> {
     Grid<T, rank, CheckingPolicy, StoragePolicy>& 
       operator=(const T &val);
     
+    template<
+      template<int> class CheckingPolicy2,
+      template<typename, int> class StoragePolicy2
+    >
+    Grid<T, rank, CheckingPolicy, StoragePolicy>&
+      operator-=(Grid<T, rank, CheckingPolicy2, StoragePolicy2>&);
+
+    template<
+      template<int> class CheckingPolicy2,
+      template<typename, int> class StoragePolicy2
+    >
+    Grid<T, rank, CheckingPolicy, StoragePolicy>&
+      operator+=(Grid<T, rank, CheckingPolicy2, StoragePolicy2>&);
+
     /** Resize to size[0] x ... x size[rank-1]
      * 
      *  Example: 

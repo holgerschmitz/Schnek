@@ -16,25 +16,38 @@
 namespace schnek
 {
 
-  struct NullType {};
-  struct EmptyType {};
+struct NullType {};
+struct EmptyType {};
 
 /** Type to type mapper class.
-   * 
-   *  A method to pass type information in an argument without creating a large
-   *  object.
+ *
+ *  A method to pass type information in an argument without creating a large
+ *  object.
  */
-  template<class Type>
-      struct Type2Type
-  {
+template<class Type>
+struct Type2Type
+{
     /** the original type */
     typedef Type OriginalType;
-  };
+};
+
+
+/** Type to type mapper class.
+ *
+ *  A method to pass type information in an argument without creating a large
+ *  object.
+ */
+template<template<class> class Type>
+struct Type2Type1
+{
+    /** the original type */
+    typedef Type OriginalType;
+};
 
 /** A templated typelist struct
-   *
-   *  Typelists are used for creating generalized functors, generating
-   *  class hierarchies and more
+ *
+ *  Typelists are used for creating generalized functors, generating
+ *  class hierarchies and more
  */
   template<class H, class T>
   struct Typelist
