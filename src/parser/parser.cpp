@@ -27,7 +27,7 @@ void Parser::parse(std::istream &input, std::string filename)
   FILE *trace = fopen("parsetrace.out", "w");
   ParseTrace(trace,"trace: ");
 
-  ParserContext context(variables, funcReg);
+  ParserContext context(variables, funcReg, blockClasses);
 
   BOOST_FOREACH(Token tok, tokens)
   {

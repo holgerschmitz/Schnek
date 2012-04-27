@@ -13,6 +13,7 @@
 #include <list>
 #include <string>
 #include <iostream>
+#include "deckgrammar.hpp"
 
 namespace schnek {
 
@@ -31,6 +32,7 @@ class Token
     Token(std::string filename_, int line_, int token_, std::string str_ = "")
         : filename(filename_), line(line_), token(token_), str(str_) {
       // std::cerr << "Creating token " << token << " in line " << line << " ("<<str<<")\n";
+      if (token==PATHIDENTIFIER) token = IDENTIFIER;
     }
 
     /// Copy constructor

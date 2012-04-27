@@ -201,8 +201,11 @@ class VariableStorage
     /// The current block
     pBlockVariables cursor;
   public:
+    VariableStorage() {}
     /// Construct with the name and classname of the root block
     VariableStorage(std::string name, std::string classname);
+    VariableStorage(const VariableStorage& storage)
+      : root(storage.root), cursor(storage.cursor) {}
 
     /// reset the cursor to the root block
     void resetCursor();

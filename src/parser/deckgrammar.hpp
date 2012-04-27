@@ -13,8 +13,9 @@
 #define EQUAL                          13
 #define LBRACKET                       14
 #define RBRACKET                       15
-#define INTEGER                        16
-#define FLOAT                          17
-#define INT_DECL                       18
-#define FLOAT_DECL                     19
-#define STRING_DECL                    20
+#define PATHIDENTIFIER                 16
+#define INTEGER                        17
+#define FLOAT                          18
+#define INT_DECL                       19
+#define FLOAT_DECL                     20
+#define STRING_DECL                    21

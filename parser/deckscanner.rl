@@ -29,7 +29,10 @@ using namespace schnek;
 
 	# Alpha charactres or underscore.
 	alpha_u = alpha | '_';
-	
+
+        # Alpha charactres or underscore.
+        alnum_uc = alnum_u | ':';
+
         # Individual symbol tokens
         '='   { tlist.insert(cur_line, EQUAL); };
         '{'   { tlist.insert(cur_line, LBRACE); };
@@ -57,8 +60,12 @@ using namespace schnek;
         
 	'string' { tlist.insert(cur_line, STRING_DECL); };
         
-	# Identifiers. Both variable, constant and block identifiers 
+	# Identifiers. 
+        # Variable identifiers in declarations, class identifiers and block identifiers 
 	alpha_u alnum_u* { tlist.insert(cur_line, IDENTIFIER,ts,te-ts); };
+
+        # Variable identifiers in expressions
+        alpha_u alnum_uc* { tlist.insert(cur_line, PATHIDENTIFIER,ts,te-ts); };
 	
 	# Single Quote string literal.
 	sliteralChar = [^'\\] | newline | ( '\\' . any_count_line );

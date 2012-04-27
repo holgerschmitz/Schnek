@@ -8,6 +8,7 @@
 
 #include <parser/parser.hpp>
 #include <parser/parsertoken.hpp>
+#include <parser/blockclasses.hpp>
 #include <variables/variables.hpp>
 #include <variables/function_expression.hpp>
 #include <iostream>
@@ -39,12 +40,16 @@ int main()
 {
   VariableStorage vars("test_parser", "app");
   FunctionRegistry freg;
+  BlockClasses blocks;
 
   freg.registerFunction("exp", exp);
   freg.registerFunction("sin", sin);
   freg.registerFunction("cos", cos);
 
-  Parser P(vars, freg);
+  blocks.addBlockClass("app").addChildren("Collection");
+  blocks.addBlockClass("Collection").addChildren("Values")("Constants");
+
+  Parser P(vars, freg, blocks);
 
   std::ifstream in("test_parser_sample.txt");
   if (!in) {

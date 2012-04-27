@@ -9,7 +9,16 @@ greet = greet + " Again!";
 float e = exp(a);
 float s = sin(var);
 
-Collection Globals {
-  int e = 3;
-  float a = cos(e);
+Collection globals {
+  float a = exp(var);
+  float b = cos(e);
+  string result = "Result is "+a;
+  Values physics {
+    float qe = 1.602e-19;
+  }
+  Constants maths {
+    float pi = 3.14159;
+  }
 }
+
+float other = globals:a;

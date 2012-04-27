@@ -10,20 +10,26 @@
 #define SCHNEK_PARSER_HPP_
 
 #include <iostream>
+#include "blockclasses.hpp"
+#include "../variables/variables.hpp"
+#include "../variables/function_expression.hpp"
 
 namespace schnek {
 
-class VariableStorage;
-class FunctionRegistry;
-
 class Parser {
   private:
-    VariableStorage *variables;
-    FunctionRegistry *funcReg;
+    VariableStorage variables;
+    FunctionRegistry funcReg;
+    BlockClasses blockClasses;
   public:
-    Parser(VariableStorage &variables_, FunctionRegistry &funcReg_)
-      : variables(&variables_), funcReg(&funcReg_)
+    Parser(const VariableStorage &variables_, const FunctionRegistry &funcReg_)
+      : variables(variables_), funcReg(funcReg_), blockClasses(false)
     {}
+
+    Parser(const VariableStorage &variables_, const FunctionRegistry &funcReg_, const BlockClasses &blockClasses_)
+      : variables(variables_), funcReg(funcReg_), blockClasses(blockClasses_)
+    {}
+
 
     void parse(std::istream &input, std::string filename);
 };

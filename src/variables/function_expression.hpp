@@ -150,20 +150,23 @@ class FunctionRegistry
 
 
     typedef std::map<std::string, pEntryBase> FExprMap;
-    FExprMap funcs;
+    boost::shared_ptr<FExprMap> funcs;
 
   public:
+    FunctionRegistry() : funcs(new FExprMap) {}
+    FunctionRegistry(const FunctionRegistry &reg) : funcs(reg.funcs) {}
+
     template<typename func>
     void registerFunction(std::string fname, func f)
     {
       pEntryBase eB(new Entry<func>(f));
-      funcs[fname] = eB;
+      (*funcs)[fname] = eB;
     }
 
     ExpressionVariant getExpression(std::string fname, ExpressionList &args)
     {
-      if (funcs.count(fname) == 0) throw FunctionNotFoundException();
-      return funcs[fname]->getExpression(args);
+      if (funcs->count(fname) == 0) throw FunctionNotFoundException();
+      return (*funcs)[fname]->getExpression(args);
     }
 
 };

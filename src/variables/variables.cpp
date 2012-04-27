@@ -12,6 +12,7 @@
 #include "../exception.hpp"
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/foreach.hpp>
 
 using namespace schnek;
 
@@ -117,7 +118,7 @@ Variable &BlockVariables::getVariable(std::list<std::string> path, bool upward)
   {
     if (vars.count(name)>0) return *(vars[name]);
   }
-  if (upward && (parent.get()==0)) return parent->getVariable(path, true);
+  if (upward && parent) return parent->getVariable(path, true);
 
   throw VariableNotFoundException();
 }
@@ -125,7 +126,7 @@ Variable &BlockVariables::getVariable(std::list<std::string> path, bool upward)
 Variable &BlockVariables::getVariable(std::string name)
 {
   std::list<std::string> path;
-  boost::split(path, name, boost::is_any_of("."));
+  boost::split(path, name, boost::is_any_of(":"));
   return getVariable(path, true);
 }
 

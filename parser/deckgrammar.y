@@ -61,6 +61,7 @@ expression(LHS) ::= value(RHS). { LHS = RHS; }
 expressionlist(LHS) ::= expressionlist(A) COMMA signed_expression(B). { B.append(A); LHS=B; }
 expressionlist(LHS) ::= signed_expression(RHS). { LHS = RHS; LHS.makeExpressionList(); }
 
+value(LHS) ::= PATHIDENTIFIER(A).  { LHS.assignIdentifier(A); }  // --done--
 value(LHS) ::= IDENTIFIER(A).  { LHS.assignIdentifier(A); }  // --done--
 value(LHS) ::= INTEGER(A). { LHS.assignInteger(A); }  // --done--
 value(LHS) ::= FLOAT(A). { LHS.assignFloat(A); }  // --done--

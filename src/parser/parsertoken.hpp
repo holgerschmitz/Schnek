@@ -10,6 +10,7 @@
 #define SCHNEK_PARSERTOKEN_HPP_
 
 #include "tokenlist.hpp"
+#include "blockclasses.hpp"
 #include "../variables/types.hpp"
 #include "../variables/variables.hpp"
 #include "../variables/expression.hpp"
@@ -32,16 +33,18 @@ struct ParserContext
 {
     VariableStorage *variables;
     FunctionRegistry *funcReg;
+    BlockClasses *blockClasses;
     ParserContext() {}
-    ParserContext(VariableStorage *variables_, FunctionRegistry *funcReg_)
-          : variables(variables_), funcReg(funcReg_) {}
+    ParserContext(VariableStorage &variables_, FunctionRegistry &funcReg_, BlockClasses &blockClasses_)
+          : variables(&variables_), funcReg(&funcReg_), blockClasses(&blockClasses_) {}
     ParserContext(const ParserContext &con)
-    : variables(con.variables), funcReg(con.funcReg) {}
+          : variables(con.variables), funcReg(con.funcReg), blockClasses(con.blockClasses) {}
 
     ParserContext &operator=(const ParserContext &con)
     {
       variables = con.variables;
       funcReg = con.funcReg;
+      blockClasses = con.blockClasses;
       return *this;
     }
 };

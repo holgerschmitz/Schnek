@@ -309,14 +309,24 @@ void ParserToken::createBlock(ParserToken &parTok)
 
   if (parTok.getType() != atom) throw ParserError("Can't convert non-atom token to identifier (block name)", atomTok);
   if (parTok.atomTok.getToken() != IDENTIFIER) throw ParserError("Can't convert non-identifier atom to identifier (block name)", atomTok);
+
+  std::string blockName = parTok.atomTok.getString();
+  std::string blockClass = atomTok.getString();
   try
   {
-//    std::cerr << "creating block " << atomTok.getString() << "(" << parTok.atomTok.getString() << ")\n";
-    context.variables->createBlock(atomTok.getString(), parTok.atomTok.getString());
+    std::string parentClass = context.variables->getCurrentBlock()->getClassName();
+    if (context.blockClasses->restrictBlocks() && (!context.blockClasses->hasChild(parentClass, blockClass)))
+      throw ParserError("Block class "+ blockClass +" not allowed inside "+ parentClass, parTok.atomTok);
+//    std::cerr << "creating block: name=" << blockName << ", class=" << blockClass << ")\n";
+    context.variables->createBlock(blockName, blockClass);
   }
   catch (DuplicateBlockException&)
   {
-    throw ParserError("Duplicate block definition "+ parTok.atomTok.getString(), parTok.atomTok);
+    throw ParserError("Duplicate block definition "+ blockName, parTok.atomTok);
+  }
+  catch (BlockNotFoundException&)
+  {
+    throw ParserError("Unknown block class "+ blockClass, parTok.atomTok);
   }
 }
 
@@ -324,6 +334,7 @@ void ParserToken::endBlock()
 {
   if (context.variables->getCurrentBlock()->getParent() == 0)
     throw ParserError("Extra } found.", atomTok);
+//  std::cerr << "end block\n";
   context.variables->cursorUp();
 }
 
