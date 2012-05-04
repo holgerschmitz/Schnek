@@ -9,6 +9,7 @@
 #include "parser.hpp"
 #include "deckscanner.hpp"
 #include "tokenlist.hpp"
+#include "block.hpp"
 #include <boost/foreach.hpp>
 
 #include "deckgrammar.hpp"
@@ -17,7 +18,7 @@ using namespace schnek;
 
 #include "deckgrammar.inc"
 
-void Parser::parse(std::istream &input, std::string filename)
+pBlock Parser::parse(std::istream &input, std::string filename)
 {
   DeckScanner scanner(filename);
   scanner.scan(&input);
@@ -27,7 +28,25 @@ void Parser::parse(std::istream &input, std::string filename)
   FILE *trace = fopen("parsetrace.out", "w");
   ParseTrace(trace,"trace: ");
 
-  ParserContext context(variables, funcReg, blockClasses);
+  pBlockTree blockTree(new BlockTree());
+  ParserContext context(variables, funcReg, blockClasses, blockTree);
+
+  std::string rootClass = variables.getRootBlock()->getClassName();
+
+  BlockClassDescriptor &blockClassDescr = context.blockClasses->get(rootClass);
+  if (blockClassDescr.hasBlockFactory())
+  {
+    pBlock block = blockClassDescr.makeBlock();
+    block->setContext(context);
+    block->setup();
+    context.blockTree->addChild(block);
+  }
+  else
+  {
+    context.blockTree->moveDown();
+  }
+
+
 
   BOOST_FOREACH(Token tok, tokens)
   {
@@ -37,5 +56,5 @@ void Parser::parse(std::istream &input, std::string filename)
   Parse(pParser, 0, ParserToken());
 
   ParseFree(pParser);
-
+  return blockTree->getRoot();
 }

@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include "blockclasses.hpp"
+#include "parsersettings.hpp"
 #include "../variables/variables.hpp"
 #include "../variables/function_expression.hpp"
 
@@ -30,8 +31,12 @@ class Parser {
       : variables(variables_), funcReg(funcReg_), blockClasses(blockClasses_)
     {}
 
+    Parser(const ParserSettings &settings)
+      : variables(settings.variables), funcReg(settings.funcReg), blockClasses(settings.blockClasses)
+    {}
 
-    void parse(std::istream &input, std::string filename);
+
+    pBlock parse(std::istream &input, std::string filename);
 };
 
 } // namespace

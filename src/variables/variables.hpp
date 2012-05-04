@@ -30,6 +30,12 @@ class VariableNotFoundException : public SchnekException
     VariableNotFoundException() : SchnekException() {}
 };
 
+class VariableNotInitialisedException : public SchnekException
+{
+  public:
+    VariableNotInitialisedException() : SchnekException() {}
+};
+
 class DuplicateVariableException : public SchnekException
 {
   public:
@@ -71,25 +77,27 @@ class Variable
     VariableTypeInfo type;
     /// fixed is true if a value is stored and false if an expression is stored in the variable
     bool fixed;
-
-
+    /// Is set to true if the variable has been initialised
+    bool initialised;
   public:
     /// construct with an integer
-    Variable(int value);
+    Variable(int value, bool initialised_ = true);
     /// construct with a float
-    Variable(double value);
+    Variable(double value, bool initialised_ = true);
     /// construct with a string
-    Variable(std::string value);
+    Variable(std::string value, bool initialised_ = true);
     /// construct with an integer expression
-    Variable(pIntExpression expr);
+    Variable(pIntExpression expr, bool initialised_ = true);
     /// construct with an float expression
-    Variable(pFloatExpression expr);
+    Variable(pFloatExpression expr, bool initialised_ = true);
     /// construct with an string expression
-    Variable(pStringExpression expr);
+    Variable(pStringExpression expr, bool initialised_ = true);
+
     /** copy constructor
      *  plain variables are copied by value, but expressions are shallow-copied
      */
     Variable(const Variable &var);
+
     /// assignment operator
     Variable &operator=(const Variable &var);
 
@@ -104,6 +112,9 @@ class Variable
 
     /// returns true if the value of the variable is constant and does not depend on non-constant variables
     bool isConstant() {return fixed;}
+
+    /// returns true if the value of the variable has been initialised
+    bool isInitialised() {return initialised;}
 };
 
 typedef boost::shared_ptr<Variable> pVariable;
@@ -149,7 +160,7 @@ class BlockVariables
      *
      * Uses the same search pattern as the exists method.
      */
-    Variable &getVariable(std::list<std::string> path, bool upward);
+    pVariable getVariable(std::list<std::string> path, bool upward);
   public:
     /// Costruct using the block's name and class name
     BlockVariables(std::string name_, std::string className_, pBlockVariables parent_)
@@ -164,7 +175,7 @@ class BlockVariables
      *
      * Use exists() to find out if the name is valid
      */
-    Variable &getVariable(std::string name);
+    pVariable getVariable(std::string name);
 
     /** Adds a new variable to the current block
      *  Returns true on success and false if the variable name already exists

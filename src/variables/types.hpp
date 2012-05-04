@@ -17,6 +17,9 @@ namespace schnek {
 /// A boost::variant that can hold the basic constant values
 typedef boost::variant<int, double, std::string> ValueVariant;
 
+/// A boost::variant that can hold the basic constant values
+typedef boost::variant<int*, double*, std::string*> ValuePointerVariant;
+
 template<typename vtype> class Expression;
 typedef boost::shared_ptr<Expression<int> > pIntExpression;
 typedef boost::shared_ptr<Expression<double> > pFloatExpression;

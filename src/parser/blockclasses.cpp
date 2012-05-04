@@ -41,6 +41,14 @@ BlockClassDescriptor &BlockClasses::addBlockClass(std::string blockClass)
   return *bcs;
 }
 
+BlockClassDescriptor &BlockClasses::get(std::string blockClass)
+{
+  if (classDescriptors->count(blockClass) < 1)
+    return addBlockClass(blockClass);
+
+  return *((*classDescriptors)[blockClass]);
+}
+
 bool BlockClasses::hasChild(std::string parent, std::string child)
 {
   if (classDescriptors->count(parent) < 1)

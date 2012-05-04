@@ -8,6 +8,7 @@
 
 #include "parsertoken.hpp"
 #include "deckgrammar.hpp"
+#include "block.hpp"
 
 #include "../variables/operators.hpp"
 
@@ -106,7 +107,7 @@ void ParserToken::assignIdentifier(ParserToken &parTok)
 
   try
   {
-    Variable v = context.variables->getCurrentBlock()->getVariable(varname);
+    Variable v = *(context.variables->getCurrentBlock()->getVariable(varname));
     switch (v.getType())
     {
       case Variable::int_type:
@@ -233,7 +234,7 @@ void ParserToken::updateVariable()
   // std::cerr << "Updating variable " << varname << std::endl;
   try
   {
-    context.variables->getCurrentBlock()->getVariable(varname) = *var;
+    *(context.variables->getCurrentBlock()->getVariable(varname)) = *var;
   }
   catch (VariableNotFoundException&)
   {
@@ -318,7 +319,19 @@ void ParserToken::createBlock(ParserToken &parTok)
     if (context.blockClasses->restrictBlocks() && (!context.blockClasses->hasChild(parentClass, blockClass)))
       throw ParserError("Block class "+ blockClass +" not allowed inside "+ parentClass, parTok.atomTok);
 //    std::cerr << "creating block: name=" << blockName << ", class=" << blockClass << ")\n";
-    context.variables->createBlock(blockName, blockClass);
+    pBlockVariables blockVars = context.variables->createBlock(blockName, blockClass);
+    BlockClassDescriptor &blockClassDescr = context.blockClasses->get(blockClass);
+    if (blockClassDescr.hasBlockFactory())
+    {
+      pBlock block = blockClassDescr.makeBlock();
+      block->setContext(context);
+      block->setup();
+      context.blockTree->addChild(block);
+    }
+    else
+    {
+      context.blockTree->moveDown();
+    }
   }
   catch (DuplicateBlockException&)
   {
@@ -336,5 +349,6 @@ void ParserToken::endBlock()
     throw ParserError("Extra } found.", atomTok);
 //  std::cerr << "end block\n";
   context.variables->cursorUp();
+  context.blockTree->moveUp();
 }
 

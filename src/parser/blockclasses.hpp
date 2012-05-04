@@ -18,16 +18,39 @@
 
 namespace schnek {
 
+class Block;
+typedef boost::shared_ptr<Block> pBlock;
+
 class BlockNotFoundException : public SchnekException
 {
   public:
     BlockNotFoundException() : SchnekException() {}
 };
 
+class BlockFactory
+{
+  public:
+    virtual pBlock makeBlock() = 0;
+};
+typedef boost::shared_ptr<BlockFactory> pBlockFactory;
+
+template<class B>
+class GenericBlockFactory : public BlockFactory
+{
+  public:
+    pBlock makeBlock()
+    {
+      pBlock pb(new B);
+      return pb;
+    }
+};
+
 class BlockClassDescriptor
 {
   private:
     std::set<std::string> allowedChildren;
+    pBlockFactory blockFactory;
+
     void doAddChild(std::string child);
   public:
     class BlockClassChildAdder
@@ -46,6 +69,15 @@ class BlockClassDescriptor
   public:
     BlockClassChildAdder addChildren(std::string child);
     bool hasChild(std::string child);
+
+    template<class B> void setBlockClass()
+    {
+        pBlockFactory bf(new GenericBlockFactory<B>());
+        blockFactory = bf;
+    }
+
+    bool hasBlockFactory() { return blockFactory; }
+    pBlock makeBlock() { return blockFactory->makeBlock(); }
 };
 
 typedef boost::shared_ptr<BlockClassDescriptor> pBlockClassDescriptor;
@@ -63,10 +95,12 @@ class BlockClasses
         : classDescriptors(blockClasses.classDescriptors), restr(blockClasses.restr) {}
 
     BlockClassDescriptor &addBlockClass(std::string blockClass);
+    BlockClassDescriptor &operator()(std::string blockClass) { return this->get(blockClass); }
+    BlockClassDescriptor &get(std::string blockClass);
+
     bool hasChild(std::string parent, std::string child);
     bool restrictBlocks() {return restr;}
 };
-
 
 } // namespace
 

@@ -9,6 +9,8 @@
 #include <parser/parser.hpp>
 #include <parser/parsertoken.hpp>
 #include <parser/blockclasses.hpp>
+#include <parser/blockparameters.hpp>
+#include <parser/block.hpp>
 #include <variables/variables.hpp>
 #include <variables/function_expression.hpp>
 #include <iostream>
@@ -19,6 +21,22 @@
 
 using namespace schnek;
 
+
+int NSteps;
+double dx;
+std::string output;
+
+
+class SimulationBlock : public Block
+{
+  protected:
+    void initParameters(BlockParameters &blockPars)
+    {
+      blockPars.addParameter("nsteps", &NSteps);
+      blockPars.addParameter("dx", &dx);
+      blockPars.addParameter("output", &output);
+    }
+};
 
 void writeBlockVars(pBlockVariables block)
 {
@@ -46,10 +64,14 @@ int main()
   freg.registerFunction("sin", sin);
   freg.registerFunction("cos", cos);
 
-  blocks.addBlockClass("app").addChildren("Collection");
+  blocks.addBlockClass("app");
+  blocks("app").addChildren("Collection");
+  blocks("app").setBlockClass<SimulationBlock>();
+
   blocks.addBlockClass("Collection").addChildren("Values")("Constants");
 
   Parser P(vars, freg, blocks);
+  pBlock application;
 
   std::ifstream in("test_parser_sample.txt");
   if (!in) {
@@ -57,13 +79,20 @@ int main()
   }
   try
   {
-    P.parse(in, "test_parser_sample.txt");
+    application = P.parse(in, "test_parser_sample.txt");
   }
   catch (ParserError &e)
   {
     std::cerr << "Parse error, " << e.atomToken.getFilename() << "(" << e.atomToken.getLine() << "): "<< e.message << "\n";
+    throw -1;
   }
-
+  application->evaluateParameters();
   writeBlockVars(vars.getRootBlock());
+
+  std::cout << "\n\n";
+  std::cout << "Application variables:\n";
+  std::cout << "NSteps = " << NSteps << std::endl;
+  std::cout << "dx = " << dx << std::endl;
+  std::cout << "output = " << output << std::endl;
 }
 

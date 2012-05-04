@@ -9,6 +9,7 @@ greet = greet + " Again!";
 float e = exp(a);
 float s = sin(var);
 
+
 Collection globals {
   float a = exp(var);
   float b = cos(e);
@@ -22,3 +23,8 @@ Collection globals {
 }
 
 float other = globals:a;
+
+
+nsteps = n;
+dx = e;
+output = hello;

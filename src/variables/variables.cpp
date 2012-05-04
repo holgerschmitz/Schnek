@@ -22,32 +22,32 @@ using namespace schnek;
 // -------------------------------------------------------------
 
 
-Variable::Variable(int value)
-  : var(value), type(int_type), fixed(true)
+Variable::Variable(int value, bool initialised_)
+  : var(value), type(int_type), fixed(true), initialised(initialised_)
 {}
 
-Variable::Variable(double value)
-  : var(value), type(float_type), fixed(true)
+Variable::Variable(double value, bool initialised_)
+  : var(value), type(float_type), fixed(true), initialised(initialised_)
 {}
 
-Variable::Variable(std::string value)
-  : var(value), type(string_type), fixed(true)
+Variable::Variable(std::string value, bool initialised_)
+  : var(value), type(string_type), fixed(true), initialised(initialised_)
 {}
 
-Variable::Variable(pIntExpression expr)
-  : expression(expr), type(int_type), fixed(false)
+Variable::Variable(pIntExpression expr, bool initialised_)
+  : expression(expr), type(int_type), fixed(false), initialised(initialised_)
 {}
 
-Variable::Variable(pFloatExpression expr)
-  : expression(expr), type(float_type), fixed(false)
+Variable::Variable(pFloatExpression expr, bool initialised_)
+  : expression(expr), type(float_type), fixed(false), initialised(initialised_)
 {}
 
-Variable::Variable(pStringExpression expr)
-  : expression(expr), type(string_type), fixed(false)
+Variable::Variable(pStringExpression expr, bool initialised_)
+  : expression(expr), type(string_type), fixed(false), initialised(initialised_)
 {}
 
 Variable::Variable(const Variable &var)
-  : expression(var.expression), var(var.var), type(var.type), fixed(var.fixed)
+  : expression(var.expression), var(var.var), type(var.type), fixed(var.fixed), initialised(var.initialised)
 {}
 
 Variable &Variable::operator=(const Variable &rhs)
@@ -56,6 +56,7 @@ Variable &Variable::operator=(const Variable &rhs)
   var = rhs.var;
   expression = rhs.expression;
   fixed = rhs.fixed;
+  initialised = rhs.initialised;
 }
 
 
@@ -100,7 +101,7 @@ bool BlockVariables::exists(std::string name)
   return exists(path, true);
 }
 
-Variable &BlockVariables::getVariable(std::list<std::string> path, bool upward)
+pVariable BlockVariables::getVariable(std::list<std::string> path, bool upward)
 {
   std::string name = path.front();
   if (path.size()>1)
@@ -116,14 +117,14 @@ Variable &BlockVariables::getVariable(std::list<std::string> path, bool upward)
   }
   else
   {
-    if (vars.count(name)>0) return *(vars[name]);
+    if (vars.count(name)>0) return vars[name];
   }
   if (upward && parent) return parent->getVariable(path, true);
 
   throw VariableNotFoundException();
 }
 
-Variable &BlockVariables::getVariable(std::string name)
+pVariable BlockVariables::getVariable(std::string name)
 {
   std::list<std::string> path;
   boost::split(path, name, boost::is_any_of(":"));

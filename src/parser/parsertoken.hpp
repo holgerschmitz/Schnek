@@ -9,12 +9,10 @@
 #ifndef SCHNEK_PARSERTOKEN_HPP_
 #define SCHNEK_PARSERTOKEN_HPP_
 
+#include "parsercontext.hpp"
 #include "tokenlist.hpp"
-#include "blockclasses.hpp"
 #include "../variables/types.hpp"
-#include "../variables/variables.hpp"
 #include "../variables/expression.hpp"
-#include "../variables/function_expression.hpp"
 
 #include "../exception.hpp"
 
@@ -29,25 +27,6 @@ class ParserToken;
 
 typedef boost::shared_ptr<ParserToken> pParserToken;
 
-struct ParserContext
-{
-    VariableStorage *variables;
-    FunctionRegistry *funcReg;
-    BlockClasses *blockClasses;
-    ParserContext() {}
-    ParserContext(VariableStorage &variables_, FunctionRegistry &funcReg_, BlockClasses &blockClasses_)
-          : variables(&variables_), funcReg(&funcReg_), blockClasses(&blockClasses_) {}
-    ParserContext(const ParserContext &con)
-          : variables(con.variables), funcReg(con.funcReg), blockClasses(con.blockClasses) {}
-
-    ParserContext &operator=(const ParserContext &con)
-    {
-      variables = con.variables;
-      funcReg = con.funcReg;
-      blockClasses = con.blockClasses;
-      return *this;
-    }
-};
 
 struct ParserError : public SchnekException
 {
