@@ -27,7 +27,7 @@ namespace schnek {
       /// Minimum and maximum corners of the rectangle
       IndexType min, max;
     public:
-      typedef FixedArray<int,rank> IndexType;
+      typedef Array<int,rank> IndexType;
       /// Construct with rectangle minimum and maximum
       RecDomain(const IndexType &min_, const IndexType &max_)
       : min(min_), max(max_) {}

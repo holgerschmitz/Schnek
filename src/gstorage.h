@@ -11,7 +11,7 @@ namespace schnek {
 template<typename T, int rank>
 class SingleArrayGridStorage {
   public:  
-    typedef FixedArray<int,rank> IndexType;
+    typedef Array<int,rank> IndexType;
     
   protected:
     T* data;

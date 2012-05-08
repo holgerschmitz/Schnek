@@ -9,7 +9,7 @@ namespace schnek {
 template<int rank>
 class GridNoArgCheck {
   public:
-    typedef FixedArray<int,rank> IndexType;
+    typedef Array<int,rank> IndexType;
     static const  IndexType &check(
         const IndexType &pos, 
         const IndexType &low,  
@@ -21,7 +21,7 @@ class GridNoArgCheck {
 template<int rank>
 class GridAssertCheck {
   public:
-    typedef FixedArray<int,rank> IndexType;
+    typedef Array<int,rank> IndexType;
     static const  IndexType &check(
         const IndexType &pos, 
         const IndexType &low,  

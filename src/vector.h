@@ -18,7 +18,7 @@ template<
   int length,
   template<int> class CheckingPolicy = FixedArrayNoArgCheck
 >
-class Vector : public FixedArray<T,length,CheckingPolicy>
+class Vector : public Array<T,length,CheckingPolicy>
 {
   public:
     T product() const;

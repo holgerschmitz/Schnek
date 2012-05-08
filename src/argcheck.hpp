@@ -1,13 +1,13 @@
-#ifndef SCHNEK_ARGCHECK_H
-#define SCHNEK_ARGCHECK_H
+#ifndef SCHNEK_ARGCHECK_HPP
+#define SCHNEK_ARGCHECK_HPP
 
 namespace schnek {
 
-/** Class to plug into the FixedArray as CheckingPolicy.
+/** Class to plug into the Array as CheckingPolicy.
  *  Performs no argument checking at all.
  */
 template<int limit>
-class FixedArrayNoArgCheck
+class ArrayNoArgCheck
 {
   public:
     /** The check method does not do anything */

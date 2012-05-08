@@ -1,15 +1,15 @@
 /*
- * fixedarray.h
+ * array.hpp
  *
  *  Created on: 26 Apr 2009
  *      Author: Holger Schmitz
  *       Email: h.schmitz@imperial.ac.uk
  */
 
-#ifndef SCHNEK_FIXEDARRAY_H
-#define SCHNEK_FIXEDARRAY_H
+#ifndef SCHNEK_ARRAY_HPP
+#define SCHNEK_ARRAY_HPP
 
-#include "argcheck.h"
+#include "argcheck.hpp"
 
 namespace schnek {
 
@@ -26,46 +26,46 @@ class FArrExpression;
 template<
   class T, 
   int length, 
-  template<int> class CheckingPolicy = FixedArrayNoArgCheck
+  template<int> class CheckingPolicy = ArrayNoArgCheck
 >
-class FixedArray : public CheckingPolicy<length> {
+class Array : public CheckingPolicy<length> {
   private:
     /// Holds the data in a simple C-style array
     T data[length];
     /// ThisType defined for convenience
-    typedef FixedArray<T,length,CheckingPolicy> ThisType;
+    typedef Array<T,length,CheckingPolicy> ThisType;
   public:
     typedef T value_type;
     enum {Length = length};
     
     /// The default constructor
-    FixedArray();
+    Array();
     /// Copy constructor copies the values
-    FixedArray(const FixedArray &);
+    Array(const Array &);
     /// Constructor for length=1 arrays setting the data explicitely
-    FixedArray(const T&);
+    Array(const T&);
     /// Constructor for length=2 arrays setting the data explicitely
-    FixedArray(const T&, const T&);
+    Array(const T&, const T&);
     /// Constructor for length=3 arrays setting the data explicitely
-    FixedArray(const T&, const T&, const T&);
+    Array(const T&, const T&, const T&);
     /// Constructor for length=4 arrays setting the data explicitely
-    FixedArray(const T&, const T&, const T&, const T&);
+    Array(const T&, const T&, const T&, const T&);
     /// Constructor for length=5 arrays setting the data explicitely
-    FixedArray(const T&, const T&, const T&, const T&, const T&);
+    Array(const T&, const T&, const T&, const T&, const T&);
     /// Constructor for length=6 arrays setting the data explicitely
-    FixedArray(const T&, const T&, const T&, const T&, const T&, 
+    Array(const T&, const T&, const T&, const T&, const T&, 
                const T&);
     /// Constructor for length=7 arrays setting the data explicitely
-    FixedArray(const T&, const T&, const T&, const T&, const T&, 
+    Array(const T&, const T&, const T&, const T&, const T&, 
                const T&, const T&);
     /// Constructor for length=8 arrays setting the data explicitely
-    FixedArray(const T&, const T&, const T&, const T&, const T&, 
+    Array(const T&, const T&, const T&, const T&, const T&, 
                const T&, const T&, const T&);
     /// Constructor for length=9 arrays setting the data explicitely
-    FixedArray(const T&, const T&, const T&, const T&, const T&, 
+    Array(const T&, const T&, const T&, const T&, const T&, 
                const T&, const T&, const T&, const T&);
     /// Constructor for length=10 arrays setting the data explicitely
-    FixedArray(const T&, const T&, const T&, const T&, const T&, 
+    Array(const T&, const T&, const T&, const T&, const T&, 
                const T&, const T&, const T&, const T&, const T&);
 
     /** Constructing from an FArrExpression.
@@ -73,9 +73,9 @@ class FixedArray : public CheckingPolicy<length> {
      *  variables
      */
     template<class Operator>
-    FixedArray(const FArrExpression<Operator>&);
+    Array(const FArrExpression<Operator>&);
     
-    ~FixedArray() {}
+    ~Array() {}
 
     /// Accessor operator
     T& operator[](int);
@@ -92,25 +92,25 @@ class FixedArray : public CheckingPolicy<length> {
      *  variables
      */
     template<class Operator>
-    FixedArray<T,length,CheckingPolicy>& operator=(const FArrExpression<Operator>&);
+    Array<T,length,CheckingPolicy>& operator=(const FArrExpression<Operator>&);
 
   public:
     /// Sets all fields to zero
-    FixedArray<T,length,CheckingPolicy>& clear();
+    Array<T,length,CheckingPolicy>& clear();
     /// Fills all fields with a given value
-    FixedArray<T,length,CheckingPolicy>& fill(const T&);
+    Array<T,length,CheckingPolicy>& fill(const T&);
     
   public:
   
     /** Returns an array filled with zeros.
      *  Only available if int can be cast to the type T
      */
-    static FixedArray<T,length,CheckingPolicy> Zero();
+    static Array<T,length,CheckingPolicy> Zero();
     
     /** Returns an array filled with ones.
      *  Only available if int can be cast to the type T
      */
-    static FixedArray<T,length,CheckingPolicy> Unity();
+    static Array<T,length,CheckingPolicy> Unity();
 };
 
 
@@ -123,8 +123,8 @@ template<
   template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
 >
 bool operator==(
-  const schnek::FixedArray<T1,length,CheckingPolicy1>&,
-  const schnek::FixedArray<T2,length,CheckingPolicy2>&
+  const schnek::Array<T1,length,CheckingPolicy1>&,
+  const schnek::Array<T2,length,CheckingPolicy2>&
 );
 
 template<
@@ -133,8 +133,8 @@ template<
   template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
 >
 bool operator!=(
-  const schnek::FixedArray<T1,length,CheckingPolicy1>&,
-  const schnek::FixedArray<T2,length,CheckingPolicy2>&
+  const schnek::Array<T1,length,CheckingPolicy1>&,
+  const schnek::Array<T2,length,CheckingPolicy2>&
 );
 
 template<
@@ -143,8 +143,8 @@ template<
   template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
 >
 bool operator<(
-  const schnek::FixedArray<T1,length,CheckingPolicy1>&,
-  const schnek::FixedArray<T2,length,CheckingPolicy2>&
+  const schnek::Array<T1,length,CheckingPolicy1>&,
+  const schnek::Array<T2,length,CheckingPolicy2>&
 );
 
 template<
@@ -153,11 +153,11 @@ template<
   template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
 >
 bool operator<=(
-  const schnek::FixedArray<T1,length,CheckingPolicy1>&,
-  const schnek::FixedArray<T2,length,CheckingPolicy2>&
+  const schnek::Array<T1,length,CheckingPolicy1>&,
+  const schnek::Array<T2,length,CheckingPolicy2>&
 );
 
 
-#include "fixedarray.t"
+#include "array.t"
 
 #endif

@@ -8,7 +8,7 @@
 namespace schnek {
 
 
-/**Expression template for the FixedArray class.
+/**Expression template for the Array class.
  * This template will be created when adding or subtracting FixedArrays and 
  * will allow performing expressions without temporary variables.
  * @todo Handle type promotion
@@ -172,7 +172,7 @@ operator symbol (                                                               
   return FArrExpression<OperatorType> (OperatorType(A,B));                        \
 }
 
-/* Operator for a FixedArray and a FArrExpression object */
+/* Operator for a Array and a FArrExpression object */
 #define EXPR_ARR(op, symbol)                                                      \
 template<class exp, class T, int length, template<int> class CheckingPolicy>      \
 FArrExpression<                                                                   \
@@ -197,7 +197,7 @@ operator symbol (                                                               
 }
 
 
-/* Operator for a FixedArray and a FArrExpression object */
+/* Operator for a Array and a FArrExpression object */
 #define ARR_EXPR(op, symbol)                                                      \
 template<                                                                         \
   class exp,                                                                      \
@@ -267,7 +267,7 @@ operator symbol (const FArrExpression<exp> &A, const T &B)        \
                                                                                   \
   return FArrExpression<OperatorType> (OperatorType(A,B));                        \
 }                                                                                 
-/* Operator for a Scalar and a FixedArray object */
+/* Operator for a Scalar and a Array object */
 #define SCAL_ARR(op, symbol)                                                     \
 template<class T, int length, template<int> class CheckingPolicy>                 \
 FArrExpression<                                                                   \
@@ -288,7 +288,7 @@ operator symbol (const T &A, const FixedArray<T,length,CheckingPolicy> &B)      
   return FArrExpression<OperatorType> (OperatorType(A,B));                        \
 }                                                                                 
                                                                                   
-/* Operator for a FixedArray and a Scalar object */
+/* Operator for a Array and a Scalar object */
 #define ARR_SCAL(op, symbol)                                                     \
 template<class T, int length, template<int> class CheckingPolicy>                 \
 FArrExpression<                                                                   \

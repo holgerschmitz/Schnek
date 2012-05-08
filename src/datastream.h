@@ -11,7 +11,7 @@ template<
   int length, 
   template<int> class CheckingPolicy
 >
-      std::ostream &operator<<(std::ostream&, const schnek::FixedArray<T,length,CheckingPolicy>&);
+      std::ostream &operator<<(std::ostream&, const schnek::Array<T,length,CheckingPolicy>&);
 
 template<
   typename T,

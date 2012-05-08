@@ -5,25 +5,25 @@ namespace schnek
 {
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray()
+inline Array<T,length,CheckingPolicy>::Array()
 {}
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(const FixedArray &fixarr)
+inline Array<T,length,CheckingPolicy>::Array(const Array &fixarr)
 {
   for (int i=0; i<length; ++i)
     data[i] = fixarr[i];
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(const T& v0)
+inline Array<T,length,CheckingPolicy>::Array(const T& v0)
 {
   BOOST_STATIC_ASSERT(1==length);
   data[0] = v0;
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(
+inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1
 )
 {
@@ -33,7 +33,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(
+inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2
 )
 {
@@ -44,7 +44,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(
+inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3
 )
 {
@@ -56,7 +56,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(
+inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4
 )
 {
@@ -69,7 +69,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(
+inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5
 )
@@ -84,7 +84,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(
+inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6
 )
@@ -100,7 +100,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(
+inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6, const T& v7
 )
@@ -117,7 +117,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(
+inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6, const T& v7, const T& v8
 )
@@ -135,7 +135,7 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(
+inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6, const T& v7, const T& v8, const T& v9
 )
@@ -156,33 +156,33 @@ inline FixedArray<T,length,CheckingPolicy>::FixedArray(
 
 template<class T, int length, template <int> class CheckingPolicy>
 template<class Operator>
-inline FixedArray<T,length,CheckingPolicy>::FixedArray(const FArrExpression<Operator> &expr)
+inline Array<T,length,CheckingPolicy>::Array(const FArrExpression<Operator> &expr)
 {
   for (int i=0; i<length; ++i)
     data[i] = expr[i];
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline T& FixedArray<T,length,CheckingPolicy>::operator[](int pos)
+inline T& Array<T,length,CheckingPolicy>::operator[](int pos)
 {
    return at(pos);
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline const T& FixedArray<T,length,CheckingPolicy>::operator[](int pos) const
+inline const T& Array<T,length,CheckingPolicy>::operator[](int pos) const
 {
    return at(pos);
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline T& FixedArray<T,length,CheckingPolicy>::at(int pos)
+inline T& Array<T,length,CheckingPolicy>::at(int pos)
 {
    this->check(pos);
    return data[pos];
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline const T& FixedArray<T,length,CheckingPolicy>::at(int pos) const
+inline const T& Array<T,length,CheckingPolicy>::at(int pos) const
 {
    this->check(pos);
    return data[pos];
@@ -190,7 +190,7 @@ inline const T& FixedArray<T,length,CheckingPolicy>::at(int pos) const
 
 template<class T, int length, template <int> class CheckingPolicy>
 template<class Operator>
-inline FixedArray<T,length,CheckingPolicy>& FixedArray<T,length,CheckingPolicy>
+inline Array<T,length,CheckingPolicy>& Array<T,length,CheckingPolicy>
   ::operator=(const FArrExpression<Operator> &expr)
 {
   for (int i=0; i<length; ++i)
@@ -199,7 +199,7 @@ inline FixedArray<T,length,CheckingPolicy>& FixedArray<T,length,CheckingPolicy>
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>& FixedArray<T,length,CheckingPolicy>::clear()
+inline Array<T,length,CheckingPolicy>& Array<T,length,CheckingPolicy>::clear()
 {
   for (int i=0; i<length; ++i)
     data[i] = 0;
@@ -207,7 +207,7 @@ inline FixedArray<T,length,CheckingPolicy>& FixedArray<T,length,CheckingPolicy>:
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy>& FixedArray<T,length,CheckingPolicy>::fill(const T &value)
+inline Array<T,length,CheckingPolicy>& Array<T,length,CheckingPolicy>::fill(const T &value)
 {
   for (int i=0; i<length; ++i)
     data[i] = value;
@@ -216,15 +216,15 @@ inline FixedArray<T,length,CheckingPolicy>& FixedArray<T,length,CheckingPolicy>:
 
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy> FixedArray<T,length,CheckingPolicy>::Zero()
+inline Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::Zero()
 {
-  return FixedArray().fill(0);
+  return Array().fill(0);
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline FixedArray<T,length,CheckingPolicy> FixedArray<T,length,CheckingPolicy>::Unity()
+inline Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::Unity()
 {
-  return FixedArray().fill(1);
+  return Array().fill(1);
 }
 
 
@@ -238,8 +238,8 @@ template<
   template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
 >
 bool operator==(
-  const schnek::FixedArray<T1,length,CheckingPolicy1>& arr1,
-  const schnek::FixedArray<T2,length,CheckingPolicy2>& arr2
+  const schnek::Array<T1,length,CheckingPolicy1>& arr1,
+  const schnek::Array<T2,length,CheckingPolicy2>& arr2
 )
 {
   for (int i=0; i<length; ++i) if (arr1[i]!=arr2[i]) return false;
@@ -252,8 +252,8 @@ template<
   template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
 >
 bool operator!=(
-  const schnek::FixedArray<T1,length,CheckingPolicy1>& arr1,
-  const schnek::FixedArray<T2,length,CheckingPolicy2>& arr2
+  const schnek::Array<T1,length,CheckingPolicy1>& arr1,
+  const schnek::Array<T2,length,CheckingPolicy2>& arr2
 )
 {
   for (int i=0; i<length; ++i) if (arr1[i]!=arr2[i]) return true;
@@ -266,8 +266,8 @@ template<
   template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
 >
 bool operator<(
-  const schnek::FixedArray<T1,length,CheckingPolicy1>& arr1,
-  const schnek::FixedArray<T2,length,CheckingPolicy2>& arr2
+  const schnek::Array<T1,length,CheckingPolicy1>& arr1,
+  const schnek::Array<T2,length,CheckingPolicy2>& arr2
 )
 {
   for (int i=0; i<length; ++i) if (arr1[i]>=arr2[i]) return false;
@@ -280,8 +280,8 @@ template<
   template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
 >
 bool operator<=(
-  const schnek::FixedArray<T1,length,CheckingPolicy1>& arr1,
-  const schnek::FixedArray<T2,length,CheckingPolicy2>& arr2
+  const schnek::Array<T1,length,CheckingPolicy1>& arr1,
+  const schnek::Array<T2,length,CheckingPolicy2>& arr2
 )
 {
   for (int i=0; i<length; ++i) if (arr1[i]>arr2[i]) return false;

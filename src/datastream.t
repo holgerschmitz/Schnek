@@ -3,7 +3,7 @@ template<
   int length, 
   template<int> class CheckingPolicy
 >
-      std::ostream &operator<<(std::ostream &out, const schnek::FixedArray<T,length,CheckingPolicy> &arr)
+      std::ostream &operator<<(std::ostream &out, const schnek::Array<T,length,CheckingPolicy> &arr)
 {
   if (length==0) return out;
   out << arr[0];
