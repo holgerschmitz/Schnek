@@ -1,4 +1,4 @@
-#include "farrexpression.h"
+#include "farrexpression.hpp"
 #include <boost/static_assert.hpp>
 
 namespace schnek

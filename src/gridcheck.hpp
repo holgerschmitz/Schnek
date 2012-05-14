@@ -1,7 +1,7 @@
 #ifndef SCHNEK_GRIDCHECK_H
 #define SCHNEK_GRIDCHECK_H
 
-#include "fixedarray.h"
+#include "array.hpp"
 #include <cassert>
 
 namespace schnek {

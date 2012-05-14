@@ -3,8 +3,8 @@
 #ifndef SCHNEK_DATASTREAM_H
 #define SCHNEK_DATASTREAM_H
 
-#include "fixedarray.h"
-#include "grid.h"
+#include "array.hpp"
+#include "grid.hpp"
 
 template<
   class T, 

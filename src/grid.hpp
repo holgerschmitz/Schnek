@@ -9,11 +9,9 @@
 #ifndef SCHNEK_GRID_H
 #define SCHNEK_GRID_H
 
-#include "typetools.h"
-
-#include "fixedarray.h"
-#include "gridcheck.h"
-#include "gstorage.h"
+#include "array.hpp"
+#include "gridcheck.hpp"
+#include "gstorage.hpp"
 
 namespace schnek {
 

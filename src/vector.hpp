@@ -9,7 +9,7 @@
 #ifndef VECTOR_H_
 #define VECTOR_H_
 
-#include "fixedarray.h"
+#include "array.hpp"
 
 namespace schnek {
 

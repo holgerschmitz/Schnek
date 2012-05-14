@@ -1,7 +1,7 @@
 #ifndef SCHNEK_FARREXPRESSION_H
 #define SCHNEK_FARREXPRESSION_H
 
-#include "fixedarray.h"
+#include "array.hpp"
 
 #include <iostream>
 
