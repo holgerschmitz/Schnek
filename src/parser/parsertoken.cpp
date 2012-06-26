@@ -324,7 +324,7 @@ void ParserToken::createBlock(ParserToken &parTok)
     if (blockClassDescr.hasBlockFactory())
     {
       pBlock block = blockClassDescr.makeBlock();
-      block->setContext(context);
+      block->setContext(context.variables->getCurrentBlock());
       block->setup();
       context.blockTree->addChild(block);
     }

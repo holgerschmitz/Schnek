@@ -703,7 +703,7 @@ PACKAGE_STRING='Schnek 0.1'
 PACKAGE_BUGREPORT=''
 PACKAGE_URL=''
 
-ac_unique_file="src/grid.h"
+ac_unique_file="src/grid.hpp"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>

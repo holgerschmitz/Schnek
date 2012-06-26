@@ -9,6 +9,9 @@
 #ifndef SINGLETON_HPP_
 #define SINGLETON_HPP_
 
+namespace schnek
+{
+
 /** Creation policy for the Singleton class.
  *
  *  CreateUsingNew is used as a template parameter for the Singleton
@@ -93,8 +96,9 @@ template<
   class TYPE,
   template<class> class CreationPolicy
 >
-TYPE* Singleton<TYPE,CreationPolicy,LifeTimePolicy>::pInstance = 0;
+TYPE* Singleton<TYPE,CreationPolicy>::pInstance = 0;
 
 
+}
 
 #endif /* SINGLETON_HPP_ */

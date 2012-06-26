@@ -9,7 +9,6 @@
 #ifndef BLOCKPARAMETERS_HPP_
 #define BLOCKPARAMETERS_HPP_
 
-#include "parsercontext.hpp"
 #include "../variables/types.hpp"
 #include "../variables/variables.hpp"
 
@@ -62,9 +61,9 @@ class BlockParameters
     pBlockVariables block;
     std::map<std::string, pParameterBase> parameterMap;
   public:
-    void setContext(ParserContext context)
+    void setContext(pBlockVariables context)
     {
-      block = context.variables->getCurrentBlock();
+      block = context;
     }
 
     template<typename T>

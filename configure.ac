@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_INIT([Schnek],[0.1])
-AC_CONFIG_SRCDIR([src/grid.h])
+AC_CONFIG_SRCDIR([src/grid.hpp])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
 # VERSION="0.1"

@@ -223,10 +223,10 @@ libschnek_la_SOURCES = functions.cpp parser/block.cpp \
 	parser/blockclasses.cpp parser/deckscanner.cpp \
 	parser/parser.cpp parser/parsertoken.cpp \
 	variables/variables.cpp
-libschnekinclude_HEADERS = algo.h algo.t argcheck.h datastream.h \
-	datastream.t farrexpression.h fixedarray.h fixedarray.t \
-	functions.h gridcheck.h grid.h grid.t gstorage.h gstorage.t \
-	typetools.h vector.h vector.t parser/block.hpp \
+libschnekinclude_HEADERS = algo.hpp algo.t argcheck.hpp datastream.hpp \
+	datastream.t farrexpression.hpp fixedarray.hpp fixedarray.t \
+	functions.hpp gridcheck.hpp grid.hpp grid.t gstorage.hpp \
+	gstorage.t typetools.hpp vector.hpp vector.t parser/block.hpp \
 	parser/blockclasses.hpp parser/blockparameters.hpp \
 	parser/deckgrammar.hpp parser/deckscanner.hpp \
 	parser/parser.hpp parser/parsercontext.hpp \

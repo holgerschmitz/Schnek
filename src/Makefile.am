@@ -6,22 +6,22 @@ libschnek_la_SOURCES = \
   functions.cpp
 
 libschnekinclude_HEADERS = \
-  algo.h           \
-  algo.t           \
-  argcheck.h       \
-	datastream.h     \
-	datastream.t     \
-	farrexpression.h \
-	fixedarray.h     \
-	fixedarray.t     \
-	functions.h      \
-	gridcheck.h      \
-	grid.h           \
-	grid.t           \
-	gstorage.h       \
-	gstorage.t       \
-	typetools.h      \
-	vector.h         \
+  algo.hpp           \
+  algo.t             \
+  argcheck.hpp       \
+	datastream.hpp     \
+	datastream.t       \
+	farrexpression.hpp \
+	fixedarray.hpp     \
+	fixedarray.t       \
+	functions.hpp      \
+	gridcheck.hpp      \
+	grid.hpp           \
+	grid.t             \
+	gstorage.hpp       \
+	gstorage.t         \
+	typetools.hpp      \
+	vector.hpp         \
 	vector.t
   
 libschnek_la_LDFLAGS = -version-info 0:0:0

@@ -10,6 +10,7 @@
 #define BLOCK_HPP_
 
 #include "blockparameters.hpp"
+#include "../util/unique.hpp"
 #include <boost/shared_ptr.hpp>
 #include <stack>
 
@@ -39,7 +40,7 @@ typedef boost::shared_ptr<BlockTree> pBlockTree;
 /** Block defines the basic structure of a unit of simulation code
  *
  */
-class Block
+class Block : public Unique<Block>
 {
   private:
     BlockParameters blockParameters;
@@ -50,7 +51,7 @@ class Block
   public:
     Block(pBlock parent_ = pBlock()) : parent(parent_) {}
 
-    void setContext(ParserContext context)
+    void setContext(pBlockVariables context)
     {
       blockParameters.setContext(context);
     }
