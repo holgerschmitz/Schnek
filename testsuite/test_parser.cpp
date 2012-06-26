@@ -8,9 +8,9 @@
 
 #include <parser/parser.hpp>
 #include <parser/parsertoken.hpp>
-#include <parser/blockclasses.hpp>
-#include <parser/blockparameters.hpp>
-#include <parser/block.hpp>
+#include <variables/blockclasses.hpp>
+#include <variables/blockparameters.hpp>
+#include <variables/block.hpp>
 #include <variables/variables.hpp>
 #include <variables/function_expression.hpp>
 #include <iostream>

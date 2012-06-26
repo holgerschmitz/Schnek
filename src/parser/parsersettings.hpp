@@ -11,7 +11,7 @@
 
 #include "../variables/variables.hpp"
 #include "../variables/function_expression.hpp"
-#include "blockclasses.hpp"
+#include "../variables/blockclasses.hpp"
 
 namespace schnek {
 

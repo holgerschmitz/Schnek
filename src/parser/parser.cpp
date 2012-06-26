@@ -9,7 +9,7 @@
 #include "parser.hpp"
 #include "deckscanner.hpp"
 #include "tokenlist.hpp"
-#include "block.hpp"
+#include "../variables/block.hpp"
 #include <boost/foreach.hpp>
 
 #include "deckgrammar.hpp"

@@ -10,7 +10,7 @@
 #define SCHNEK_PARSER_HPP_
 
 #include <iostream>
-#include "blockclasses.hpp"
+#include "../variables/blockclasses.hpp"
 #include "parsersettings.hpp"
 #include "../variables/variables.hpp"
 #include "../variables/function_expression.hpp"

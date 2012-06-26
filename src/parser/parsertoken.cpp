@@ -8,7 +8,7 @@
 
 #include "parsertoken.hpp"
 #include "deckgrammar.hpp"
-#include "block.hpp"
+#include "../variables/block.hpp"
 
 #include "../variables/operators.hpp"
 

@@ -74,8 +74,8 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(libschnekincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libschnek_la_LIBADD =
-am_libschnek_la_OBJECTS = functions.lo block.lo blockclasses.lo \
-	deckscanner.lo parser.lo parsertoken.lo variables.lo
+am_libschnek_la_OBJECTS = functions.lo deckscanner.lo parser.lo \
+	parsertoken.lo block.lo blockclasses.lo variables.lo
 libschnek_la_OBJECTS = $(am_libschnek_la_OBJECTS)
 libschnek_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -219,21 +219,21 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libschnek.la
 libschnekincludedir = $(includedir)/schnek
-libschnek_la_SOURCES = functions.cpp parser/block.cpp \
-	parser/blockclasses.cpp parser/deckscanner.cpp \
-	parser/parser.cpp parser/parsertoken.cpp \
-	variables/variables.cpp
+libschnek_la_SOURCES = functions.cpp parser/deckscanner.cpp \
+	parser/parser.cpp parser/parsertoken.cpp variables/block.cpp \
+	variables/blockclasses.cpp variables/variables.cpp
 libschnekinclude_HEADERS = algo.hpp algo.t argcheck.hpp datastream.hpp \
 	datastream.t farrexpression.hpp fixedarray.hpp fixedarray.t \
 	functions.hpp gridcheck.hpp grid.hpp grid.t gstorage.hpp \
-	gstorage.t typetools.hpp vector.hpp vector.t parser/block.hpp \
-	parser/blockclasses.hpp parser/blockparameters.hpp \
+	gstorage.t typetools.hpp vector.hpp vector.t \
 	parser/deckgrammar.hpp parser/deckscanner.hpp \
 	parser/parser.hpp parser/parsercontext.hpp \
 	parser/parsersettings.hpp parser/parsertoken.hpp \
-	parser/tokenlist.hpp variables/expression.hpp \
-	variables/function_expression.hpp variables/operators.hpp \
-	variables/types.hpp variables/variables.hpp
+	parser/tokenlist.hpp variables/block.hpp \
+	variables/blockclasses.hpp variables/blockparameters.hpp \
+	variables/expression.hpp variables/function_expression.hpp \
+	variables/operators.hpp variables/types.hpp \
+	variables/variables.hpp
 libschnek_la_LDFLAGS = -version-info 0:0:0
 all: all-am
 
@@ -338,20 +338,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
-block.lo: parser/block.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT block.lo -MD -MP -MF $(DEPDIR)/block.Tpo -c -o block.lo `test -f 'parser/block.cpp' || echo '$(srcdir)/'`parser/block.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/block.Tpo $(DEPDIR)/block.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='parser/block.cpp' object='block.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o block.lo `test -f 'parser/block.cpp' || echo '$(srcdir)/'`parser/block.cpp
-
-blockclasses.lo: parser/blockclasses.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT blockclasses.lo -MD -MP -MF $(DEPDIR)/blockclasses.Tpo -c -o blockclasses.lo `test -f 'parser/blockclasses.cpp' || echo '$(srcdir)/'`parser/blockclasses.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/blockclasses.Tpo $(DEPDIR)/blockclasses.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='parser/blockclasses.cpp' object='blockclasses.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o blockclasses.lo `test -f 'parser/blockclasses.cpp' || echo '$(srcdir)/'`parser/blockclasses.cpp
-
 deckscanner.lo: parser/deckscanner.cpp
 @am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT deckscanner.lo -MD -MP -MF $(DEPDIR)/deckscanner.Tpo -c -o deckscanner.lo `test -f 'parser/deckscanner.cpp' || echo '$(srcdir)/'`parser/deckscanner.cpp
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/deckscanner.Tpo $(DEPDIR)/deckscanner.Plo
@@ -372,6 +358,20 @@ parsertoken.lo: parser/parsertoken.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='parser/parsertoken.cpp' object='parsertoken.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o parsertoken.lo `test -f 'parser/parsertoken.cpp' || echo '$(srcdir)/'`parser/parsertoken.cpp
+
+block.lo: variables/block.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT block.lo -MD -MP -MF $(DEPDIR)/block.Tpo -c -o block.lo `test -f 'variables/block.cpp' || echo '$(srcdir)/'`variables/block.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/block.Tpo $(DEPDIR)/block.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='variables/block.cpp' object='block.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o block.lo `test -f 'variables/block.cpp' || echo '$(srcdir)/'`variables/block.cpp
+
+blockclasses.lo: variables/blockclasses.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT blockclasses.lo -MD -MP -MF $(DEPDIR)/blockclasses.Tpo -c -o blockclasses.lo `test -f 'variables/blockclasses.cpp' || echo '$(srcdir)/'`variables/blockclasses.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/blockclasses.Tpo $(DEPDIR)/blockclasses.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='variables/blockclasses.cpp' object='blockclasses.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o blockclasses.lo `test -f 'variables/blockclasses.cpp' || echo '$(srcdir)/'`variables/blockclasses.cpp
 
 variables.lo: variables/variables.cpp
 @am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT variables.lo -MD -MP -MF $(DEPDIR)/variables.Tpo -c -o variables.lo `test -f 'variables/variables.cpp' || echo '$(srcdir)/'`variables/variables.cpp
