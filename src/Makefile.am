@@ -20,7 +20,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
- 
+
 lib_LTLIBRARIES = libschnek.la
 
 libschnekincludedir = $(includedir)/schnek
@@ -49,6 +49,3 @@ libschnekinclude_HEADERS = \
   
 libschnek_la_LDFLAGS = -version-info 0:0:0
 
-include parser/Makefile.am
-
-include variables/Makefile.am
