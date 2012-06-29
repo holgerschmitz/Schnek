@@ -1,7 +1,7 @@
 /*
- * vector.hpp
+ * blockdata.hpp
  *
- * Created on: 8 Oct 2010
+ * Created on: 26 Jun 2012
  * Author: Holger Schmitz
  * Email: holger@notjustphysics.com
  *
@@ -24,25 +24,31 @@
  *
  */
 
-#ifndef SCHNEK_VECTOR_H_
-#define SCHNEK_VECTOR_H_
+#ifndef SCHNEK_BLOCKDATA_HPP_
+#define SCHNEK_BLOCKDATA_HPP_
 
-#include "array.hpp"
+#include "../util/singleton.hpp"
+#include <map>
 
-namespace schnek {
-
-template<
-  class T,
-  int length,
-  template<int> class CheckingPolicy = FixedArrayNoArgCheck
->
-class Vector : public Array<T,length,CheckingPolicy>
+namespace schnek
 {
+
+template<typename T>
+class BlockData : public Singleton<BlockData>
+{
+  private:
+    typedef std::map<std::string, T> DataMap;
+    typedef boost::shared_ptr<DataMap> pDataMap;
+    typedef std::map<long, pDataMap> BlockDataMap;
+
+    BlockDataMap blockDataMap;
+
   public:
-    T product() const;
-    T sum() const;
+    void add(long blockId, std::string key, T &data);
+    T &get(long blockId, std::string key);
+    bool exists(long blockId, std::string key);
 };
 
-}
+} //namespace
 
-#endif // SCHNEK_VECTOR_H_
+#endif // SCHNEK_BLOCKDATA_HPP_

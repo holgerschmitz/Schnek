@@ -1,7 +1,7 @@
 /*
- * functions.cpp
+ * blockdata.cpp
  *
- * Created on: 23 Jan 2007
+ * Created on: 26 Jun 2012
  * Author: Holger Schmitz
  * Email: holger@notjustphysics.com
  *
@@ -24,20 +24,37 @@
  *
  */
 
-#include "functions.hpp"
+#include "blockdata.hpp"
+#include "types.hpp"
 
-#include <cmath>
-#include <cstdlib>
+using namespace schnek;
 
 
-static const double RAND_MAX2 = double(RAND_MAX)*double(RAND_MAX);
-
-double schnek::drand()
+template<typename T>
+void BlockData<T>::add(long blockId, std::string key, T &data)
 {
-  return (double(rand()) +  double(RAND_MAX)*double(rand()))/RAND_MAX2;
+  if (0 == blockDataMap.count(blockId))
+  {
+    blockDataMap[blockId] = new pDataMap;
+  }
+
+  blockDataMap[blockId][key] = data;
 }
 
-int schnek::irand(int range)
+template<typename T>
+T &BlockData<T>::get(long blockId, std::string key)
 {
-  return int(drand()*range);
+  if (0 == blockDataMap.count(blockId))
+    throw VariableNotFoundException();
+  if (0 == blockDataMap[blockId].count(key))
+    throw VariableNotFoundException();
+
+  return blockDataMap[blockId][key];
+}
+
+template<typename T>
+bool BlockData<T>::exists(long blockId, std::string key)
+{
+  if (0 == blockDataMap.count(blockId)) return false;
+  return (blockDataMap[blockId].count(key) > 0);
 }
