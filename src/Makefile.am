@@ -34,9 +34,9 @@ libschnekinclude_HEADERS = \
   argcheck.hpp       \
 	datastream.hpp     \
 	datastream.t       \
-	farrexpression.hpp \
-	fixedarray.hpp     \
-	fixedarray.t       \
+	arrayexpression.hpp \
+	array.hpp          \
+	array.t            \
 	functions.hpp      \
 	gridcheck.hpp      \
 	grid.hpp           \
@@ -48,4 +48,9 @@ libschnekinclude_HEADERS = \
 	vector.t
   
 libschnek_la_LDFLAGS = -version-info 0:0:0
+
+
+include parser/Makefile.am
+
+include variables/Makefile.am
 

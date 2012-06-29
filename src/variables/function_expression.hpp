@@ -189,6 +189,8 @@ class FunctionRegistry
 
 };
 
+void registerCMath(FunctionRegistry &freg);
+
 } // namespace schnek
 
 #endif // FUNCTION_EXPRESSION_HPP_

@@ -27,6 +27,8 @@
 #ifndef SCHNEK_TYPES_HPP_
 #define SCHNEK_TYPES_HPP_
 
+#include "../exception.hpp"
+
 #include <boost/variant.hpp>
 #include <boost/shared_ptr.hpp>
 
