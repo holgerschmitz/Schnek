@@ -36,6 +36,9 @@
 
 namespace schnek {
 
+/** DependencyMap contains a directed graph whose edges are oriented from the independent to the dependent variables.
+ *
+ */
 class DependencyMap
 {
   private:
@@ -54,7 +57,7 @@ class DependencyMap
 
     void constructMapRecursive(const pBlockVariables vars, DepMap& backDep);
     void constructMap(const pBlockVariables vars);
-    void clearCounters();
+    void resetCounters();
 
     struct DependenciesGetter : public boost::static_visitor<DepList>
     {

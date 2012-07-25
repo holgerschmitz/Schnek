@@ -73,7 +73,6 @@ void DependencyMap::constructMap(const pBlockVariables vars)
 	}
 }
 
-
 void DependencyMap::resetCounters()
 {
 	BOOST_FOREACH(DepMap::value_type entry, dependencies)

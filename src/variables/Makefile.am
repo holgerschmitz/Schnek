@@ -24,6 +24,7 @@
 libschnek_la_SOURCES += \
   variables/block.cpp  \
   variables/blockclasses.cpp  \
+  variables/dependencies.cpp  \
   variables/function_expression.cpp \
   variables/variables.cpp
 
@@ -31,6 +32,7 @@ libschnekinclude_HEADERS += \
   variables/block.hpp  \
   variables/blockclasses.hpp  \
   variables/blockparameters.hpp  \
+  variables/dependencies.hpp  \
   variables/expression.hpp  \
   variables/function_expression.hpp  \
   variables/operators.hpp       \
