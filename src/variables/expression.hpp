@@ -45,6 +45,7 @@
 
 #include <string>
 #include <iostream>
+#include <set>
 
 namespace fusion = boost::fusion;
 namespace mpl = boost::mpl;
@@ -63,6 +64,8 @@ class FunctionNotFoundException : public SchnekException
   public:
     FunctionNotFoundException() : SchnekException() {}
 };
+
+typedef std::set<long> DependencyList;
 
 /** A base type for real time evaluation of mathematical expressions.
  *
@@ -84,6 +87,8 @@ class Expression
 
     /// The () operator allows expressions to be used as function objects
     vtype operator()() { return eval(); }
+
+    virtual DependencyList getDependencies() { return DependencyList(); }
 
     /// A pointer to an Expression
     typedef boost::shared_ptr<Expression> pExpression;
@@ -142,6 +147,14 @@ class ReferencedValue : public Expression<vtype>
     }
     /// Constancy depends on the constancy of the variable
     bool isConstant() { return var.isConstant(); }
+
+    /// returns a list with the variable's id
+    DependencyList getDependencies()
+    {
+      DependencyList dep;
+      dep.insert(var.getId());
+      return dep;
+    }
 };
 
 /** Unary operator expression
@@ -164,6 +177,12 @@ class UnaryOp : public Expression<vtype>
 
     /// Constancy depends on the constancy of the expression
     bool isConstant() { return expr->isConstant(); }
+
+    /// returns the dependencies of the sub expression
+    DependencyList getDependencies()
+	{
+	  return exp->getDependencies();
+	}
 };
 
 /** Binary operator expression
@@ -187,6 +206,15 @@ class BinaryOp : public Expression<vtype>
 
     /// Constancy depends on the constancy of both expressions
     bool isConstant() { return expr1->isConstant() && expr2->isConstant(); }
+
+    /// returns the joint dependencies of both sub expression
+    DependencyList getDependencies()
+	{
+      DependencyList dep1 = exp1->getDependencies();
+      DependencyList dep2 = exp2->getDependencies();
+      dep1.insert(dep2.begin(), dep2.end());
+      return dep1;
+	}
 };
 
 template<class vtype>
@@ -256,6 +284,12 @@ class TypecastOp : public Expression<vtype>
 
     /// Constancy depends on the constancy of the expression
     bool isConstant() { return expr->isConstant(); }
+
+    /// returns the dependencies of the sub expression
+    DependencyList getDependencies()
+	{
+	  return exp->getDependencies();
+	}
 };
 
 

@@ -35,6 +35,7 @@
 
 #include "types.hpp"
 #include "../exception.hpp"
+#include "../util/unique.hpp"
 
 namespace schnek {
 
@@ -67,6 +68,8 @@ class Variable
     bool fixed;
     /// Is set to true if the variable has been initialised
     bool initialised;
+    /// a unique identifier that is copied with the copy operator and copy constructor
+    boost::shared_ptr< Unique<Variable> > uniqueId;
   public:
     /// construct with an integer
     Variable(int value, bool initialised_ = true);
@@ -103,6 +106,17 @@ class Variable
 
     /// returns true if the value of the variable has been initialised
     bool isInitialised() {return initialised;}
+
+    /* Returns the id of the variable
+     *
+     * A unique id is created when a Variable is created with a value or an expression.
+     * When one Variable is copied to another, either by the copy constructor or the assignement operator,
+     * the id is copied as well.
+     *
+     * Thus, the id is not unique across all variables but is an id that identifies <strong>different</strong>
+     * variables.
+     */
+    long getId() { return uniqueId->getId(); }
 };
 
 typedef boost::shared_ptr<Variable> pVariable;

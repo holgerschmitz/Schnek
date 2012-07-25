@@ -41,31 +41,60 @@ using namespace schnek;
 
 
 Variable::Variable(int value, bool initialised_)
-  : var(value), type(int_type), fixed(true), initialised(initialised_)
+  : var(value),
+    type(int_type),
+    fixed(true),
+    initialised(initialised_),
+    uniqueId(new Unique<Variable>())
 {}
 
 Variable::Variable(double value, bool initialised_)
-  : var(value), type(float_type), fixed(true), initialised(initialised_)
+  : var(value),
+    type(float_type),
+    fixed(true),
+    initialised(initialised_),
+    uniqueId(new Unique<Variable>())
 {}
 
 Variable::Variable(std::string value, bool initialised_)
-  : var(value), type(string_type), fixed(true), initialised(initialised_)
+  : var(value),
+    type(string_type),
+    fixed(true),
+    initialised(initialised_),
+    uniqueId(new Unique<Variable>())
 {}
 
 Variable::Variable(pIntExpression expr, bool initialised_)
-  : expression(expr), type(int_type), fixed(false), initialised(initialised_)
+  : expression(expr),
+    type(int_type),
+    fixed(false),
+    initialised(initialised_),
+    uniqueId(new Unique<Variable>())
 {}
 
 Variable::Variable(pFloatExpression expr, bool initialised_)
-  : expression(expr), type(float_type), fixed(false), initialised(initialised_)
+  : expression(expr),
+    type(float_type),
+    fixed(false),
+    initialised(initialised_),
+    uniqueId(new Unique<Variable>())
 {}
 
 Variable::Variable(pStringExpression expr, bool initialised_)
-  : expression(expr), type(string_type), fixed(false), initialised(initialised_)
+  : expression(expr),
+    type(string_type),
+    fixed(false),
+    initialised(initialised_),
+    uniqueId(new Unique<Variable>())
 {}
 
 Variable::Variable(const Variable &var)
-  : expression(var.expression), var(var.var), type(var.type), fixed(var.fixed), initialised(var.initialised)
+  : expression(var.expression),
+    var(var.var),
+    type(var.type),
+    fixed(var.fixed),
+    initialised(var.initialised),
+    uniqueId(var.uniqueId)
 {}
 
 Variable &Variable::operator=(const Variable &rhs)
@@ -75,6 +104,7 @@ Variable &Variable::operator=(const Variable &rhs)
   expression = rhs.expression;
   fixed = rhs.fixed;
   initialised = rhs.initialised;
+  uniqueId = rhs.uniqueId;
 }
 
 
