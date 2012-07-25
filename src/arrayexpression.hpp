@@ -35,7 +35,7 @@ namespace schnek {
 
 
 /**Expression template for the Array class.
- * This template will be created when adding or subtracting FixedArrays and 
+ * This template will be created when adding or subtracting Arrays and
  * will allow performing expressions without temporary variables.
  * @todo Handle type promotion
  */
@@ -170,7 +170,7 @@ struct FArrOpDiv {
   }
 
 
-/* Operator for two FixedArrays */
+/* Operator for two Arrays */
 #define ARR_ARR(op, symbol)                                                       \
 template <                                                                        \
   class T,                                                                        \
@@ -180,18 +180,18 @@ template <                                                                      
 >                                                                                 \
 FArrExpression<                                                                   \
   FArrBinaryOp<                                                                   \
-    FArrExpression< FixedArray<T,length,CheckingPolicy1> >,                       \
-    FArrExpression< FixedArray<T,length,CheckingPolicy2> >,                       \
+    FArrExpression< Array<T,length,CheckingPolicy1> >,                       \
+    FArrExpression< Array<T,length,CheckingPolicy2> >,                       \
     op<T> >                                                                       \
   >                                                                               \
 operator symbol (                                                                 \
-  const FixedArray<T,length,CheckingPolicy1> &A,                                  \
-  const FixedArray<T,length,CheckingPolicy2> &B                                   \
+  const Array<T,length,CheckingPolicy1> &A,                                  \
+  const Array<T,length,CheckingPolicy2> &B                                   \
 )                                                                                 \
 {                                                                                 \
   typedef FArrBinaryOp<                                                           \
-    FArrExpression< FixedArray<T,length,CheckingPolicy1> >,                       \
-    FArrExpression< FixedArray<T,length,CheckingPolicy2> >,                       \
+    FArrExpression< Array<T,length,CheckingPolicy1> >,                       \
+    FArrExpression< Array<T,length,CheckingPolicy2> >,                       \
     op<T>                                                                         \
   > OperatorType;                                                                 \
                                                                                   \
@@ -204,18 +204,18 @@ template<class exp, class T, int length, template<int> class CheckingPolicy>    
 FArrExpression<                                                                   \
   FArrBinaryOp<                                                                   \
     FArrExpression<exp>,                                                          \
-    FArrExpression< FixedArray<T,length,CheckingPolicy> >,                        \
+    FArrExpression< Array<T,length,CheckingPolicy> >,                        \
     op<T>                                                                         \
   >                                                                               \
 >                                                                                 \
 operator symbol (                                                                 \
   const FArrExpression<exp> &A,                                                   \
-  const FixedArray<T,length,CheckingPolicy> &B                                    \
+  const Array<T,length,CheckingPolicy> &B                                    \
 )                                                                                 \
 {                                                                                 \
   typedef FArrBinaryOp<                                                           \
     FArrExpression<exp>,                                                          \
-    FArrExpression< FixedArray<T,length,CheckingPolicy> >,                        \
+    FArrExpression< Array<T,length,CheckingPolicy> >,                        \
     op<T>                                                                         \
   > OperatorType;                                                                 \
                                                                                   \
@@ -233,18 +233,18 @@ template<                                                                       
 >                                                                                 \
 FArrExpression<                                                                   \
   FArrBinaryOp<                                                                   \
-    FArrExpression< FixedArray<T,length,CheckingPolicy> >,                        \
+    FArrExpression< Array<T,length,CheckingPolicy> >,                        \
     FArrExpression<exp>,                                                          \
     op<T>                                                                         \
   >                                                                               \
 >                                                                                 \
 operator symbol (                                                                 \
-  const FixedArray<T,length,CheckingPolicy> &A,                                   \
+  const Array<T,length,CheckingPolicy> &A,                                   \
   const FArrExpression<exp> &B                                                    \
 )                                                                                 \
 {                                                                                 \
   typedef FArrBinaryOp<                                                         \
-    FArrExpression< FixedArray<T,length,CheckingPolicy> >,                        \
+    FArrExpression< Array<T,length,CheckingPolicy> >,                        \
     FArrExpression<exp>,                                                          \
     op<T>                                                                         \
   > OperatorType;                                                                 \
@@ -299,15 +299,15 @@ template<class T, int length, template<int> class CheckingPolicy>               
 FArrExpression<                                                                   \
   FArrBinaryOp<                                                             \
     FArrScalarHolderExp<T>,                                                       \
-    FixedArray<T,length,CheckingPolicy>,                                                          \
+    Array<T,length,CheckingPolicy>,                                                          \
     op<T>                                                                         \
   >                                                                               \
 >                                                                                 \
-operator symbol (const T &A, const FixedArray<T,length,CheckingPolicy> &B)        \
+operator symbol (const T &A, const Array<T,length,CheckingPolicy> &B)        \
 {                                                                                 \
   typedef FArrBinaryOp<                                                     \
     FArrScalarHolderExp<T>,                                                       \
-    FixedArray<T,length,CheckingPolicy>,                                                          \
+    Array<T,length,CheckingPolicy>,                                                          \
     op<T>                                                                         \
   > OperatorType;                                                                 \
                                                                                   \
@@ -319,15 +319,15 @@ operator symbol (const T &A, const FixedArray<T,length,CheckingPolicy> &B)      
 template<class T, int length, template<int> class CheckingPolicy>                 \
 FArrExpression<                                                                   \
   FArrBinaryOp<                                                             \
-    FixedArray<T,length,CheckingPolicy>,                                                          \
+    Array<T,length,CheckingPolicy>,                                                          \
     FArrScalarHolderExp<T>,                                                       \
     op<T>                                                                         \
   >                                                                               \
 >                                                                                 \
-operator symbol (const FixedArray<T,length,CheckingPolicy> &A, const T &B)        \
+operator symbol (const Array<T,length,CheckingPolicy> &A, const T &B)        \
 {                                                                                 \
   typedef FArrBinaryOp<                                                     \
-    FixedArray<T,length,CheckingPolicy>,                                                          \
+    Array<T,length,CheckingPolicy>,                                                          \
     FArrScalarHolderExp<T>,                                                       \
     op<T>                                                                         \
   > OperatorType;                                                                 \

@@ -34,7 +34,7 @@ namespace schnek {
 template<
   class T,
   int length,
-  template<int> class CheckingPolicy = FixedArrayNoArgCheck
+  template<int> class CheckingPolicy = ArrayNoArgCheck
 >
 class Vector : public Array<T,length,CheckingPolicy>
 {

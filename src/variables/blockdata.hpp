@@ -23,18 +23,19 @@
  * along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
+ 
 #ifndef SCHNEK_BLOCKDATA_HPP_
 #define SCHNEK_BLOCKDATA_HPP_
 
 #include "../util/singleton.hpp"
 #include <map>
+#include <string>
 
 namespace schnek
 {
 
 template<typename T>
-class BlockData : public Singleton<BlockData>
+class BlockData : public Singleton<BlockData<T> >
 {
   private:
     typedef std::map<std::string, T> DataMap;
@@ -49,6 +50,38 @@ class BlockData : public Singleton<BlockData>
     bool exists(long blockId, std::string key);
 };
 
+
+template<typename T>
+void BlockData<T>::add(long blockId, std::string key, T &data)
+{
+  if (0 == blockDataMap.count(blockId))
+  {
+    blockDataMap[blockId] = new pDataMap;
+  }
+
+  blockDataMap[blockId][key] = data;
+}
+
+template<typename T>
+T &BlockData<T>::get(long blockId, std::string key)
+{
+  if (0 == blockDataMap.count(blockId))
+    throw VariableNotFoundException();
+  if (0 == blockDataMap[blockId].count(key))
+    throw VariableNotFoundException();
+
+  return blockDataMap[blockId][key];
+}
+
+template<typename T>
+bool BlockData<T>::exists(long blockId, std::string key)
+{
+  if (0 == blockDataMap.count(blockId)) return false;
+  return (blockDataMap[blockId].count(key) > 0);
+}
+
 } //namespace
 
+
 #endif // SCHNEK_BLOCKDATA_HPP_
+

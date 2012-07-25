@@ -66,10 +66,9 @@ class Block : public Unique<Block>
     BlockList children;
 
     template<typename T>
-    void getData(std::string key, T &data, bool upward);
+    bool getData(std::string key, T &data, bool upward);
 
     void initHierarchy();
-
   protected:
     virtual void initParameters(BlockParameters&) = 0;
     virtual void registerData() {}

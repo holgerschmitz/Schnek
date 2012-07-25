@@ -25,6 +25,7 @@
  */
 
 #include "block.hpp"
+#include "blockdata.hpp"
 #include <boost/foreach.hpp>
 
 using namespace schnek;
@@ -83,20 +84,19 @@ void Block::addChild(pBlock child)
   children.push_back(child);
 }
 
-
 template<typename T>
-bool Block::getData(std::string key, const T &data, bool upward)
+bool Block::getData(std::string key, T &data, bool upward)
 {
-  if (BlockData::instance().exists(this->getId(), key))
+  if (BlockData<T>::instance().exists(this->getId(), key))
   {
-    data = BlockData::instance().get(this->getId(), key);
+    data = BlockData<T>::instance().get(this->getId(), key);
     return true;
   }
 
   if (upward && parent)
     return parent->getData(key, data, true);
 
-  count = 0;
+  int count = 0;
   BOOST_FOREACH(pBlock child, children)
   {
     if (child->getData(key,data, false)) ++count;
@@ -109,7 +109,7 @@ bool Block::getData(std::string key, const T &data, bool upward)
 template<typename T>
 void Block::addData(std::string key, const T &data)
 {
-  BlockData::instance().add(this->getId(), key, data);
+  BlockData<T>::instance().add(this->getId(), key, data);
 }
 
 template<typename T>
@@ -134,8 +134,9 @@ void Block::initHierarchy()
 
 void Block::initAll()
 {
-  pBlock b = this;
-  while (b->parent) b = parent;
+  Block *b = this;
+  while (b->parent) b = &(*parent);
 
   b->initHierarchy();
 }
+

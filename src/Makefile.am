@@ -29,23 +29,23 @@ libschnek_la_SOURCES = \
   functions.cpp
 
 libschnekinclude_HEADERS = \
-  algo.hpp           \
-  algo.t             \
-  argcheck.hpp       \
-	datastream.hpp     \
-	datastream.t       \
-	arrayexpression.hpp \
-	array.hpp          \
-	array.t            \
-	functions.hpp      \
-	gridcheck.hpp      \
-	grid.hpp           \
-	grid.t             \
-	gstorage.hpp       \
-	gstorage.t         \
-	typetools.hpp      \
-	vector.hpp         \
-	vector.t
+  algo.hpp             \
+  algo.t               \
+  array.hpp            \
+  array.t              \
+  arrayexpression.hpp  \
+  argcheck.hpp         \
+  datastream.hpp       \
+  datastream.t         \
+  functions.hpp        \
+  gridcheck.hpp        \
+  grid.hpp             \
+  grid.t               \
+  gstorage.hpp         \
+  gstorage.t           \
+  typetools.hpp        \
+  vector.hpp           \
+  vector.t
   
 libschnek_la_LDFLAGS = -version-info 0:0:0
 

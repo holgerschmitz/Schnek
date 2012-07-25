@@ -24,7 +24,7 @@
  *
  */
 
-#include "farrexpression.hpp"
+#include "arrayexpression.hpp"
 #include <boost/static_assert.hpp>
 
 namespace schnek

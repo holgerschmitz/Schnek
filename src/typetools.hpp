@@ -46,17 +46,17 @@ struct Type2Type
 };
 
 
-/** Type to type mapper class.
- *
- *  A method to pass type information in an argument without creating a large
- *  object.
- */
-template<template<class> class Type>
-struct Type2Type1
-{
-    /** the original type */
-    typedef Type OriginalType;
-};
+///** Type to type mapper class.
+// *
+// *  A method to pass type information in an argument without creating a large
+// *  object.
+// */
+//template<template<class> class Type>
+//struct Type2Type1
+//{
+//    /** the original type */
+//    typedef Type OriginalType;
+//};
 
 /** A templated typelist struct
  *

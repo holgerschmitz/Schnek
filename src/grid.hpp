@@ -30,6 +30,7 @@
 #include "array.hpp"
 #include "gridcheck.hpp"
 #include "gstorage.hpp"
+#include "typetools.hpp"
 
 namespace schnek {
 
@@ -51,7 +52,7 @@ class Grid : public StoragePolicy<T,rank>, public CheckingPolicy<rank> {
 
   public:
     typedef T value_type;
-    typedef FixedArray<int,rank> IndexType;
+    typedef Array<int,rank> IndexType;
     typedef Grid<T,rank,CheckingPolicy,StoragePolicy> GridType;
     enum {Rank = rank};
   
