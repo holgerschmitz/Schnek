@@ -39,32 +39,31 @@ namespace schnek {
 class DependencyMap
 {
   private:
-	typedef std::set<long> DependencyList;
-	struct VarInfo
-	{
-		pVariable v;
-		DependencyList dep;
-		int counter;
-		VarInfo(pVariable v_, DependencyList dep_) : v(v_), dep(dep_), visited(false) {}
-	};
+    typedef std::set<long> DependencyList;
+    struct VarInfo
+    {
+      pVariable v;
+      DependencyList dep;
+      int counter;
+      VarInfo(pVariable v_, DependencyList dep_) : v(v_), dep(dep_), visited(false) {}
+    };
 
-	typedef std::map<long, VarInfo> DepMap;
+    typedef std::map<long, VarInfo> DepMap;
 
-	DepMap dependencies;
+    DepMap dependencies;
 
-	void constructMap(const pBlockVariables vars);
-	void clearCounters();
+    void constructMapRecursive(const pBlockVariables vars, DepMap& backDep);
+    void constructMap(const pBlockVariables vars);
+    void clearCounters();
 
-	struct DependenciesGetter : public boost::static_visitor<DepList>
-	{
-	  template<class ExpressionPointer>
-	  DepList operator()(ExpressionPointer e) { return e->getDependencies(); }
-	};
+    struct DependenciesGetter : public boost::static_visitor<DepList>
+    {
+      template<class ExpressionPointer>
+      DepList operator()(ExpressionPointer e) { return e->getDependencies(); }
+    };
 
   public:
-	DependencyMap(const pBlockVariables vars);
-
-
+    DependencyMap(const pBlockVariables vars);
 };
 
 } // namespace

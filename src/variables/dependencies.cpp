@@ -37,33 +37,38 @@ DependencyMap::DependencyMap(const pBlockVariables vars)
   constructMap(vars);
 }
 
+void DependencyMap::constructMapRecursive(const pBlockVariables vars, DepMap &backDep)
+{
+  BOOST_FOREACH(VariableMap::value_type it, vars->getVariables())
+  {
+    pVariable v=it.second;
+    if (!v->isConstant())
+    {
+      DependenciesGetter depGet;
+      DepList dep = boost::apply_visitor(depGet, v->getExpression());
+      long id = v->getId();
+      if (backDep.count(id)>0) throw SchnekException();
+      backDep[id] = VarInfo(v, dep);
+      dependencies[id] = VarInfo(v, DepList());
+    }
+  }
+
+  BOOST_FOREACH(pBlockVariables ch, vars->getChildren())
+  {
+    constructMapRecursive(ch, backDep);
+  }
+}
 void DependencyMap::constructMap(const pBlockVariables vars)
 {
 	DepMap backDep;
-	BOOST_FOREACH(VariableMap::value_type it, vars->getVariables())
-	{
-		pVariable v=it.second;
-		if (!v->isConstant())
-		{
-			DependenciesGetter depGet;
-			DepList dep = boost::apply_visitor(depGet, v->getExpression());
-			long id = v->getId();
-			if (backDep.count(id)>0) throw SchnekException();
-			backDep[id] = VarInfo(v, dep);
-			dependencies[id] = VarInfo(v, DepList());
-		}
-	}
 
-	BOOST_FOREACH(pBlockVariables ch, vars->getChildren())
-	{
-		constructMap(ch);
-	}
+	constructMapRecursive(vars, backDep);
 
 	BOOST_FOREACH(DepMap::value_type entry, backDep)
 	{
 	  BOOST_FOREACH(long id, entry.second.dep)
 	  {
-		dependencies[id].dep.push_back(entry.first);
+	    dependencies[id].dep.push_back(entry.first);
 	  }
 	}
 }
