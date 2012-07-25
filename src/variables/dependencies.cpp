@@ -49,7 +49,7 @@ void DependencyMap::constructMapRecursive(const pBlockVariables vars, DepMap &ba
       long id = v->getId();
       if (backDep.count(id)>0) throw SchnekException();
       backDep[id] = VarInfo(v, dep);
-      dependencies[id] = VarInfo(v, DepList());
+      dependencies[id] = VarInfo(v, DepList(), dep);
     }
   }
 

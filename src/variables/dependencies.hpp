@@ -46,9 +46,11 @@ class DependencyMap
     struct VarInfo
     {
       pVariable v;
-      DependencyList dep;
+      DependencyList dependsOn;
+      DependencyList modifies;
       int counter;
-      VarInfo(pVariable v_, DependencyList dep_) : v(v_), dep(dep_), visited(false) {}
+      VarInfo(pVariable v_, DependencyList dependsOn_, DependencyList modifies_)
+        : v(v_), dependsOn(dependsOn_), modifies(modifies_), counter(0) {}
     };
 
     typedef std::map<long, VarInfo> DepMap;
