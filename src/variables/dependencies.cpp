@@ -37,7 +37,7 @@ DependencyMap::DependencyMap(const pBlockVariables vars)
   constructMap(vars);
 }
 
-void DependencyMap::constructMapRecursive(const pBlockVariables vars, DepMap &backDep)
+void DependencyMap::constructMapRecursive(const pBlockVariables vars)
 {
   BOOST_FOREACH(VariableMap::value_type it, vars->getVariables())
   {
@@ -48,8 +48,7 @@ void DependencyMap::constructMapRecursive(const pBlockVariables vars, DepMap &ba
       DepList dep = boost::apply_visitor(depGet, v->getExpression());
       long id = v->getId();
       if (backDep.count(id)>0) throw SchnekException();
-      backDep[id] = VarInfo(v, dep);
-      dependencies[id] = VarInfo(v, DepList(), dep);
+      dependencies[id] = VarInfo(v, dep, DepList());
     }
   }
 
@@ -60,15 +59,13 @@ void DependencyMap::constructMapRecursive(const pBlockVariables vars, DepMap &ba
 }
 void DependencyMap::constructMap(const pBlockVariables vars)
 {
-	DepMap backDep;
+	constructMapRecursive(vars);
 
-	constructMapRecursive(vars, backDep);
-
-	BOOST_FOREACH(DepMap::value_type entry, backDep)
+	BOOST_FOREACH(DepMap::value_type entry, dependencies)
 	{
-	  BOOST_FOREACH(long id, entry.second.dep)
+	  BOOST_FOREACH(long id, entry.second.dependsOn)
 	  {
-	    dependencies[id].dep.push_back(entry.first);
+	    dependencies[id].modifies.push_back(entry.first);
 	  }
 	}
 }
@@ -77,7 +74,7 @@ void DependencyMap::resetCounters()
 {
 	BOOST_FOREACH(DepMap::value_type entry, dependencies)
 	{
-	  entry.second.counter = entry.second.dep.size();
+	  entry.second.counter = entry.second.dependsOn.size();
 	}
 }
 
