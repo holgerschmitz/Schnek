@@ -84,6 +84,29 @@
 # You should have received a copy of the GNU General Public License
 # along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
 
+# Makefile.am
+#
+# Created on: 26 Apr 2012
+# Author: Holger Schmitz
+# Email: holger@notjustphysics.com
+#
+# Copyright 2012 Holger Schmitz
+#
+# This file is part of Schnek.
+#
+# Schnek is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Schnek is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
+
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -104,9 +127,12 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-DIST_COMMON = $(libschnekinclude_HEADERS) $(srcdir)/Makefile.am \
+DIST_COMMON = $(libschnekinclude_HEADERS) \
+	$(libschnekparserinclude_HEADERS) \
+	$(libschnekutilinclude_HEADERS) \
+	$(libschnekvariablesinclude_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/parser/Makefile.am \
-	$(srcdir)/variables/Makefile.am
+	$(srcdir)/util/Makefile.am $(srcdir)/variables/Makefile.am
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -146,11 +172,14 @@ am__uninstall_files_from_dir = { \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
 am__installdirs = "$(DESTDIR)$(libdir)" \
-	"$(DESTDIR)$(libschnekincludedir)"
+	"$(DESTDIR)$(libschnekincludedir)" \
+	"$(DESTDIR)$(libschnekparserincludedir)" \
+	"$(DESTDIR)$(libschnekutilincludedir)" \
+	"$(DESTDIR)$(libschnekvariablesincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libschnek_la_LIBADD =
 am_libschnek_la_OBJECTS = functions.lo deckscanner.lo parser.lo \
-	parsertoken.lo block.lo blockclasses.lo function_expression.lo \
+	parsertoken.lo block.lo blockclasses.lo dependencies.lo \
 	variables.lo
 libschnek_la_OBJECTS = $(am_libschnek_la_OBJECTS)
 libschnek_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -171,7 +200,10 @@ CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libschnek_la_SOURCES)
 DIST_SOURCES = $(libschnek_la_SOURCES)
-HEADERS = $(libschnekinclude_HEADERS)
+HEADERS = $(libschnekinclude_HEADERS) \
+	$(libschnekparserinclude_HEADERS) \
+	$(libschnekutilinclude_HEADERS) \
+	$(libschnekvariablesinclude_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -194,6 +226,7 @@ CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -219,6 +252,7 @@ LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 NM = @NM@
 NMEDIT = @NMEDIT@
@@ -244,6 +278,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
@@ -277,7 +312,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -297,26 +331,69 @@ lib_LTLIBRARIES = libschnek.la
 libschnekincludedir = $(includedir)/schnek
 libschnek_la_SOURCES = functions.cpp parser/deckscanner.cpp \
 	parser/parser.cpp parser/parsertoken.cpp variables/block.cpp \
-	variables/blockclasses.cpp variables/function_expression.cpp \
+	variables/blockclasses.cpp variables/dependencies.cpp \
 	variables/variables.cpp
-libschnekinclude_HEADERS = algo.hpp algo.t array.hpp array.t \
-	arrayexpression.hpp argcheck.hpp datastream.hpp datastream.t \
-	functions.hpp gridcheck.hpp grid.hpp grid.t gstorage.hpp \
-	gstorage.t typetools.hpp vector.hpp vector.t \
-	parser/deckgrammar.hpp parser/deckscanner.hpp \
-	parser/parser.hpp parser/parsercontext.hpp \
-	parser/parsersettings.hpp parser/parsertoken.hpp \
-	parser/tokenlist.hpp variables/block.hpp \
-	variables/blockclasses.hpp variables/blockparameters.hpp \
-	variables/expression.hpp variables/function_expression.hpp \
-	variables/operators.hpp variables/types.hpp \
-	variables/variables.hpp
+libschnekinclude_HEADERS = \
+  algo.hpp             \
+  algo.t               \
+  argcheck.hpp         \
+  array.hpp            \
+  array.t              \
+  arrayexpression.hpp  \
+  datastream.hpp       \
+  datastream.t         \
+  domain.hpp           \
+  exception.hpp        \
+  field.hpp            \
+  field.t              \
+  functions.hpp        \
+  gridcheck.hpp        \
+  grid.hpp             \
+  grid.t               \
+  gstorage.hpp         \
+  gstorage.t           \
+  parser.hpp           \
+  typetools.hpp        \
+  util.hpp             \
+  variables.hpp        \
+  vector.hpp           \
+  vector.t
+
 libschnek_la_LDFLAGS = -version-info 0:0:0
+libschnekparserincludedir = $(includedir)/schnek/parser
+libschnekparserinclude_HEADERS = \
+  parser/deckgrammar.hpp  \
+  parser/deckscanner.hpp  \
+  parser/parser.hpp       \
+  parser/parsercontext.hpp       \
+  parser/parsersettings.hpp       \
+  parser/parsertoken.hpp  \
+  parser/parsertoken.t  \
+  parser/tokenlist.hpp    
+
+libschnekvariablesincludedir = $(includedir)/schnek/variables
+libschnekvariablesinclude_HEADERS = \
+  variables/block.hpp  \
+  variables/blockclasses.hpp  \
+  variables/blockdata.hpp  \
+  variables/blockparameters.hpp  \
+  variables/dependencies.hpp  \
+  variables/expression.hpp  \
+  variables/function_expression.hpp  \
+  variables/operators.hpp       \
+  variables/types.hpp  \
+  variables/variables.hpp    
+
+libschnekutilincludedir = $(includedir)/schnek/util
+libschnekutilinclude_HEADERS = \
+  util/singleton.hpp  \
+  util/unique.hpp
+
 all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .cpp .lo .o .obj
-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/parser/Makefile.am $(srcdir)/variables/Makefile.am $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/parser/Makefile.am $(srcdir)/variables/Makefile.am $(srcdir)/util/Makefile.am $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -337,7 +414,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe);; \
 	esac;
-$(srcdir)/parser/Makefile.am $(srcdir)/variables/Makefile.am:
+$(srcdir)/parser/Makefile.am $(srcdir)/variables/Makefile.am $(srcdir)/util/Makefile.am:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
@@ -390,7 +467,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/block.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/blockclasses.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/deckscanner.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/function_expression.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dependencies.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/functions.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parsertoken.Plo@am__quote@
@@ -452,12 +529,12 @@ blockclasses.lo: variables/blockclasses.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o blockclasses.lo `test -f 'variables/blockclasses.cpp' || echo '$(srcdir)/'`variables/blockclasses.cpp
 
-function_expression.lo: variables/function_expression.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT function_expression.lo -MD -MP -MF $(DEPDIR)/function_expression.Tpo -c -o function_expression.lo `test -f 'variables/function_expression.cpp' || echo '$(srcdir)/'`variables/function_expression.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/function_expression.Tpo $(DEPDIR)/function_expression.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='variables/function_expression.cpp' object='function_expression.lo' libtool=yes @AMDEPBACKSLASH@
+dependencies.lo: variables/dependencies.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT dependencies.lo -MD -MP -MF $(DEPDIR)/dependencies.Tpo -c -o dependencies.lo `test -f 'variables/dependencies.cpp' || echo '$(srcdir)/'`variables/dependencies.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/dependencies.Tpo $(DEPDIR)/dependencies.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='variables/dependencies.cpp' object='dependencies.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o function_expression.lo `test -f 'variables/function_expression.cpp' || echo '$(srcdir)/'`variables/function_expression.cpp
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o dependencies.lo `test -f 'variables/dependencies.cpp' || echo '$(srcdir)/'`variables/dependencies.cpp
 
 variables.lo: variables/variables.cpp
 @am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT variables.lo -MD -MP -MF $(DEPDIR)/variables.Tpo -c -o variables.lo `test -f 'variables/variables.cpp' || echo '$(srcdir)/'`variables/variables.cpp
@@ -489,6 +566,60 @@ uninstall-libschnekincludeHEADERS:
 	@list='$(libschnekinclude_HEADERS)'; test -n "$(libschnekincludedir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(libschnekincludedir)'; $(am__uninstall_files_from_dir)
+install-libschnekparserincludeHEADERS: $(libschnekparserinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	test -z "$(libschnekparserincludedir)" || $(MKDIR_P) "$(DESTDIR)$(libschnekparserincludedir)"
+	@list='$(libschnekparserinclude_HEADERS)'; test -n "$(libschnekparserincludedir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(libschnekparserincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(libschnekparserincludedir)" || exit $$?; \
+	done
+
+uninstall-libschnekparserincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(libschnekparserinclude_HEADERS)'; test -n "$(libschnekparserincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(libschnekparserincludedir)'; $(am__uninstall_files_from_dir)
+install-libschnekutilincludeHEADERS: $(libschnekutilinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	test -z "$(libschnekutilincludedir)" || $(MKDIR_P) "$(DESTDIR)$(libschnekutilincludedir)"
+	@list='$(libschnekutilinclude_HEADERS)'; test -n "$(libschnekutilincludedir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(libschnekutilincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(libschnekutilincludedir)" || exit $$?; \
+	done
+
+uninstall-libschnekutilincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(libschnekutilinclude_HEADERS)'; test -n "$(libschnekutilincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(libschnekutilincludedir)'; $(am__uninstall_files_from_dir)
+install-libschnekvariablesincludeHEADERS: $(libschnekvariablesinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	test -z "$(libschnekvariablesincludedir)" || $(MKDIR_P) "$(DESTDIR)$(libschnekvariablesincludedir)"
+	@list='$(libschnekvariablesinclude_HEADERS)'; test -n "$(libschnekvariablesincludedir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(libschnekvariablesincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(libschnekvariablesincludedir)" || exit $$?; \
+	done
+
+uninstall-libschnekvariablesincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(libschnekvariablesinclude_HEADERS)'; test -n "$(libschnekvariablesincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(libschnekvariablesincludedir)'; $(am__uninstall_files_from_dir)
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -576,7 +707,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(LTLIBRARIES) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(libschnekincludedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(libschnekincludedir)" "$(DESTDIR)$(libschnekparserincludedir)" "$(DESTDIR)$(libschnekutilincludedir)" "$(DESTDIR)$(libschnekvariablesincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -632,7 +763,10 @@ info: info-am
 
 info-am:
 
-install-data-am: install-libschnekincludeHEADERS
+install-data-am: install-libschnekincludeHEADERS \
+	install-libschnekparserincludeHEADERS \
+	install-libschnekutilincludeHEADERS \
+	install-libschnekvariablesincludeHEADERS
 
 install-dvi: install-dvi-am
 
@@ -679,7 +813,10 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-libLTLIBRARIES \
-	uninstall-libschnekincludeHEADERS
+	uninstall-libschnekincludeHEADERS \
+	uninstall-libschnekparserincludeHEADERS \
+	uninstall-libschnekutilincludeHEADERS \
+	uninstall-libschnekvariablesincludeHEADERS
 
 .MAKE: install-am install-strip
 
@@ -691,13 +828,18 @@ uninstall-am: uninstall-libLTLIBRARIES \
 	install-dvi-am install-exec install-exec-am install-html \
 	install-html-am install-info install-info-am \
 	install-libLTLIBRARIES install-libschnekincludeHEADERS \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-libLTLIBRARIES \
-	uninstall-libschnekincludeHEADERS
+	install-libschnekparserincludeHEADERS \
+	install-libschnekutilincludeHEADERS \
+	install-libschnekvariablesincludeHEADERS install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-libLTLIBRARIES uninstall-libschnekincludeHEADERS \
+	uninstall-libschnekparserincludeHEADERS \
+	uninstall-libschnekutilincludeHEADERS \
+	uninstall-libschnekvariablesincludeHEADERS
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

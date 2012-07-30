@@ -21,20 +21,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
  
-libschnek_la_SOURCES += \
-  parser/deckscanner.cpp  \
-  parser/parser.cpp       \
-  parser/parsertoken.cpp 
+libschnek_la_SOURCES +=
 
-libschnekparserincludedir = $(includedir)/schnek/parser
+libschnekutilincludedir = $(includedir)/schnek/util
 
-libschnekparserinclude_HEADERS = \
-  parser/deckgrammar.hpp  \
-  parser/deckscanner.hpp  \
-  parser/parser.hpp       \
-  parser/parsercontext.hpp       \
-  parser/parsersettings.hpp       \
-  parser/parsertoken.hpp  \
-  parser/parsertoken.t  \
-  parser/tokenlist.hpp    
+libschnekutilinclude_HEADERS = \
+  util/singleton.hpp  \
+  util/unique.hpp
   

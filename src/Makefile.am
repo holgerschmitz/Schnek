@@ -31,19 +31,26 @@ libschnek_la_SOURCES = \
 libschnekinclude_HEADERS = \
   algo.hpp             \
   algo.t               \
+  argcheck.hpp         \
   array.hpp            \
   array.t              \
   arrayexpression.hpp  \
-  argcheck.hpp         \
   datastream.hpp       \
   datastream.t         \
+  domain.hpp           \
+  exception.hpp        \
+  field.hpp            \
+  field.t              \
   functions.hpp        \
   gridcheck.hpp        \
   grid.hpp             \
   grid.t               \
   gstorage.hpp         \
   gstorage.t           \
+  parser.hpp           \
   typetools.hpp        \
+  util.hpp             \
+  variables.hpp        \
   vector.hpp           \
   vector.t
   
@@ -51,6 +58,6 @@ libschnek_la_LDFLAGS = -version-info 0:0:0
 
 
 include parser/Makefile.am
-
 include variables/Makefile.am
+include util/Makefile.am
 

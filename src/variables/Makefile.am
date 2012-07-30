@@ -21,16 +21,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
 
+
 libschnek_la_SOURCES += \
   variables/block.cpp  \
   variables/blockclasses.cpp  \
   variables/dependencies.cpp  \
-  variables/function_expression.cpp \
   variables/variables.cpp
 
-libschnekinclude_HEADERS += \
+libschnekvariablesincludedir = $(includedir)/schnek/variables
+
+libschnekvariablesinclude_HEADERS = \
   variables/block.hpp  \
   variables/blockclasses.hpp  \
+  variables/blockdata.hpp  \
   variables/blockparameters.hpp  \
   variables/dependencies.hpp  \
   variables/expression.hpp  \

@@ -181,7 +181,7 @@ class UnaryOp : public Expression<vtype>
     /// returns the dependencies of the sub expression
     DependencyList getDependencies()
 	{
-	  return exp->getDependencies();
+	  return expr->getDependencies();
 	}
 };
 
@@ -210,8 +210,8 @@ class BinaryOp : public Expression<vtype>
     /// returns the joint dependencies of both sub expression
     DependencyList getDependencies()
 	{
-      DependencyList dep1 = exp1->getDependencies();
-      DependencyList dep2 = exp2->getDependencies();
+      DependencyList dep1 = expr1->getDependencies();
+      DependencyList dep2 = expr2->getDependencies();
       dep1.insert(dep2.begin(), dep2.end());
       return dep1;
 	}
@@ -288,7 +288,7 @@ class TypecastOp : public Expression<vtype>
     /// returns the dependencies of the sub expression
     DependencyList getDependencies()
 	{
-	  return exp->getDependencies();
+	  return expr->getDependencies();
 	}
 };
 

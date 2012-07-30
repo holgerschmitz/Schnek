@@ -49,6 +49,7 @@ class DependencyMap
       DependencyList dependsOn;
       DependencyList modifies;
       int counter;
+      VarInfo() {}
       VarInfo(pVariable v_, DependencyList dependsOn_, DependencyList modifies_)
         : v(v_), dependsOn(dependsOn_), modifies(modifies_), counter(0) {}
     };
@@ -57,14 +58,14 @@ class DependencyMap
 
     DepMap dependencies;
 
-    void constructMapRecursive(const pBlockVariables vars, DepMap& backDep);
+    void constructMapRecursive(const pBlockVariables vars);
     void constructMap(const pBlockVariables vars);
     void resetCounters();
 
-    struct DependenciesGetter : public boost::static_visitor<DepList>
+    struct DependenciesGetter : public boost::static_visitor<DependencyList>
     {
       template<class ExpressionPointer>
-      DepList operator()(ExpressionPointer e) { return e->getDependencies(); }
+      DependencyList operator()(ExpressionPointer e) { return e->getDependencies(); }
     };
 
   public:

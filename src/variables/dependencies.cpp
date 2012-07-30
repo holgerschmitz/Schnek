@@ -25,6 +25,7 @@
  */
 
 #include "dependencies.hpp"
+#include "expression.hpp"
 #include "../exception.hpp"
 
 #include <boost/variant/apply_visitor.hpp>
@@ -45,16 +46,16 @@ void DependencyMap::constructMapRecursive(const pBlockVariables vars)
     if (!v->isConstant())
     {
       DependenciesGetter depGet;
-      DepList dep = boost::apply_visitor(depGet, v->getExpression());
+      DependencyList dep = boost::apply_visitor(depGet, v->getExpression());
       long id = v->getId();
-      if (backDep.count(id)>0) throw SchnekException();
-      dependencies[id] = VarInfo(v, dep, DepList());
+      if (dependencies.count(id)>0) throw SchnekException();
+      dependencies[id] = VarInfo(v, dep, DependencyList());
     }
   }
 
   BOOST_FOREACH(pBlockVariables ch, vars->getChildren())
   {
-    constructMapRecursive(ch, backDep);
+    constructMapRecursive(ch);
   }
 }
 void DependencyMap::constructMap(const pBlockVariables vars)
@@ -65,7 +66,7 @@ void DependencyMap::constructMap(const pBlockVariables vars)
 	{
 	  BOOST_FOREACH(long id, entry.second.dependsOn)
 	  {
-	    dependencies[id].modifies.push_back(entry.first);
+	    dependencies[id].modifies.insert(entry.first);
 	  }
 	}
 }
