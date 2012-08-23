@@ -30,11 +30,16 @@
 #include "variables.hpp"
 
 #include <boost/variant.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/foreach.hpp>
 
 #include <map>
 #include <set>
+#include <list>
 
 namespace schnek {
+
+class DependencyUpdater;
 
 /** DependencyMap contains a directed graph whose edges are oriented from the independent to the dependent variables.
  *
@@ -42,34 +47,80 @@ namespace schnek {
 class DependencyMap
 {
   private:
-    typedef std::set<long> DependencyList;
+    typedef std::set<long> DependencySet;
     struct VarInfo
     {
       pVariable v;
-      DependencyList dependsOn;
-      DependencyList modifies;
+      DependencySet dependsOn;
+      DependencySet modifies;
       int counter;
       VarInfo() {}
-      VarInfo(pVariable v_, DependencyList dependsOn_, DependencyList modifies_)
+      VarInfo(pVariable v_, DependencySet dependsOn_, DependencySet modifies_)
         : v(v_), dependsOn(dependsOn_), modifies(modifies_), counter(0) {}
     };
 
     typedef std::map<long, VarInfo> DepMap;
 
+    /// This is used internally. The pointers are to VarInfo objects stored in the dependencies map.
+    typedef std::map<long, VarInfo*> RefDepMap;
+    typedef boost::shared_ptr<RefDepMap> pRefDepMap;
+
+    typedef std::set<pVariable> VariableSet;
+    typedef std::list<pVariable> VariableList;
+
     DepMap dependencies;
+    pBlockVariables blockVars;
+
+    friend class DependencyUpdater;
 
     void constructMapRecursive(const pBlockVariables vars);
     void constructMap(const pBlockVariables vars);
     void resetCounters();
 
-    struct DependenciesGetter : public boost::static_visitor<DependencyList>
+    void makeUpdateList(const VariableSet &independentVars, const VariableSet &dependentVars, VariableList &updateList);
+    pRefDepMap makeUpdatePredecessors(const VariableSet &dependentVars);
+    pRefDepMap makeUpdateFollowers(const VariableSet &independentVars, pRefDepMap reverseDeps);
+    void makeUpdateOrder(const VariableSet &independentVars, pRefDepMap deps, VariableList &updateList);
+
+
+    struct DependenciesGetter : public boost::static_visitor<DependencySet>
     {
       template<class ExpressionPointer>
-      DependencyList operator()(ExpressionPointer e) { return e->getDependencies(); }
+      DependencySet operator()(ExpressionPointer e) { return e->getDependencies(); }
     };
 
   public:
     DependencyMap(const pBlockVariables vars);
+    pBlockVariables getBlockVariables();
+
+};
+
+typedef boost::shared_ptr<DependencyMap> pDependencyMap;
+
+class DependencyUpdater
+{
+  private:
+    typedef std::set<pVariable> VariableSet;
+    typedef std::list<pVariable> VariableList;
+    VariableList updateList;
+    VariableSet independentVars;
+    VariableSet dependentVars;
+    pDependencyMap dependencies;
+    bool isValid;
+  public:
+    DependencyUpdater(pDependencyMap dependencies_);
+    void addIndependent(pVariable v);
+    void addDependent(pVariable v);
+
+    /** Updates the dependent variables and all the variables needed to evaluate them.
+     *
+     *  This method is inline because it is potentially speed critical.
+     */
+    void update()
+    {
+      if (!isValid) dependencies->makeUpdateList(independentVars, dependentVars, updateList);
+      BOOST_FOREACH(pVariable v, updateList) v->evaluateExpression();
+    }
 };
 
 } // namespace

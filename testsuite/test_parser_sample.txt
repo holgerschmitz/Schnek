@@ -11,7 +11,7 @@ float s = sin(var);
 
 
 Collection globals {
-  float a = exp(var);
+  float a = exp(var*x);
   float b = cos(e);
   string result = "Result is "+a;
   Values physics {
@@ -23,7 +23,6 @@ Collection globals {
 }
 
 float other = globals:a;
-
 
 nsteps = n;
 dx = e;

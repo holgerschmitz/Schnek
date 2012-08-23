@@ -40,51 +40,57 @@ using namespace schnek;
 // -------------------------------------------------------------
 
 
-Variable::Variable(int value, bool initialised_)
+Variable::Variable(int value, bool initialised_, bool readonly_)
   : var(value),
     type(int_type),
     fixed(true),
     initialised(initialised_),
+    readonly(readonly_),
     uniqueId(new Unique<Variable>())
 {}
 
-Variable::Variable(double value, bool initialised_)
+Variable::Variable(double value, bool initialised_, bool readonly_)
   : var(value),
     type(float_type),
     fixed(true),
     initialised(initialised_),
+    readonly(readonly_),
     uniqueId(new Unique<Variable>())
 {}
 
-Variable::Variable(std::string value, bool initialised_)
+Variable::Variable(std::string value, bool initialised_, bool readonly_)
   : var(value),
     type(string_type),
     fixed(true),
     initialised(initialised_),
+    readonly(readonly_),
     uniqueId(new Unique<Variable>())
 {}
 
-Variable::Variable(pIntExpression expr, bool initialised_)
+Variable::Variable(pIntExpression expr, bool initialised_, bool readonly_)
   : expression(expr),
     type(int_type),
     fixed(false),
     initialised(initialised_),
+    readonly(readonly_),
     uniqueId(new Unique<Variable>())
 {}
 
-Variable::Variable(pFloatExpression expr, bool initialised_)
+Variable::Variable(pFloatExpression expr, bool initialised_, bool readonly_)
   : expression(expr),
     type(float_type),
     fixed(false),
     initialised(initialised_),
+    readonly(readonly_),
     uniqueId(new Unique<Variable>())
 {}
 
-Variable::Variable(pStringExpression expr, bool initialised_)
+Variable::Variable(pStringExpression expr, bool initialised_, bool readonly_)
   : expression(expr),
     type(string_type),
     fixed(false),
     initialised(initialised_),
+    readonly(readonly_),
     uniqueId(new Unique<Variable>())
 {}
 
@@ -94,12 +100,14 @@ Variable::Variable(const Variable &var)
     type(var.type),
     fixed(var.fixed),
     initialised(var.initialised),
+    readonly(var.readonly),
     uniqueId(var.uniqueId)
 {}
 
 Variable &Variable::operator=(const Variable &rhs)
 {
   if (type != rhs.type) throw TypeMismatchException();
+  if (readonly) throw ReadOnlyAssignmentException();
   var = rhs.var;
   expression = rhs.expression;
   fixed = rhs.fixed;

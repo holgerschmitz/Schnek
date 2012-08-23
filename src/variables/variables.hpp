@@ -66,32 +66,35 @@ class Variable
     VariableTypeInfo type;
     /// fixed is true if a value is stored and false if an expression is stored in the variable
     bool fixed;
+    /// readonly is true if the variable represents a read only variable which cannot be modified by the input deck
+    bool readonly;
     /// Is set to true if the variable has been initialised
     bool initialised;
     /// a unique identifier that is copied with the copy operator and copy constructor
     boost::shared_ptr< Unique<Variable> > uniqueId;
   public:
     /// construct with an integer
-    Variable(int value, bool initialised_ = true);
+    Variable(int value, bool initialised_ = true, bool readonly_ = false);
     /// construct with a float
-    Variable(double value, bool initialised_ = true);
+    Variable(double value, bool initialised_ = true, bool readonly_ = false);
     /// construct with a string
-    Variable(std::string value, bool initialised_ = true);
+    Variable(std::string value, bool initialised_ = true, bool readonly_ = false);
     /// construct with an integer expression
-    Variable(pIntExpression expr, bool initialised_ = true);
+    Variable(pIntExpression expr, bool initialised_ = true, bool readonly_ = false);
     /// construct with an float expression
-    Variable(pFloatExpression expr, bool initialised_ = true);
+    Variable(pFloatExpression expr, bool initialised_ = true, bool readonly_ = false);
     /// construct with an string expression
-    Variable(pStringExpression expr, bool initialised_ = true);
+    Variable(pStringExpression expr, bool initialised_ = true, bool readonly_ = false);
 
+  private:
     /** copy constructor
      *  plain variables are copied by value, but expressions are shallow-copied
      */
     Variable(const Variable &var);
-
     /// assignment operator
     Variable &operator=(const Variable &var);
 
+  public:
     /// returns the type of the variable
     VariableTypeInfo getType() {return type;}
     /// returns the fixed value of the variable
@@ -103,6 +106,9 @@ class Variable
 
     /// returns true if the value of the variable is constant and does not depend on non-constant variables
     bool isConstant() {return fixed;}
+
+    /// returns true if the value of the variable is a read only variable
+    bool isReadOnly() {return readonly;}
 
     /// returns true if the value of the variable has been initialised
     bool isInitialised() {return initialised;}

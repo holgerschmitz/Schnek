@@ -25,6 +25,7 @@ using namespace schnek;
 int NSteps;
 double dx;
 std::string output;
+double x;
 
 
 class SimulationBlock : public Block
@@ -32,6 +33,7 @@ class SimulationBlock : public Block
   protected:
     void initParameters(BlockParameters &blockPars)
     {
+      blockPars.addParameter("x", &x, BlockParameters::readonly);
       blockPars.addParameter("nsteps", &NSteps);
       blockPars.addParameter("dx", &dx);
       blockPars.addParameter("output", &output);
@@ -86,6 +88,12 @@ int main()
     std::cerr << "Parse error, " << e.atomToken.getFilename() << "(" << e.atomToken.getLine() << "): "<< e.message << "\n";
     throw -1;
   }
+
+  x = 1;
+  application->evaluateParameters();
+  writeBlockVars(vars.getRootBlock());
+
+  x = 2;
   application->evaluateParameters();
   writeBlockVars(vars.getRootBlock());
 

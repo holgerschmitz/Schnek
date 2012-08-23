@@ -131,28 +131,28 @@ class ReferencedValue : public Expression<vtype>
 {
   private:
     /// Contains the name of the variable
-    Variable var;
+    pVariable var;
   public:
     /// Construct with a value
-    ReferencedValue(const Variable &var_) : var(var_) {}
+    ReferencedValue(const pVariable &var_) : var(var_) {}
     /// Return the modified value
     vtype eval() {
-      if (var.isConstant())
+      if (var->isConstant())
       {
         //std::cerr << "Attempting to assign variable\n";
-        return boost::get<vtype>(var.getValue());
+        return boost::get<vtype>(var->getValue());
       }
       else
-        return boost::get<vtype>(var.evaluateExpression());
+        return boost::get<vtype>(var->evaluateExpression());
     }
     /// Constancy depends on the constancy of the variable
-    bool isConstant() { return var.isConstant(); }
+    bool isConstant() { return var->isConstant(); }
 
     /// returns a list with the variable's id
     DependencyList getDependencies()
     {
       DependencyList dep;
-      dep.insert(var.getId());
+      dep.insert(var->getId());
       return dep;
     }
 };

@@ -81,6 +81,11 @@ class TypeMismatchException : public SchnekException
     TypeMismatchException() : SchnekException() {}
 };
 
+class ReadOnlyAssignmentException : public SchnekException
+{
+  public:
+    ReadOnlyAssignmentException() : SchnekException() {}
+};
 
 } // namespace
 

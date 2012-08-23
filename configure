@@ -15048,6 +15048,9 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
 
+#AX_BOOST_BASE([1.48.0])
+#AC_HEADER_ASSERT
+
 # AC_ARG_PROGRAM
 
 # Checks for libraries.

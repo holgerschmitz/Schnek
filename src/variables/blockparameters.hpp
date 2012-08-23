@@ -66,7 +66,11 @@ class Parameter : public ParameterBase
       if (! variable->isInitialised())
         throw VariableNotInitialisedException();
 
-      if (variable->isConstant())
+      if (variable->isReadOnly())
+      {
+        boost::get<T>(variable->getValue()) = *value;
+      }
+      else if (variable->isConstant())
         *value = boost::get<T>(variable->getValue());
       else
         *value = boost::get<T>(variable->evaluateExpression());
@@ -79,17 +83,18 @@ class BlockParameters
     pBlockVariables block;
     std::map<std::string, pParameterBase> parameterMap;
   public:
+    typedef enum {readwrite, readonly} Permissions;
     void setContext(pBlockVariables context)
     {
       block = context;
     }
 
     template<typename T>
-    void addParameter(std::string varName, T* var)
+    void addParameter(std::string varName, T* var, Permissions perm=readwrite)
     {
       T defaultValue = T(); // ensure default values
 
-      pVariable variable(new Variable(defaultValue, false));
+      pVariable variable(new Variable(defaultValue, (perm==readonly), (perm==readonly)));
       block->addVariable(varName, variable);
 
       pParameterBase par(new Parameter<T>(varName, variable, var));

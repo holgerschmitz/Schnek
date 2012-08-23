@@ -125,8 +125,8 @@ void ParserToken::assignIdentifier(ParserToken &parTok)
 
   try
   {
-    Variable v = *(context.variables->getCurrentBlock()->getVariable(varname));
-    switch (v.getType())
+    pVariable v = *(context.variables->getCurrentBlock()->getVariable(varname));
+    switch (v->getType())
     {
       case Variable::int_type:
       {
@@ -257,6 +257,10 @@ void ParserToken::updateVariable()
   catch (VariableNotFoundException&)
   {
     throw ParserError("Variable "+varname+" was not declared!", atomTok);
+  }
+  catch (ReadOnlyAssignmentException&)
+  {
+    throw ParserError("Variable "+varname+" is read only! It can not be assigned a value!", atomTok);
   }
 }
 
