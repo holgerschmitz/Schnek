@@ -83,8 +83,59 @@ void DependencyMap::resetCounters()
 
 void DependencyMap::makeUpdateList(const VariableSet &independentVars, const VariableSet &dependentVars, VariableList &updateList)
 {
+//  std::cout << " ======== All dependencies ========\n";
+//  BOOST_FOREACH(DepMap::value_type entry, dependencies)
+//  {
+//    std::cout << "Var " << entry.second.v->getId()  << std::endl;
+//    std::cout << "  depends on ";
+//    BOOST_FOREACH(long id, entry.second.dependsOn) std::cout << id << " ";
+//    std::cout << std::endl;
+//    std::cout << "  modifies ";
+//    BOOST_FOREACH(long id, entry.second.modifies) std::cout << id << " ";
+//    std::cout << std::endl;
+//  }
+//
+//  std::cout << " ======== Dependent Vars ========\n";
+//  BOOST_FOREACH(pVariable v, dependentVars)
+//  {
+//    std::cout << "Var " << v->getId()  << std::endl;
+//  }
+//
+//  std::cout << " ======== Independent Vars ========\n";
+//  BOOST_FOREACH(pVariable v, independentVars)
+//  {
+//    std::cout << "Var " << v->getId()  << std::endl;
+//  }
+
   pRefDepMap reverseDeps = makeUpdatePredecessors(dependentVars);
+
+//  std::cout << " ======== Reverse dependencies ========\n";
+//  BOOST_FOREACH(RefDepMap::value_type entry, *reverseDeps)
+//  {
+//    std::cout << "Var " << entry.second->v->getId()  << std::endl;
+//    std::cout << "  depends on ";
+//    BOOST_FOREACH(long id, entry.second->dependsOn) std::cout << id << " ";
+//    std::cout << std::endl;
+//    std::cout << "  modifies ";
+//    BOOST_FOREACH(long id, entry.second->modifies) std::cout << id << " ";
+//    std::cout << std::endl;
+//  }
+
   pRefDepMap deps = makeUpdateFollowers(independentVars, reverseDeps);
+
+
+//  std::cout << " ======== Trimmed dependencies ========\n";
+//  BOOST_FOREACH(RefDepMap::value_type entry, *deps)
+//  {
+//    std::cout << "Var " << entry.second->v->getId()  << std::endl;
+//    std::cout << "  depends on ";
+//    BOOST_FOREACH(long id, entry.second->dependsOn) std::cout << id << " ";
+//    std::cout << std::endl;
+//    std::cout << "  modifies ";
+//    BOOST_FOREACH(long id, entry.second->modifies) std::cout << id << " ";
+//    std::cout << std::endl;
+//  }
+
   makeUpdateOrder(independentVars, deps, updateList);
 }
 
@@ -224,15 +275,23 @@ pBlockVariables DependencyMap::getBlockVariables()
   return blockVars;
 }
 
-void DependencyUpdater::addIndependent(pVariable v)
+void DependencyUpdater::addIndependent(pParameter p)
 {
-  independentVars.insert(v);
+  assert(p->getVariable()->isReadOnly());
+  independentVars.insert(p->getVariable());
   isValid = false;
 }
 
-void DependencyUpdater::addDependent(pVariable v)
+void DependencyUpdater::addDependent(pParameter p)
 {
-  dependentVars.insert(v);
+  // only non-constant variables have to be updated using the DependencyUpdater
+  if (p->getVariable()->isConstant())
+  {
+    p->update();
+    return;
+  }
+  dependentParameters.insert(p);
+  dependentVars.insert(p->getVariable());
   isValid = false;
 }
 

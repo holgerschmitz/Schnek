@@ -28,6 +28,7 @@
 #define SCHNEK_DEPENDENCIES_HPP_
 
 #include "variables.hpp"
+#include "blockparameters.hpp"
 
 #include <boost/variant.hpp>
 #include <boost/shared_ptr.hpp>
@@ -56,7 +57,9 @@ class DependencyMap
       int counter;
       VarInfo() {}
       VarInfo(pVariable v_, DependencySet dependsOn_, DependencySet modifies_)
-        : v(v_), dependsOn(dependsOn_), modifies(modifies_), counter(0) {}
+        : v(v_), dependsOn(dependsOn_), modifies(modifies_), counter(0) {
+        assert(v);
+      }
     };
 
     typedef std::map<long, VarInfo> DepMap;
@@ -100,17 +103,20 @@ typedef boost::shared_ptr<DependencyMap> pDependencyMap;
 class DependencyUpdater
 {
   private:
+    typedef std::set<pParameter> ParameterSet;
     typedef std::set<pVariable> VariableSet;
     typedef std::list<pVariable> VariableList;
+
     VariableList updateList;
     VariableSet independentVars;
     VariableSet dependentVars;
+    ParameterSet dependentParameters;
     pDependencyMap dependencies;
     bool isValid;
   public:
     DependencyUpdater(pDependencyMap dependencies_);
-    void addIndependent(pVariable v);
-    void addDependent(pVariable v);
+    void addIndependent(pParameter v);
+    void addDependent(pParameter v);
 
     /** Updates the dependent variables and all the variables needed to evaluate them.
      *
@@ -118,8 +124,12 @@ class DependencyUpdater
      */
     void update()
     {
-      if (!isValid) dependencies->makeUpdateList(independentVars, dependentVars, updateList);
+      if (!isValid) {
+        dependencies->makeUpdateList(independentVars, dependentVars, updateList);
+        isValid = true;
+      }
       BOOST_FOREACH(pVariable v, updateList) v->evaluateExpression();
+      BOOST_FOREACH(pParameter p, dependentParameters) p->update();
     }
 };
 

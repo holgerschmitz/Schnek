@@ -113,13 +113,15 @@ Variable &Variable::operator=(const Variable &rhs)
   fixed = rhs.fixed;
   initialised = rhs.initialised;
   uniqueId = rhs.uniqueId;
+  return *this;
 }
 
 
-ValueVariant Variable::evaluateExpression()
+const ValueVariant &Variable::evaluateExpression()
 {
   ExpressionEvaluator<ValueVariant> eval;
-  return boost::apply_visitor(eval, expression);
+  var = boost::apply_visitor(eval, expression);
+  return var;
 }
 
 // -------------------------------------------------------------

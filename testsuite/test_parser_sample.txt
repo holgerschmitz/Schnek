@@ -1,3 +1,5 @@
+// general test of variables assignment and evaluation
+
 float var = 2/1.9;
 string hello = "Hello";
 string greet = hello + " world!";
@@ -11,7 +13,7 @@ float s = sin(var);
 
 
 Collection globals {
-  float a = exp(var*x);
+  float a = exp(s);
   float b = cos(e);
   string result = "Result is "+a;
   Values physics {
@@ -25,5 +27,21 @@ Collection globals {
 float other = globals:a;
 
 nsteps = n;
-dx = e;
 output = hello;
+
+//dx = 1.0;
+//dy = 1.0;
+
+// from here on we test dependencies
+
+float depA = x;
+float depB = y+x;
+float depC = depA * depB;
+float depD = depC / (y+1);
+float depE = depA * depD;
+
+dx = depB*depD; 
+dy = depC;
+
+// initialising without using independent variables
+dz = 1.0;

@@ -86,7 +86,6 @@ class Variable
     /// construct with an string expression
     Variable(pStringExpression expr, bool initialised_ = true, bool readonly_ = false);
 
-  private:
     /** copy constructor
      *  plain variables are copied by value, but expressions are shallow-copied
      */
@@ -94,15 +93,14 @@ class Variable
     /// assignment operator
     Variable &operator=(const Variable &var);
 
-  public:
     /// returns the type of the variable
     VariableTypeInfo getType() {return type;}
     /// returns the fixed value of the variable
-    ValueVariant &getValue() {return var;}
+    ValueVariant getValue() {return var;}
     /// returns the expression kept in the variable
     const ExpressionVariant &getExpression() {return expression;}
-    /// returns the expression kept in the variable
-    ValueVariant evaluateExpression();
+    /// evaluetes the expression kept in the variable and returns the value
+    const ValueVariant &evaluateExpression();
 
     /// returns true if the value of the variable is constant and does not depend on non-constant variables
     bool isConstant() {return fixed;}
@@ -123,6 +121,9 @@ class Variable
      * variables.
      */
     long getId() { return uniqueId->getId(); }
+
+    /// returns the value of the variable
+    const ValueVariant &evaluate() { if (!isConstant()) evaluateExpression(); return var; }
 };
 
 typedef boost::shared_ptr<Variable> pVariable;

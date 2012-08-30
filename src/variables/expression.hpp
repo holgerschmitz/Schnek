@@ -130,7 +130,7 @@ template<typename vtype>
 class ReferencedValue : public Expression<vtype>
 {
   private:
-    /// Contains the name of the variable
+    /// Contains the variable
     pVariable var;
   public:
     /// Construct with a value
@@ -144,6 +144,8 @@ class ReferencedValue : public Expression<vtype>
       }
       else
         return boost::get<vtype>(var->evaluateExpression());
+       // it is assumed that the referenced variable has been evaluated
+//      return boost::get<vtype>(var->getValue());
     }
     /// Constancy depends on the constancy of the variable
     bool isConstant() { return var->isConstant(); }
@@ -155,6 +157,28 @@ class ReferencedValue : public Expression<vtype>
       dep.insert(var->getId());
       return dep;
     }
+};
+
+/** A special type of expresion that holds a reference to an external value
+ */
+template<typename vtype>
+class ExternalValue : public Expression<vtype>
+{
+  private:
+    /// Contains the pointer to the external value
+    vtype *var;
+  public:
+    /// Construct with a pointer to the value
+    ExternalValue(vtype *var_) : var(var_) {}
+
+    /// Return the value
+    vtype eval() {
+//      std::cout << "Returning value " << *var << "\n";
+      return *var;
+    }
+
+    /// The value of the external variable can change
+    bool isConstant() { return false; }
 };
 
 /** Unary operator expression

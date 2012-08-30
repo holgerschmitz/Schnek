@@ -29,51 +29,63 @@
 
 #include "../variables/types.hpp"
 #include "../variables/variables.hpp"
+#include "../variables/expression.hpp"
 
 #include <boost/foreach.hpp>
 #include <map>
 
 namespace schnek {
 
-class ParameterBase
+class Parameter
 {
   protected:
     std::string varName;
     pVariable variable;
   public:
-    ParameterBase(std::string varName_, pVariable variable_)
+    Parameter(std::string varName_, pVariable variable_)
       : varName(varName_), variable(variable_)
     {}
 
     bool canEvaluate() { return (variable) && (variable->isInitialised()); }
+    pVariable getVariable() { return variable; }
 
     virtual void evaluate() = 0;
+    virtual void update() = 0;
 };
 
-typedef boost::shared_ptr<ParameterBase> pParameterBase;
+typedef boost::shared_ptr<Parameter> pParameter;
 
 template<typename T>
-class Parameter : public ParameterBase
+class ConcreteParameter : public Parameter
 {
   protected:
     T *value;
   public:
-    Parameter(std::string varName_, pVariable variable_, T *value_)
-      : ParameterBase(varName_, variable_), value(value_) {}
+    ConcreteParameter(std::string varName_, pVariable variable_, T *value_)
+      : Parameter(varName_, variable_), value(value_) {}
 
     void evaluate()
     {
+      std::cout << "Evaluating Parameter" << varName << "\n";
       if (! variable->isInitialised())
         throw VariableNotInitialisedException();
 
       if (variable->isReadOnly())
       {
-        boost::get<T>(variable->getValue()) = *value;
+//        std::cout << "  read only " << varName << "=" << *value << "\n";
+        return;
       }
-      else if (variable->isConstant())
+
+      if (variable->isConstant())
         *value = boost::get<T>(variable->getValue());
       else
         *value = boost::get<T>(variable->evaluateExpression());
+    }
+
+    void update()
+    {
+      if (variable->isReadOnly()) return;
+      *value = boost::get<T>(variable->getValue());
     }
 };
 
@@ -81,7 +93,7 @@ class BlockParameters
 {
   private:
     pBlockVariables block;
-    std::map<std::string, pParameterBase> parameterMap;
+    std::map<std::string, pParameter> parameterMap;
   public:
     typedef enum {readwrite, readonly} Permissions;
     void setContext(pBlockVariables context)
@@ -90,20 +102,28 @@ class BlockParameters
     }
 
     template<typename T>
-    void addParameter(std::string varName, T* var, Permissions perm=readwrite)
+    pParameter addParameter(std::string varName, T* var, Permissions perm=readwrite)
     {
       T defaultValue = T(); // ensure default values
-
-      pVariable variable(new Variable(defaultValue, (perm==readonly), (perm==readonly)));
+      pVariable variable;
+      if (perm==readwrite)
+        variable = pVariable(new Variable(defaultValue, false, false));
+      else
+      {
+        typedef boost::shared_ptr<Expression<T> > ParExpression;
+        ParExpression pexp(new ExternalValue<T>(var));
+        variable = pVariable(new Variable(pexp, true, true));
+      }
       block->addVariable(varName, variable);
 
-      pParameterBase par(new Parameter<T>(varName, variable, var));
+      pParameter par(new ConcreteParameter<T>(varName, variable, var));
       parameterMap[varName] = par;
+      return par;
     }
 
     void evaluate()
     {
-      typedef std::pair<std::string, pParameterBase> ParameterPair;
+      typedef std::pair<std::string, pParameter> ParameterPair;
       BOOST_FOREACH(ParameterPair par, parameterMap)
       {
         par.second->evaluate();

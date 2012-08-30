@@ -13,6 +13,7 @@
 #include <variables/block.hpp>
 #include <variables/variables.hpp>
 #include <variables/function_expression.hpp>
+#include <variables/dependencies.hpp>
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -23,20 +24,37 @@ using namespace schnek;
 
 
 int NSteps;
-double dx;
-std::string output;
-double x;
 
+double dx;
+double dy;
+double dz;
+
+double x;
+double y;
+
+std::string output;
+
+pParameter xVar;
+pParameter yVar;
+pParameter dxVar;
+pParameter dyVar;
+pParameter dzVar;
 
 class SimulationBlock : public Block
 {
   protected:
     void initParameters(BlockParameters &blockPars)
     {
-      blockPars.addParameter("x", &x, BlockParameters::readonly);
+      xVar = blockPars.addParameter("x", &x, BlockParameters::readonly);
+      yVar = blockPars.addParameter("y", &y, BlockParameters::readonly);
+
+      dxVar = blockPars.addParameter("dx", &dx);
+      dyVar = blockPars.addParameter("dy", &dy);
+      dzVar = blockPars.addParameter("dz", &dz);
+
       blockPars.addParameter("nsteps", &NSteps);
-      blockPars.addParameter("dx", &dx);
       blockPars.addParameter("output", &output);
+
     }
 };
 
@@ -101,6 +119,44 @@ int main()
   std::cout << "Application variables:\n";
   std::cout << "NSteps = " << NSteps << std::endl;
   std::cout << "dx = " << dx << std::endl;
+  std::cout << "dy = " << dy << std::endl;
   std::cout << "output = " << output << std::endl;
+
+
+  std::cout << "Automatic update:\n";
+  std::cout << "id(x) = " << xVar->getVariable()->getId() << std::endl;
+  std::cout << "id(y) = " << yVar->getVariable()->getId() << std::endl;
+  std::cout << "id(dx) = " << dxVar->getVariable()->getId() << std::endl;
+  std::cout << "id(dy) = " << dyVar->getVariable()->getId() << std::endl;
+
+  pDependencyMap depMap(new DependencyMap(vars.getRootBlock()));
+  DependencyUpdater updater(depMap);
+
+  updater.addIndependent(xVar);
+  updater.addIndependent(yVar);
+  updater.addDependent(dxVar);
+  updater.addDependent(dyVar);
+
+  for (x=0.0; x<=1.0; x+= 0.125)
+    for (y=0.0; y<=1.0; y+= 0.125)
+    {
+      updater.update();
+      std::cout << x << " " << y << " " << dx << " " << dy << std::endl;
+    }
+
+  std::cout << "Automatic update for constant expressions:\n";
+  DependencyUpdater updater_const(depMap);
+
+  updater_const.addIndependent(xVar);
+  updater_const.addIndependent(yVar);
+  updater_const.addDependent(dzVar);
+
+  for (x=0.0; x<=1.0; x+= 0.125)
+    for (y=0.0; y<=1.0; y+= 0.125)
+    {
+      updater_const.update();
+      std::cout << x << " " << y << " " << dz << std::endl;
+    }
+
 }
 

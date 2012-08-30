@@ -125,7 +125,7 @@ void ParserToken::assignIdentifier(ParserToken &parTok)
 
   try
   {
-    pVariable v = *(context.variables->getCurrentBlock()->getVariable(varname));
+    pVariable v = context.variables->getCurrentBlock()->getVariable(varname);
     switch (v->getType())
     {
       case Variable::int_type:
@@ -200,13 +200,13 @@ struct evaluateVisitor : public boost::static_visitor<pVariable>
     {
         if (e->isConstant())
         {
-          // std::cerr << " * evaluating " << e->eval() << std::endl;
+          std::cerr << " * evaluating " << e->eval() << std::endl;
           pVariable pV(new Variable(e->eval()));
           return pV;
         }
         else
         {
-          // std::cerr << " * assigning variable" << std::endl;
+          std::cerr << " * assigning variable" << std::endl;
           pVariable pV(new Variable(e));
           return pV;
         }
