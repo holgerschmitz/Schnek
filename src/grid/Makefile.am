@@ -1,6 +1,6 @@
 # Makefile.am
 #
-# Created on: 12 Apr 2007
+# Created on: 31 Aug 2012
 # Author: Holger Schmitz
 # Email: holger@notjustphysics.com
 #
@@ -21,32 +21,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
 
-lib_LTLIBRARIES = libschnek.la
+libschnekgridincludedir = $(includedir)/schnek/grid
 
-libschnekincludedir = $(includedir)/schnek
+libschnekinclude_HEADERS += \
+  array.hpp            \
+  array.t              \
+  arraycheck.hpp       \
+  field.hpp            \
+  field.t              \
+  gridcheck.hpp        \
+  grid.hpp             \
+  grid.t               \
+  gridstorage.hpp      \
+  gridstorage.t        \
+  range.hpp
 
-libschnek_la_SOURCES = \
-  functions.cpp
-
-libschnekinclude_HEADERS = \
-  algo.hpp             \
-  algo.t               \
-  arrayexpression.hpp  \
-  datastream.hpp       \
-  datastream.t         \
-  exception.hpp        \
-  functions.hpp        \
-  parser.hpp           \
-  typetools.hpp        \
-  util.hpp             \
-  variables.hpp        \
-  vector.hpp           \
-  vector.t
-  
-libschnek_la_LDFLAGS = -version-info 0:0:0
-
-include grid/Makefile.am
-include parser/Makefile.am
-include variables/Makefile.am
-include util/Makefile.am
 

@@ -29,7 +29,7 @@
 
 #include "array.hpp"
 #include "gridcheck.hpp"
-#include "gstorage.hpp"
+#include "gridstorage.hpp"
 #include "typetools.hpp"
 
 namespace schnek {

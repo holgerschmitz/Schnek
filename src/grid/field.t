@@ -24,7 +24,7 @@
  *
  */
 
-using namespace schnek
+using namespace schnek;
 
 template<
   typename T,

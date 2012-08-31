@@ -27,7 +27,7 @@
 #ifndef SCHNEK_DOMAIN_H_
 #define SCHNEK_DOMAIN_H_
 
-#include "array.hpp"
+#include "range.hpp"
 
 #include <list>
 #include <boost/shared_ptr.hpp>
@@ -39,34 +39,25 @@ namespace schnek {
  *  The rectangular domain is defined by a minimum and maximum. An iterator is provided that
  *  traverses the domain and returns the positions.
  */
-template<int rank>
-class RecDomain {
-  public:
-    typedef Array<int,rank> IndexType;
-  private:
-    /// Minimum and maximum corners of the rectangle
-    IndexType min, max;
+template<
+  int rank,
+  template<int> class CheckingPolicy = ArrayNoArgCheck
+>
+class RecDomain : public Range<int, rank, CheckingPolicy>
+{
   public:
     /// Construct with rectangle minimum and maximum
-    RecDomain(const IndexType &min_, const IndexType &max_)
-    : min(min_), max(max_) {}
+    RecDomain(const LimitType &min, const LimitType &max)
+    : Range(min, max) {}
 
     /// Copy constructor
-    RecDomain(const RecDomain &domain)
-    : min(domain.min), max(domain.max) {}
+    RecDomain(const RecDomain &domain) : Range(domain) {}
 
     /// Assignment operator
     RecDomain &operator=(const RecDomain &domain)
     {
-      min = domain.min;
-      max = domain.max;
-      return *this;
+      return std::static_cast<RecDomain &>( this->operator=(domain) );
     }
-
-    /// Return rectangle minimum
-    const IndexType &getMin() const {return min;}
-    /// Return rectangle maximum
-    const IndexType &getMax() const {return max;}
 
     /** Forward iterator over the rectangular domain
      *  Implements operator* and getPos which both return the current iterator position
@@ -75,14 +66,14 @@ class RecDomain {
       private:
         friend class RecDomain;
         /// Current iterator position
-        IndexType pos;
+        LimitType pos;
         /// Reference to the rectangular domain
         const RecDomain &domain;
         /// True if the iterator has reached the end
         bool atEnd;
 
         /// Constructor called by RecDomain to create the iterator
-        iterator(const RecDomain &domain_, const IndexType &pos_, bool atEnd_=false)
+        iterator(const RecDomain &domain_, const LimitType &pos_, bool atEnd_=false)
         : pos(pos_), domain(domain_), atEnd(atEnd_) {}
         /// Default constructor is declared private for now. (Need to implement assignment first)
         iterator();
@@ -134,12 +125,12 @@ class RecDomain {
 
     /// Creates an iterator pointing to the beginning of the rectangle
     iterator begin() {
-      return iterator(*this, min);
+      return iterator(*this, getMin());
     }
 
     /// Creates an iterator pointing to a position after the end of the rectangle
     iterator end() {
-      return iterator(*this, min, true);
+      return iterator(*this, getMin(), true);
     }
 };
 

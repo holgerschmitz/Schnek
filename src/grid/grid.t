@@ -23,7 +23,6 @@
  * along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "arrayexpression.hpp"
 
 // --------------------------------------------------------------
 // implementation

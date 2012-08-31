@@ -1,5 +1,5 @@
 /*
- * algo.hpp
+ * arraycheck.hpp
  *
  * Created on: 23 Jan 2007
  * Author: Holger Schmitz
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef SCHNEK_ARGCHECK_HPP_
-#define SCHNEK_ARGCHECK_HPP_
+#ifndef SCHNEK_ARRAYCHECK_HPP_
+#define SCHNEK_ARRAYCHECK_HPP_
 
 namespace schnek {
 

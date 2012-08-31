@@ -29,6 +29,7 @@
 
 #include "range.hpp"
 #include "domain.hpp"
+#include "grid.hpp"
 
 namespace schnek {
 

@@ -1,5 +1,5 @@
 /*
- * gstorage.t
+ * gridstorage.t
  *
  * Created on: 23 Jan 2007
  * Author: Holger Schmitz

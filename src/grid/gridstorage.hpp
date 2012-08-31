@@ -1,5 +1,5 @@
 /*
- * gstorage.hpp
+ * gridstorage.hpp
  *
  * Created on: 23 Jan 2007
  * Author: Holger Schmitz
@@ -24,11 +24,12 @@
  *
  */
 
-#ifndef SCHNEK_GSTORAGE_H_
-#define SCHNEK_GSTORAGE_H_
+#ifndef SCHNEK_GRIDSTORAGE_H_
+#define SCHNEK_GRIDSTORAGE_H_
+
+#include "array.hpp"
 
 namespace schnek {
-
 
 /** Stores the grid data in a single array
  *
