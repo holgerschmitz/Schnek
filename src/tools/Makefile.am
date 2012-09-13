@@ -21,21 +21,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
 
-libschnekgridincludedir = $(includedir)/schnek/grid
+libschnektoolsincludedir = $(includedir)/schnek/tools
 
-libschnekgridinclude_HEADERS = \
-  grid/array.hpp            \
-  grid/array.t              \
-  grid/arraycheck.hpp       \
-  grid/arrayexpression.hpp  \
-  grid/domain.hpp           \
-  grid/field.hpp            \
-  grid/field.t              \
-  grid/gridcheck.hpp        \
-  grid/grid.hpp             \
-  grid/grid.t               \
-  grid/gridstorage.hpp      \
-  grid/gridstorage.t        \
-  grid/range.hpp
+libschnektoolsinclude_HEADERS = \
+  tools/fieldtools.hpp \
+  tools/fieldtools.t
 
 

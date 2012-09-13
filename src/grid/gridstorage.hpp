@@ -128,7 +128,7 @@ class SingleArrayGridStorage {
 } // namespace schnek
 
 
-#include "gstorage.t"
+#include "gridstorage.t"
 
 
 #endif // SCHNEK_GSTORAGE_H_

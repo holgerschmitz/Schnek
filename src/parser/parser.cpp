@@ -28,6 +28,7 @@
 #include "deckscanner.hpp"
 #include "tokenlist.hpp"
 #include "../variables/block.hpp"
+#include "../variables/dependencies.hpp"
 #include <boost/foreach.hpp>
 
 #include "deckgrammar.hpp"
@@ -74,5 +75,10 @@ pBlock Parser::parse(std::istream &input, std::string filename)
   Parse(pParser, 0, ParserToken());
 
   ParseFree(pParser);
+
+  DependencyMap depMap(variables.getRootBlock());
+  depMap.updateAll();
+
+
   return blockTree->getRoot();
 }

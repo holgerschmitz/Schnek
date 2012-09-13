@@ -24,7 +24,7 @@
  *
  */
 
-#include "arrayexpression.hpp"
+//#include "arrayexpression.hpp"
 #include <boost/static_assert.hpp>
 
 namespace schnek
@@ -255,7 +255,7 @@ inline Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::Unity()
 
 
 
-}
+} // namespace
 
 
 template<

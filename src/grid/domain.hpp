@@ -46,17 +46,18 @@ template<
 class RecDomain : public Range<int, rank, CheckingPolicy>
 {
   public:
+    typedef typename Range<int, rank, CheckingPolicy>::LimitType LimitType;
     /// Construct with rectangle minimum and maximum
     RecDomain(const LimitType &min, const LimitType &max)
-    : Range(min, max) {}
+    : Range<int, rank, CheckingPolicy>(min, max) {}
 
     /// Copy constructor
-    RecDomain(const RecDomain &domain) : Range(domain) {}
+    RecDomain(const RecDomain &domain) : Range<int, rank, CheckingPolicy>(domain) {}
 
     /// Assignment operator
     RecDomain &operator=(const RecDomain &domain)
     {
-      return std::static_cast<RecDomain &>( this->operator=(domain) );
+      return static_cast<RecDomain &>( this->operator=(domain) );
     }
 
     /** Forward iterator over the rectangular domain
@@ -87,7 +88,7 @@ class RecDomain : public Range<int, rank, CheckingPolicy>
             --d;
             if (++pos[d] > domain.getMax()[d])
             {
-              pod[d] = domain.getMin()[d];
+              pos[d] = domain.getMin()[d];
             }
             else
               return;
@@ -116,54 +117,58 @@ class RecDomain : public Range<int, rank, CheckingPolicy>
         {
           return (atEnd==it.atEnd) && (pos==it.pos);
         }
-        /// Returns the current iterator position
-        const IndexType& operator*() { return pos; }
+
+        /// Equality test
+        bool operator!=(const iterator &it) { return !(operator==(it)); }
 
         /// Returns the current iterator position
-        const IndexType& getPos() { return pos; }
+        const LimitType& operator*() { return pos; }
+
+        /// Returns the current iterator position
+        const LimitType& getPos() { return pos; }
     };
 
     /// Creates an iterator pointing to the beginning of the rectangle
     iterator begin() {
-      return iterator(*this, getMin());
+      return iterator(*this, this->getMin());
     }
 
     /// Creates an iterator pointing to a position after the end of the rectangle
     iterator end() {
-      return iterator(*this, getMin(), true);
+      return iterator(*this, this->getMin(), true);
     }
 };
 
-typedef boost::shared_ptr<RecDomain> pRecDomain;
-
-/** MultiRecDomain contains a list of RecDomain rectangular domains.
- *
- *  New domains can be added by supplying the rectangular domain bounds.
- */
-template<int rank>
-class MultiRecDomain {
-  private:
-    /// The list of rectangular domains
-    std::list<pRecDomain> domains;
-
-  public:
-    /// Default constructor
-    MultiRecDomain() {}
-
-    /// Copy constructor
-    MultiRecDomain(const MultiRecDomain &dom)
-    : domains(dom.domains) {}
-
-    /// Add a new rectangular domain by supplying the domain bounds.
-    const Domain &addDomain(const IndexType &min_, const IndexType &max_)
-    {
-      pDomain ndom(new Domain(min_, max_));
-      domains.push_back(ndom);
-      return *ndom;
-    }
-};
-
-typedef boost::shared_ptr<MultiRecDomain> pMultiRecDomain;
+//typedef boost::shared_ptr<RecDomain> pRecDomain;
+//
+///** MultiRecDomain contains a list of RecDomain rectangular domains.
+// *
+// *  New domains can be added by supplying the rectangular domain bounds.
+// */
+//template<int rank>
+//class MultiRecDomain {
+//  private:
+//    /// The list of rectangular domains
+//    std::list<pRecDomain> domains;
+//
+//  public:
+//    /// Default constructor
+//    MultiRecDomain() {}
+//
+//    /// Copy constructor
+//    MultiRecDomain(const MultiRecDomain &dom)
+//    : domains(dom.domains) {}
+//
+//    /// Add a new rectangular domain by supplying the domain bounds.
+//    const Domain &addDomain(const IndexType &min_, const IndexType &max_)
+//    {
+//      pDomain ndom(new Domain(min_, max_));
+//      domains.push_back(ndom);
+//      return *ndom;
+//    }
+//};
+//
+//typedef boost::shared_ptr<MultiRecDomain> pMultiRecDomain;
 
 } // namespace schnek
 

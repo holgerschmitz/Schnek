@@ -28,6 +28,7 @@
 #define FUNCTION_EXPRESSION_HPP_
 
 #include "expression.hpp"
+#include <boost/foreach.hpp>
 
 namespace schnek {
 
@@ -88,6 +89,13 @@ class FunctionExpression : public Expression<vtype>
 
     };
 
+    struct isConstantVisitor : public boost::static_visitor<bool>
+    {
+        template<class ExpressionPointer>
+        bool operator()(ExpressionPointer e) { return e->isConstant(); }
+    };
+
+
     ExpressionList args;
     func f;
   public:
@@ -97,6 +105,8 @@ class FunctionExpression : public Expression<vtype>
     vtype eval();
 
     bool isConstant();
+
+    DependencyList getDependencies();
 };
 
 template<class vtype, typename func>
@@ -129,11 +139,31 @@ vtype FunctionExpression<vtype, func>::eval()
     return converter<>::evaluate(f, args.begin(), fusion::nil());
 }
 
-
 template<class vtype, typename func>
 bool FunctionExpression<vtype, func>::isConstant()
 {
-    return true;
+  bool result = true;
+  isConstantVisitor visit;
+  BOOST_FOREACH(ExpressionVariant ex, args)
+  {
+    result = result && boost::apply_visitor(visit, ex);
+  }
+
+  return result;
+}
+
+template<class vtype, typename func>
+DependencyList FunctionExpression<vtype, func>::getDependencies()
+{
+  DependencyList result;
+
+  DependenciesGetter visit;
+  BOOST_FOREACH(ExpressionVariant ex, args)
+  {
+    DependencyList dep = boost::apply_visitor(visit, ex);
+    result.insert(dep.begin(), dep.end());
+  }
+  return result;
 }
 
 class FunctionRegistry

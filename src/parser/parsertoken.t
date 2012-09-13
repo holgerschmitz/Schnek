@@ -84,6 +84,61 @@ inline void TypePromoter::operator()(pStringExpression e1, pFloatExpression e2)
   result1 = e1;
   result2 = pS;
 }
+
+
+/* ========================
+ * TypePromoterAssign for assignments from one type to another
+ */
+
+
+template<class ExpressionPointer>
+inline ExpressionVariant TypePromoterAssign::operator()(ExpressionPointer e1, ExpressionPointer e2)
+{
+  return e2;
+}
+
+template<>
+inline ExpressionVariant TypePromoterAssign::operator()(pIntExpression e1, pFloatExpression e2)
+{
+  pIntExpression pI(new TypecastOp<int,double>(e2));
+  return pI;
+}
+
+template<>
+inline ExpressionVariant TypePromoterAssign::operator()(pFloatExpression e1, pIntExpression e2)
+{
+  pFloatExpression pF(new TypecastOp<double,int>(e2));
+  return pF;
+}
+
+template<>
+inline ExpressionVariant TypePromoterAssign::operator()(pIntExpression e1, pStringExpression e2)
+{
+  pIntExpression pI(new TypecastOp<int,std::string,LexicalCast>(e2));
+  return pI;
+}
+
+template<>
+inline ExpressionVariant TypePromoterAssign::operator()(pStringExpression e1, pIntExpression e2)
+{
+  pStringExpression pS(new TypecastOp<std::string,int,LexicalCast>(e2));
+  return pS;
+}
+
+template<>
+inline ExpressionVariant TypePromoterAssign::operator()(pFloatExpression e1, pStringExpression e2)
+{
+  pFloatExpression pF(new TypecastOp<double,std::string,LexicalCast>(e2));
+  return pF;
+}
+
+template<>
+inline ExpressionVariant TypePromoterAssign::operator()(pStringExpression e1, pFloatExpression e2)
+{
+  pStringExpression pS(new TypecastOp<std::string,double, LexicalCast>(e2));
+  return pS;
+}
+
 /* ========================
  * ParserToken operator assignment
  */

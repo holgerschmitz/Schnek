@@ -161,9 +161,11 @@ bool BlockVariables::exists(std::string name)
 
 pVariable BlockVariables::getVariable(std::list<std::string> path, bool upward)
 {
+  //std::cout << "BlockVariables " << getBlockName() << "(" << getClassName() << ")" << std::endl;
   std::string name = path.front();
   if (path.size()>1)
   {
+    //std::cout << "  -- Going into path " << name << std::endl;
     if (childrenByName.count(name)>0)
     {
       path.pop_front();
@@ -175,8 +177,10 @@ pVariable BlockVariables::getVariable(std::list<std::string> path, bool upward)
   }
   else
   {
+    //std::cout << "  -- Checking Variable " << name << std::endl;
     if (vars.count(name)>0) return vars[name];
   }
+
   if (upward && parent) return parent->getVariable(path, true);
 
   throw VariableNotFoundException();

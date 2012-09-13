@@ -27,7 +27,7 @@
 #ifndef SCHNEK_ARRAY_HPP_
 #define SCHNEK_ARRAY_HPP_
 
-#include "argcheck.hpp"
+#include "arraycheck.hpp"
 
 namespace schnek {
 

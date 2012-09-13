@@ -46,7 +46,7 @@ struct CreateUsingNew
    */
   static TYPE* create()
   {
-    return new TYPE;
+    return new TYPE();
   }
 };
 
@@ -94,15 +94,16 @@ class Singleton
       return *pInstance;
     }
 
+  protected:
+    Singleton() {}
+    /** Destructor made private and not implemented  */
+    ~Singleton() {}
   private:
-    /** Default constructor made private and not implemented  */
-    Singleton();
     /** Copy constructor made private and not implemented  */
     Singleton(const Singleton&);
     /** Copy operator made private and not implemented  */
     Singleton& operator=(const Singleton&);
-    /** Destructor made private and not implemented  */
-    ~Singleton() {}
+
 
     /** The pointer to the one and only instance of the singleton instance
      *  class.

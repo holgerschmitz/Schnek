@@ -24,7 +24,8 @@
  *
  */
 
-using namespace schnek;
+namespace schnek
+{
 
 template<
   typename T,
@@ -32,8 +33,9 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-static IndexType Field<T, rank, CheckingPolicy, StoragePolicy>
-  ::calcGridSize(const IndexType &size, const Stagger &stagger)
+typename Field<T, rank, CheckingPolicy, StoragePolicy>::IndexType
+  Field<T, rank, CheckingPolicy, StoragePolicy>
+    ::calcGridSize(const IndexType &size, const Stagger &stagger)
 {
   IndexType gridSize(size);
   for (int i=0; i<rank; ++i)
@@ -58,7 +60,7 @@ template<
 >
 Field<T, rank, CheckingPolicy, StoragePolicy>
   ::Field(const IndexType &size_, const FieldRange &range_, const Stagger &stagger_)
-  : Grid(calcGridSize(size_,stagger)),
+  : Grid<T, rank, CheckingPolicy, StoragePolicy>(calcGridSize(size_,stagger)),
     range(range_),
     stagger(stagger_),
     size(size_)
@@ -99,5 +101,7 @@ template<
 inline double Field<T, rank, CheckingPolicy, StoragePolicy>::indexToPosition(int dim, int index)
 {
     return (range.getMax()[dim] - range.getMin()[dim])
-        * (index+0.5*int(stagger[dim]))/size[dim]
+        * (index+0.5*int(stagger[dim]))/size[dim];
 }
+
+} // namespace

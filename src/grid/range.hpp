@@ -46,7 +46,7 @@ class Range {
     typedef Array<T,rank,CheckingPolicy> LimitType;
   private:
     /// Minimum and maximum corners of the rectangle
-    IndexType min, max;
+    LimitType min, max;
   public:
     /// Construct with rectangle minimum and maximum
     Range(const LimitType &min_, const LimitType &max_)

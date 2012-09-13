@@ -56,10 +56,11 @@ void BlockData<T>::add(long blockId, std::string key, T &data)
 {
   if (0 == blockDataMap.count(blockId))
   {
-    blockDataMap[blockId] = new pDataMap;
+    pDataMap pdm(new DataMap());
+    blockDataMap[blockId] = pdm;
   }
 
-  blockDataMap[blockId][key] = data;
+  (*blockDataMap[blockId])[key] = data;
 }
 
 template<typename T>

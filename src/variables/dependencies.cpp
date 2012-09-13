@@ -71,6 +71,18 @@ void DependencyMap::constructMap(const pBlockVariables vars)
 	    dependencies[id].modifies.insert(entry.first);
 	  }
 	}
+
+  std::cout << "DependencyMap::constructMap";
+  BOOST_FOREACH(DepMap::value_type info, dependencies)
+  {
+     std::cout << "Variable " << info.first << "("<< info.second.v->getId() << "): ";
+     BOOST_FOREACH(long id, info.second.dependsOn)
+     {
+       std::cout << id << " ";
+     }
+     std::cout << std::endl;
+  }
+
 }
 
 void DependencyMap::resetCounters()
@@ -136,7 +148,7 @@ void DependencyMap::makeUpdateList(const VariableSet &independentVars, const Var
 //    std::cout << std::endl;
 //  }
 
-  makeUpdateOrder(independentVars, deps, updateList);
+  makeUpdateOrder(deps, updateList);
 }
 
 DependencyMap::pRefDepMap DependencyMap::makeUpdatePredecessors(const VariableSet &dependentVars)
@@ -220,7 +232,7 @@ DependencyMap::pRefDepMap DependencyMap::makeUpdateFollowers(const VariableSet &
 
 }
 
-void DependencyMap::makeUpdateOrder(const VariableSet &independentVars, pRefDepMap deps_p, VariableList &updateList)
+void DependencyMap::makeUpdateOrder(pRefDepMap deps_p, VariableList &updateList)
 {
   typedef std::list<VarInfo*>::iterator WorkIter;
 
@@ -232,12 +244,14 @@ void DependencyMap::makeUpdateOrder(const VariableSet &independentVars, pRefDepM
   // first initialise the counters
   BOOST_FOREACH(RefDepMap::value_type entry, deps)
   {
+
     int count = 0;
     VarInfo *vi = entry.second;
     workingSet.push_back(vi);
     BOOST_FOREACH(long id, vi->dependsOn)
+    {
       if (deps.count(id) > 0) ++count;
-
+    }
     entry.second->counter = count;
   }
 
@@ -266,14 +280,60 @@ void DependencyMap::makeUpdateOrder(const VariableSet &independentVars, pRefDepM
   }
 }
 
-DependencyUpdater::DependencyUpdater(pDependencyMap dependencies_)
-  : dependencies(dependencies_), isValid(true)
-{}
+bool DependencyMap::hasRoots(pVariable v, pParametersGroup roots)
+{
+  VariableSet deps;
+  deps.insert(v);
+  pRefDepMap predecessors = makeUpdatePredecessors(deps);
+
+  // roots are all the predecessord that do not depend on anything else.
+  std::set<long> allRoots;
+  BOOST_FOREACH(RefDepMap::value_type entry, *predecessors)
+  {
+    if (entry.second->dependsOn.empty())
+      allRoots.insert(entry.second->v->getId());
+  }
+
+  return roots->hasElements(allRoots);
+
+}
+
 
 pBlockVariables DependencyMap::getBlockVariables()
 {
   return blockVars;
 }
+
+void DependencyMap::updateAll()
+{
+  std::cout << "DependencyMap::updateAll()\n";
+  pRefDepMap deps(new RefDepMap());
+  BOOST_FOREACH(DepMap::value_type &entry, dependencies)
+  {
+    deps->insert(RefDepMap::value_type(entry.first, &entry.second));
+  }
+
+  BOOST_FOREACH(RefDepMap::value_type info, *deps)
+  {
+     std::cout << "Variable " << info.first << "("<< info.second->v->getId() << "): ";
+     BOOST_FOREACH(long id, info.second->dependsOn)
+     {
+       std::cout << id << " ";
+     }
+     std::cout << std::endl;
+  }
+
+  VariableList updateList;
+
+  makeUpdateOrder(deps, updateList);
+
+  BOOST_FOREACH(pVariable v, updateList) v->evaluateExpression();
+}
+
+
+DependencyUpdater::DependencyUpdater(pDependencyMap dependencies_)
+  : dependencies(dependencies_), isValid(true)
+{}
 
 void DependencyUpdater::addIndependent(pParameter p)
 {
@@ -295,3 +355,9 @@ void DependencyUpdater::addDependent(pParameter p)
   isValid = false;
 }
 
+void DependencyUpdater::clearDependent()
+{
+  dependentParameters.clear();
+  dependentVars.clear();
+  isValid = false;
+}

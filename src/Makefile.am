@@ -31,11 +31,11 @@ libschnek_la_SOURCES = \
 libschnekinclude_HEADERS = \
   algo.hpp             \
   algo.t               \
-  arrayexpression.hpp  \
   datastream.hpp       \
   datastream.t         \
   exception.hpp        \
   functions.hpp        \
+  grid.hpp             \
   parser.hpp           \
   typetools.hpp        \
   util.hpp             \
@@ -48,5 +48,6 @@ libschnek_la_LDFLAGS = -version-info 0:0:0
 include grid/Makefile.am
 include parser/Makefile.am
 include variables/Makefile.am
+include tools/Makefile.am
 include util/Makefile.am
 

@@ -30,7 +30,7 @@
 #include "array.hpp"
 #include "gridcheck.hpp"
 #include "gridstorage.hpp"
-#include "typetools.hpp"
+#include "../typetools.hpp"
 
 namespace schnek {
 

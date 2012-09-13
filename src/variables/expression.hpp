@@ -137,15 +137,15 @@ class ReferencedValue : public Expression<vtype>
     ReferencedValue(const pVariable &var_) : var(var_) {}
     /// Return the modified value
     vtype eval() {
-      if (var->isConstant())
-      {
-        //std::cerr << "Attempting to assign variable\n";
-        return boost::get<vtype>(var->getValue());
-      }
-      else
-        return boost::get<vtype>(var->evaluateExpression());
+//      if (var->isConstant())
+//      {
+//        //std::cerr << "Attempting to assign variable\n";
+//        return boost::get<vtype>(var->getValue());
+//      }
+//      else
+//        return boost::get<vtype>(var->evaluateExpression());
        // it is assumed that the referenced variable has been evaluated
-//      return boost::get<vtype>(var->getValue());
+      return boost::get<vtype>(var->getValue());
     }
     /// Constancy depends on the constancy of the variable
     bool isConstant() { return var->isConstant(); }
@@ -204,9 +204,9 @@ class UnaryOp : public Expression<vtype>
 
     /// returns the dependencies of the sub expression
     DependencyList getDependencies()
-	{
-	  return expr->getDependencies();
-	}
+    {
+      return expr->getDependencies();
+    }
 };
 
 /** Binary operator expression
@@ -233,12 +233,12 @@ class BinaryOp : public Expression<vtype>
 
     /// returns the joint dependencies of both sub expression
     DependencyList getDependencies()
-	{
-      DependencyList dep1 = expr1->getDependencies();
-      DependencyList dep2 = expr2->getDependencies();
-      dep1.insert(dep2.begin(), dep2.end());
-      return dep1;
-	}
+    {
+        DependencyList dep1 = expr1->getDependencies();
+        DependencyList dep2 = expr2->getDependencies();
+        dep1.insert(dep2.begin(), dep2.end());
+        return dep1;
+    }
 };
 
 template<class vtype>
@@ -311,9 +311,15 @@ class TypecastOp : public Expression<vtype>
 
     /// returns the dependencies of the sub expression
     DependencyList getDependencies()
-	{
-	  return expr->getDependencies();
-	}
+    {
+      return expr->getDependencies();
+    }
+};
+
+struct DependenciesGetter : public boost::static_visitor<DependencyList>
+{
+  template<class ExpressionPointer>
+  DependencyList operator()(ExpressionPointer e) { return e->getDependencies(); }
 };
 
 

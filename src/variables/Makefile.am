@@ -25,7 +25,9 @@
 libschnek_la_SOURCES += \
   variables/block.cpp  \
   variables/blockclasses.cpp  \
+  variables/blockparameters.cpp  \
   variables/dependencies.cpp  \
+  variables/function_expression.cpp  \
   variables/variables.cpp
 
 libschnekvariablesincludedir = $(includedir)/schnek/variables

@@ -83,19 +83,15 @@ class DependencyMap
     void makeUpdateList(const VariableSet &independentVars, const VariableSet &dependentVars, VariableList &updateList);
     pRefDepMap makeUpdatePredecessors(const VariableSet &dependentVars);
     pRefDepMap makeUpdateFollowers(const VariableSet &independentVars, pRefDepMap reverseDeps);
-    void makeUpdateOrder(const VariableSet &independentVars, pRefDepMap deps, VariableList &updateList);
-
-
-    struct DependenciesGetter : public boost::static_visitor<DependencySet>
-    {
-      template<class ExpressionPointer>
-      DependencySet operator()(ExpressionPointer e) { return e->getDependencies(); }
-    };
+    void makeUpdateOrder(pRefDepMap deps, VariableList &updateList);
 
   public:
     DependencyMap(const pBlockVariables vars);
+    void recreate() { constructMap(blockVars); }
     pBlockVariables getBlockVariables();
+    void updateAll();
 
+    bool hasRoots(pVariable v, pParametersGroup roots);
 };
 
 typedef boost::shared_ptr<DependencyMap> pDependencyMap;
@@ -111,12 +107,22 @@ class DependencyUpdater
     VariableSet independentVars;
     VariableSet dependentVars;
     ParameterSet dependentParameters;
+
     pDependencyMap dependencies;
     bool isValid;
   public:
     DependencyUpdater(pDependencyMap dependencies_);
     void addIndependent(pParameter v);
     void addDependent(pParameter v);
+    void clearDependent();
+
+    template<int rank, template<int> class CheckingPolicy>
+    void addIndependentArray(Array<pParameter, rank, CheckingPolicy> v)
+    { for (int i=0; i<rank; ++i) addIndependent(v[i]); }
+
+    template<int rank, template<int> class CheckingPolicy>
+    void addDependentArray(Array<pParameter, rank, CheckingPolicy> v)
+    { for (int i=0; i<rank; ++i) addDependent(v[i]); }
 
     /** Updates the dependent variables and all the variables needed to evaluate them.
      *
@@ -132,6 +138,8 @@ class DependencyUpdater
       BOOST_FOREACH(pParameter p, dependentParameters) p->update();
     }
 };
+
+typedef boost::shared_ptr<DependencyUpdater> pDependencyUpdater;
 
 } // namespace
 

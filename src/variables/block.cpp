@@ -35,7 +35,13 @@ BlockTree::BlockTree() : root(), cursor(), depth() {}
 
 void BlockTree::addChild(pBlock child)
 {
-  if (cursor) cursor->addChild(child);
+  std::cout << "BlockTree::addChild(" << child->getId() << ")\n";
+  if (cursor) std::cout << "  - have cursor " << cursor->getId() << ")\n";
+
+  if (cursor) {
+    cursor->addChild(child);
+    child->setParent(cursor);
+  }
   cursor = child;
   if (!root) root = child;
   depth.push(0);
@@ -43,15 +49,21 @@ void BlockTree::addChild(pBlock child)
 
 void BlockTree::moveDown()
 {
+  std::cout << "BlockTree::moveDown()\n";
   if (depth.size() >0) ++(depth.top());
 }
 
 void BlockTree::moveUp()
 {
+  std::cout << "BlockTree::moveUp()\n";
+  if (cursor) std::cout << "  - have cursor " << cursor->getId() << ")\n";
+
   if (depth.size() == 0) return;
   if (0 == depth.top())
   {
+    std::cout << "  to parent\n";
     cursor = cursor->getParent();
+    if (cursor) std::cout << "  - have parent cursor " << cursor->getId() << ")\n";
     depth.pop();
   }
   else
@@ -72,6 +84,7 @@ void Block::evaluateParameters()
 
 void Block::setup()
 {
+  std::cout << "Block::setup() " << getId() << "  " << this << std::endl;
   this->initParameters(blockParameters);
   BOOST_FOREACH(pBlock child, children)
   {
@@ -81,54 +94,45 @@ void Block::setup()
 
 void Block::addChild(pBlock child)
 {
+  std::cout << "Block("<< getId() <<")::addChild("<< child->getId() <<")\n";
   children.push_back(child);
 }
 
-template<typename T>
-bool Block::getData(std::string key, T &data, bool upward)
+
+void Block::registerHierarchy()
 {
-  if (BlockData<T>::instance().exists(this->getId(), key))
-  {
-    data = BlockData<T>::instance().get(this->getId(), key);
-    return true;
-  }
-
-  if (upward && parent)
-    return parent->getData(key, data, true);
-
-  int count = 0;
+  std::cout << "Block::registerHierarchy() " << getId() << "  " << this << std::endl;
+  this->registerData();
   BOOST_FOREACH(pBlock child, children)
   {
-    if (child->getData(key,data, false)) ++count;
+    child->registerHierarchy();
   }
-
-  if (count>1) throw DuplicateVariableException();
-  return (count!=0);
 }
 
-template<typename T>
-void Block::addData(std::string key, const T &data)
+void Block::preInitHierarchy()
 {
-  BlockData<T>::instance().add(this->getId(), key, data);
+  this->preInit();
+  BOOST_FOREACH(pBlock child, children)
+  {
+    child->preInitHierarchy();
+  }
 }
-
-template<typename T>
-void Block::retrieveData(std::string key, T &data)
-{
-  if (!getData(key, data, true)) throw VariableNotFoundException();
-}
-
 
 void Block::initHierarchy()
 {
+  this->init();
   BOOST_FOREACH(pBlock child, children)
   {
-    child->registerData();
+    child->initHierarchy();
   }
+}
 
+void Block::postInitHierarchy()
+{
+  this->postInit();
   BOOST_FOREACH(pBlock child, children)
   {
-    child->init();
+    child->postInitHierarchy();
   }
 }
 
@@ -137,6 +141,10 @@ void Block::initAll()
   Block *b = this;
   while (b->parent) b = &(*parent);
 
+  b->evaluateParameters();
+  b->registerHierarchy();
+  b->preInitHierarchy();
   b->initHierarchy();
+  b->postInitHierarchy();
 }
 

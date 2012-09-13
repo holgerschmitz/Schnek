@@ -200,13 +200,13 @@ struct evaluateVisitor : public boost::static_visitor<pVariable>
     {
         if (e->isConstant())
         {
-          std::cerr << " * evaluating " << e->eval() << std::endl;
+//          std::cerr << " * evaluating " << e->eval() << std::endl;
           pVariable pV(new Variable(e->eval()));
           return pV;
         }
         else
         {
-          std::cerr << " * assigning variable" << std::endl;
+//          std::cerr << " * assigning variable" << std::endl;
           pVariable pV(new Variable(e));
           return pV;
         }
@@ -220,14 +220,27 @@ void ParserToken::evaluateExpression(ParserToken &identifier, ParserToken &expre
   if (identifier.getType() != atom) throw ParserError("Can't convert non-atom token to identifier (left value)", atomTok);
   if (atomTok.getToken() != IDENTIFIER) throw ParserError("Can't convert non-identifier atom to identifier", atomTok);
 
-  evaluateVisitor visit;
-  var = boost::apply_visitor(visit, expression.data);
+  data = expression.data;
 
   type = statement;
 }
 
+class ValueToExpressionVisitor : public boost::static_visitor<ExpressionVariant>
+{
+  public:
+    template<typename T>
+    ExpressionVariant operator()(T var)
+    {
+      boost::shared_ptr< Expression<T> > e(new Value<T>(var));
+      return e;
+    }
+};
+
 void ParserToken::storeVariable(ParserToken &parTok)
 {
+  evaluateVisitor visit;
+  var = boost::apply_visitor(visit, data);
+
   ensureVariable(parTok);
   std::string varname = atomTok.getString();
 
@@ -252,7 +265,25 @@ void ParserToken::updateVariable()
   // std::cerr << "Updating variable " << varname << std::endl;
   try
   {
-    *(context.variables->getCurrentBlock()->getVariable(varname)) = *var;
+    pVariable storedVar = context.variables->getCurrentBlock()->getVariable(varname);
+    ExpressionVariant expr;
+
+    if (storedVar->isConstant())
+    {
+      ValueToExpressionVisitor visit;
+      ValueVariant val = storedVar->getValue();
+      expr =  boost::apply_visitor(visit, val);
+    }
+    else
+    {
+      expr = storedVar->getExpression();
+    }
+
+    TypePromoterAssign promote;
+    ExpressionVariant typeMatched = boost::apply_visitor(promote, expr, data);
+
+    evaluateVisitor eval;
+    *storedVar = *(boost::apply_visitor(eval, typeMatched));
   }
   catch (VariableNotFoundException&)
   {

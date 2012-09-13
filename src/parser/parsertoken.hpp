@@ -129,6 +129,20 @@ class TypePromoter : public boost::static_visitor<void>
     const ExpressionVariant &getResultB() { return result2; }
 };
 
+/** This class creates result types from two argument types and stores them in a
+ * ExpressionVariant.
+ */
+class TypePromoterAssign : public boost::static_visitor<ExpressionVariant>
+{
+  public:
+    template<class ExpressionPointer1, class ExpressionPointer2>
+    ExpressionVariant operator()(ExpressionPointer1, ExpressionPointer2 e2);
+
+    template<class ExpressionPointer>
+    ExpressionVariant operator()(ExpressionPointer, ExpressionPointer e2);
+
+};
+
 #include "parsertoken.t"
 
 } // namespace

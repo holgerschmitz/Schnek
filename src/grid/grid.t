@@ -400,4 +400,4 @@ void Grid<T, rank, CheckingPolicy, StoragePolicy>
   }
 }
 
-}
+} // namespace

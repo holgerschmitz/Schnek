@@ -59,8 +59,10 @@ class VariableNotFoundException : public SchnekException
 
 class VariableNotInitialisedException : public SchnekException
 {
+  std::string varName;
   public:
-    VariableNotInitialisedException() : SchnekException() {}
+    VariableNotInitialisedException(std::string varName_) : SchnekException(), varName(varName_) {}
+    std::string getVarName() { return varName; }
 };
 
 class DuplicateVariableException : public SchnekException

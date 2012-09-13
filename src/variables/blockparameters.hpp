@@ -31,29 +31,65 @@
 #include "../variables/variables.hpp"
 #include "../variables/expression.hpp"
 
+#include "../grid/array.hpp"
+
 #include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
 #include <map>
 
 namespace schnek {
+
+class DependencyMap;
+typedef boost::shared_ptr<DependencyMap> pDependencyMap;
+class Parameter;
+typedef boost::shared_ptr<Parameter> pParameter;
+
+class ParametersGroup
+{
+  private:
+    typedef std::set<long> ParameterSet;
+    ParameterSet parameters;
+  public:
+    void add(pParameter p);
+    void add(pVariable v);
+    bool isElement(pParameter p);
+    bool isElement(pVariable v);
+
+    template<int rank, template<int> class CheckingPolicy>
+    void addArray(Array<pParameter, rank, CheckingPolicy> &pa)
+    {
+        for (int i=0; i<rank; ++i) add(pa[i]);
+    }
+
+
+    // This method has the side effect of modifying ids to the set containing all the values not
+    // contained in the group.
+    bool hasElements(std::set<long> &ids);
+};
+
+typedef boost::shared_ptr<ParametersGroup> pParametersGroup;
+
 
 class Parameter
 {
   protected:
     std::string varName;
     pVariable variable;
+    pParametersGroup allowedDeps;
   public:
-    Parameter(std::string varName_, pVariable variable_)
-      : varName(varName_), variable(variable_)
+    Parameter(std::string varName_, pVariable variable_, pParametersGroup allowedDeps_)
+      : varName(varName_), variable(variable_), allowedDeps(allowedDeps_)
     {}
 
     bool canEvaluate() { return (variable) && (variable->isInitialised()); }
     pVariable getVariable() { return variable; }
+    pParametersGroup getAllowedDeps() { return allowedDeps; }
+
+    bool depsAllowed(pDependencyMap deps);
 
     virtual void evaluate() = 0;
     virtual void update() = 0;
 };
-
-typedef boost::shared_ptr<Parameter> pParameter;
 
 template<typename T>
 class ConcreteParameter : public Parameter
@@ -61,14 +97,14 @@ class ConcreteParameter : public Parameter
   protected:
     T *value;
   public:
-    ConcreteParameter(std::string varName_, pVariable variable_, T *value_)
-      : Parameter(varName_, variable_), value(value_) {}
+    ConcreteParameter(std::string varName_, pVariable variable_, T *value_, pParametersGroup allowedDeps_)
+      : Parameter(varName_, variable_, allowedDeps_), value(value_) {}
 
     void evaluate()
     {
-      std::cout << "Evaluating Parameter" << varName << "\n";
+      //std::cout << "Evaluating Parameter " << varName << "\n";
       if (! variable->isInitialised())
-        throw VariableNotInitialisedException();
+        throw VariableNotInitialisedException(varName);
 
       if (variable->isReadOnly())
       {
@@ -101,8 +137,12 @@ class BlockParameters
       block = context;
     }
 
+
     template<typename T>
-    pParameter addParameter(std::string varName, T* var, Permissions perm=readwrite)
+    pParameter addParameter(std::string varName,
+                            T* var,
+                            pParametersGroup allowedDeps,
+                            Permissions perm=readwrite)
     {
       T defaultValue = T(); // ensure default values
       pVariable variable;
@@ -116,10 +156,35 @@ class BlockParameters
       }
       block->addVariable(varName, variable);
 
-      pParameter par(new ConcreteParameter<T>(varName, variable, var));
+      pParameter par(new ConcreteParameter<T>(varName, variable, var, allowedDeps));
       parameterMap[varName] = par;
       return par;
     }
+
+    template<typename T>
+    pParameter addParameter(std::string varName, T* var, Permissions perm=readwrite)
+    {
+      pParametersGroup empty(new ParametersGroup());
+      return addParameter(varName, var, empty, perm);
+    }
+
+    template<
+      class T,
+      int rank,
+      template<int> class CheckingPolicy
+    >
+    Array<pParameter, rank, CheckingPolicy> addArrayParameter(
+        std::string varName,
+        Array<T, rank, CheckingPolicy> &var,
+        Permissions perm=readwrite,
+        std::string extension = "xyzuvw")
+    {
+        Array<pParameter, rank, CheckingPolicy>  result;
+        for (int i=0; i<rank; ++i)
+          result[i] = addParameter(varName+extension[i], &(var[i]), perm);
+        return result;
+    }
+
 
     void evaluate()
     {

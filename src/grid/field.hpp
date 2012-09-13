@@ -43,15 +43,15 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
 {
   public:
     typedef Range<double, rank> FieldRange;
-    typedef RecDomain<rank> FieldDomain;
     typedef Array<bool, rank> Stagger;
+    typedef typename Grid<T, rank, CheckingPolicy, StoragePolicy>::IndexType IndexType;
   private:
     FieldRange range;
     Stagger stagger;
     /// Stores the size of the simulation domain
     IndexType size;
 
-    static IndexType &calcGridSize(const IndexType &size, const Stagger &stagger);
+    static IndexType calcGridSize(const IndexType &size, const Stagger &stagger);
   public:
     /** default constructor creates an empty grid */
     Field();
@@ -65,7 +65,7 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     Field(const IndexType &size, const FieldRange &range_, const Stagger &stagger_);
 
     /** copy constructor */
-    Field(const Grid<T, rank, CheckingPolicy, StoragePolicy>&);
+    Field(const Field<T, rank, CheckingPolicy, StoragePolicy>&);
 
     /** Calculates index and offset from a position on the field
      *
@@ -85,6 +85,6 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
 
 } //namespace
 
-#include field.t
+#include "field.t"
 
 #endif // SCHNEK_FIELD_HPP_
