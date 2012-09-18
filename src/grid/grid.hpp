@@ -45,10 +45,58 @@ struct IndexCast;
 template<
   typename T, 
   int rank,
+  class CheckingPolicy,
+  class StoragePolicy
+>
+class GridBase : public StoragePolicy, public CheckingPolicy
+{
+  public:
+    typedef T value_type;
+    typedef Array<int,rank> IndexType;
+    typedef GridBase<T,rank,CheckingPolicy,StoragePolicy> GridBaseType;
+    enum {Rank = rank};
+
+    GridBase();
+    GridBase(const IndexType &size);
+    GridBase(const IndexType &low, const IndexType &high);
+
+    /** index operator, writing */
+    T& operator[](const IndexType& pos); // write
+    /** index operator, reading */
+    T  operator[](const IndexType& pos) const; // read
+    /** index operator, writing */
+    T& operator()(int i);
+    /** index operator, reading */
+    T  operator()(int i) const;
+    /** index operator, writing */
+    T& operator()(int i, int j);
+    /** index operator, reading */
+    T  operator()(int i, int j) const;
+    /** index operator, writing */
+    T& operator()(int i, int j, int k);
+    /** index operator, reading */
+    T  operator()(int i, int j, int k) const;
+    /** index operator, writing */
+    T& operator()(int i, int j, int k, int l);
+    /** index operator, reading */
+    T  operator()(int i, int j, int k, int l) const;
+    /** index operator, writing */
+    T& operator()(int i, int j, int k, int l, int m);
+    /** index operator, reading */
+    T  operator()(int i, int j, int k, int l, int m) const;
+};
+
+
+
+/** An elementary grid class */
+template<
+  typename T,
+  int rank,
   template<int> class CheckingPolicy = GridNoArgCheck,
   template<typename, int> class StoragePolicy = SingleArrayGridStorage
 >
-class Grid : public StoragePolicy<T,rank>, public CheckingPolicy<rank> {
+class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >
+{
 
   public:
     typedef T value_type;
@@ -87,31 +135,7 @@ class Grid : public StoragePolicy<T,rank>, public CheckingPolicy<rank> {
 
     /** copy constructor */
     Grid(const Grid<T, rank, CheckingPolicy, StoragePolicy>&);
-    
-    /** index operator, writing */
-    T& operator[](const IndexType& pos); // write
-    /** index operator, reading */
-    T  operator[](const IndexType& pos) const; // read
-    /** index operator, writing */
-    T& operator()(int i);
-    /** index operator, reading */
-    T  operator()(int i) const;
-    /** index operator, writing */
-    T& operator()(int i, int j);
-    /** index operator, reading */
-    T  operator()(int i, int j) const;
-    /** index operator, writing */
-    T& operator()(int i, int j, int k);
-    /** index operator, reading */
-    T  operator()(int i, int j, int k) const;
-    /** index operator, writing */
-    T& operator()(int i, int j, int k, int l);
-    /** index operator, reading */
-    T  operator()(int i, int j, int k, int l) const;
-    /** index operator, writing */
-    T& operator()(int i, int j, int k, int l, int m);
-    /** index operator, reading */
-    T  operator()(int i, int j, int k, int l, int m) const;
+
 
     template<typename Arg0>
     IndexedGrid<GridType, TYPELIST_1(Arg0) > operator()(
