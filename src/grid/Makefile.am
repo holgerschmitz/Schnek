@@ -36,6 +36,7 @@ libschnekgridinclude_HEADERS = \
   grid/grid.t               \
   grid/gridstorage.hpp      \
   grid/gridstorage.t        \
-  grid/range.hpp
+  grid/range.hpp            \
+  grid/subgrid.hpp
 
 

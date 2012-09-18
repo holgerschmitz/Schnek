@@ -86,7 +86,7 @@ class SingleArrayGridStorage {
     
     SingleArrayGridStorage(const IndexType &low_, const IndexType &high_);
 
-    virtual ~SingleArrayGridStorage();
+    ~SingleArrayGridStorage();
 
     /** resizes to grid with lower indices low[0],...,low[rank-1]
      *  and upper indices high[0],...,high[rank-1] */
@@ -119,10 +119,9 @@ class SingleArrayGridStorage {
 
   private:
     /** */
-    virtual void deleteData();
+    void deleteData();
     /** */
-    virtual void newData(const IndexType &low_, const IndexType &high_);
-
+    void newData(const IndexType &low_, const IndexType &high_);
 };
 
 } // namespace schnek
