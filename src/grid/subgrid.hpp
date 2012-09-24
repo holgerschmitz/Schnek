@@ -40,7 +40,7 @@ template<
 class SubGridStorage {
   public:
     typedef Array<int,rank> IndexType;
-    typedef BaseGridType;
+    typedef BaseGrid BaseGridType;
   protected:
     typedef RecDomain<rank, CheckingPolicy> DomainType;
     BaseGridType *baseGrid;
@@ -99,9 +99,7 @@ class SubGridStorage {
 
     SubGridStorage();
 
-    SubGridStorage(const IndexType &low_, const IndexType &high_, BaseGridType &baseGrid_);
-
-    virtual ~SubGridStorage();
+    SubGridStorage(const IndexType &low_, const IndexType &high_);
 
     void resize(const IndexType &low_, const IndexType &high_);
 
@@ -111,11 +109,11 @@ class SubGridStorage {
       return baseGrid->get(index);
     }
 
-    const T &get(const IndexType &index)
+    const T &get(const IndexType &index) const
     {
       CheckingPolicy::check(index, domain.getMin(), domain.getMax());
       return baseGrid->get(index);
-    } const;
+    }
 
     /** */
     const IndexType& getLow() const { return domain.getMin(); }
@@ -136,6 +134,9 @@ class SubGridStorage {
 
     const_storage_iterator cbegin() const { return const_storage_iterator(data); }
     const_storage_iterator cend() const { return const_storage_iterator(data + size); }
+
+    void setBaseGrid(BaseGridType &baseGrid_) { baseGrid = &baseGrid_; }
+
 };
 
 template<
@@ -155,12 +156,24 @@ class SubGrid
       >
     >
 {
+  private:
+    typedef GridBase
+        <
+          typename BaseGrid::value_type,
+          BaseGrid::Rank,
+          CheckingPolicy<BaseGrid::Rank>,
+          SubGridStorage<
+            typename BaseGrid::value_type,
+            BaseGrid::Rank,
+            BaseGrid
+          >
+        > ParentType;
 
   public:
     enum {Rank = BaseGrid::Rank};
     typedef typename BaseGrid::value_type value_type;
     typedef Array<int,Rank> IndexType;
-
+    typedef BaseGrid BaseGridType;
     /** default constructor creates an empty grid */
     SubGrid();
 
@@ -174,7 +187,7 @@ class SubGrid
      *
      *  The ranges then extend from 0 to size[i]-1
      */
-    SubGrid(const IndexType &size);
+    SubGrid(const IndexType &size, BaseGridType &baseGrid_);
 
     /** constructor, which builds Grid with lower indices low[0],...,low[rank-1]
      *  and upper indices high[0],...,high[rank-1]
@@ -188,39 +201,8 @@ class SubGrid
      *
      *  The ranges then extend from low[i] to high[i]
      */
-    SubGrid(const IndexType &low, const IndexType &high);
+    SubGrid(const IndexType &low, const IndexType &high, BaseGridType &baseGrid_);
 
-    /** copy constructor */
-    SubGrid(const Grid<T, rank, CheckingPolicy, StoragePolicy>&);
-
-    /** assign another grid */
-    Grid<T, rank, CheckingPolicy, StoragePolicy>&
-      operator=(const Grid<T, rank, CheckingPolicy, StoragePolicy>&);
-
-    /** assign a value */
-    Grid<T, rank, CheckingPolicy, StoragePolicy>&
-      operator=(const T &val);
-
-    template<
-      template<int> class CheckingPolicy2,
-      template<typename, int> class StoragePolicy2
-    >
-    Grid<T, rank, CheckingPolicy, StoragePolicy>&
-      operator-=(Grid<T, rank, CheckingPolicy2, StoragePolicy2>&);
-
-    template<
-      template<int> class CheckingPolicy2,
-      template<typename, int> class StoragePolicy2
-    >
-    Grid<T, rank, CheckingPolicy, StoragePolicy>&
-      operator+=(Grid<T, rank, CheckingPolicy2, StoragePolicy2>&);
-
-    void resize(const IndexType &size);
-
-    void resize(const IndexType &low, const IndexType &high);
-
-    /** Resize to match the size of another matrix */
-    void resize(const Grid<T, rank>& matr);
 };
 
 

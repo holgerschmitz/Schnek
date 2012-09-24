@@ -84,11 +84,100 @@ class GridBase : public StoragePolicy, public CheckingPolicy
     T& operator()(int i, int j, int k, int l, int m);
     /** index operator, reading */
     T  operator()(int i, int j, int k, int l, int m) const;
+
+    /** assign another grid */
+    template<
+      typename T2,
+      class CheckingPolicy2,
+      class StoragePolicy2
+    >
+    GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+      operator=(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>&);
+
+    /** assign a value */
+    GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+      operator=(const T &val);
+
+    template<
+      typename T2,
+      class CheckingPolicy2
+    >
+    GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+      operator-=(Grid<T2, rank, CheckingPolicy2, StoragePolicy>&);
+
+    template<
+      typename T2,
+      class CheckingPolicy2,
+      class StoragePolicy2
+    >
+    GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+      operator-=(Grid<T2, rank, CheckingPolicy2, StoragePolicy2>&);
+
+    template<
+      typename T2,
+      class CheckingPolicy2
+    >
+    GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+      operator+=(Grid<T2, rank, CheckingPolicy2, StoragePolicy>&);
+
+
+    template<
+      typename T2,
+      class CheckingPolicy2,
+      class StoragePolicy2
+    >
+    GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+      operator+=(Grid<T2, rank, CheckingPolicy2, StoragePolicy2>&);
+
+    /** Resize to size[0] x ... x size[rank-1]
+     *
+     *  Example:
+     *  \begin{verbatim}
+     *  Grid<double,2>::IndexType size=(512,512);
+     *  Grid<double,2> m;
+     *  m.resize(size);
+     *  \end{verbatim}
+     *
+     *  The ranges then extend from 0 to size[i]-1
+     */
+    void resize(const IndexType &size);
+
+    /** Resize to lower indices low[0],...,low[rank-1]
+     *  and upper indices high[0],...,high[rank-1]
+     *
+     *  Example:
+     *  \begin{verbatim}
+     *  Grid<double,2>::IndexType low(-5,-10);
+     *  Grid<double,2>::IndexType high(15,36);
+     *  Grid<double,2> m;
+     *  m.resize(l,h);
+     *  \end{verbatim}
+     *
+     *  The ranges then extend from low[i] to high[i]
+     */
+    void resize(const IndexType &low, const IndexType &high);
+
+    /** Resize to match the size of another matrix */
+    template<
+      typename T2,
+      class CheckingPolicy2,
+      class StoragePolicy2
+    >
+    void resize(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy>& grid);
+
+  protected:
+    // assumes that the sizes are already set properly
+    template<class CheckingPolicy2>
+    void copyFromGrid(const GridBase<T, rank, CheckingPolicy2, StoragePolicy>& grid);
+
 };
 
 
 
-/** An elementary grid class */
+/** An elementary grid class
+ *
+ *  The reason we inherit from GridBase, is for ease of specifying template arguments.
+ */
 template<
   typename T,
   int rank,
@@ -146,62 +235,6 @@ class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Ran
     IndexedGrid<GridType, TYPELIST_2(Arg0, Arg1) > operator()(
       const Arg0 &i0, const Arg1 &i1
     );
-        
-    /** assign another grid */
-    Grid<T, rank, CheckingPolicy, StoragePolicy>& 
-      operator=(const Grid<T, rank, CheckingPolicy, StoragePolicy>&);
-
-    /** assign a value */
-    Grid<T, rank, CheckingPolicy, StoragePolicy>& 
-      operator=(const T &val);
-    
-    template<
-      template<int> class CheckingPolicy2,
-      template<typename, int> class StoragePolicy2
-    >
-    Grid<T, rank, CheckingPolicy, StoragePolicy>&
-      operator-=(Grid<T, rank, CheckingPolicy2, StoragePolicy2>&);
-
-    template<
-      template<int> class CheckingPolicy2,
-      template<typename, int> class StoragePolicy2
-    >
-    Grid<T, rank, CheckingPolicy, StoragePolicy>&
-      operator+=(Grid<T, rank, CheckingPolicy2, StoragePolicy2>&);
-
-    /** Resize to size[0] x ... x size[rank-1]
-     * 
-     *  Example: 
-     *  \begin{verbatim}
-     *  Grid<double,2>::IndexType size=(512,512);
-     *  Grid<double,2> m;
-     *  m.resize(size);
-     *  \end{verbatim}
-     * 
-     *  The ranges then extend from 0 to size[i]-1
-     */        
-    void resize(const IndexType &size);
-
-    /** Resize to lower indices low[0],...,low[rank-1]
-     *  and upper indices high[0],...,high[rank-1]
-     * 
-     *  Example: 
-     *  \begin{verbatim}
-     *  Grid<double,2>::IndexType low(-5,-10);
-     *  Grid<double,2>::IndexType high(15,36);
-     *  Grid<double,2> m;
-     *  m.resize(l,h);
-     *  \end{verbatim}
-     * 
-     *  The ranges then extend from low[i] to high[i]
-     */
-    void resize(const IndexType &low, const IndexType &high);
-   
-    /** Resize to match the size of another matrix */
-    void resize(const Grid<T, rank>& matr);
-  private:
-    // assumes that the sizes are already set properly
-    void copyFromGrid(const Grid<T, rank, CheckingPolicy, StoragePolicy>& matr);
 };
 
 } // namespace schnek

@@ -27,22 +27,64 @@
 namespace schnek
 {
 
-SubGridStorage::SubGridStorage()
+template<
+  typename T,
+  int rank,
+  class BaseGrid
+>
+SubGridStorage<T, rank, BaseGrid>::SubGridStorage()
   : baseGrid(NULL), domain(0,0), dims(0)
 {}
 
-SubGridStorage(const IndexType &low_, const IndexType &high_, BaseGridType &baseGrid_)
-  : baseGrid(&baseGrid_), domain(low_, high_)
+template<
+  typename T,
+  int rank,
+  class BaseGrid
+>
+SubGridStorage<T, rank, BaseGrid>::SubGridStorage(const IndexType &low_, const IndexType &high_)
+  : baseGrid(NULL), domain(low_, high_)
 {
   for (int d = 0; d < rank; d++)
     dims[d] = high_[d] - low_[d] + 1;
 }
 
-void resize(const IndexType &low_, const IndexType &high_)
+template<
+  typename T,
+  int rank,
+  class BaseGrid
+>
+void SubGridStorage<T, rank, BaseGrid>::resize(const IndexType &low_, const IndexType &high_)
 {
-  domain = DomainType(low_, high_);
-  for (int d = 0; d < rank; d++)
-    dims[d] = high_[d] - low_[d] + 1;
+    domain = DomainType(low, high);
 }
+
+template<
+  class BaseGrid,
+  template<int> class CheckingPolicy = GridNoArgCheck
+>
+SubGrid<BaseGrid, CheckingPolicy>::SubGrid()
+  : ParentType()
+{}
+
+template<
+  class BaseGrid,
+  template<int> class CheckingPolicy = GridNoArgCheck
+>
+SubGrid<BaseGrid, CheckingPolicy>::SubGrid(const IndexType &size, BaseGridType &baseGrid_)
+  : ParentType(size)
+{
+    setBaseGrid(baseGrid_);
+}
+
+template<
+  class BaseGrid,
+  template<int> class CheckingPolicy = GridNoArgCheck
+>
+SubGrid<BaseGrid, CheckingPolicy>::SubGrid(const IndexType &low, const IndexType &high, BaseGridType &baseGrid_)
+  : ParentType(low, high)
+{
+  setBaseGrid(baseGrid_);
+}
+
 
 } // namespace schnek
