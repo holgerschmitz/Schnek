@@ -1,0 +1,252 @@
+/*
+ * hdfdiagnostic.cpp
+ *
+ * Created on: 23 Oct 2012
+ * Author: hschmitz
+ * Email: holger@notjustphysics.com
+ *
+ * Copyright 2012 Holger Schmitz
+ *
+ * This file is part of Schnek.
+ *
+ * Schnek is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Schnek is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+#include "hdfdiagnostic.hpp"
+
+using namespace schnek;
+
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
+#include <mpi.h>
+#endif
+
+HdfStream::HdfStream()
+  : file_id(-1),
+    status(0),
+    blockname("data"),
+    sets_count(0),
+    active(true),
+    activeModified(false)
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
+    , commSet(false)
+#endif
+{}
+
+HdfStream::HdfStream(const HdfStream& hdf)
+  : file_id(hdf.file_id),
+    status(hdf.status),
+    blockname(hdf.blockname),
+    sets_count(hdf.sets_count),
+    active(true),
+    activeModified(false)
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
+    , commSet(false)
+#endif
+{}
+
+HdfStream &HdfStream::operator=(const HdfStream& hdf)
+{
+  file_id = hdf.file_id;
+  status = hdf.status;
+  sets_count = hdf.sets_count;
+  blockname = hdf.blockname;
+  active = hdf.active;
+  activeModified = hdf.activeModified;
+#ifdef USE_HDF_PARALLEL
+  mpiComm = hdf.mpiComm;
+  commSet = hdf.commSet;
+#endif
+  return *this;
+}
+
+HdfStream::~HdfStream()
+{
+  close();
+}
+
+void HdfStream::close()
+{
+  if (file_id >= 0) {
+    H5Fclose (file_id);
+  }
+  file_id = -1;
+}
+
+bool HdfStream::good() const
+{
+  return (file_id>=0);
+}
+
+void HdfStream::setBlockName(std::string blockname_)
+{
+  blockname = blockname_;
+  sets_count = -1;
+}
+
+std::string HdfStream::getNextBlockName()
+{
+  std::ostringstream bname;
+  bname << blockname;
+
+  if (sets_count<0) sets_count = 1;
+  else
+  {
+    bname << sets_count++;
+  }
+  return bname.str();
+}
+
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
+void HdfStream::makeMPIGroup()
+{
+  if (!activeModified) {
+    if (!commSet)
+    {
+      mpiComm = MPI_COMM_WORLD;
+      commSet = true;
+    }
+    return;
+  }
+
+  int rank, size;
+  MPI_Group worldGroup, activeGroup;
+
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
+
+  int *inputArr = new int[size];
+  int *activeArr = new int[size];
+
+  for (int i=0; i<size; ++i) inputArr[i] = 0;
+  if (active) inputArr[rank] = 1;
+
+  MPI_Allreduce(inputArr, activeArr, size, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+  int count = 0;
+  for (int i=0; i<size; ++i)
+  {
+    if (activeArr[i]>0) {
+      inputArr[count] = i;
+      ++count;
+    }
+  }
+
+  MPI_Group_incl(worldGroup, count, inputArr, &activeGroup);
+  MPI_Comm_create(MPI_COMM_WORLD, activeGroup, &mpiComm);
+
+  delete[] activeArr;
+  delete[] inputArr;
+
+  activeModified = false;
+}
+#endif
+
+
+// ----------------------------------------------------------------------
+
+HdfIStream::HdfIStream()
+  : HdfStream() {}
+
+HdfIStream::HdfIStream(const char* fname)
+  : HdfStream()
+{
+  open(fname);
+}
+
+HdfIStream::HdfIStream(const HdfIStream& hdf)
+  : HdfStream(hdf)
+{}
+
+int HdfIStream::open(const char* fname)
+{
+  close();
+
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
+  makeMPIGroup();
+  if (active)
+  {
+    /* setup file access template */
+    hid_t plist_id = H5Pcreate (H5P_FILE_ACCESS);
+
+    /* set Parallel access with communicator */
+    H5Pset_fapl_mpio(plist_id, mpiComm, MPI_INFO_NULL);
+//    H5Pset_fapl_mpiposix(plist_id, mpiComm, 0);
+    /* open the file collectively */
+    file_id = H5Fopen (fname, H5F_ACC_RDONLY, plist_id);
+    /* Release file-access template */
+    H5Pclose(plist_id);
+  }
+#else
+  if (active)
+    file_id = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT);
+#endif
+  sets_count = 0;
+  return 1;
+}
+
+
+// ----------------------------------------------------------------------
+
+HdfOStream::HdfOStream()
+   : HdfStream()
+{}
+
+HdfOStream::HdfOStream(const HdfOStream& hdf)
+  : HdfStream(hdf)
+{}
+
+HdfOStream::HdfOStream(const char* fname)
+   : HdfStream()
+{
+  open(fname);
+}
+
+int HdfOStream::open(const char* fname)
+{
+  sets_count = 0;
+
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
+  makeMPIGroup();
+  if (active)
+  {
+    /* setup file access template */
+    hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
+    /* set Parallel access with communicator */
+    H5Pset_fapl_mpio(plist_id, mpiComm, MPI_INFO_NULL);
+    /* open the file collectively */
+//    H5Pset_fapl_mpiposix(plist_id, mpiComm, 0);
+    file_id = H5Fcreate (fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    /* Release file-access template */
+    H5Pclose(plist_id);
+  }
+#else
+  if (active)
+    file_id = H5Fcreate (fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+#endif
+
+  return file_id;
+}
+
+// ----------------------------------------------------------------------
+
+template<>
+const hid_t H5DataType<int>::type = H5T_NATIVE_INT;
+
+template<>
+const hid_t H5DataType<float>::type = H5T_NATIVE_FLOAT;
+
+template<>
+const hid_t H5DataType<double>::type = H5T_NATIVE_DOUBLE;

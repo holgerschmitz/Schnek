@@ -2,7 +2,7 @@
  * blockparameters.cpp
  *
  * Created on: 6 Sep 2012
- * Author: hschmitz
+ * Author: Holger Schmitz
  * Email: holger@notjustphysics.com
  *
  * Copyright 2012 Holger Schmitz

@@ -2,7 +2,7 @@
  * subgrid.hpp
  *
  * Created on: 18 Sep 2012
- * Author: hschmitz
+ * Author: Holger Schmitz
  * Email: holger@notjustphysics.com
  *
  * Copyright 2012 Holger Schmitz
@@ -41,8 +41,8 @@ class SubGridStorage {
   public:
     typedef Array<int,rank> IndexType;
     typedef BaseGrid BaseGridType;
+    typedef RecDomain<rank> DomainType;
   protected:
-    typedef RecDomain<rank, CheckingPolicy> DomainType;
     BaseGridType *baseGrid;
     DomainType domain;
     IndexType dims;
@@ -51,10 +51,10 @@ class SubGridStorage {
 
     class storage_iterator {
       protected:
-        DomainType::iterator it;
+        typename DomainType::iterator it;
         BaseGridType *baseGrid;
         T* element;
-        storage_iterator(DomainType::iterator it_, BaseGridType *baseGrid_)
+        storage_iterator(typename DomainType::iterator it_, BaseGridType *baseGrid_)
           : it(it_), baseGrid(baseGrid_), element(&baseGrid->get(*it)) {}
 
         friend class SubGridStorage;
@@ -63,7 +63,7 @@ class SubGridStorage {
         T& operator*() { return *element;}
         storage_iterator &operator++()
         {
-          it++;
+          ++it;
           element = &baseGrid->get(*it);
           return *this;
         }
@@ -76,10 +76,11 @@ class SubGridStorage {
 
     class const_storage_iterator {
       protected:
-        DomainType::iterator it;
+        typename DomainType::iterator it;
         const BaseGridType *baseGrid;
         const T* element;
-        const_storage_iterator(const T* element_) : element(element_) {}
+        const_storage_iterator(typename DomainType::iterator it_, BaseGridType *baseGrid_)
+          : it(it_), baseGrid(baseGrid_), element(&baseGrid->get(*it)) {}
 
         friend class SubGridStorage;
 
@@ -87,7 +88,7 @@ class SubGridStorage {
         const T& operator*() { return *element;}
         const_storage_iterator &operator++()
         {
-          it++;
+          ++it;
           element = &baseGrid->get(*it);
           return *this;
         }
@@ -105,35 +106,35 @@ class SubGridStorage {
 
     T &get(const IndexType &index)
     {
-      CheckingPolicy::check(index, domain.getMin(), domain.getMax());
+      typename BaseGrid::template CheckingPolicy<rank>::check(index, domain.getLo(), domain.getHi());
       return baseGrid->get(index);
     }
 
     const T &get(const IndexType &index) const
     {
-      CheckingPolicy::check(index, domain.getMin(), domain.getMax());
+      typename BaseGrid::template CheckingPolicy<rank>::check(index, domain.getLo(), domain.getHi());
       return baseGrid->get(index);
     }
 
     /** */
-    const IndexType& getLow() const { return domain.getMin(); }
+    const IndexType& getLo() const { return domain.getLo(); }
     /** */
-    const IndexType& getHigh() const { return domain.getMax(); }
+    const IndexType& getHi() const { return domain.getHi(); }
     /** */
     const IndexType& getDims() const { return dims; }
 
     /** */
-    int getLow(int k) const { return domain.getMin()[k]; }
+    int getLo(int k) const { return domain.getLo()[k]; }
     /** */
-    int getHigh(int k) const { return domain.getMax()[k]; }
+    int getHi(int k) const { return domain.getHi()[k]; }
     /** */
     int getDims(int k) const { return dims[k]; }
 
-    storage_iterator begin() { return storage_iterator(data); }
-    storage_iterator end() { return storage_iterator(data + size); }
+    storage_iterator begin() { return storage_iterator(domain.begin(), baseGrid); }
+    storage_iterator end() { return storage_iterator(domain.end(), baseGrid); }
 
-    const_storage_iterator cbegin() const { return const_storage_iterator(data); }
-    const_storage_iterator cend() const { return const_storage_iterator(data + size); }
+    const_storage_iterator cbegin() const { return const_storage_iterator(domain.cbegin(), baseGrid); }
+    const_storage_iterator cend() const { return const_storage_iterator(domain.cend(), baseGrid); }
 
     void setBaseGrid(BaseGridType &baseGrid_) { baseGrid = &baseGrid_; }
 

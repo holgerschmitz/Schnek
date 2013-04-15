@@ -37,6 +37,7 @@ libschnekinclude_HEADERS = \
   functions.hpp        \
   grid.hpp             \
   parser.hpp           \
+  schnek_config.hpp    \
   typetools.hpp        \
   util.hpp             \
   variables.hpp        \
@@ -45,6 +46,7 @@ libschnekinclude_HEADERS = \
   
 libschnek_la_LDFLAGS = -version-info 0:0:0
 
+include diagnostic/Makefile.am
 include grid/Makefile.am
 include parser/Makefile.am
 include variables/Makefile.am

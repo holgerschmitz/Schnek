@@ -101,7 +101,7 @@ struct FArrScalarHolderExp {
     value_type operator[](int i) const { return val; }
 };
 
-/**An operator type implementing the plus sign
+/**An operator type implementing addition
  */
 template<typename T>
 struct FArrOpPlus {
@@ -111,7 +111,7 @@ struct FArrOpPlus {
   static value_type apply(value_type x, value_type y) { return x+y; }
 };
 
-/**An operator type implementing the minus sign
+/**An operator type implementing subtraction
  */
 template<typename T>
 struct FArrOpMinus {
@@ -121,7 +121,7 @@ struct FArrOpMinus {
   static value_type apply(value_type x, value_type y) { return x-y; }
 };
 
-/**An operator type implementing the plus sign
+/**An operator type implementing multiplication
  */
 template<typename T>
 struct FArrOpMult {
@@ -131,7 +131,7 @@ struct FArrOpMult {
   static value_type apply(value_type x, value_type y) { return x*y; }
 };
 
-/**An operator type implementing the plus sign
+/**An operator type implementing division
  */
 template<typename T>
 struct FArrOpDiv {

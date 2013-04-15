@@ -25,6 +25,7 @@
  */
 
 #include <sstream>
+#include "exceptions.hpp"
 
 using namespace schnek;
 
@@ -34,9 +35,9 @@ ScheckException::ScheckException(const std::string& file, long line,
   std::ostringstream msg_stream;
   msg_stream << function << std::endl
       << file << "(" << line << "): " << message_ << std::endl;
-  message = msg_stream.string();
+  message = msg_stream.str();
 }
 
-const char* Error::what() const throw () {
-    return message_->c_str();
+const char* ScheckException::what() const throw () {
+    return message.c_str();
 }

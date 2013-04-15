@@ -2,7 +2,7 @@
  * grid.hpp
  *
  * Created on: 31 Aug 2012
- * Author: hschmitz
+ * Author: Holger Schmitz
  * Email: holger@notjustphysics.com
  *
  * Copyright 2012 Holger Schmitz
@@ -28,8 +28,10 @@
 #include "grid/arraycheck.hpp"
 #include "grid/arrayexpression.hpp"
 #include "grid/domain.hpp"
+#include "grid/domainsubdivision.hpp"
 #include "grid/field.hpp"
 #include "grid/grid.hpp"
 #include "grid/gridcheck.hpp"
 #include "grid/gridstorage.hpp"
+#include "grid/mpisubdivision.hpp"
 #include "grid/range.hpp"

@@ -85,7 +85,7 @@ if (!(condition)) { \
 
 // duplications of the macros allowing for other exceptions with comparable constructor
 
-#define SCHNECK_FAIL(message, exceptclass) \
+#define SCHNECK_FAIL_E(message, exceptclass) \
 { \
     std::ostringstream _schnek_msg_stream; \
     _schnek_msg_stream << message; \
@@ -94,7 +94,7 @@ if (!(condition)) { \
 }
 
 
-#define SCHNEK_ASSERT(condition,message, exceptclass) \
+#define SCHNEK_ASSERT_E(condition,message, exceptclass) \
 if (!(condition)) { \
     std::ostringstream _schnek_msg_stream; \
     _schnek_msg_stream << message; \
@@ -102,7 +102,7 @@ if (!(condition)) { \
                           BOOST_CURRENT_FUNCTION,_schnek_msg_stream.str()); \
 }
 
-#define SCHNEK_REQUIRE(condition,message, exceptclass) \
+#define SCHNEK_REQUIRE_E(condition,message, exceptclass) \
 if (!(condition)) { \
     std::ostringstream _schnek_msg_stream; \
     _schnek_msg_stream << message; \
@@ -110,7 +110,7 @@ if (!(condition)) { \
                           BOOST_CURRENT_FUNCTION,_schnek_msg_stream.str()); \
 }
 
-#define SCHNEK_ENSURE(condition,message, exceptclass) \
+#define SCHNEK_ENSURE_E(condition,message, exceptclass) \
 if (!(condition)) { \
     std::ostringstream _schnek_msg_stream; \
     _schnek_msg_stream << message; \

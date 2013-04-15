@@ -21,11 +21,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
  
-libschnek_la_SOURCES +=
+libschnek_la_SOURCES += \
+  util/exceptions.cpp \
+  util/factor.cpp 
 
 libschnekutilincludedir = $(includedir)/schnek/util
 
 libschnekutilinclude_HEADERS = \
+  util/algohelper.hpp  \
+  util/exceptions.hpp  \
+  util/factor.hpp  \
+  util/logger.hpp  \
   util/singleton.hpp  \
   util/unique.hpp
   

@@ -49,7 +49,7 @@ namespace schnek {
  *  The message argument can consist of multiple strings or values
  *  concatenated with <<. It should end in a newline.
  */
-#define SCHNEK_TRACE_LOG(i,x)                                  \
+#define SCHNEK_TRACE_LOG(i,x)                         \
   BOOST_PP_IIF( BOOST_PP_GREATER_EQUAL( LOGLEVEL, i ), \
     schnek::Logger::instance().out() << __LINE__ << " " << __FILE__ << ": "<< x << "\n";, \
     BOOST_PP_EMPTY()                                   \
@@ -94,7 +94,7 @@ namespace schnek {
  */
 #define LOGLEVEL 2
 
-#include "../singleton.h"
+#include "singleton.hpp"
 
 /** Instance of the logger singleton used for logging debug and error
  *  messages.
@@ -103,7 +103,7 @@ namespace schnek {
  *  messages. These are provided by the methods out and err. Currently they
  *  are implemented to return the std::cout and std::cerr streams.
  */
-class Logger : public Singleton<Globals>
+class Logger : public Singleton<Logger>
 {
   public:
     /** Return the ostream for writing standard debug comments.
@@ -124,12 +124,12 @@ class Logger : public Singleton<Globals>
     /** The private default constructor can only be called by the
      *  singleton template.
      */
-    LoggerInstance() { }
+    Logger() { }
 
     /** The private destructor can only be called by the
      *  singleton template.
      */
-    ~LoggerInstance() {
+    ~Logger() {
 //      std::cerr << "DELETING LOGGER "<< this <<" " <<i<<"\n";
     }
 };
@@ -156,13 +156,6 @@ class Logger : public Singleton<Globals>
  *  This will only produce code for the level 1 and 2 statements. All other
  *  macros expand to nothing.
  */
-
-} // namespace davtools
-
-#include "logger.t"
-
-#endif
-
 
 } // namespace 
 #endif // LOGGER_HPP_ 

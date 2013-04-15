@@ -55,40 +55,16 @@ struct ExpressionConverterVisitor : public boost::static_visitor<ExpressionVaria
 template<class vtype, typename func>
 class FunctionExpression : public Expression<vtype>
 {
-  private:
+  public:
     typedef typename bft::result_type<func>::type rtype;
 
     template<
       typename from = typename mpl::begin< bft::parameter_types<func> >::type,
       typename to = typename mpl::end< bft::parameter_types<func> >::type
     >
-    struct converter
-    {
-        typedef typename bft::result_type<func>::type rtype;
-        typedef typename mpl::deref<from>::type arg_type;
-        typedef typename mpl::next<from>::type next_type_iter;
+    struct converter;
 
-        static void makeList(ExpressionList::iterator var, ExpressionList::iterator end, ExpressionList &args)
-        {
-          if (var == end) throw WrongNumberOfArgsException();
-
-          ExpressionConverterVisitor<arg_type> visit;
-          args.push_back(boost::apply_visitor(visit, (*var)));
-          ++var;
-          FunctionExpression<vtype, func>::converter<next_type_iter, to>::makeList(var, end, args);
-        }
-
-        template<typename ArgType>
-        static rtype evaluate(func f, ExpressionList::iterator var, ArgType const &sArgs)
-        {
-          typedef boost::shared_ptr< Expression<arg_type> > pExprType;
-          pExprType expr = boost::get<pExprType>(*var);
-          ++var;
-          return FunctionExpression<vtype, func>::converter<next_type_iter, to>::evaluate(f, var, fusion::push_back(sArgs, expr->eval()));
-        }
-
-    };
-
+  private:
     struct isConstantVisitor : public boost::static_visitor<bool>
     {
         template<class ExpressionPointer>
@@ -124,6 +100,38 @@ struct FunctionExpression<vtype, func>::converter<to, to>
   {
     return fusion::invoke(f, sArgs);
   }
+};
+
+template<class vtype, typename func>
+template<
+  typename from,
+  typename to
+>
+struct FunctionExpression<vtype, func>::converter
+{
+    typedef typename bft::result_type<func>::type rtype;
+    typedef typename mpl::deref<from>::type arg_type;
+    typedef typename mpl::next<from>::type next_type_iter;
+
+    static void makeList(ExpressionList::iterator var, ExpressionList::iterator end, ExpressionList &args)
+    {
+      if (var == end) throw WrongNumberOfArgsException();
+
+      ExpressionConverterVisitor<arg_type> visit;
+      args.push_back(boost::apply_visitor(visit, (*var)));
+      ++var;
+      FunctionExpression<vtype, func>::converter<next_type_iter, to>::makeList(var, end, args);
+    }
+
+    template<typename ArgType>
+    static rtype evaluate(func f, ExpressionList::iterator var, ArgType const &sArgs)
+    {
+      typedef boost::shared_ptr< Expression<arg_type> > pExprType;
+      pExprType expr = boost::get<pExprType>(*var);
+      ++var;
+      return FunctionExpression<vtype, func>::converter<next_type_iter, to>::evaluate(f, var, fusion::push_back(sArgs, expr->eval()));
+    }
+
 };
 
 template<class vtype, typename func>

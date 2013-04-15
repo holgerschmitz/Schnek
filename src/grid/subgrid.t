@@ -2,7 +2,7 @@
  * subgrid.t
  *
  * Created on: 18 Sep 2012
- * Author: hschmitz
+ * Author: Holger Schmitz
  * Email: holger@notjustphysics.com
  *
  * Copyright 2012 Holger Schmitz
@@ -55,12 +55,12 @@ template<
 >
 void SubGridStorage<T, rank, BaseGrid>::resize(const IndexType &low_, const IndexType &high_)
 {
-    domain = DomainType(low, high);
+    domain = DomainType(low_, high_);
 }
 
 template<
   class BaseGrid,
-  template<int> class CheckingPolicy = GridNoArgCheck
+  template<int> class CheckingPolicy
 >
 SubGrid<BaseGrid, CheckingPolicy>::SubGrid()
   : ParentType()
@@ -68,7 +68,7 @@ SubGrid<BaseGrid, CheckingPolicy>::SubGrid()
 
 template<
   class BaseGrid,
-  template<int> class CheckingPolicy = GridNoArgCheck
+  template<int> class CheckingPolicy
 >
 SubGrid<BaseGrid, CheckingPolicy>::SubGrid(const IndexType &size, BaseGridType &baseGrid_)
   : ParentType(size)
@@ -78,7 +78,7 @@ SubGrid<BaseGrid, CheckingPolicy>::SubGrid(const IndexType &size, BaseGridType &
 
 template<
   class BaseGrid,
-  template<int> class CheckingPolicy = GridNoArgCheck
+  template<int> class CheckingPolicy
 >
 SubGrid<BaseGrid, CheckingPolicy>::SubGrid(const IndexType &low, const IndexType &high, BaseGridType &baseGrid_)
   : ParentType(low, high)

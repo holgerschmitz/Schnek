@@ -44,8 +44,7 @@ inline Array<T,length,CheckingPolicy>::Array(const Array &fixarr)
 template<class T, int length, template <int> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(const T& v0)
 {
-  BOOST_STATIC_ASSERT(1==length);
-  data[0] = v0;
+  for (int i=0; i<length; ++i) data[i] = v0;
 }
 
 template<class T, int length, template <int> class CheckingPolicy>

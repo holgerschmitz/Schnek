@@ -77,7 +77,7 @@ class Block : public Unique<Block>
     void setParent(pBlock parent_) { parent=parent_; }
     friend class BlockTree;
   protected:
-    virtual void initParameters(BlockParameters&) = 0;
+    virtual void initParameters(BlockParameters&) {}
     virtual void registerData() {}
     virtual void preInit() {}
     virtual void init() {}

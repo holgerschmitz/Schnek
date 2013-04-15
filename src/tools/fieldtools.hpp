@@ -2,7 +2,7 @@
  * fieldtools.hpp
  *
  * Created on: 31 Aug 2012
- * Author: hschmitz
+ * Author: Holger Schmitz
  * Email: holger@notjustphysics.com
  *
  * Copyright 2012 Holger Schmitz
@@ -44,6 +44,20 @@ void fill_field(
     Array<double, rank, ArrayCheckingPolicy> &coords,
     T &value,
     DependencyUpdater &updater);
+
+template<
+  typename T,
+  int rank,
+  template<int> class GridCheckingPolicy,
+  template<int> class ArrayCheckingPolicy,
+  template<typename, int> class StoragePolicy
+>
+void fill_field(
+    Field<T, rank, GridCheckingPolicy, StoragePolicy> &field,
+    Array<double, rank, ArrayCheckingPolicy> &coords,
+    T &value,
+    DependencyUpdater &updater,
+    pParameter dependent);
 
 
 class FieldFiller

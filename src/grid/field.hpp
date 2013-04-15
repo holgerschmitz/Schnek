@@ -50,19 +50,17 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     Stagger stagger;
     /// Stores the size of the simulation domain
     IndexType size;
-
-    static IndexType calcGridSize(const IndexType &size, const Stagger &stagger);
+    int ghostCells;
   public:
     /** default constructor creates an empty grid */
     Field();
 
     /** Constructs a grid with a given number of cells in each direction
      *
-     * The actual number of grid points depends on the stagger.
-     * For a non-staggered grid, the grid contains one more point, because the
-     * boundaries lie at 0 and N.
      */
-    Field(const IndexType &size, const FieldRange &range_, const Stagger &stagger_);
+    Field(const IndexType &size, const FieldRange &range_, const Stagger &stagger_, int ghostCells_);
+
+    Field(const IndexType &low_, const IndexType &high_, const FieldRange &range_, const Stagger &stagger_, int ghostCells_);
 
     /** copy constructor */
     Field(const Field<T, rank, CheckingPolicy, StoragePolicy>&);
@@ -81,6 +79,9 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
 
     /// Calculates the position of a grid point
     double indexToPosition(int dim, int index);
+
+    Stagger& getStagger() { return stagger; }
+    bool getStagger(int i) { return stagger[i]; }
 };
 
 } //namespace

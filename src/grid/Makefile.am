@@ -24,19 +24,28 @@
 libschnekgridincludedir = $(includedir)/schnek/grid
 
 libschnekgridinclude_HEADERS = \
-  grid/array.hpp            \
-  grid/array.t              \
-  grid/arraycheck.hpp       \
-  grid/arrayexpression.hpp  \
-  grid/domain.hpp           \
-  grid/field.hpp            \
-  grid/field.t              \
-  grid/gridcheck.hpp        \
-  grid/grid.hpp             \
-  grid/grid.t               \
-  grid/gridstorage.hpp      \
-  grid/gridstorage.t        \
-  grid/range.hpp            \
-  grid/subgrid.hpp
+  grid/array.hpp              \
+  grid/array.t                \
+  grid/arraycheck.hpp         \
+  grid/arrayexpression.hpp    \
+  grid/boundary.hpp           \
+  grid/boundary.t             \
+  grid/domain.hpp             \
+  grid/domainsubdivision.hpp  \
+  grid/domainsubdivision.t    \
+  grid/field.hpp              \
+  grid/field.t                \
+  grid/gridcheck.hpp          \
+  grid/grid.hpp               \
+  grid/grid.t                 \
+  grid/gridstorage.hpp        \
+  grid/gridstorage.t          \
+  grid/mpisubdivision.hpp     \
+  grid/mpisubdivision.t       \
+  grid/range.hpp              \
+  grid/subgrid.hpp            \
+  grid/subgrid.t              \
+  grid/gridtransform.hpp      \
+  grid/gridtransform.t
 
 

@@ -52,6 +52,8 @@ class GridBase : public StoragePolicy, public CheckingPolicy
 {
   public:
     typedef T value_type;
+    typedef CheckingPolicy CheckingPolicyType;
+    typedef StoragePolicy StoragePolicyType;
     typedef Array<int,rank> IndexType;
     typedef GridBase<T,rank,CheckingPolicy,StoragePolicy> GridBaseType;
     enum {Rank = rank};
@@ -103,7 +105,7 @@ class GridBase : public StoragePolicy, public CheckingPolicy
       class CheckingPolicy2
     >
     GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-      operator-=(Grid<T2, rank, CheckingPolicy2, StoragePolicy>&);
+      operator-=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy>&);
 
     template<
       typename T2,
@@ -111,14 +113,14 @@ class GridBase : public StoragePolicy, public CheckingPolicy
       class StoragePolicy2
     >
     GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-      operator-=(Grid<T2, rank, CheckingPolicy2, StoragePolicy2>&);
+      operator-=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>&);
 
     template<
       typename T2,
       class CheckingPolicy2
     >
     GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-      operator+=(Grid<T2, rank, CheckingPolicy2, StoragePolicy>&);
+      operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy>&);
 
 
     template<
@@ -127,7 +129,7 @@ class GridBase : public StoragePolicy, public CheckingPolicy
       class StoragePolicy2
     >
     GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-      operator+=(Grid<T2, rank, CheckingPolicy2, StoragePolicy2>&);
+      operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>&);
 
     /** Resize to size[0] x ... x size[rank-1]
      *
@@ -163,12 +165,12 @@ class GridBase : public StoragePolicy, public CheckingPolicy
       class CheckingPolicy2,
       class StoragePolicy2
     >
-    void resize(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy>& grid);
+    void resize(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid);
 
   protected:
     // assumes that the sizes are already set properly
-    template<class CheckingPolicy2>
-    void copyFromGrid(const GridBase<T, rank, CheckingPolicy2, StoragePolicy>& grid);
+    template<typename T2, class CheckingPolicy2>
+    void copyFromGrid(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy>& grid);
 
 };
 
@@ -184,7 +186,7 @@ template<
   template<int> class CheckingPolicy = GridNoArgCheck,
   template<typename, int> class StoragePolicy = SingleArrayGridStorage
 >
-class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >
+class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,rank> >
 {
 
   public:
@@ -225,16 +227,20 @@ class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Ran
     /** copy constructor */
     Grid(const Grid<T, rank, CheckingPolicy, StoragePolicy>&);
 
+//
+//    template<typename Arg0>
+//    IndexedGrid<GridType, TYPELIST_1(Arg0) > operator()(
+//      const Arg0 &i0
+//    );
+//
+//    template<typename Arg0, typename Arg1>
+//    IndexedGrid<GridType, TYPELIST_2(Arg0, Arg1) > operator()(
+//      const Arg0 &i0, const Arg1 &i1
+//    );
+    /** assign a value */
+    GridBase<T, rank, CheckingPolicy<rank>, StoragePolicy<T,rank> >& operator=(const T &val)
+      { return GridBase<T, rank, CheckingPolicy<rank>, StoragePolicy<T,rank> >::operator=(val); }
 
-    template<typename Arg0>
-    IndexedGrid<GridType, TYPELIST_1(Arg0) > operator()(
-      const Arg0 &i0
-    );
-
-    template<typename Arg0, typename Arg1>
-    IndexedGrid<GridType, TYPELIST_2(Arg0, Arg1) > operator()(
-      const Arg0 &i0, const Arg1 &i1
-    );
 };
 
 } // namespace schnek

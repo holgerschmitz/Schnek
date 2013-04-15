@@ -27,7 +27,7 @@
 #ifndef SCHNEK_VECTOR_H_
 #define SCHNEK_VECTOR_H_
 
-#include "array.hpp"
+#include "grid/array.hpp"
 
 namespace schnek {
 

@@ -2,7 +2,7 @@
  * range.hpp
  *
  * Created on: 31 Aug 2012
- * Author: hschmitz
+ * Author: Holger Schmitz
  * Email: holger@notjustphysics.com
  *
  * Copyright 2012 Holger Schmitz
@@ -31,10 +31,7 @@
 
 namespace schnek {
 
-/** RecDomain is a rectangular domain that is not bound to any concrete grid data structure.
- *
- *  The rectangular domain is defined by a minimum and maximum. An iterator is provided that
- *  traverses the domain and returns the positions.
+/** Range is a rectangular domain defining two corners
  */
 template<
   class T,
@@ -46,28 +43,36 @@ class Range {
     typedef Array<T,rank,CheckingPolicy> LimitType;
   private:
     /// Minimum and maximum corners of the rectangle
-    LimitType min, max;
+    LimitType lo, hi;
   public:
     /// Construct with rectangle minimum and maximum
-    Range(const LimitType &min_, const LimitType &max_)
-    : min(min_), max(max_) {}
+    Range(const LimitType &lo_, const LimitType &hi_)
+    : lo(lo_), hi(hi_) {}
 
     /// Copy constructor
     Range(const Range &domain)
-    : min(domain.min), max(domain.max) {}
+    : lo(domain.lo), hi(domain.hi) {}
 
     /// Assignment operator
     Range &operator=(const Range &domain)
     {
-      min = domain.min;
-      max = domain.max;
+      lo = domain.lo;
+      hi = domain.hi;
       return *this;
     }
 
     /// Return rectangle minimum
-    const LimitType &getMin() const {return min;}
+    const LimitType &getLo() const {return lo;}
     /// Return rectangle maximum
-    const LimitType &getMax() const {return max;}
+    const LimitType &getHi() const {return hi;}
+
+    void grow(const T &s) {
+      for (int i=0; i<rank; ++i)
+      {
+        lo[i] -= s;
+        hi[i] += s;
+      }
+    }
 };
 
 } // namespace 

@@ -28,8 +28,12 @@
 #define SCHNEK_BLOCKDATA_HPP_
 
 #include "../util/singleton.hpp"
+#include "../util/logger.hpp"
 #include <map>
 #include <string>
+
+#undef LOGLEVEL
+#define LOGLEVEL 5
 
 namespace schnek
 {
@@ -38,7 +42,7 @@ template<typename T>
 class BlockData : public Singleton<BlockData<T> >
 {
   private:
-    typedef std::map<std::string, T> DataMap;
+    typedef std::map<std::string, T*> DataMap;
     typedef boost::shared_ptr<DataMap> pDataMap;
     typedef std::map<long, pDataMap> BlockDataMap;
 
@@ -54,31 +58,35 @@ class BlockData : public Singleton<BlockData<T> >
 template<typename T>
 void BlockData<T>::add(long blockId, std::string key, T &data)
 {
+  SCHNEK_TRACE_LOG(2, "BlockData<T>::add(" <<blockId << ", " << key << ")")
   if (0 == blockDataMap.count(blockId))
   {
     pDataMap pdm(new DataMap());
     blockDataMap[blockId] = pdm;
   }
 
-  (*blockDataMap[blockId])[key] = data;
+  (*blockDataMap[blockId])[key] = &data;
 }
 
 template<typename T>
 T &BlockData<T>::get(long blockId, std::string key)
 {
+  SCHNEK_TRACE_LOG(2, "BlockData<T>::get(" <<blockId << ", " << key << ")")
+
   if (0 == blockDataMap.count(blockId))
     throw VariableNotFoundException();
-  if (0 == blockDataMap[blockId].count(key))
+  if (0 == blockDataMap[blockId]->count(key))
     throw VariableNotFoundException();
 
-  return blockDataMap[blockId][key];
+  return *(*blockDataMap[blockId])[key];
 }
 
 template<typename T>
 bool BlockData<T>::exists(long blockId, std::string key)
 {
+  SCHNEK_TRACE_LOG(2, "BlockData<T>::exists(" <<blockId << ", " << key << ")")
   if (0 == blockDataMap.count(blockId)) return false;
-  return (blockDataMap[blockId].count(key) > 0);
+  return (blockDataMap[blockId]->count(key) > 0);
 }
 
 } //namespace

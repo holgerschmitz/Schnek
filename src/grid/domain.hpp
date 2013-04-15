@@ -86,9 +86,9 @@ class RecDomain : public Range<int, rank, CheckingPolicy>
           while (d>0)
           {
             --d;
-            if (++pos[d] > domain.getMax()[d])
+            if (++pos[d] > domain.getHi()[d])
             {
-              pos[d] = domain.getMin()[d];
+              pos[d] = domain.getLo()[d];
             }
             else
               return;
@@ -130,12 +130,12 @@ class RecDomain : public Range<int, rank, CheckingPolicy>
 
     /// Creates an iterator pointing to the beginning of the rectangle
     iterator begin() {
-      return iterator(*this, this->getMin());
+      return iterator(*this, this->getLo());
     }
 
     /// Creates an iterator pointing to a position after the end of the rectangle
     iterator end() {
-      return iterator(*this, this->getMin(), true);
+      return iterator(*this, this->getLo(), true);
     }
 };
 

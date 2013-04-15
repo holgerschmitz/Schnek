@@ -28,10 +28,11 @@ AC_INIT([Schnek],[0.1])
 
 AC_CONFIG_SRCDIR([src/grid.hpp])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_HEADERS([src/config.hpp])
+AC_CONFIG_HEADERS([src/config.hpp src/schnek_config.hpp:src/schnek_config.hpp.in])
+  
 AM_INIT_AUTOMAKE
-# VERSION="0.1"
-# PACKAGE="schnek"
+VERSION="0.1"
+PACKAGE="schnek"
 
 AC_LANG(C++)
 
@@ -44,7 +45,9 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AM_PROG_LIBTOOL
+
+LT_INIT
+AC_SUBST([LIBTOOL_DEPS])
 
 AX_BOOST_BASE([1.48.0],,[AC_MSG_ERROR([Schnek needs Boost version 1.48.0 to compile!])])
 
@@ -56,24 +59,20 @@ AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
        ],,[with_mpi=auto])
        
 if test x"$with_mpi" != xno; then
-  CXXFLAGS_save=$CXXFLAGS
-  LDFLAGS_save=$LDFLAGS
-  CXXFLAGS=""
-  LDFLAGS=""
   AX_MPI([
-    MPI_CXXFLAGS=`$MPICXX --showme:compile`
-    [echo Using MPI_CXXFLAGS=$MPI_CXXFLAGS]
-    AC_SUBST(MPI_CXXFLAGS)
-    MPI_LDFLAGS=`$MPICXX --showme:link`
-    [echo Using MPI_LDFLAGS=$MPI_LDFLAGS]
-    AC_SUBST(MPI_LDFLAGS)
-    CXXFLAGS="$CXXFLAGS_save $MPI_CXXFLAGS"
-    LDFLAGS="$LDFLAGS_save $MPI_LDFLAGS"
+    using_mpi=yes
+    CXX=$MPICXX
+    CC=$MPICXX
+    CPP=$MPICXX
+    AC_DEFINE([SCHNEK_HAVE_MPI],[1],[Define this macro if Schnek is compiled with MPI support])
   ],[
+    using_mpi=no
     if test x"$with_mpi" = xyes; then
       AC_MSG_ERROR([MPI support requested but no MPI library found!])
     fi
   ])
+else
+  using_mpi=no
 fi
 
 # Search for HDF5 libraries
@@ -81,86 +80,30 @@ fi
 # supplied by HDF5 itself
 # Checks for libraries.
 # start: Check for HDF5 support
-AC_ARG_WITH([hdf5],
-            [AS_HELP_STRING([--with-hdf5=path], [location of the hdf5 library])],[
-              hdf5_LIBS="-L$withval/lib -lhdf5 -lhdf5_cpp"
-              hdf5_CFLAGS="-I$withval/include"
-            ],
-            [with_hdf5=auto]
-           )
+AC_ARG_WITH(hdf5, [AC_HELP_STRING([--without-hdf5],[do not allow HDF5 output])], ok=$withval, ok=yes)
+if test "$ok" = "yes"; then
+  AC_CHECK_LIB(z,deflate, [],[AC_MSG_WARN([zlib is required for HDF5!])])
 
-
-if test x"$with_hdf5" = xyes; then
-  hdf5_LIBS="-lhdf5 -lhdf5_cpp"
-  hdf5_CFLAGS=""
-fi
-
-if test x"$with_hdf5" = xauto; then
-  hdf5_LIBS="-lhdf5 -lhdf5_cpp"
-  hdf5_CFLAGS=""
-fi
-
-if test x"$with_hdf5" = xno; then
-  hdf5_LIBS=""
-  hdf5_CFLAGS=""
-fi
-
-AC_SUBST([hdf5_CFLAGS])
-AC_SUBST([hdf5_LIBS])
-
-AC_ARG_WITH([hdf5-include],
-            [AS_HELP_STRING([--with-hdf5-include=path], [location of the hdf5 headers, defaults to /usr/include])],[ 
-                hdf5_CFLAGS="-I$withval"
-                AC_SUBST([hdf5_CFLAGS])
-                ],
-            [])
-
-AC_ARG_WITH([hdf5-lib],
-            [AS_HELP_STRING([--with-hdf5-lib=path], [location of the hdf5 libraries])], [
-                hdf5_LIBS="-L$withval -lhdf5 -lhdf5_cpp"
-                AC_SUBST([hdf5_LIBS])
-            ],
-            [])
-
-
-PKG_CHECK_MODULES([hdf5], [hdf5 >= 1.8.0],[
-                    AC_SUBST([hdf5_CFLAGS])
-                    AC_SUBST([hdf5_LIBS])
-                    ],
-                    [
-                    hdf5_LIBS="-L/usr/lib -lhdf5 -lhdf5_cpp"
-                    hdf5_CFLAGS="-I/usr/include"
-                    AC_MSG_WARN(["No hdf5 >= 1.8.0 found automatically. Check your \$PKG_CONFIG_PATH or set --with-hdf5 flag. Assuming hdf5 is stored in /usr "])
-                    ]
-                  )
-
-
-if test x"$with_hdf5" != xno; then
-  AC_LANG_PUSH([C++])
-  CPPFLAGS_save=$CPPFLAGS
-  LDFLAGS_save=$LDFLAGS
-  CPPFLAGS=$hdf5_CFLAGS
-  LDFLAGS=$hdf5_LIBS
-  
-  found_hdf5=yes;
-  AC_CHECK_HEADER([hdf5.h],,[found_hdf5=no])
-  AC_CHECK_LIB(hdf5, H5Fflush,,[found_hdf5=no])
-  AC_CHECK_LIB(hdf5_hl, H5DSis_scale,,[found_hdf5=no])
-
-  CPPFLAGS=$CPPFLAGS_save
-  LDFLAGS=$LDFLAGS_save
-  AC_LANG_POP([C++])
-  
-  if test $found_hdf5 = yes; then
-    AC_DEFINE([HAVE_HDF5],[1],[Define this macro if Schnek is compiled with HDF5 support])
-  else if test x"$with_hdf5" = xyes; then
-      AC_MSG_ERROR([HDF5 support requested HDF5 library not found!])
-    fi
+  save_LIBS_0="$LIBS" # save, to check later if we found any library
+  AC_CHECK_LIB(hdf5, H5Pcreate, [
+    AC_CHECK_HEADERS(hdf5.h, [LIBS="-lhdf5 $LIBS"
+                     AC_DEFINE([SCHNEK_HAVE_HDF5],[1],[Define this macro if Schnek is compiled with HDF5 support])])])
+  if test x"$save_LIBS_0" = x"$LIBS"; then
+    AC_MSG_WARN([Couldn't find the HDF5 library!!  Switching to --without-hdf5.])
   fi
 
+  if test "x$with_mpi" = "xyes"; then
+    AC_CHECK_FUNCS(H5Pset_mpi H5Pset_fapl_mpio)
+  fi
 fi
 
+AC_ARG_ENABLE([parallel-hdf5],
+          [AS_HELP_STRING([--enable-parallel-hdf5], [use parallel file access for HDF5 (mpio) if available.])], 
+          [],[])
 
+if test x"$enable-parallel-hdf5" != "xno" ; then
+  AC_DEFINE([SCHNEK_USE_HDF_PARALLEL],[1],[Defined if we use parallel file access for HDF5 (mpio) if available.])
+fi
 
 AC_LANG_PUSH([C++])
 OLDCPPFLAGS=$CPPFLAGS

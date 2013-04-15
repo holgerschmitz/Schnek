@@ -48,8 +48,8 @@ std::ostream &operator<<(
 {
   typedef typename schnek::Grid<T, 1, CheckingPolicy, StoragePolicy>::IndexType IndexType;
   
-  const IndexType &low = M.getLow();
-  const IndexType &high = M.getHigh();
+  const IndexType &low = M.getLo();
+  const IndexType &high = M.getHi();
   
   if ( !(low<=high) ) return out;
   out << M(low[0]);
@@ -70,8 +70,8 @@ std::ostream &operator<<(
 {
   typedef typename schnek::Grid<T, 2, CheckingPolicy, StoragePolicy>::IndexType IndexType;
   
-  const IndexType &low = M.getLow();
-  const IndexType &high = M.getHigh();
+  const IndexType &low = M.getLo();
+  const IndexType &high = M.getHi();
   
   if ( !(low<=high) ) return out;
   for (int j=low[1]; j<=high[1]; ++j)
@@ -96,8 +96,8 @@ std::ostream &operator<<(
 {
   typedef typename schnek::Grid<T, 3, CheckingPolicy, StoragePolicy>::IndexType IndexType;
   
-  const IndexType &low = M.getLow();
-  const IndexType &high = M.getHigh();
+  const IndexType &low = M.getLo();
+  const IndexType &high = M.getHi();
   
   if ( !(low<=high) ) return out;
   for (int k=low[2]; k<=high[2]; ++k)
@@ -126,8 +126,8 @@ std::ostream &operator<<(
 {
   typedef typename schnek::Grid<T, 4, CheckingPolicy, StoragePolicy>::IndexType IndexType;
   
-  const IndexType &low = M.getLow();
-  const IndexType &high = M.getHigh();
+  const IndexType &low = M.getLo();
+  const IndexType &high = M.getHi();
   
   if ( !(low<=high) ) return out;
   for (int l=low[3]; l<=high[3]; ++l)
@@ -159,8 +159,8 @@ std::ostream &operator<<(
 {
   typedef typename schnek::Grid<T, 5, CheckingPolicy, StoragePolicy>::IndexType IndexType;
   
-  const IndexType &low = M.getLow();
-  const IndexType &high = M.getHigh();
+  const IndexType &low = M.getLo();
+  const IndexType &high = M.getHi();
   
   if ( !(low<=high) ) return out;
   for (int m=low[4]; m<=high[4]; ++m)

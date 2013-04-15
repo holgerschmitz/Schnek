@@ -2,7 +2,7 @@
  * function_expression.cpp
  *
  * Created on: 12 Sep 2012
- * Author: hschmitz
+ * Author: Holger Schmitz
  * Email: holger@notjustphysics.com
  *
  * Copyright 2012 Holger Schmitz
