@@ -57,12 +57,7 @@ class DomainSubdivision {
     typedef typename GridType::CheckingPolicyType CheckingPolicyType;
     typedef typename GridType::StoragePolicyType StoragePolicyType;
 
-    /**
-     * @todo Create a Storage Policy that adjusts the physical size slowly to minimize
-     * allocation requests. Use running average and variance to calculate an internal
-     * buffer size. This can be useful for the Buffer.
-     */
-    typedef Grid<unsigned char, 1, CheckingPolicyType, StoragePolicyType> BufferType;
+    typedef Grid<unsigned char, 1, CheckingPolicyType, LazyArrayGridStorage> BufferType;
 
     typedef RecDomain<Rank> DomainType;
     typedef Boundary<Rank> BoundaryType;

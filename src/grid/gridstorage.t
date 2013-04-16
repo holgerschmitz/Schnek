@@ -189,18 +189,3 @@ inline const T& SingleArrayGridStorage<T, rank, AllocationPolicy>::get(const Ind
   return data_fast[pos];
 }
 
-
-
-
-//=================================================================
-//===================== AdapterGridStorage ========================
-//=================================================================
-
-template<typename T, typename InnerGrid>
-const int AdapterGridStorage<T,InnerGrid>::byteRatio = sizeof(T)/sizeof(typename InnerGrid::value_type);
-
-template<typename T, typename InnerGrid>
-const int AdapterGridStorage<T,InnerGrid>::invByteRatio = sizeof(typename InnerGrid::value_type)/sizeof(T);
-
-
-}
