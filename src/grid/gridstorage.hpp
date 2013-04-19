@@ -46,6 +46,7 @@ class SingleArrayInstantAllocation
     IndexType dims;
 
   public:
+    ~SingleArrayInstantAllocation();
     /** resizes to grid with lower indices low[0],...,low[rank-1]
      *  and upper indices high[0],...,high[rank-1] */
     void resize(const IndexType &low_, const IndexType &high_);
@@ -78,6 +79,8 @@ class SingleArrayLazyAllocation
 
   public:
     SingleArrayLazyAllocation();
+
+    ~SingleArrayLazyAllocation();
     /** resizes to grid with lower indices low[0],...,low[rank-1]
      *  and upper indices high[0],...,high[rank-1] */
     void resize(const IndexType &low_, const IndexType &high_);
@@ -104,15 +107,16 @@ class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
     IndexType low;
     IndexType high;
     IndexType dims;
-
+  public:
     class storage_iterator {
       protected:
         T* element;
         storage_iterator(T* element_) : element(element_) {}
 
-        friend class SingleArrayGridStorage;
+        friend class SingleArrayGridStorageBase;
 
       public:
+        storage_iterator(const storage_iterator &it) : element(it.element) {}
         T& operator*() { return *element;}
         storage_iterator &operator++() {++element; return *this;}
         bool operator==(const storage_iterator &SI) 
@@ -126,7 +130,7 @@ class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
         const T* element;
         const_storage_iterator(const T* element_) : element(element_) {}
 
-        friend class SingleArrayGridStorage;
+        friend class SingleArrayGridStorageBase;
 
       public:
         const T& operator*() { return *element;}
@@ -140,9 +144,6 @@ class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
     SingleArrayGridStorageBase();
     
     SingleArrayGridStorageBase(const IndexType &low_, const IndexType &high_);
-
-    ~SingleArrayGridStorageBase();
-
 
     T &get(const IndexType &index);
     const T &get(const IndexType &index) const;
@@ -176,12 +177,30 @@ class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
 template<typename T, int rank>
 class SingleArrayGridStorage
     : public SingleArrayGridStorageBase<T, rank, SingleArrayInstantAllocation>
-{};
+{
+  public:
+    typedef SingleArrayGridStorageBase<T, rank, SingleArrayInstantAllocation> BaseType;
+    typedef typename BaseType::IndexType IndexType;
+
+    SingleArrayGridStorage() : BaseType() {}
+
+    SingleArrayGridStorage(const IndexType &low_, const IndexType &high_)
+        : BaseType(low_, high_) {}
+};
 
 template<typename T, int rank>
 class LazyArrayGridStorage
     : public SingleArrayGridStorageBase<T, rank, SingleArrayLazyAllocation>
-{};
+{
+  public:
+    typedef SingleArrayGridStorageBase<T, rank, SingleArrayLazyAllocation> BaseType;
+    typedef typename BaseType::IndexType IndexType;
+
+    LazyArrayGridStorage() : BaseType() {}
+
+    LazyArrayGridStorage(const IndexType &low_, const IndexType &high_)
+        : BaseType(low_, high_) {}
+};
 
 } // namespace schnek
 

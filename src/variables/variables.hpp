@@ -27,15 +27,16 @@
 #ifndef SCHNEK_VARIABLES_HPP_
 #define SCHNEK_VARIABLES_HPP_
 
+#include "types.hpp"
+#include "../exception.hpp"
+#include "../util/unique.hpp"
+
 #include <list>
 #include <map>
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
 
-#include "types.hpp"
-#include "../exception.hpp"
-#include "../util/unique.hpp"
 
 namespace schnek {
 

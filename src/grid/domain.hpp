@@ -29,8 +29,10 @@
 
 #include "range.hpp"
 
-#include <list>
 #include <boost/shared_ptr.hpp>
+
+#include <list>
+#include <iterator>
 
 namespace schnek {
 
@@ -63,7 +65,7 @@ class RecDomain : public Range<int, rank, CheckingPolicy>
     /** Forward iterator over the rectangular domain
      *  Implements operator* and getPos which both return the current iterator position
      */
-    class iterator {
+    class iterator : public std::iterator<std::forward_iterator_tag, LimitType> {
       private:
         friend class RecDomain;
         /// Current iterator position

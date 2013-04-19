@@ -193,6 +193,7 @@ class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,ran
     typedef T value_type;
     typedef Array<int,rank> IndexType;
     typedef Grid<T,rank,CheckingPolicy,StoragePolicy> GridType;
+    typedef GridBase<T, rank, CheckingPolicy<rank>, StoragePolicy<T,rank> > BaseType;
     enum {Rank = rank};
   
     /** default constructor creates an empty grid */
@@ -237,10 +238,26 @@ class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,ran
 //    IndexedGrid<GridType, TYPELIST_2(Arg0, Arg1) > operator()(
 //      const Arg0 &i0, const Arg1 &i1
 //    );
-    /** assign a value */
-    GridBase<T, rank, CheckingPolicy<rank>, StoragePolicy<T,rank> >& operator=(const T &val)
-      { return GridBase<T, rank, CheckingPolicy<rank>, StoragePolicy<T,rank> >::operator=(val); }
 
+
+    /** assign another grid */
+    GridType& operator=(const T &val)
+    {
+      BaseType::operator=(val);
+      return *this;
+    }
+
+    /** assign another grid */
+    template<
+      typename T2,
+      class CheckingPolicy2,
+      class StoragePolicy2
+    >
+    GridType& operator=(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy2> &grid)
+    {
+      BaseType::operator=(grid);
+      return *this;
+    }
 };
 
 } // namespace schnek

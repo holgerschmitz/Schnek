@@ -32,8 +32,6 @@
 #include <iostream>
 #include <vector>
 
-#define SCHNEK_MPI_EXCHANGE_SIZE
-
 namespace schnek {
 
 /* **************************************************************
@@ -126,13 +124,12 @@ void MPICartSubdivision<GridType>::exchange(GridType &grid, int dim)
   DomainType loSource = this->bounds->getGhostSourceDomain(dim, BoundaryType::Min);
   DomainType hiSource = this->bounds->getGhostSourceDomain(dim, BoundaryType::Max);
 
-
   MPI_Status stat;
 
   value_type *send = sendarr[dim];
   value_type *recv = recvarr[dim];
 
-  int mpiType = MpiValueType<value_type>::value;
+  MPI_Datatype mpiType = MpiValueType<value_type>::value;
 
   // fill the lower ghost cells with the vales from higher source cells
   // in the neighbouring process
@@ -214,9 +211,11 @@ void MPICartSubdivision<GridType>::exchangeData(
   int sendCoord = (orientation>0)?nextcoord[dim]:prevcoord[dim];
   int recvCoord = (orientation>0)?prevcoord[dim]:nextcoord[dim];
 
+  MPI_Status stat;
+
   MPI_Sendrecv(
-      sendSize, 1, MPI_INT, sendCoord, 0,
-      recvSize, 1, MPI_INT, recvCoord, 0,
+      &sendSize, 1, MPI_INT, sendCoord, 0,
+      &recvSize, 1, MPI_INT, recvCoord, 0,
       comm, &stat);
 
   out.resize(Index(recvSize));
@@ -264,37 +263,39 @@ int MPICartSubdivision<GridType>::getUniqueId() const
  ****************************************************************/
 
 template<>
-int MpiValueType<signed char>::value = MPI_CHAR;
+const MPI_Datatype MpiValueType<signed char>::value = MPI_CHAR;
 
 template<>
-int MpiValueType<signed short int>::value = MPI_SHORT;
+const MPI_Datatype MpiValueType<signed short int>::value = MPI_SHORT;
 
 template<>
-int MpiValueType<signed int>::value = MPI_INT;
+const MPI_Datatype MpiValueType<signed int>::value = MPI_INT;
 
 template<>
-int MpiValueType<signed long int>::value = MPI_LONG;
+const MPI_Datatype MpiValueType<signed long int>::value = MPI_LONG;
 
 template<>
-int MpiValueType<unsigned char>::value = MPI_UNSIGNED_CHAR;
+const MPI_Datatype MpiValueType<unsigned char>::value = MPI_UNSIGNED_CHAR;
 
 template<>
-int MpiValueType<unsigned short int>::value = MPI_UNSIGNED_SHORT;
+const MPI_Datatype MpiValueType<unsigned short int>::value = MPI_UNSIGNED_SHORT;
 
 template<>
-int MpiValueType<unsigned int>::value = MPI_UNSIGNED_INT;
+const MPI_Datatype MpiValueType<unsigned int>::value = MPI_UNSIGNED;
 
 template<>
-int MpiValueType<unsigned long int>::value = MPI_UNSIGNED_LONG;
+const MPI_Datatype MpiValueType<unsigned long int>::value = MPI_UNSIGNED_LONG;
 
 template<>
-int MpiValueType<float>::value = MPI_FLOAT;
+const MPI_Datatype MpiValueType<float>::value = MPI_FLOAT;
 
 template<>
-int MpiValueType<double>::value = MPI_DOUBLE;
+const MPI_Datatype MpiValueType<double>::value = MPI_DOUBLE;
 
 template<>
-int MpiValueType<long double>::value = MPI_LONG_DOUBLE;
+const MPI_Datatype MpiValueType<long double>::value = MPI_LONG_DOUBLE;
+
+}
 
 #endif // HAVE_MPI
 

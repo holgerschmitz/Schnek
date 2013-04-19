@@ -36,7 +36,7 @@ void DataBuffer<T>::makeBuffer(ContainerType &container)
   buffer.resize(dsize*BufferType::IndexType(container.size()));
   unsigned char *data = buffer.getRawData();
 
-  for (ContainerType::iterator it = container.begin(); it != container.end(); ++it)
+  for (typename ContainerType::iterator it = container.begin(); it != container.end(); ++it)
   {
     // Dereference twice and then take address of because container could
     // contain iterators and not pointers.

@@ -24,6 +24,7 @@
  *
  */
 
+
 #include "grid/array.hpp"
 #include "grid/arraycheck.hpp"
 #include "grid/arrayexpression.hpp"
@@ -33,5 +34,7 @@
 #include "grid/grid.hpp"
 #include "grid/gridcheck.hpp"
 #include "grid/gridstorage.hpp"
+
 #include "grid/mpisubdivision.hpp"
+
 #include "grid/range.hpp"

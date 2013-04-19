@@ -27,9 +27,9 @@
 #ifndef SCHNEK_BLOCKPARAMETERS_HPP_
 #define SCHNEK_BLOCKPARAMETERS_HPP_
 
-#include "../variables/types.hpp"
-#include "../variables/variables.hpp"
-#include "../variables/expression.hpp"
+#include "types.hpp"
+#include "variables.hpp"
+#include "expression.hpp"
 
 #include "../grid/array.hpp"
 

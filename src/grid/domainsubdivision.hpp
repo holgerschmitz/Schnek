@@ -57,12 +57,11 @@ class DomainSubdivision {
     typedef typename GridType::CheckingPolicyType CheckingPolicyType;
     typedef typename GridType::StoragePolicyType StoragePolicyType;
 
-    typedef Grid<unsigned char, 1, CheckingPolicyType, LazyArrayGridStorage> BufferType;
+    typedef Grid<unsigned char, 1, GridNoArgCheck, LazyArrayGridStorage> BufferType;
 
     typedef RecDomain<Rank> DomainType;
     typedef Boundary<Rank> BoundaryType;
     typedef boost::shared_ptr<BoundaryType> pBoundaryType;
-    typedef Grid<T, 1, CheckingPolicy, StoragePolicy>
 
   protected:
     pBoundaryType bounds;
@@ -162,6 +161,7 @@ class SerialSubdivision : public DomainSubdivision<GridType>
     typedef typename GridType::value_type value_type;
     typedef typename DomainSubdivision<GridType>::DomainType DomainType;
     typedef typename DomainSubdivision<GridType>::BoundaryType BoundaryType;
+    typedef typename DomainSubdivision<GridType>::BufferType BufferType;
 
   private:
     /// The positions of the lower corner of the local piece of the grid

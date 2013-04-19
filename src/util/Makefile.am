@@ -29,9 +29,11 @@ libschnekutilincludedir = $(includedir)/schnek/util
 
 libschnekutilinclude_HEADERS = \
   util/algohelper.hpp  \
+  util/databuffer.hpp  \
+  util/databuffer.t    \
   util/exceptions.hpp  \
-  util/factor.hpp  \
-  util/logger.hpp  \
+  util/factor.hpp      \
+  util/logger.hpp      \
   util/singleton.hpp  \
   util/unique.hpp
   

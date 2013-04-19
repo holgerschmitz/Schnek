@@ -90,7 +90,7 @@ class DataBuffer
      * @param last
      */
     template<class ContainerType>
-    void makeBuffer(ContainerType container);
+    void makeBuffer(ContainerType &container);
 
     BufferType &getBuffer()
     {

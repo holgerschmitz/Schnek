@@ -45,6 +45,9 @@ class Range {
     /// Minimum and maximum corners of the rectangle
     LimitType lo, hi;
   public:
+    /// Default constructor
+    Range() {};
+
     /// Construct with rectangle minimum and maximum
     Range(const LimitType &lo_, const LimitType &hi_)
     : lo(lo_), hi(hi_) {}

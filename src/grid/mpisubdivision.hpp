@@ -32,7 +32,6 @@
 
 #ifdef SCHNEK_HAVE_MPI
 
-#include "domainsubdivision.hpp"
 #include <mpi.h>
 
 namespace schnek {
@@ -50,6 +49,8 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
     typedef typename GridType::value_type value_type;
     typedef typename DomainSubdivision<GridType>::DomainType DomainType;
     typedef typename DomainSubdivision<GridType>::BoundaryType BoundaryType;
+    typedef typename DomainSubdivision<GridType>::BufferType BufferType;
+
     enum {Rank = GridType::Rank};
   protected:
     /// The number of processes
@@ -155,7 +156,7 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
 template<typename value_type>
 struct MpiValueType
 {
-    static const int value;
+    static const MPI_Datatype value;
 };
 
 } // namespace schnek
@@ -163,6 +164,7 @@ struct MpiValueType
 #endif // HAVE_MPI
 
 #include "mpisubdivision.t"
+
 
 #endif // SCHNEK_MPISUBDIVISION_HPP
 

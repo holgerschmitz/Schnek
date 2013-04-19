@@ -38,9 +38,15 @@ void SingleArrayInstantAllocation<T, rank>::resize(const IndexType &low_, const 
 {
 //  if ( (low != low_) || (high != high_) )
 //  {
-    deleteData();
-    newData(low_,high_);
+  this->deleteData();
+  this->newData(low_,high_);
 //  }
+}
+
+template<typename T, int rank>
+SingleArrayInstantAllocation<T, rank>::~SingleArrayInstantAllocation()
+{
+  this->deleteData();
 }
 
 template<typename T, int rank>
@@ -87,6 +93,12 @@ SingleArrayLazyAllocation<T, rank>::SingleArrayLazyAllocation()
 {}
 
 template<typename T, int rank>
+SingleArrayLazyAllocation<T, rank>::~SingleArrayLazyAllocation()
+{
+  this->deleteData();
+}
+
+template<typename T, int rank>
 void SingleArrayLazyAllocation<T, rank>::resize(const IndexType &low_, const IndexType &high_)
 {
   int oldSize = size;
@@ -107,8 +119,8 @@ void SingleArrayLazyAllocation<T, rank>::resize(const IndexType &low_, const Ind
 
   if ((size > oldSize) || ((size + 8*sqrt(avgVar)) < bufSize))
   {
-    deleteData();
-    newData(size);
+    this->deleteData();
+    this->newData(size);
   }
 
   int p = -low[rank-1];
@@ -158,16 +170,8 @@ SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBas
 {
   data = NULL;
   size = 0;
-  resize(low_, high_);
+  this->resize(low_, high_);
 }
-
-
-template<class T, int rank, template<typename, int> class AllocationPolicy>
-SingleArrayGridStorageBase<T, rank, AllocationPolicy>::~SingleArrayGridStorageBase()
-{
-  this->deleteData();
-}
-
 
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
 inline T& SingleArrayGridStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)

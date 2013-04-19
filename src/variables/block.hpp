@@ -30,6 +30,7 @@
 #include "blockparameters.hpp"
 #include "blockdata.hpp"
 #include "../util/unique.hpp"
+
 #include <boost/shared_ptr.hpp>
 #include <stack>
 
