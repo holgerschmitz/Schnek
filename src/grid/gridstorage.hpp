@@ -85,7 +85,7 @@ class SingleArrayLazyAllocation
     /** */
     void deleteData();
     /** */
-    void newData(const IndexType &low_, const IndexType &high_);
+    void newData(int size);
 };
 
 /** Stores the grid data in a single array
@@ -95,6 +95,15 @@ class SingleArrayLazyAllocation
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
 class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
   public:
+    typedef Array<int,rank> IndexType;
+
+  protected:
+    T* data;
+    T* data_fast;
+    int size;
+    IndexType low;
+    IndexType high;
+    IndexType dims;
 
     class storage_iterator {
       protected:
@@ -128,11 +137,11 @@ class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
           { return element != SI.element; }
     };
     
-    SingleArrayGridStorage();
+    SingleArrayGridStorageBase();
     
-    SingleArrayGridStorage(const IndexType &low_, const IndexType &high_);
+    SingleArrayGridStorageBase(const IndexType &low_, const IndexType &high_);
 
-    ~SingleArrayGridStorage();
+    ~SingleArrayGridStorageBase();
 
 
     T &get(const IndexType &index);

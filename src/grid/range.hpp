@@ -76,4 +76,5 @@ class Range {
 };
 
 } // namespace 
+
 #endif // RANGE_HPP_ 

@@ -25,6 +25,7 @@
  */
 
 #include <cstddef>
+#include <cmath>
 
 namespace schnek {
 
@@ -81,7 +82,7 @@ void SingleArrayInstantAllocation<T, rank>::newData(
 //=================================================================
 
 template<typename T, int rank>
-void SingleArrayLazyAllocation<T, rank>::SingleArrayLazyAllocation()
+SingleArrayLazyAllocation<T, rank>::SingleArrayLazyAllocation()
   : bufSize(0), avgSize(0.0), avgVar(0.0), r(0.05)
 {}
 
@@ -101,14 +102,21 @@ void SingleArrayLazyAllocation<T, rank>::resize(const IndexType &low_, const Ind
   }
 
   avgSize = r*size + (1-r)*avgSize;
-  int d = size - avgSize;
-  avgVar = r*d*d + (1-r)*avgVar;
+  int diff = size - avgSize;
+  avgVar = r*diff*diff + (1-r)*avgVar;
 
   if ((size > oldSize) || ((size + 8*sqrt(avgVar)) < bufSize))
   {
     deleteData();
-    newData(low_,high_);
+    newData(size);
   }
+
+  int p = -low[rank-1];
+
+  for (d = rank-2; d >= 0 ; d--) {
+    p = p*dims[d] -low[d];
+  }
+  data_fast = data + p;
 }
 
 template<typename T, int rank>
@@ -127,20 +135,14 @@ void SingleArrayLazyAllocation<T, rank>::newData(
 {
   bufSize = size + (int)(4*sqrt(avgVar));
   data = new T[bufSize];
-  int p = -low[rank-1];
-
-  for (d = rank-2; d >= 0 ; d--) {
-    p = p*dims[d] -low[d];
-  }
-  data_fast = data + p;
 }
 
 //=================================================================
-//================== SingleArrayGridStorage =======================
+//================== SingleArrayGridStorageBase ===================
 //=================================================================
 
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
-SingleArrayGridStorage<T, rank, AllocationPolicy>::SingleArrayGridStorage()
+SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBase()
 {
   data = NULL;
   data_fast = NULL;
@@ -149,7 +151,7 @@ SingleArrayGridStorage<T, rank, AllocationPolicy>::SingleArrayGridStorage()
 
 
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
-SingleArrayGridStorage<T, rank, AllocationPolicy>::SingleArrayGridStorage(
+SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBase(
   const IndexType &low_, 
   const IndexType &high_
 )
@@ -161,14 +163,14 @@ SingleArrayGridStorage<T, rank, AllocationPolicy>::SingleArrayGridStorage(
 
 
 template<class T, int rank, template<typename, int> class AllocationPolicy>
-SingleArrayGridStorage<T, rank, AllocationPolicy>::~SingleArrayGridStorage()
+SingleArrayGridStorageBase<T, rank, AllocationPolicy>::~SingleArrayGridStorageBase()
 {
-  deleteData();
+  this->deleteData();
 }
 
 
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
-inline T& SingleArrayGridStorage<T, rank, AllocationPolicy>::get(const IndexType &index)
+inline T& SingleArrayGridStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
 {
   int pos = index[rank-1];
   for (int i=rank-2; i>=0; --i)
@@ -179,7 +181,7 @@ inline T& SingleArrayGridStorage<T, rank, AllocationPolicy>::get(const IndexType
 }
 
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
-inline const T& SingleArrayGridStorage<T, rank, AllocationPolicy>::get(const IndexType &index) const
+inline const T& SingleArrayGridStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
 {
   int pos = index[rank-1];
   for (int i=rank-2; i>=0; --i)
@@ -189,3 +191,4 @@ inline const T& SingleArrayGridStorage<T, rank, AllocationPolicy>::get(const Ind
   return data_fast[pos];
 }
 
+}
