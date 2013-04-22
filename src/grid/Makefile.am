@@ -21,6 +21,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
 
+
+libschnek_la_SOURCES += \
+  grid/mpisubdivision.cpp
+  
 libschnekgridincludedir = $(includedir)/schnek/grid
 
 libschnekgridinclude_HEADERS = \

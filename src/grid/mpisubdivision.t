@@ -23,7 +23,6 @@
  * along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "mpisubdivision.hpp"
 
 #ifdef SCHNEK_HAVE_MPI
 
@@ -257,43 +256,6 @@ int MPICartSubdivision<GridType>::getUniqueId() const
   return id;
 }
 
-
-/* **************************************************************
- *                 MpiValueType                                 *
- ****************************************************************/
-
-template<>
-const MPI_Datatype MpiValueType<signed char>::value = MPI_CHAR;
-
-template<>
-const MPI_Datatype MpiValueType<signed short int>::value = MPI_SHORT;
-
-template<>
-const MPI_Datatype MpiValueType<signed int>::value = MPI_INT;
-
-template<>
-const MPI_Datatype MpiValueType<signed long int>::value = MPI_LONG;
-
-template<>
-const MPI_Datatype MpiValueType<unsigned char>::value = MPI_UNSIGNED_CHAR;
-
-template<>
-const MPI_Datatype MpiValueType<unsigned short int>::value = MPI_UNSIGNED_SHORT;
-
-template<>
-const MPI_Datatype MpiValueType<unsigned int>::value = MPI_UNSIGNED;
-
-template<>
-const MPI_Datatype MpiValueType<unsigned long int>::value = MPI_UNSIGNED_LONG;
-
-template<>
-const MPI_Datatype MpiValueType<float>::value = MPI_FLOAT;
-
-template<>
-const MPI_Datatype MpiValueType<double>::value = MPI_DOUBLE;
-
-template<>
-const MPI_Datatype MpiValueType<long double>::value = MPI_LONG_DOUBLE;
 
 }
 

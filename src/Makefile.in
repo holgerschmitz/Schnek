@@ -274,8 +274,8 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libschnek_la_LIBADD =
 am_libschnek_la_OBJECTS = functions.lo diagnostic.lo hdfdiagnostic.lo \
-	deckscanner.lo parser.lo parsertoken.lo block.lo \
-	blockclasses.lo blockparameters.lo dependencies.lo \
+	mpisubdivision.lo deckscanner.lo parser.lo parsertoken.lo \
+	block.lo blockclasses.lo blockparameters.lo dependencies.lo \
 	function_expression.lo variables.lo exceptions.lo factor.lo
 libschnek_la_OBJECTS = $(am_libschnek_la_OBJECTS)
 libschnek_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -438,8 +438,9 @@ top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libschnek.la
 libschnekincludedir = $(includedir)/schnek
 libschnek_la_SOURCES = functions.cpp diagnostic/diagnostic.cpp \
-	diagnostic/hdfdiagnostic.cpp parser/deckscanner.cpp \
-	parser/parser.cpp parser/parsertoken.cpp variables/block.cpp \
+	diagnostic/hdfdiagnostic.cpp grid/mpisubdivision.cpp \
+	parser/deckscanner.cpp parser/parser.cpp \
+	parser/parsertoken.cpp variables/block.cpp \
 	variables/blockclasses.cpp variables/blockparameters.cpp \
 	variables/dependencies.cpp variables/function_expression.cpp \
 	variables/variables.cpp util/exceptions.cpp util/factor.cpp
@@ -644,6 +645,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/function_expression.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/functions.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdfdiagnostic.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpisubdivision.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parsertoken.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variables.Plo@am__quote@
@@ -682,6 +684,13 @@ hdfdiagnostic.lo: diagnostic/hdfdiagnostic.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='diagnostic/hdfdiagnostic.cpp' object='hdfdiagnostic.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o hdfdiagnostic.lo `test -f 'diagnostic/hdfdiagnostic.cpp' || echo '$(srcdir)/'`diagnostic/hdfdiagnostic.cpp
+
+mpisubdivision.lo: grid/mpisubdivision.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mpisubdivision.lo -MD -MP -MF $(DEPDIR)/mpisubdivision.Tpo -c -o mpisubdivision.lo `test -f 'grid/mpisubdivision.cpp' || echo '$(srcdir)/'`grid/mpisubdivision.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/mpisubdivision.Tpo $(DEPDIR)/mpisubdivision.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='grid/mpisubdivision.cpp' object='mpisubdivision.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mpisubdivision.lo `test -f 'grid/mpisubdivision.cpp' || echo '$(srcdir)/'`grid/mpisubdivision.cpp
 
 deckscanner.lo: parser/deckscanner.cpp
 @am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT deckscanner.lo -MD -MP -MF $(DEPDIR)/deckscanner.Tpo -c -o deckscanner.lo `test -f 'parser/deckscanner.cpp' || echo '$(srcdir)/'`parser/deckscanner.cpp
