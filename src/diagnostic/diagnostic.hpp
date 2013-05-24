@@ -54,6 +54,7 @@ class DiagnosticInterface : public Block
     int interval;
   public:
       DiagnosticInterface();
+      virtual ~DiagnosticInterface() {}
       void execute(bool master, int rank, int timeCounter);
   protected:
     virtual void open(const std::string &) {}
@@ -103,11 +104,13 @@ class SimpleDiagnostic : public DiagnosticInterface
     PointerType field;
   public:
     SimpleDiagnostic() { single_out=false; }
-    ~SimpleDiagnostic();
+    virtual ~SimpleDiagnostic();
   protected:
     bool singleOut() { return single_out; }
     void initParameters(BlockParameters&);
     void init();
+    std::string getFieldName() { return fieldName; }
+    virtual bool isDerived() { return false; }
   public:
     void setSingleOut(bool single_out_) { single_out = single_out_; }
 };

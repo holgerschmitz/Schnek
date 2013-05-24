@@ -131,6 +131,9 @@ class DomainSubdivision {
     /// Return the process number
     virtual int procnum() const = 0;
 
+    /// Return the total number of processes
+    virtual int procCount() const = 0;
+
     /// get a unique Id
     virtual int getUniqueId() const = 0;
 
@@ -199,6 +202,9 @@ class SerialSubdivision : public DomainSubdivision<GridType>
 
     /// Returns the comm rank as given by mpi
     int procnum() const { return 0; }
+
+    /// Return the total number of processes
+    int procCount() const { return 1; }
 
     ///returns an ID, which consists of the Dimensions and coordinates
     int getUniqueId() const { return 0; }

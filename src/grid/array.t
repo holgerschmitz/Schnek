@@ -239,6 +239,17 @@ inline Array<T,length,CheckingPolicy>& Array<T,length,CheckingPolicy>::fill(cons
   return *this;
 }
 
+template<class T, int length, template <int> class CheckingPolicy>
+template<int destLength>
+inline Array<T,destLength,CheckingPolicy> Array<T,length,CheckingPolicy>::project()
+{
+  BOOST_STATIC_ASSERT(destLength<=length);
+
+  Array<T,destLength,CheckingPolicy> result;
+  for (int i=0; i<destLength; ++i)
+    result[i] = data[i];
+  return result;
+}
 
 template<class T, int length, template <int> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::Zero()

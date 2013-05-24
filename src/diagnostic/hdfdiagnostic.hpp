@@ -148,7 +148,7 @@ struct H5DataType{
 
 template<typename Type, typename PointerType = boost::shared_ptr<Type> >
 class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType> {
-  private:
+  protected:
     HdfOStream output;
     GridContainer<Type> container;
   protected:
@@ -159,6 +159,8 @@ class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType> {
     void init();
     virtual IndexType getGlobalMin() = 0;
     virtual IndexType getGlobalMax() = 0;
+  public:
+    virtual ~HDFGridDiagnostic() {}
 };
 
 } // namespace schnek

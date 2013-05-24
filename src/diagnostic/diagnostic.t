@@ -44,7 +44,7 @@ void SimpleDiagnostic<Type, PointerType>::initParameters(BlockParameters &blockP
 template<class Type, typename PointerType>
 void SimpleDiagnostic<Type, PointerType>::init()
 {
-  retrieveData(fieldName, field);
+  if (!isDerived()) retrieveData(fieldName, field);
   std::cout << "got field " << field << std::endl;
 }
 

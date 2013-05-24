@@ -125,6 +125,9 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
     /// Returns the comm rank as given by mpi
     int procnum() const { return ComRank; }
 
+    /// Return the total number of processes
+    int procCount() const { return ComSize; }
+
     ///returns an ID, which consists of the Dimensions and coordinates
     int getUniqueId() const;
 

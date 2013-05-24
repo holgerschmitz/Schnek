@@ -118,8 +118,8 @@ class Array : public CheckingPolicy<length> {
     /// Fills all fields with a given value
     Array<T,length,CheckingPolicy>& fill(const T&);
     
-  public:
-  
+    template<int destLength>
+    Array<T,destLength,CheckingPolicy> project();
     /** Returns an array filled with zeros.
      *  Only available if int can be cast to the type T
      */
