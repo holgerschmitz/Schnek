@@ -366,12 +366,16 @@ void ParserToken::createBlock(ParserToken &parTok)
 
   std::string blockName = parTok.atomTok.getString();
   std::string blockClass = atomTok.getString();
+
+  std::cerr << "Block name = " << blockName << std::endl;
+  std::cerr << "Block class = " << blockClass << std::endl;
   try
   {
     std::string parentClass = context.variables->getCurrentBlock()->getClassName();
     if (context.blockClasses->restrictBlocks() && (!context.blockClasses->hasChild(parentClass, blockClass)))
       throw ParserError("Block class "+ blockClass +" not allowed inside "+ parentClass, parTok.atomTok);
 //    std::cerr << "creating block: name=" << blockName << ", class=" << blockClass << ")\n";
+
     pBlockVariables blockVars = context.variables->createBlock(blockName, blockClass);
     BlockClassDescriptor &blockClassDescr = context.blockClasses->get(blockClass);
     if (blockClassDescr.hasBlockFactory())

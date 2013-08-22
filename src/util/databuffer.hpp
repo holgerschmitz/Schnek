@@ -37,7 +37,7 @@ template<class T>
 class DataBuffer
 {
   public:
-    typedef Grid<unsigned char, 1, GridNoArgCheck, LazyArrayGridStorage> BufferType;
+    typedef Grid<unsigned char, 1, GridAssertCheck, LazyArrayGridStorage> BufferType;
   private:
     BufferType buffer;
   public:
@@ -104,7 +104,7 @@ class DataBuffer
 
     iterator end()
     {
-      return iterator(buffer.getRawData() + buffer.getSize()*sizeof(T));
+      return iterator(buffer.getRawData() + buffer.getSize());
     }
 
 };

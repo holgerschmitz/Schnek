@@ -33,7 +33,7 @@
 #include <string>
 
 #undef LOGLEVEL
-#define LOGLEVEL 5
+#define LOGLEVEL 0
 
 namespace schnek
 {

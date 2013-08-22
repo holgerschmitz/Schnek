@@ -31,9 +31,6 @@
 
 namespace schnek {
 
-template<class Operator>
-class FArrExpression;
-
 /**A Fixed size array.
  * The three template parameters are:<br>
  * T: the type of data stored<br>
@@ -46,10 +43,13 @@ template<
   int length, 
   template<int> class CheckingPolicy = ArrayNoArgCheck
 >
-class Array : public CheckingPolicy<length> {
+class Array :
+    public CheckingPolicy<length>
+{
   private:
-    /// Holds the data in a simple C-style array
+    /// The data stored in a C array
     T data[length];
+
     /// ThisType defined for convenience
     typedef Array<T,length,CheckingPolicy> ThisType;
   public:
@@ -85,32 +85,32 @@ class Array : public CheckingPolicy<length> {
     /// Constructor for length=10 arrays setting the data explicitely
     Array(const T&, const T&, const T&, const T&, const T&, 
                const T&, const T&, const T&, const T&, const T&);
-
-    /** Constructing from an FArrExpression.
-     *  The expression is evaluated at construction time so there are no temporary 
-     *  variables
-     */
-    template<class Operator>
-    Array(const FArrExpression<Operator>&);
     
     ~Array() {}
 
     /// Accessor operator
     T& operator[](int);
     /// Constant accessor operator
-    const T& operator[](int) const;
-    
+    T operator[](int) const;
+
     /// Accessor operator
     T& at(int);
     /// Constant accessor operator
-    const T& at(int) const;
-    
-    /** Operator for assigning a FArrExpression to the array.
-     *  The expression is evaluated at assign time so there are no temporary 
-     *  variables
-     */
-    template<class Operator>
-    Array<T,length,CheckingPolicy>& operator=(const FArrExpression<Operator>&);
+    T at(int) const;
+
+  public:
+
+    template<typename T2>
+    Array<T,length,CheckingPolicy> operator+=(const T2);
+
+    template<typename T2>
+    Array<T,length,CheckingPolicy> operator-=(const T2);
+
+    template<typename T2>
+    Array<T,length,CheckingPolicy> operator*=(const T2);
+
+    template<typename T2>
+    Array<T,length,CheckingPolicy> operator/=(const T2);
 
   public:
     /// Sets all fields to zero
@@ -120,6 +120,8 @@ class Array : public CheckingPolicy<length> {
     
     template<int destLength>
     Array<T,destLength,CheckingPolicy> project();
+
+
     /** Returns an array filled with zeros.
      *  Only available if int can be cast to the type T
      */

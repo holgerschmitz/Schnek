@@ -26,6 +26,8 @@
 
 #include <cstddef>
 #include <cmath>
+#include <iostream>
+#include <unistd.h>
 
 namespace schnek {
 
@@ -89,7 +91,7 @@ void SingleArrayInstantAllocation<T, rank>::newData(
 
 template<typename T, int rank>
 SingleArrayLazyAllocation<T, rank>::SingleArrayLazyAllocation()
-  : bufSize(0), avgSize(0.0), avgVar(0.0), r(0.05)
+  : data(NULL) , data_fast(NULL), size(0), bufSize(0), avgSize(0.0), avgVar(0.0), r(0.05)
 {}
 
 template<typename T, int rank>
@@ -102,7 +104,8 @@ template<typename T, int rank>
 void SingleArrayLazyAllocation<T, rank>::resize(const IndexType &low_, const IndexType &high_)
 {
   int oldSize = size;
-  size = 1;
+  int newSize;
+  newSize = 1;
   int d;
 
   low = low_;
@@ -110,18 +113,19 @@ void SingleArrayLazyAllocation<T, rank>::resize(const IndexType &low_, const Ind
 
   for (d = 0; d < rank; d++) {
     dims[d] = high[d] - low[d] + 1;
-    size *= dims[d];
+    newSize *= dims[d];
   }
 
-  avgSize = r*size + (1-r)*avgSize;
-  int diff = size - avgSize;
+  avgSize = r*newSize + (1-r)*avgSize;
+  int diff = newSize - avgSize;
   avgVar = r*diff*diff + (1-r)*avgVar;
 
-  if ((size > oldSize) || ((size + 8*sqrt(avgVar)) < bufSize))
+  if ((newSize > bufSize) || ((newSize + 8*sqrt(avgVar)) < bufSize))
   {
     this->deleteData();
-    this->newData(size);
+    this->newData(newSize);
   }
+  size = newSize;
 
   int p = -low[rank-1];
 
@@ -134,18 +138,22 @@ void SingleArrayLazyAllocation<T, rank>::resize(const IndexType &low_, const Ind
 template<typename T, int rank>
 void SingleArrayLazyAllocation<T, rank>::deleteData()
 {
+  std::cerr << "Deleting pointer (" << (void*)data << "): size = " << size << std::endl;
   if (data)
     delete[] data;
   data = NULL;
   size = 0;
+  bufSize = 0;
 }
 
 template<typename T, int rank>
 void SingleArrayLazyAllocation<T, rank>::newData(
-  int size
+  int newSize
 )
 {
-  bufSize = size + (int)(4*sqrt(avgVar));
+  std::cerr << "Allocating pointer: size = " << newSize << std::endl;
+  bufSize = newSize + (int)(4*sqrt(avgVar));
+  if (bufSize<=0) bufSize=10;
   data = new T[bufSize];
 }
 
@@ -155,21 +163,17 @@ void SingleArrayLazyAllocation<T, rank>::newData(
 
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
 SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBase()
-{
-  data = NULL;
-  data_fast = NULL;
-  size = 0;
-}
+  : AllocationPolicy<T, rank>()
+{}
 
 
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
 SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBase(
-  const IndexType &low_, 
-  const IndexType &high_
-)
+    const IndexType &low_,
+    const IndexType &high_
+  )
+  : AllocationPolicy<T, rank>()
 {
-  data = NULL;
-  size = 0;
   this->resize(low_, high_);
 }
 
@@ -179,9 +183,9 @@ inline T& SingleArrayGridStorageBase<T, rank, AllocationPolicy>::get(const Index
   int pos = index[rank-1];
   for (int i=rank-2; i>=0; --i)
   {
-    pos = index[i] + dims[i]*pos; 
+    pos = index[i] + this->dims[i]*pos;
   }
-  return data_fast[pos];
+  return this->data_fast[pos];
 }
 
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
@@ -190,9 +194,9 @@ inline const T& SingleArrayGridStorageBase<T, rank, AllocationPolicy>::get(const
   int pos = index[rank-1];
   for (int i=rank-2; i>=0; --i)
   {
-    pos = index[i] + dims[i]*pos; 
+    pos = index[i] + this->dims[i]*pos;
   }
-  return data_fast[pos];
+  return this->data_fast[pos];
 }
 
 }

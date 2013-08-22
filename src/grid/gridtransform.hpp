@@ -140,7 +140,7 @@ class GridTransformStorage {
 template<
   class BaseGrid,
   typename Transformation,
-  template<int> class CheckingPolicy = GridNoArgCheck
+  template<int> class CheckingPolicy = GridAssertCheck
 >
 class GridTransform
   : public GridBase

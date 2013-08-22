@@ -139,7 +139,10 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
     if (dims[i]<(start[i]+locdims[FieldType::Rank-1-i]))
     {
       std::cerr << "FATAL ERROR!\n"
+        << "  in HdfOStream::writeGrid\n"
         << "Dimension " << i << ":\n  global size: " << dims[i]
+        << "\n  global min: " << gmin
+        << "\n  global max: " << g.global_max[i]
         << "\n  local start: " << start[i]
         << "\n  local size: " << locdims[FieldType::Rank-1-i]
         << "\n  global min: " << gmin << "\n";
@@ -242,9 +245,12 @@ void HDFGridDiagnostic<Type, PointerType>::init()
 {
   SimpleDiagnostic<Type, PointerType>::init();
 
-  container.grid = &(*this->field);
-  container.global_min = this->getGlobalMin();
-  container.global_max = this->getGlobalMax();
+  if (!this->isDerived())
+  {
+    container.grid = &(*this->field);
+    container.global_min = this->getGlobalMin();
+    container.global_max = this->getGlobalMax();
+  }
 }
 
 

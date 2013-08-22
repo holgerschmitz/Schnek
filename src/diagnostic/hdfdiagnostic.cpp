@@ -25,6 +25,10 @@
  */
 
 #include "hdfdiagnostic.hpp"
+#include "../util/logger.hpp"
+
+#undef LOGLEVEL
+#define LOGLEVEL 5
 
 using namespace schnek;
 
@@ -91,6 +95,7 @@ bool HdfStream::good() const
 
 void HdfStream::setBlockName(std::string blockname_)
 {
+  SCHNEK_TRACE_LOG(2,"setBlockName("<<blockname_<<")")
   blockname = blockname_;
   sets_count = -1;
 }
@@ -105,6 +110,9 @@ std::string HdfStream::getNextBlockName()
   {
     bname << sets_count++;
   }
+
+  SCHNEK_TRACE_LOG(2,"getBlockName = " << bname.str())
+
   return bname.str();
 }
 

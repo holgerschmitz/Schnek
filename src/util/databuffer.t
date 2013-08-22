@@ -33,7 +33,9 @@ template<class ContainerType>
 void DataBuffer<T>::makeBuffer(ContainerType &container)
 {
   static const int dsize = sizeof(T);
-  buffer.resize(dsize*BufferType::IndexType(container.size()));
+  BufferType::IndexType sz(container.size());
+  for (int i=0; i<BufferType::Rank; ++i) sz[i] *= dsize;
+  buffer.resize(sz);
   unsigned char *data = buffer.getRawData();
 
   for (typename ContainerType::iterator it = container.begin(); it != container.end(); ++it)

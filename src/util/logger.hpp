@@ -90,7 +90,7 @@ namespace schnek {
  * To redefine to eg level 2 use the following commands:
  *
  * #undef LOGLEVEL
- * #define LOGLEVEL 2
+ * #define LOGLEVEL 5
  */
 #define LOGLEVEL 2
 

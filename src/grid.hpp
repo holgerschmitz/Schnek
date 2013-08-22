@@ -27,7 +27,6 @@
 
 #include "grid/array.hpp"
 #include "grid/arraycheck.hpp"
-#include "grid/arrayexpression.hpp"
 #include "grid/domain.hpp"
 #include "grid/domainsubdivision.hpp"
 #include "grid/field.hpp"

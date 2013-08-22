@@ -31,7 +31,6 @@ libschnekgridinclude_HEADERS = \
   grid/array.hpp              \
   grid/array.t                \
   grid/arraycheck.hpp         \
-  grid/arrayexpression.hpp    \
   grid/boundary.hpp           \
   grid/boundary.t             \
   grid/domain.hpp             \

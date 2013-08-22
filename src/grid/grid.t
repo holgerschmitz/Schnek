@@ -367,7 +367,7 @@ template<
 void GridBase<T, rank, CheckingPolicy, StoragePolicy>::resize(const IndexType &d)
 {
   IndexType high;
-  high = d-IndexType::Unity();
+  for (int i=0; i<rank; ++i) high[i] = d[i]-1;
   StoragePolicy::resize(IndexType::Zero(), high);
 }
 

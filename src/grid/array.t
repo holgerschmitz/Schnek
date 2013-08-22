@@ -24,7 +24,6 @@
  *
  */
 
-//#include "arrayexpression.hpp"
 #include <boost/static_assert.hpp>
 
 namespace schnek
@@ -35,10 +34,10 @@ inline Array<T,length,CheckingPolicy>::Array()
 {}
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline Array<T,length,CheckingPolicy>::Array(const Array &fixarr)
+inline Array<T,length,CheckingPolicy>::Array(const Array &arr)
 {
   for (int i=0; i<length; ++i)
-    data[i] = fixarr[i];
+    data[i] = arr[i];
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
@@ -179,49 +178,74 @@ inline Array<T,length,CheckingPolicy>::Array(
 }
 
 
-template<class T, int length, template <int> class CheckingPolicy>
-template<class Operator>
-inline Array<T,length,CheckingPolicy>::Array(const FArrExpression<Operator> &expr)
-{
-  for (int i=0; i<length; ++i)
-    data[i] = expr[i];
-}
-
-template<class T, int length, template <int> class CheckingPolicy>
-inline T& Array<T,length,CheckingPolicy>::operator[](int pos)
-{
-   return at(pos);
-}
-
-template<class T, int length, template <int> class CheckingPolicy>
-inline const T& Array<T,length,CheckingPolicy>::operator[](int pos) const
-{
-   return at(pos);
-}
-
+/// Accessor operator
 template<class T, int length, template <int> class CheckingPolicy>
 inline T& Array<T,length,CheckingPolicy>::at(int pos)
 {
-   this->check(pos);
-   return data[pos];
+ this->check(pos);
+ return data[pos];
 }
 
+/// Constant accessor operator
 template<class T, int length, template <int> class CheckingPolicy>
-inline const T& Array<T,length,CheckingPolicy>::at(int pos) const
+inline T Array<T,length,CheckingPolicy>::at(int pos) const
 {
-   this->check(pos);
-   return data[pos];
+ this->check(pos);
+ return data[pos];
 }
 
+/// Accessor operator
 template<class T, int length, template <int> class CheckingPolicy>
-template<class Operator>
-inline Array<T,length,CheckingPolicy>& Array<T,length,CheckingPolicy>
-  ::operator=(const FArrExpression<Operator> &expr)
+inline T& Array<T,length,CheckingPolicy>::operator[](int pos)
+{
+  return at(pos);
+}
+
+/// Constant accessor operator
+template<class T, int length, template <int> class CheckingPolicy>
+inline T Array<T,length,CheckingPolicy>::operator[](int pos) const
+{
+  return at(pos);
+}
+
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<typename T2>
+Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::operator+=(const T2 val)
 {
   for (int i=0; i<length; ++i)
-    data[i] = expr[i];
+    data[i] += val;
   return *this;
 }
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<typename T2>
+Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::operator-=(const T2 val)
+{
+  for (int i=0; i<length; ++i)
+    data[i] -= val;
+  return *this;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<typename T2>
+Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::operator*=(const T2 val)
+{
+  for (int i=0; i<length; ++i)
+    data[i] *= val;
+  return *this;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<typename T2>
+Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::operator/=(const T2 val)
+{
+  for (int i=0; i<length; ++i)
+    data[i] /= val;
+  return *this;
+}
+
+
 
 template<class T, int length, template <int> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>& Array<T,length,CheckingPolicy>::clear()

@@ -217,11 +217,14 @@ void MPICartSubdivision<GridType>::exchangeData(
       &recvSize, 1, MPI_INT, recvCoord, 0,
       comm, &stat);
 
+
   out.resize(Index(recvSize));
 
+  // memcpy(out.getRawData(), in.getRawData(), sendSize*sizeof(value_type));
+
   MPI_Sendrecv(
-      in.getRawData() , sendSize, MpiValueType<value_type>::value, sendCoord, 0,
-      out.getRawData(), recvSize, MpiValueType<value_type>::value, recvCoord, 0,
+      in.getRawData() , sendSize, MPI_UNSIGNED_CHAR, sendCoord, 0,
+      out.getRawData(), recvSize, MPI_UNSIGNED_CHAR, recvCoord, 0,
       comm, &stat);
 }
 

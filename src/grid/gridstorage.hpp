@@ -46,6 +46,9 @@ class SingleArrayInstantAllocation
     IndexType dims;
 
   public:
+    SingleArrayInstantAllocation()
+      : data(NULL) , data_fast(NULL), size(0) {}
+
     ~SingleArrayInstantAllocation();
     /** resizes to grid with lower indices low[0],...,low[rank-1]
      *  and upper indices high[0],...,high[rank-1] */
@@ -99,14 +102,6 @@ template<typename T, int rank, template<typename, int> class AllocationPolicy>
 class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
   public:
     typedef Array<int,rank> IndexType;
-
-  protected:
-    T* data;
-    T* data_fast;
-    int size;
-    IndexType low;
-    IndexType high;
-    IndexType dims;
   public:
     class storage_iterator {
       protected:
@@ -148,29 +143,29 @@ class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
     T &get(const IndexType &index);
     const T &get(const IndexType &index) const;
     
-    T* getRawData() const { return data; }
+    T* getRawData() const { return this->data; }
 
     /** */
-    const IndexType& getLo() const { return low; }
+    const IndexType& getLo() const { return this->low; }
     /** */
-    const IndexType& getHi() const { return high; }
+    const IndexType& getHi() const { return this->high; }
     /** */
-    const IndexType& getDims() const { return dims; }
+    const IndexType& getDims() const { return this->dims; }
 
     /** */
-    int getLo(int k) const { return low[k]; }
+    int getLo(int k) const { return this->low[k]; }
     /** */
-    int getHi(int k) const { return high[k]; }
+    int getHi(int k) const { return this->high[k]; }
     /** */
-    int getDims(int k) const { return dims[k]; }
+    int getDims(int k) const { return this->dims[k]; }
 
-    int getSize() const { return size; }
+    int getSize() const { return this->size; }
 
-    storage_iterator begin() { return storage_iterator(data); }
-    storage_iterator end() { return storage_iterator(data + size); }
+    storage_iterator begin() { return storage_iterator(this->data); }
+    storage_iterator end() { return storage_iterator(this->data + this->size); }
 
-    const_storage_iterator cbegin() const { return const_storage_iterator(data); }
-    const_storage_iterator cend() const { return const_storage_iterator(data + size); }
+    const_storage_iterator cbegin() const { return const_storage_iterator(this->data); }
+    const_storage_iterator cend() const { return const_storage_iterator(this->data + this->size); }
 
 };
 

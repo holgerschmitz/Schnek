@@ -44,12 +44,21 @@ template<
 >
 Field<T, rank, CheckingPolicy, StoragePolicy>
   ::Field(const IndexType &size_, const FieldRange &range_, const Stagger &stagger_, int ghostCells_)
-  : Grid<T, rank, CheckingPolicy, StoragePolicy>(size_),
+  : Grid<T, rank, CheckingPolicy, StoragePolicy>(),
     range(range_),
     stagger(stagger_),
     size(size_),
     ghostCells(ghostCells_)
-{}
+{
+  IndexType low(IndexType::Zero());
+  IndexType high(size);
+  for (int i=0; i<rank; ++i)
+  {
+    low[i]  -= ghostCells;
+    high[i] += ghostCells - 1;
+  }
+  this->resize(low, high);
+}
 
 template<
   typename T,
@@ -59,12 +68,24 @@ template<
 >
 Field<T, rank, CheckingPolicy, StoragePolicy>
   ::Field(const IndexType &low_, const IndexType &high_, const FieldRange &range_, const Stagger &stagger_, int ghostCells_)
-  : Grid<T, rank, CheckingPolicy, StoragePolicy>(low_, high_),
+  : Grid<T, rank, CheckingPolicy, StoragePolicy>(),
     range(range_),
     stagger(stagger_),
-    size(this->getDims()),
     ghostCells(ghostCells_)
-{}
+{
+  IndexType low(low_);
+  IndexType high(high_);
+  for (int i=0; i<rank; ++i)
+  {
+    low[i]  -= ghostCells;
+    high[i] += ghostCells;
+  }
+  std::cerr << "Field Constructor " << std::endl;
+  for (int i=0; i<rank; ++i)
+    std::cerr << low[i] << " " << high[i] << std::endl;
+
+  this->resize(low, high);
+}
 
 template<
   typename T,

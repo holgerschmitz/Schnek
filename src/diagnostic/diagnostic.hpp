@@ -110,6 +110,14 @@ class SimpleDiagnostic : public DiagnosticInterface
     void initParameters(BlockParameters&);
     void init();
     std::string getFieldName() { return fieldName; }
+
+    /**
+     * Is the field to be written derived from another field and not available through
+     * the Block::retrieveData mechanism.
+     *
+     * If a class overrides and returns true then SimpleDiagnostic::field has
+     * to be set manually.
+     */
     virtual bool isDerived() { return false; }
   public:
     void setSingleOut(bool single_out_) { single_out = single_out_; }

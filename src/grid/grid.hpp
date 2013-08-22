@@ -183,7 +183,7 @@ class GridBase : public StoragePolicy, public CheckingPolicy
 template<
   typename T,
   int rank,
-  template<int> class CheckingPolicy = GridNoArgCheck,
+  template<int> class CheckingPolicy = GridAssertCheck,
   template<typename, int> class StoragePolicy = SingleArrayGridStorage
 >
 class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,rank> >

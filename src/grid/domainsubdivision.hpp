@@ -57,7 +57,7 @@ class DomainSubdivision {
     typedef typename GridType::CheckingPolicyType CheckingPolicyType;
     typedef typename GridType::StoragePolicyType StoragePolicyType;
 
-    typedef Grid<unsigned char, 1, GridNoArgCheck, LazyArrayGridStorage> BufferType;
+    typedef Grid<unsigned char, 1, GridAssertCheck, LazyArrayGridStorage> BufferType;
 
     typedef RecDomain<Rank> DomainType;
     typedef Boundary<Rank> BoundaryType;
