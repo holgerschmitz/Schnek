@@ -24,6 +24,8 @@
  *
  */
 
+#include "../grid/field.hpp"
+
 namespace schnek {
 
 
@@ -39,16 +41,26 @@ void HdfIStream::readGrid(GridContainer<FieldType> &g)
   IndexType mlo = g.grid->getLo();
   IndexType mhi = g.grid->getHi();
 
+  IndexType llo = g.local_min;
+  IndexType lhi = g.local_max;
+
+
   hsize_t dims[FieldType::Rank];
+
   hsize_t locdims[FieldType::Rank];
-  hsize_t start[FieldType::Rank];
+  hsize_t memdims[FieldType::Rank];
+  hsize_t locstart[FieldType::Rank];
+  hsize_t memstart[FieldType::Rank];
 
   for (int i=0; i<FieldType::Rank; ++i)
   {
+    // maybe use [FieldType::Rank-1-i] as index on the LHS
     int gmin = g.global_min[i];
     dims[i] = 1 + g.global_max[i] - gmin;
-    locdims[i] = mdims[i];
-    start[i] = mlo[i] - gmin;
+    locdims[i]  = lhi[i] - llo[i] + 1;
+    locstart[i] = llo[i] - gmin;
+    memdims[i] = mhi[i] - mlo[i] + 1;
+    memstart[i] = llo[i] - mlo[i];
   }
 
   T *data = *g.grid->getRawData();
@@ -67,17 +79,17 @@ void HdfIStream::readGrid(GridContainer<FieldType> &g)
   hid_t file_dataspace = H5Dget_space(dataset);
   assert(file_dataspace != -1);
 
-  hid_t ret=H5Sselect_hyperslab(file_dataspace,
-                                H5S_SELECT_SET,
-                                start,
-                                NULL,
-                                locdims,
-                                NULL);
+  hid_t ret=H5Sselect_hyperslab(file_dataspace, H5S_SELECT_SET,
+                                locstart, NULL,
+                                locdims, NULL);
   assert(ret != -1);
 
   /* create a memory dataspace independently */
-  hid_t mem_dataspace = H5Screate_simple(FieldType::Rank, locdims, NULL);
+  hid_t mem_dataspace = H5Screate_simple(FieldType::Rank, memdims, NULL);
   assert (mem_dataspace != -1);
+  ret = H5Sselect_hyperslab(mem_dataspace,  H5S_SELECT_SET,
+                            memstart, NULL, locdims, NULL);
+  assert(ret != -1);
 
 
   /* read the data independently */
@@ -121,29 +133,41 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
   IndexType mlo = g.grid->getLo();
   IndexType mhi = g.grid->getHi();
 
+  IndexType llo = g.local_min;
+  IndexType lhi = g.local_max;
+
+
   hsize_t dims[FieldType::Rank];
+
   hsize_t locdims[FieldType::Rank];
-  hsize_t start[FieldType::Rank];
+  hsize_t memdims[FieldType::Rank];
+  hsize_t locstart[FieldType::Rank];
+  hsize_t memstart[FieldType::Rank];
 
   //bool empty = false;
 
   for (int i=0; i<FieldType::Rank; ++i)
   {
+    // maybe use [FieldType::Rank-1-i] as index on the LHS
     int gmin = g.global_min[i];
     dims[i] = 1 + g.global_max[i] - gmin;
-    locdims[FieldType::Rank-1-i] = mdims[i];
-    start[i] = mlo[i] - gmin;
+    locdims[i]  = lhi[i] - llo[i] + 1;
+    locstart[i] = llo[i] - gmin;
+    memdims[i] = mhi[i] - mlo[i] + 1;
+    memstart[i] = llo[i] - mlo[i];
 
     //if (locdims[FieldType::Rank-1-i]<=0) empty = true;
 
-    if (dims[i]<(start[i]+locdims[FieldType::Rank-1-i]))
+    if (dims[i]<(locstart[i]+locdims[FieldType::Rank-1-i]))
     {
       std::cerr << "FATAL ERROR!\n"
         << "  in HdfOStream::writeGrid\n"
         << "Dimension " << i << ":\n  global size: " << dims[i]
         << "\n  global min: " << gmin
         << "\n  global max: " << g.global_max[i]
-        << "\n  local start: " << start[i]
+        << "\n  local start: " << locstart[i]
+        << "\n  mlo: " << mlo[i]
+        << "\n  llo: " << llo[i]
         << "\n  local size: " << locdims[FieldType::Rank-1-i]
         << "\n  global min: " << gmin << "\n";
       exit(-1);
@@ -157,7 +181,7 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 #if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
   hid_t sid = H5Screate_simple (FieldType::Rank, dims, NULL);
 #else
-  hid_t sid = H5Screate_simple (FieldType::Rank, locdims, NULL);
+  hid_t sid = H5Screate_simple (FieldType::Rank, memdims, NULL);
 #endif
 
   /* create a dataset */
@@ -182,11 +206,14 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
   hid_t file_dataspace = H5Dget_space(dataset);
 
   ret = H5Sselect_hyperslab(file_dataspace,  H5S_SELECT_SET,
-                              start, NULL, locdims, NULL);
+                            locstart, NULL, locdims, NULL);
   assert(ret != -1);
 
   /* create a memory dataspace independently */
-  hid_t mem_dataspace = H5Screate_simple (FieldType::Rank, locdims, NULL);
+  hid_t mem_dataspace = H5Screate_simple (FieldType::Rank, memdims, NULL);
+  ret = H5Sselect_hyperslab(mem_dataspace,  H5S_SELECT_SET,
+                              memstart, NULL, locdims, NULL);
+  assert(ret != -1);
 //  hid_t mem_dataspace = H5Dget_space(dataset);
 
   /* write data independently */
@@ -240,6 +267,36 @@ void HDFGridDiagnostic<Type, PointerType>::close()
   output.close();
 }
 
+
+template<typename InnerType>
+struct CopyToContainer
+{
+  static void copy(InnerType *field, GridContainer<InnerType> &container)
+  {
+    container.grid = field;
+    container.local_min = field->getLo();
+    container.local_max = field->getHi();
+  }
+};
+
+template<
+  typename T,
+  int rank,
+  template<int> class CheckingPolicy,
+  template<typename, int> class StoragePolicy
+>
+struct CopyToContainer<Field<T, rank, CheckingPolicy, StoragePolicy> >
+{
+  static void copy(Field<T, rank, CheckingPolicy, StoragePolicy> *field,
+           GridContainer<Field<T, rank, CheckingPolicy, StoragePolicy> > &container)
+  {
+    container.grid = field;
+    container.local_min = field->getInnerLo();
+    container.local_max = field->getInnerHi();
+
+  }
+};
+
 template<typename Type, typename PointerType>
 void HDFGridDiagnostic<Type, PointerType>::init()
 {
@@ -247,7 +304,7 @@ void HDFGridDiagnostic<Type, PointerType>::init()
 
   if (!this->isDerived())
   {
-    container.grid = &(*this->field);
+    CopyToContainer<Type>::copy(&(*this->field), container);
     container.global_min = this->getGlobalMin();
     container.global_max = this->getGlobalMax();
   }

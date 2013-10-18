@@ -40,6 +40,8 @@ struct GridContainer
   FieldType *grid;
   typename FieldType::IndexType global_min;
   typename FieldType::IndexType global_max;
+  typename FieldType::IndexType local_min;
+  typename FieldType::IndexType local_max;
 };
 
 /** @brief IO class for handling HDF files
@@ -151,6 +153,8 @@ class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType> {
   protected:
     HdfOStream output;
     GridContainer<Type> container;
+
+
   protected:
     typedef typename Type::IndexType IndexType;
     void open(const std::string &);

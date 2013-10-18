@@ -50,12 +50,15 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
     size(size_),
     ghostCells(ghostCells_)
 {
+  lo_inner = IndexType::Zero();
+  hi_inner = size;
   IndexType low(IndexType::Zero());
   IndexType high(size);
   for (int i=0; i<rank; ++i)
   {
     low[i]  -= ghostCells;
     high[i] += ghostCells - 1;
+    hi_inner -= 1;
   }
   this->resize(low, high);
 }
@@ -73,6 +76,8 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
     stagger(stagger_),
     ghostCells(ghostCells_)
 {
+  lo_inner = low_;
+  hi_inner = high_;
   IndexType low(low_);
   IndexType high(high_);
   for (int i=0; i<rank; ++i)

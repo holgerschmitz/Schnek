@@ -28,7 +28,7 @@
 #include "../util/logger.hpp"
 
 #undef LOGLEVEL
-#define LOGLEVEL 5
+#define LOGLEVEL 0
 
 using namespace schnek;
 

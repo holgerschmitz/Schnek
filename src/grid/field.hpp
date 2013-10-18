@@ -52,6 +52,10 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     Stagger stagger;
     /// Stores the size of the simulation domain
     IndexType size;
+    /// The low coordinate of the inner region (without the ghost cells)
+    IndexType lo_inner;
+    /// The high coordinate of the inner region (without the ghost cells)
+    IndexType hi_inner;
     int ghostCells;
   public:
     /** default constructor creates an empty grid */
@@ -63,6 +67,12 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     Field(const IndexType &size, const FieldRange &range_, const Stagger &stagger_, int ghostCells_);
 
     Field(const IndexType &low_, const IndexType &high_, const FieldRange &range_, const Stagger &stagger_, int ghostCells_);
+
+    /** Get the lo if the inner domain */
+    const IndexType& getInnerLo() {return lo_inner;}
+
+    /** Get the lo if the inner domain */
+    const IndexType& getInnerHi() {return hi_inner;}
 
     /** copy constructor */
     Field(const Field<T, rank, CheckingPolicy, StoragePolicy>&);
