@@ -120,7 +120,7 @@ void SingleArrayLazyAllocation<T, rank>::resize(const IndexType &low_, const Ind
   int diff = newSize - avgSize;
   avgVar = r*diff*diff + (1-r)*avgVar;
 
-  if ((newSize > bufSize) || ((newSize + 8*sqrt(avgVar)) < bufSize))
+  if ((newSize > bufSize) || (((newSize + 32.0*sqrt(avgVar)) < bufSize) && (bufSize>100)))
   {
     this->deleteData();
     this->newData(newSize);
@@ -138,7 +138,7 @@ void SingleArrayLazyAllocation<T, rank>::resize(const IndexType &low_, const Ind
 template<typename T, int rank>
 void SingleArrayLazyAllocation<T, rank>::deleteData()
 {
-  std::cerr << "Deleting pointer (" << (void*)data << "): size = " << size << std::endl;
+  SCHNEK_TRACE_LOG(2,"Deleting pointer (" << (void*)data << "): size=" << size << " avgSize="<<avgSize << " avgVar="<<avgVar << " bufSize="<<bufSize);
   if (data)
     delete[] data;
   data = NULL;

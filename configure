@@ -15872,13 +15872,14 @@ done
   fi
 fi
 
-# Check whether --enable-parallel-hdf5 was given.
+# Check whether --enable-parallel_hdf5 was given.
 if test "${enable_parallel_hdf5+set}" = set; then :
   enableval=$enable_parallel_hdf5;
 fi
 
 
-if test x"$enable-parallel-hdf5" != "xno" ; then
+if test "x$enable_parallel_hdf5" != "xno"; then :
+
 
 $as_echo "#define SCHNEK_USE_HDF_PARALLEL 1" >>confdefs.h
 

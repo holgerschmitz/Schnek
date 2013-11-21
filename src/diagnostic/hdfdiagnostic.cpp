@@ -24,6 +24,7 @@
  *
  */
 
+#include "../config.hpp"
 #include "hdfdiagnostic.hpp"
 #include "../util/logger.hpp"
 
@@ -227,23 +228,49 @@ int HdfOStream::open(const char* fname)
   sets_count = 0;
 
 #if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
+
+  int sieve_buf_size = 262144;
+  int align_threshold = 524288;
+  int alignment = 262144;
+
+  MPI_Info mpi_info;
+
   makeMPIGroup();
   if (active)
   {
     /* setup file access template */
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
+
+    H5Pset_sieve_buf_size(plist_id, sieve_buf_size);
+    H5Pset_alignment(plist_id, align_threshold, alignment);
+
+    MPI_Info_create(&mpi_info);
+
+    MPI_Info_set(mpi_info, "access_style", "write_once");
+    MPI_Info_set(mpi_info, "collective_buffering", "true");
+    MPI_Info_set(mpi_info, "cb_block_size", "1048576");
+    MPI_Info_set(mpi_info, "cb_buffer_size", "4194304");
+
     /* set Parallel access with communicator */
-    H5Pset_fapl_mpio(plist_id, mpiComm, MPI_INFO_NULL);
+    H5Pset_fapl_mpio(plist_id, mpiComm, mpi_info);
     /* open the file collectively */
-//    H5Pset_fapl_mpiposix(plist_id, mpiComm, 0);
+    //H5Pset_fapl_mpiposix(plist_id, mpiComm, 0);
     file_id = H5Fcreate (fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     /* Release file-access template */
     H5Pclose(plist_id);
+
+    dxpl_id = H5Pcreate(H5P_DATASET_XFER);
+    SCHNEK_TRACE_LOG(3,"Data Transfer Property List Id (0) " << dxpl_id)
+    H5Pset_dxpl_mpio(dxpl_id, H5FD_MPIO_COLLECTIVE);
   }
 #else
   if (active)
     file_id = H5Fcreate (fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+  dxpl_id = H5P_DEFAULT;
 #endif
+
+  SCHNEK_TRACE_LOG(3,"Data Transfer Property List Id " << dxpl_id)
 
   return file_id;
 }

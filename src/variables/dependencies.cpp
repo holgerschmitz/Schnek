@@ -72,16 +72,16 @@ void DependencyMap::constructMap(const pBlockVariables vars)
 	  }
 	}
 
-  std::cout << "DependencyMap::constructMap";
-  BOOST_FOREACH(DepMap::value_type info, dependencies)
-  {
-     std::cout << "Variable " << info.first << "("<< info.second.v->getId() << "): ";
-     BOOST_FOREACH(long id, info.second.dependsOn)
-     {
-       std::cout << id << " ";
-     }
-     std::cout << std::endl;
-  }
+//  std::cout << "DependencyMap::constructMap";
+//  BOOST_FOREACH(DepMap::value_type info, dependencies)
+//  {
+//     std::cout << "Variable " << info.first << "("<< info.second.v->getId() << "): ";
+//     BOOST_FOREACH(long id, info.second.dependsOn)
+//     {
+//       std::cout << id << " ";
+//     }
+//     std::cout << std::endl;
+//  }
 
 }
 
@@ -313,15 +313,15 @@ void DependencyMap::updateAll()
     deps->insert(RefDepMap::value_type(entry.first, &entry.second));
   }
 
-  BOOST_FOREACH(RefDepMap::value_type info, *deps)
-  {
-     std::cout << "Variable " << info.first << "("<< info.second->v->getId() << "): ";
-     BOOST_FOREACH(long id, info.second->dependsOn)
-     {
-       std::cout << id << " ";
-     }
-     std::cout << std::endl;
-  }
+//  BOOST_FOREACH(RefDepMap::value_type info, *deps)
+//  {
+//     std::cout << "Variable " << info.first << "("<< info.second->v->getId() << "): ";
+//     BOOST_FOREACH(long id, info.second->dependsOn)
+//     {
+//       std::cout << id << " ";
+//     }
+//     std::cout << std::endl;
+//  }
 
   VariableList updateList;
 

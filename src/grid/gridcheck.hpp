@@ -28,6 +28,8 @@
 #define SCHNEK_GRIDCHECK_H_
 
 #include "array.hpp"
+
+#include "../util/logger.hpp"
 #include <cassert>
 
 namespace schnek {
@@ -56,6 +58,38 @@ class GridAssertCheck {
 };
 
 
+
+template<int rank>
+class GridDebugCheck {
+  public:
+    typedef Array<int,rank> IndexType;
+  private:
+    static bool errorFlag;
+    static int errorInfo;
+    static IndexType offending;
+  public:
+    static const  IndexType check(
+        const IndexType &pos,
+        const IndexType &low,
+        const IndexType &high
+    );
+
+    static bool getErrorFlag()
+    {
+      return errorFlag;
+    }
+
+    static int getErrorInfo()
+    {
+      return errorInfo;
+    }
+
+    static IndexType getOffending()
+    {
+      return offending;
+    }
+  };
+
 template<int rank>
 inline const typename GridNoArgCheck<rank>::IndexType &GridNoArgCheck<rank>::check(
         const IndexType &pos, 
@@ -76,6 +110,45 @@ inline const typename GridAssertCheck<rank>::IndexType &GridAssertCheck<rank>::c
     assert(pos[i]<=high[i]);
   }
   return pos; 
+}
+
+
+template<int rank>
+bool GridDebugCheck<rank>::errorFlag = false;
+
+template<int rank>
+int GridDebugCheck<rank>::errorInfo = 0;
+
+template<int rank>
+typename GridDebugCheck<rank>::IndexType GridDebugCheck<rank>::offending;
+
+template<int rank>
+inline const typename GridDebugCheck<rank>::IndexType GridDebugCheck<rank>::check(
+        const IndexType &pos,
+        const IndexType &low,
+        const IndexType &high
+    )
+{
+  IndexType pos_copy(pos);
+  for (int i=0; i<rank; ++i)
+  {
+    if (pos_copy[i]<low[i])  {
+      SCHNEK_TRACE_ERR(1,"schnek::GridDebugCheck index out of range (dim="<<i<<"): index=" <<pos_copy[i]<<"  lo="<<low[i])
+      pos_copy[i]=low[i];
+      GridDebugCheck<rank>::errorFlag = true;
+      GridDebugCheck<rank>::errorInfo = -i;
+      GridDebugCheck<rank>::offending = pos;
+    }
+    if (pos_copy[i] > high[i])
+    {
+      SCHNEK_TRACE_ERR(1,"schnek::GridDebugCheck index out of range (dim="<<i<<"): index=" <<pos_copy[i]<<"  hi="<<high[i])
+      pos_copy[i] = high[i];
+      GridDebugCheck<rank>::errorFlag = true;
+      GridDebugCheck<rank>::errorInfo = i;
+      GridDebugCheck<rank>::offending = pos;
+    }
+  }
+  return pos_copy;
 }
 
 }

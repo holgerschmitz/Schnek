@@ -58,7 +58,7 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
   {
     low[i]  -= ghostCells;
     high[i] += ghostCells - 1;
-    hi_inner -= 1;
+    hi_inner[i] -= 1;
   }
   this->resize(low, high);
 }

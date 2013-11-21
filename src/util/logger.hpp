@@ -35,6 +35,8 @@
 #include <iostream>
 #include <string>
 
+#include "singleton.hpp"
+
 namespace schnek {
 
 /** Macro for writing to the normal log.
@@ -69,7 +71,7 @@ namespace schnek {
  */
 #define SCHNEK_TRACE_ERR(i,x)                                  \
   BOOST_PP_IIF( BOOST_PP_GREATER_EQUAL( LOGLEVEL, i ), \
-      schnek:::Logger::instance().err() << __LINE__ << " " << __FILE__ << ": " << x << "\n";, \
+      schnek::Logger::instance().err() << __LINE__ << " " << __FILE__ << ": " << x << "\n";, \
     BOOST_PP_EMPTY()                                   \
   )
 
@@ -85,14 +87,16 @@ namespace schnek {
     BOOST_PP_EMPTY()                                   \
   )
 
-/** Predefines the log level.
+/** Predefines the log level if it is not defined.
  *
- * To redefine to eg level 2 use the following commands:
+ * To redefine to eg level 5 use the following commands:
  *
  * #undef LOGLEVEL
  * #define LOGLEVEL 5
  */
-#define LOGLEVEL 2
+#ifndef LOGLEVEL
+#define LOGLEVEL 0
+#endif
 
 #include "singleton.hpp"
 

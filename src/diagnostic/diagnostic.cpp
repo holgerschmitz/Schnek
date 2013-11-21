@@ -26,6 +26,10 @@
 
 #include <sstream>
 #include "diagnostic.hpp"
+#include "../util/logger.hpp"
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 using namespace schnek;
 
@@ -37,6 +41,7 @@ DiagnosticInterface::DiagnosticInterface() :
 
 void DiagnosticInterface::execute(bool master, int rank, int timeCounter)
 {
+  SCHNEK_TRACE_LOG(2, "DiagnosticInterface::execute " << fname << " " << rank)
   if (singleOut() && !master) return;
 
   if ((0 == timeCounter) && appending()) open(fname);
@@ -69,6 +74,7 @@ std::string DiagnosticInterface::parsedFileName(int rank, int timeCounter)
   std::string comrank = boost::lexical_cast<std::string>(rank);
   std::string tstep = boost::lexical_cast<std::string>(timeCounter);
 
+  SCHNEK_TRACE_LOG(2, "DiagnosticInterface::parsedFileName " << rank << " " << comrank << " "<< timeCounter)
   size_t pos;
   pos = parsed.find("#p");
   if (pos != std::string::npos) parsed.replace(pos, 2, comrank);
@@ -90,6 +96,7 @@ void DiagnosticManager::addDiagnostic(DiagnosticInterface *diag)
 
 void DiagnosticManager::execute()
 {
+  SCHNEK_TRACE_LOG(2, "DiagnosticManager::execute " << rank << " "<< *timecounter)
   BOOST_FOREACH(DiagnosticInterface *diag, diags)
   {
     diag->execute(master, rank, *timecounter);

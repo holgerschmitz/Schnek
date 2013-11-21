@@ -125,6 +125,8 @@ class HdfIStream : public HdfStream {
 
 /** @brief output stream for HDF files */
 class HdfOStream : public HdfStream {
+  private:
+    hid_t dxpl_id;
   public:
     /// constructor
     HdfOStream();

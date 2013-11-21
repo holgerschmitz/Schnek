@@ -105,18 +105,35 @@ template<
 typename Boundary<rank,CheckingPolicy>::DomainType
         Boundary<rank,CheckingPolicy>::getBoundaryDomain(int dim, bound b, bool stagger)
 {
-        DomainType bounds = size;
-        switch (b)
-        {
-                case Min: 
-                        bounds.getHi()[dim] = bounds.getLo()[dim] + delta - 1 - int(stagger);
-                        break;
-                case Max:
-                default:
-                        bounds.getLo()[dim] = bounds.getHi()[dim] - delta + 1;
-                        break;
-        }
-        return bounds;
+  DomainType bounds = size;
+  switch (b)
+  {
+    case Min:
+      bounds.getHi()[dim] = bounds.getLo()[dim] + delta - 1 - int(stagger);
+      break;
+    case Max:
+    default:
+      bounds.getLo()[dim] = bounds.getHi()[dim] - delta + 1;
+      break;
+  }
+  return bounds;
+}
+
+template<
+  int rank,
+  template<int> class CheckingPolicy
+>
+typename Boundary<rank,CheckingPolicy>::DomainType
+    Boundary<rank,CheckingPolicy>::getInnerDomain()
+{
+  typename DomainType::LimitType lo = size.getLo();
+  typename DomainType::LimitType hi = size.getHi();
+  for (int d=0; d<rank; ++d)
+  {
+    lo[d] += delta;
+    hi[d] -= delta;
+  }
+  return DomainType(lo,hi);
 }
         
 template<

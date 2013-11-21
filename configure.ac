@@ -97,13 +97,11 @@ if test "$ok" = "yes"; then
   fi
 fi
 
-AC_ARG_ENABLE([parallel-hdf5],
-          [AS_HELP_STRING([--enable-parallel-hdf5], [use parallel file access for HDF5 (mpio) if available.])], 
-          [],[])
+AC_ARG_ENABLE([parallel_hdf5],
+          [AS_HELP_STRING([--enable-parallel-hdf5], [use parallel file access for HDF5 (mpio) if available.])])
 
-if test x"$enable-parallel-hdf5" != "xno" ; then
-  AC_DEFINE([SCHNEK_USE_HDF_PARALLEL],[1],[Defined if we use parallel file access for HDF5 (mpio) if available.])
-fi
+AS_IF([test "x$enable_parallel_hdf5" != "xno"], [
+  AC_DEFINE([SCHNEK_USE_HDF_PARALLEL],[1],[Defined if we use parallel file access for HDF5 (mpio) if available.])])
 
 AC_LANG_PUSH([C++])
 OLDCPPFLAGS=$CPPFLAGS

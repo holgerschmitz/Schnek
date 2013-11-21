@@ -25,6 +25,10 @@
  */
 
 #include "../grid/field.hpp"
+#include "../util/logger.hpp"
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 namespace schnek {
 
@@ -156,6 +160,8 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
     memdims[i] = mhi[i] - mlo[i] + 1;
     memstart[i] = llo[i] - mlo[i];
 
+    SCHNEK_TRACE_LOG(2,"HdfOStream::writeGrid("<<i<<") "<< gmin <<" "<< g.global_max[i]<<" " << llo[i]<<" " << lhi[i])
+
     //if (locdims[FieldType::Rank-1-i]<=0) empty = true;
 
     if (dims[i]<(locstart[i]+locdims[FieldType::Rank-1-i]))
@@ -167,7 +173,9 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
         << "\n  global max: " << g.global_max[i]
         << "\n  local start: " << locstart[i]
         << "\n  mlo: " << mlo[i]
+        << "\n  mhi: " << mhi[i]
         << "\n  llo: " << llo[i]
+        << "\n  lhi: " << lhi[i]
         << "\n  local size: " << locdims[FieldType::Rank-1-i]
         << "\n  global min: " << gmin << "\n";
       exit(-1);
@@ -183,6 +191,8 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 #else
   hid_t sid = H5Screate_simple (FieldType::Rank, memdims, NULL);
 #endif
+
+  assert(sid > -1);
 
   /* create a dataset */
 #if H5Dcreate_vers==2
@@ -201,9 +211,13 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
                             H5P_DEFAULT);
 #endif
 
+  assert(dataset > -1);
+
 #if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
   /* create a file dataspace independently */
   hid_t file_dataspace = H5Dget_space(dataset);
+
+  assert(file_dataspace > -1);
 
   ret = H5Sselect_hyperslab(file_dataspace,  H5S_SELECT_SET,
                             locstart, NULL, locdims, NULL);
@@ -211,6 +225,8 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 
   /* create a memory dataspace independently */
   hid_t mem_dataspace = H5Screate_simple (FieldType::Rank, memdims, NULL);
+
+  assert(mem_dataspace > -1);
   ret = H5Sselect_hyperslab(mem_dataspace,  H5S_SELECT_SET,
                               memstart, NULL, locdims, NULL);
   assert(ret != -1);
@@ -221,7 +237,7 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
                  H5DataType<T>::type,
                  mem_dataspace,
                  file_dataspace,
-                 H5P_DEFAULT,
+                 dxpl_id,
                  data);
 
   assert(ret != -1);
@@ -310,5 +326,7 @@ void HDFGridDiagnostic<Type, PointerType>::init()
   }
 }
 
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 } // namespace 

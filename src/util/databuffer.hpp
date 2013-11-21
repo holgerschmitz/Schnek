@@ -81,6 +81,11 @@ class DataBuffer
          {
            return *((T*)(data));
          }
+
+         T* operator->()
+         {
+           return (T*)(data);
+         }
      };
 
     /** Make the buffer from some data. ContainerType is expected to

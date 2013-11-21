@@ -88,7 +88,7 @@ class DiagnosticManager : public Singleton<DiagnosticManager>
 
     void setTimeCounter(int *timecounter_) { timecounter = timecounter_; }
     void setMaster(bool master_) { master = master_; }
-    void setRank(bool rank_) { rank = rank_; }
+    void setRank(int rank_) { rank = rank_; }
   private:
     DiagnosticManager();
 };

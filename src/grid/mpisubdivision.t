@@ -27,6 +27,10 @@
 #ifdef SCHNEK_HAVE_MPI
 
 #include "../util/factor.hpp"
+#include "../util/logger.hpp"
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 #include <iostream>
 #include <vector>
@@ -55,7 +59,7 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
 
   for (int i=0; i<Rank; ++i)
   {
-    box[i] = High[i]-Low[i]-1;
+    box[i] = High[i]-Low[i];
       periodic[Rank] = true;
   }
 
@@ -83,9 +87,13 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
 
     if (mycoord[i]>0)
       Low[i] = int(width[i]*mycoord[i])-delta+1;
+    else
+      Low[i] = -delta;
 
     if (mycoord[i]<(dims[i]-1))
       High[i] = int(width[i]*(mycoord[i]+1))+delta;
+    else
+      High[i] = High[i]+delta;
 
     exchangeSizeProduct *= (High[i]-Low[i]+1);
     //std::cout << "Calculating exchange size product: " << exchangeSizeProduct << std::endl;
@@ -256,11 +264,16 @@ int MPICartSubdivision<GridType>::getUniqueId() const
 {
   int id = mycoord[0];
   for (int i=1; i<Rank; ++i) id = dims[i]*id + mycoord[i];
+
+  SCHNEK_TRACE_LOG(2, "MPICartSubdivision::getUniqueId() " << id)
   return id;
 }
 
 
 }
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 #endif // HAVE_MPI
 

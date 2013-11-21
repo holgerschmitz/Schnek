@@ -25,6 +25,11 @@
  */
 
 
+#include "../util/logger.hpp""
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
+
 namespace schnek {
 
 
@@ -45,7 +50,7 @@ template<class Type, typename PointerType>
 void SimpleDiagnostic<Type, PointerType>::init()
 {
   if (!isDerived()) retrieveData(fieldName, field);
-  std::cout << "got field " << field << std::endl;
+  SCHNEK_TRACE_LOG(2, "got field " << field)
 }
 
 template<class Type, typename PointerType>
@@ -68,6 +73,8 @@ void SimpleFileDiagnostic<Type, PointerType>::close()
 }
 
 
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 
 } // namespace schnek

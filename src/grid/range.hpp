@@ -69,6 +69,11 @@ class Range {
     /// Return rectangle maximum
     const LimitType &getHi() const {return hi;}
 
+    /// Return rectangle minimum
+    LimitType &getLo() {return lo;}
+    /// Return rectangle maximum
+    LimitType &getHi() {return hi;}
+
     void grow(const T &s) {
       for (int i=0; i<rank; ++i)
       {

@@ -91,7 +91,7 @@ class DomainSubdivision {
      */
     void init(const DomainType &domain, int delta)
     {
-      init(domain.getLo(), domain.getHi, delta);
+      init(domain.getLo(), domain.getHi(), delta);
     }
 
     /** Convenience method.
@@ -99,7 +99,17 @@ class DomainSubdivision {
      */
     void init(const GridType &grid, int delta)
     {
-      init(grid.getLo(), grid.getHi, delta);
+      init(grid.getLo(), grid.getHi(), delta);
+    }
+
+    /** Convenience method.
+     *  Initialise the boundary with the extent of the grid.
+     */
+    void init(const LimitType &size, int delta)
+    {
+      LimitType sizem(size);
+      for (int i=0; i<Rank; ++i) --sizem[i];
+      init(LimitType(0), sizem, delta);
     }
 
     /// Return the local domain size
@@ -108,6 +118,13 @@ class DomainSubdivision {
     const LimitType &getLo() const {return bounds->getDomain().getLo();}
     /// Return rectangle maximum
     const LimitType &getHi() const {return bounds->getDomain().getHi();}
+
+    /// Return the local domain size
+    const DomainType &getInnerDomain() { return bounds->getInnerDomain(); }
+    /// Return rectangle minimum
+    const LimitType &getInnerLo() const {return bounds->getInnerDomain().getLo();}
+    /// Return rectangle maximum
+    const LimitType &getInnerHi() const {return bounds->getInnerDomain().getHi();}
 
     /** @brief Exchange the boundaries of a field function
      *  in the direction given by dim.

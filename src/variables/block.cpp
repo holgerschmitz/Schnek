@@ -56,7 +56,7 @@ void BlockTree::moveDown()
 void BlockTree::moveUp()
 {
   //std::cout << "BlockTree::moveUp()\n";
-  if (cursor) std::cout << "  - have cursor " << cursor->getId() << ")\n";
+  // if (cursor) std::cout << "  - have cursor " << cursor->getId() << ")\n";
 
   if (depth.size() == 0) return;
   if (0 == depth.top())
