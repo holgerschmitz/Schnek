@@ -226,7 +226,13 @@ class FunctionRegistry
     }
 
 };
-
+ /** Registers many functions supplied by cmath with the function registry.
+  * This allows the functions to be used in the input deck and for evaluating variables.
+  *
+  * Currently the following functions are registered:
+  * cos, sin, tan,  acos, asin, atan, atan2, cosh, sinh, tanh, exp,
+  * ldexp, log, log10, pow, sqrt, ceil, fabs, floor, fmod
+  */
 void registerCMath(FunctionRegistry &freg);
 
 } // namespace schnek

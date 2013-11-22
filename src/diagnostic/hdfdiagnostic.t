@@ -164,7 +164,7 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 
     //if (locdims[FieldType::Rank-1-i]<=0) empty = true;
 
-    if (dims[i]<(locstart[i]+locdims[FieldType::Rank-1-i]))
+    if (dims[i]<(locstart[i]+locdims[i]))
     {
       std::cerr << "FATAL ERROR!\n"
         << "  in HdfOStream::writeGrid\n"
@@ -176,7 +176,7 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
         << "\n  mhi: " << mhi[i]
         << "\n  llo: " << llo[i]
         << "\n  lhi: " << lhi[i]
-        << "\n  local size: " << locdims[FieldType::Rank-1-i]
+        << "\n  local size: " << locdims[i]
         << "\n  global min: " << gmin << "\n";
       exit(-1);
     }
