@@ -36,5 +36,7 @@ libschnekparserinclude_HEADERS = \
   parser/parsersettings.hpp       \
   parser/parsertoken.hpp  \
   parser/parsertoken.t  \
-  parser/tokenlist.hpp    
+  parser/tokenlist.hpp
+  
+  EXTRA_DIST += parser/deckgrammar.inc
   

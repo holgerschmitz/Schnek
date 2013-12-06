@@ -24,14 +24,15 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([Schnek],[0.1])
+AC_PREREQ([2.65])
+AC_INIT([Schnek],[0.9.0])
 
 AC_CONFIG_SRCDIR([src/grid.hpp])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([src/config.hpp src/schnek_config.hpp:src/schnek_config.hpp.in])
   
 AM_INIT_AUTOMAKE
-VERSION="0.1"
+VERSION="0.9.0"
 PACKAGE="schnek"
 
 AC_LANG(C++)
@@ -49,7 +50,12 @@ AC_PROG_MAKE_SET
 LT_INIT
 AC_SUBST([LIBTOOL_DEPS])
 
+AC_LANG_PUSH([C++])
+
 AX_BOOST_BASE([1.48.0],,[AC_MSG_ERROR([Schnek needs Boost version 1.48.0 to compile!])])
+
+CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
+LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
 
 # Search for MPI support
 # allows the  --with-mpi option (yes, no, auto)
@@ -80,41 +86,39 @@ fi
 # supplied by HDF5 itself
 # Checks for libraries.
 # start: Check for HDF5 support
-AC_ARG_WITH(hdf5, [AC_HELP_STRING([--without-hdf5],[do not allow HDF5 output])], ok=$withval, ok=yes)
-if test "$ok" = "yes"; then
-  AC_CHECK_LIB(z,deflate, [],[AC_MSG_WARN([zlib is required for HDF5!])])
 
-  save_LIBS_0="$LIBS" # save, to check later if we found any library
-  AC_CHECK_LIB(hdf5, H5Pcreate, [
-    AC_CHECK_HEADERS(hdf5.h, [LIBS="-lhdf5 $LIBS"
-                     AC_DEFINE([SCHNEK_HAVE_HDF5],[1],[Define this macro if Schnek is compiled with HDF5 support])])])
-  if test x"$save_LIBS_0" = x"$LIBS"; then
-    AC_MSG_WARN([Couldn't find the HDF5 library!!  Switching to --without-hdf5.])
-  fi
-
-  if test "x$with_mpi" = "xyes"; then
-    AC_CHECK_FUNCS(H5Pset_mpi H5Pset_fapl_mpio)
-  fi
-fi
+AX_HDF5([
+  AC_DEFINE([SCHNEK_HAVE_HDF5],[1],[Define this macro if Schnek is compiled with HDF5 support])
+  EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $HDF5_CFLAGS"
+  EXTRA_LDFLAGS="$EXTRA_LDFLAGS $HDF5_LDFLAGS"
+  EXTRA_LIBS="$EXTRA_LIBS $HDF5_LIBS"
+],[
+  AC_MSG_WARN([Couldn't find the HDF5 library!!  Switching to --without-hdf5.])
+])
 
 AC_ARG_ENABLE([parallel_hdf5],
-          [AS_HELP_STRING([--enable-parallel-hdf5], [use parallel file access for HDF5 (mpio) if available.])])
+          [AS_HELP_STRING([--enable-parallel-hdf5], [use parallel file access for HDF5 (mpio) if available.])], [])
 
-AS_IF([test "x$enable_parallel_hdf5" != "xno"], [
-  AC_DEFINE([SCHNEK_USE_HDF_PARALLEL],[1],[Defined if we use parallel file access for HDF5 (mpio) if available.])])
+AS_IF([test "x$enable_parallel_hdf5" != "xno"], [ 
+    AC_DEFINE([SCHNEK_USE_HDF_PARALLEL],[1],[Defined if we use parallel file access for HDF5 (mpio) if available.])
+  ])
+  
 
-AC_LANG_PUSH([C++])
-OLDCPPFLAGS=$CPPFLAGS
-OLDLDFLAGS=$LDFLAGS
-CPPFLAGS=$hdf5_CFLAGS
-LDFLAGS=$hdf5_LIBS
+CPPFLAGS="$CPPFLAGS $EXTRA_CPPFLAGS"
+LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
+LIBS="$LIBS $EXTRA_LIBS"
 
-CPPFLAGS=$OLDCPPFLAGS
-LDFLAGS=$OLDLDFLAGS
-AC_LANG_POP([C++])
 #End :: Check HDF5 suport
 
 
+schnek_lib_version_major=`expr $VERSION : '\([[0-9]]*\)'`
+schnek_lib_version_minor=`expr $VERSION : '[[0-9]]*\.\([[0-9]]*\)'`
+schnek_lib_version_sub_minor=`expr $VERSION : '[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\)'`
+    
+schnek_lib_version_long=`expr $schnek_lib_version_major \* 100000 \+  $schnek_lib_version_minor \* 100 \+ $schnek_lib_version_sub_minor`
+    
+AC_DEFINE_UNQUOTED([SCHNEK_VERSION], [$schnek_lib_version_long],
+  [Integer Schnek Version Number])
        
 # AC_ARG_PROGRAM
 

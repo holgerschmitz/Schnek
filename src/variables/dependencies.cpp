@@ -307,6 +307,7 @@ pBlockVariables DependencyMap::getBlockVariables()
 void DependencyMap::updateAll()
 {
   std::cout << "DependencyMap::updateAll()\n";
+
   pRefDepMap deps(new RefDepMap());
   BOOST_FOREACH(DepMap::value_type &entry, dependencies)
   {
@@ -327,7 +328,9 @@ void DependencyMap::updateAll()
 
   makeUpdateOrder(deps, updateList);
 
-  BOOST_FOREACH(pVariable v, updateList) v->evaluateExpression();
+  BOOST_FOREACH(pVariable v, updateList) {
+    v->evaluateExpression();
+  }
 }
 
 

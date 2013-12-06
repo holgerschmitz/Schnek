@@ -6,20 +6,11 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Define to 1 if you have the `H5Pset_fapl_mpio' function. */
-#undef HAVE_H5PSET_FAPL_MPIO
-
-/* Define to 1 if you have the `H5Pset_mpi' function. */
-#undef HAVE_H5PSET_MPI
-
-/* Define to 1 if you have the <hdf5.h> header file. */
-#undef HAVE_HDF5_H
+/* define if the HDF5 library is available */
+#undef HAVE_HDF5
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
-
-/* Define to 1 if you have the `z' library (-lz). */
-#undef HAVE_LIBZ
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -84,6 +75,9 @@
 
 /* Defined if we use parallel file access for HDF5 (mpio) if available. */
 #undef SCHNEK_USE_HDF_PARALLEL
+
+/* Integer Schnek Version Number */
+#undef SCHNEK_VERSION
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

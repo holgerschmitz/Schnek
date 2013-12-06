@@ -32,3 +32,6 @@
 
 /* Defined if we use parallel file access for HDF5 (mpio) if available. */
 #undef SCHNEK_USE_HDF_PARALLEL
+
+/* Integer Schnek Version Number */
+#undef SCHNEK_VERSION

@@ -24,7 +24,10 @@
  *
  */
 
-#include "../config.hpp"
+#include "../schnek_config.hpp"
+
+#ifdef SCHNEK_HAVE_HDF5
+
 #include "hdfdiagnostic.hpp"
 #include "../util/logger.hpp"
 
@@ -69,7 +72,7 @@ HdfStream &HdfStream::operator=(const HdfStream& hdf)
   blockname = hdf.blockname;
   active = hdf.active;
   activeModified = hdf.activeModified;
-#ifdef USE_HDF_PARALLEL
+#ifdef SCHNEK_USE_HDF_PARALLEL
   mpiComm = hdf.mpiComm;
   commSet = hdf.commSet;
 #endif
@@ -285,3 +288,5 @@ const hid_t H5DataType<float>::type = H5T_NATIVE_FLOAT;
 
 template<>
 const hid_t H5DataType<double>::type = H5T_NATIVE_DOUBLE;
+
+#endif

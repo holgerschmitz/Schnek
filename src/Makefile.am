@@ -46,6 +46,8 @@ libschnekinclude_HEADERS = \
   
 libschnek_la_LDFLAGS = -version-info 0:0:0
 
+EXTRA_DIST =
+
 include diagnostic/Makefile.am
 include grid/Makefile.am
 include parser/Makefile.am

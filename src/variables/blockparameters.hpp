@@ -142,12 +142,13 @@ class BlockParameters
     pParameter addParameter(std::string varName,
                             T* var,
                             pParametersGroup allowedDeps,
+                            bool hasDefault = false,
+                            T defaultValue = T(),
                             Permissions perm=readwrite)
     {
-      T defaultValue = T(); // ensure default values
       pVariable variable;
       if (perm==readwrite)
-        variable = pVariable(new Variable(defaultValue, false, false));
+        variable = pVariable(new Variable(defaultValue, hasDefault, false));
       else
       {
         typedef boost::shared_ptr<Expression<T> > ParExpression;
@@ -165,7 +166,14 @@ class BlockParameters
     pParameter addParameter(std::string varName, T* var, Permissions perm=readwrite)
     {
       pParametersGroup empty(new ParametersGroup());
-      return addParameter(varName, var, empty, perm);
+      return addParameter(varName, var, empty, false, T(), perm);
+    }
+
+    template<typename T>
+    pParameter addParameter(std::string varName, T* var, T defaultValue, Permissions perm=readwrite)
+    {
+      pParametersGroup empty(new ParametersGroup());
+      return addParameter(varName, var, empty, true, defaultValue, perm);
     }
 
     template<
@@ -185,6 +193,41 @@ class BlockParameters
         return result;
     }
 
+    template<
+      class T,
+      int rank,
+      template<int> class CheckingPolicy
+    >
+    Array<pParameter, rank, CheckingPolicy> addArrayParameter(
+        std::string varName,
+        Array<T, rank, CheckingPolicy> &var,
+        Array<T, rank, CheckingPolicy> default_values,
+        Permissions perm=readwrite,
+        std::string extension = "xyzuvw")
+    {
+        Array<pParameter, rank, CheckingPolicy>  result;
+        for (int i=0; i<rank; ++i)
+          result[i] = addParameter(varName+extension[i], &(var[i]), default_values[i], perm);
+        return result;
+    }
+
+    template<
+      class T,
+      int rank,
+      template<int> class CheckingPolicy
+    >
+    Array<pParameter, rank, CheckingPolicy> addArrayParameter(
+        std::string varName,
+        Array<T, rank, CheckingPolicy> &var,
+        T default_value,
+        Permissions perm=readwrite,
+        std::string extension = "xyzuvw")
+    {
+        Array<pParameter, rank, CheckingPolicy>  result;
+        for (int i=0; i<rank; ++i)
+          result[i] = addParameter(varName+extension[i], &(var[i]), default_value, perm);
+        return result;
+    }
 
     void evaluate()
     {

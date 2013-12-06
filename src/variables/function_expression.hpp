@@ -30,6 +30,15 @@
 #include "expression.hpp"
 #include <boost/foreach.hpp>
 
+#include <boost/mpl/begin.hpp>
+#include <boost/mpl/end.hpp>
+#include <boost/mpl/next.hpp>
+#include <boost/mpl/deref.hpp>
+
+namespace fusion = boost::fusion;
+namespace mpl = boost::mpl;
+namespace bft = boost::function_types;
+
 namespace schnek {
 
 typedef std::list<ExpressionVariant> ExpressionList;
@@ -58,11 +67,11 @@ class FunctionExpression : public Expression<vtype>
   public:
     typedef typename bft::result_type<func>::type rtype;
 
-    template<
-      typename from = typename mpl::begin< bft::parameter_types<func> >::type,
-      typename to = typename mpl::end< bft::parameter_types<func> >::type
-    >
-    struct converter;
+//    template<
+//      typename from = typename mpl::begin< bft::parameter_types<func> >::type,
+//      typename to = typename mpl::end< bft::parameter_types<func> >::type
+//    >
+//    struct converter;
 
   private:
     struct isConstantVisitor : public boost::static_visitor<bool>
@@ -85,9 +94,16 @@ class FunctionExpression : public Expression<vtype>
     DependencyList getDependencies();
 };
 
-template<class vtype, typename func>
-template<typename to>
-struct FunctionExpression<vtype, func>::converter<to, to>
+template<
+  class vtype,
+  typename func,
+  typename from = typename mpl::begin< bft::parameter_types<func> >::type,
+  typename to = typename mpl::end< bft::parameter_types<func> >::type
+>
+struct FunctionExpressionConverter;
+
+template<class vtype, typename func, typename to>
+struct FunctionExpressionConverter<vtype, func, to, to>
 {
   typedef typename bft::result_type<func>::type rtype;
   static void makeList(ExpressionList::iterator var, ExpressionList::iterator end, ExpressionList &args)
@@ -102,12 +118,8 @@ struct FunctionExpression<vtype, func>::converter<to, to>
   }
 };
 
-template<class vtype, typename func>
-template<
-  typename from,
-  typename to
->
-struct FunctionExpression<vtype, func>::converter
+template<class vtype, typename func, typename from, typename to>
+struct FunctionExpressionConverter
 {
     typedef typename bft::result_type<func>::type rtype;
     typedef typename mpl::deref<from>::type arg_type;
@@ -120,7 +132,9 @@ struct FunctionExpression<vtype, func>::converter
       ExpressionConverterVisitor<arg_type> visit;
       args.push_back(boost::apply_visitor(visit, (*var)));
       ++var;
-      FunctionExpression<vtype, func>::converter<next_type_iter, to>::makeList(var, end, args);
+      typedef FunctionExpressionConverter<vtype, func, next_type_iter, to> Con;
+      Con::makeList(var, end, args);
+      // FunctionExpressionConverter<vtype, func, next_type_iter, to>::makeList(var, end, args);
     }
 
     template<typename ArgType>
@@ -129,7 +143,7 @@ struct FunctionExpression<vtype, func>::converter
       typedef boost::shared_ptr< Expression<arg_type> > pExprType;
       pExprType expr = boost::get<pExprType>(*var);
       ++var;
-      return FunctionExpression<vtype, func>::converter<next_type_iter, to>::evaluate(f, var, fusion::push_back(sArgs, expr->eval()));
+      return FunctionExpressionConverter<vtype, func, next_type_iter, to>::evaluate(f, var, fusion::push_back(sArgs, expr->eval()));
     }
 
 };
@@ -138,13 +152,13 @@ template<class vtype, typename func>
 FunctionExpression<vtype, func>::FunctionExpression(func f_, ExpressionList &args_)
   : f(f_)
 {
-    converter<>::makeList(args_.begin(), args_.end(), args);
+    FunctionExpressionConverter<vtype, func>::makeList(args_.begin(), args_.end(), args);
 }
 
 template<class vtype, typename func>
 vtype FunctionExpression<vtype, func>::eval()
 {
-    return converter<>::evaluate(f, args.begin(), fusion::nil());
+    return FunctionExpressionConverter<vtype, func>::evaluate(f, args.begin(), fusion::nil());
 }
 
 template<class vtype, typename func>

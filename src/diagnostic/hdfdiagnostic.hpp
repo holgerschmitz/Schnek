@@ -27,6 +27,9 @@
 #ifndef SCHNEK_HDFDIAGNOSTIC_HPP_
 #define SCHNEK_HDFDIAGNOSTIC_HPP_
 
+#include "../schnek_config.hpp"
+#ifdef SCHNEK_HAVE_HDF5
+
 #include "../grid/grid.hpp"
 #include "diagnostic.hpp"
 
@@ -172,5 +175,7 @@ class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType> {
 } // namespace schnek
 
 #include "hdfdiagnostic.t"
+
+#endif
 
 #endif // SCHNEK_HDFDIAGNOSTIC_HPP_
