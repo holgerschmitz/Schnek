@@ -29,6 +29,8 @@
 
 #include <iostream>
 
+using namespace schnek;
+
 std::string LiteratureReference::getPublicationTypeString() const
 {
   switch (publType)
@@ -82,7 +84,7 @@ void writeRefField(std::ostream &out, std::string name, std::string value)
     out << "  " << name << " = {" << value << "}\n";
 }
 
-std::ostream &operator<<(std::ostream &out, const LiteraturReference &lit)
+std::ostream &operator<<(std::ostream &out, const LiteratureReference &lit)
 {
   out << "@" << lit.getPublicationTypeString() << " {"<< lit.getBibKey() <<"\n";
   writeRefField(out, "address", lit.getAddress());
@@ -123,40 +125,105 @@ LiteratureManager::addReference(std::string description,
   std::string bibKey = reference.getBibKey();
   if (records.count(bibKey) > 0)
   {
-    records[bibKey].first.push_back(description);
+    records[bibKey].first.insert(description);
   }
   else
   {
     LitRecord rec;
-    rec.first.push_back(description);
+    rec.first.insert(description);
     rec.second = reference;
     records.insert(Records::value_type(bibKey, rec));
   }
 }
 
 void
-LiteratureManager::writeInformation(std::ostream out, std::string bibfile)
+LiteratureManager::writeInformation(std::ostream &out, std::string bibfile)
 {
-  out << "\\documentclass{article}\n" << "\\begin{document}"
-      << "The following alrgorithms have been used\n" << "\\begin{itemize}";
+  out << "\\documentclass{article}\n"
+      << "\\begin{document}\n"
+      << "\\section*{Information on Numerical Methods}\n"
+      << "The following algorithms have been used\n" << "\\begin{itemize}";
   BOOST_FOREACH(Records::value_type rec, records)
   {
-    out << "\\item";
+    out << "\\item ";
     BOOST_FOREACH(std::string desc, rec.second.first)
-    {
       out << desc << "\n";
-    }
     out << "\\cite{" << rec.first << "}\n";
   }
-  out << "\\bibliography{" << bibfile << "}\n" << "\\end{itemize}\n"
+  out  << "\\end{itemize}\n"
+      << "\\bibliographystyle{acm}\n"
+      << "\\bibliography{" << bibfile << "}\n"
       << "\\end{document}\n";
 }
 
 void
-LiteratureManager::writeBibTex(std::ostream out)
+LiteratureManager::writeBibTex(std::ostream &out)
 {
   BOOST_FOREACH(Records::value_type rec, records)
   {
     out << rec.second.second << std::endl;
   }
+}
+
+std::ostream& schnek::operator<<(std::ostream &out, const schnek::LiteratureReference &ref)
+{
+  out << "@" << ref.getPublicationTypeString() << "{"<< ref.getBibKey() ;
+  if (ref.getAuthor()!="")
+    out << ",\n  author={"<<ref.getAuthor() << "}";
+  if (ref.getTitle()!="")
+    out << ",\n  title={"<<ref.getTitle() << "}";
+  if (ref.getJournal()!="")
+    out << ",\n  journal={"<<ref.getJournal() << "}";
+  if (ref.getBooktitle()!="")
+    out << ",\n  booktitle={"<<ref.getBooktitle() << "}";
+  if (ref.getEdition()!="")
+    out << ",\n  edition={"<<ref.getEdition() << "}";
+  if (ref.getVolume()!="")
+    out << ",\n  volume={"<<ref.getVolume() << "}";
+  if (ref.getChapter()!="")
+    out << ",\n  chapter={"<<ref.getChapter() << "}";
+  if (ref.getNumber()!="")
+    out << ",\n  number={"<<ref.getNumber() << "}";
+  if (ref.getMonth()!="")
+    out << ",\n  month={"<<ref.getMonth() << "}";
+  if (ref.getYear()!="")
+    out << ",\n  year={"<<ref.getYear() << "}";
+  if (ref.getPages()!="")
+    out << ",\n  pages={"<<ref.getPages() << "}";
+  if (ref.getEditor()!="")
+    out << ",\n  editor={"<<ref.getEditor() << "}";
+  if (ref.getSeries()!="")
+    out << ",\n  series={"<<ref.getSeries() << "}";
+  if (ref.getInstitution()!="")
+    out << ",\n  institution={"<<ref.getInstitution() << "}";
+  if (ref.getOrganization()!="")
+    out << ",\n  organization={"<<ref.getOrganization() << "}";
+  if (ref.getSchool()!="")
+    out << ",\n  school={"<<ref.getSchool() << "}";
+  if (ref.getPublisher()!="")
+    out << ",\n  publisher={"<<ref.getPublisher() << "}";
+  if (ref.getAddress()!="")
+    out << ",\n  address={"<<ref.getAddress() << "}";
+
+  if (ref.getAnnote()!="")
+    out << ",\n  annote={"<<ref.getAnnote() << "}";
+  if (ref.getCrossref()!="")
+    out << ",\n  crossref={"<<ref.getCrossref() << "}";
+  if (ref.getEprint()!="")
+    out << ",\n  eprint={"<<ref.getEprint() << "}";
+  if (ref.getHowpublished()!="")
+    out << ",\n  howpublished={"<<ref.getHowpublished() << "}";
+
+  if (ref.getKey()!="")
+    out << ",\n  key={"<<ref.getKey() << "}";
+  if (ref.getNote()!="")
+    out << ",\n  note={"<<ref.getNote() << "}";
+  if (ref.getType()!="")
+    out << ",\n  type={"<<ref.getType() << "}";
+  if (ref.getUrl()!="")
+    out << ",\n  url={"<<ref.getUrl() << "}";
+
+  out << "\n}\n\n";
+  return out;
+
 }

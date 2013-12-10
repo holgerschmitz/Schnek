@@ -21,10 +21,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
 
+libschnek_la_SOURCES += \
+  tools/literature.cpp
+  
 libschnektoolsincludedir = $(includedir)/schnek/tools
 
 libschnektoolsinclude_HEADERS = \
   tools/fieldtools.hpp \
-  tools/fieldtools.t
+  tools/fieldtools.t \
+  tools/literature.hpp
 
 

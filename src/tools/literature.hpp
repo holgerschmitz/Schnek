@@ -27,7 +27,14 @@
 #ifndef SCHNEK_LITERATURE_HPP_
 #define SCHNEK_LITERATURE_HPP_
 
+#include "../util/singleton.hpp"
+
 #include <boost/tuple/tuple.hpp>
+
+#include <string>
+#include <iostream>
+#include <set>
+#include <map>
 
 namespace schnek {
 
@@ -52,7 +59,7 @@ private:
     std::string howpublished; // How it was published, if the publishing method is nonstandard
     std::string institution; // The institution that was involved in the publishing, but not necessarily the publisher
     std::string journal; // The journal or magazine the work was published in
-    std::string key; // A hidden field used for specifying or overriding the alphabetical order of entries (when the "author" and "editor" fields are missing). Note that this is very different from the key (mentioned just after this list) that is used to cite or cross-reference the entry.
+    std::string key; // A hidden field used for specifying or overriding the alphabetical order of entries (when the "author" and "editor" fields are missing). Note that this is very different from the citation key that is used to cite or cross-reference the entry.
     std::string month; // The month of publication (or, if unpublished, the month of creation)
     std::string note; // Miscellaneous extra information
     std::string number; // The "(issue) number" of a journal, magazine, or tech-report, if applicable. (Most publications have a "volume", but no "number" field.)
@@ -100,7 +107,8 @@ private:
       url(ref.url),
       volume(ref.volume),
       year(ref.year),
-      bibKey(ref.bibKey)
+      bibKey(ref.bibKey),
+      publType(ref.publType)
     {}
 
     LiteratureReference &operator=(const LiteratureReference &ref)
@@ -132,6 +140,7 @@ private:
       volume = ref.volume;
       year = ref.year;
       bibKey = ref.bibKey;
+      publType = ref.publType;
 
       return *this;
     }
@@ -420,7 +429,7 @@ class LiteratureArticle : public LiteratureReference
 {
   public:
     LiteratureArticle(std::string bibKey, std::string author, std::string title, std::string journal, std::string year,
-        std::string volume = "", std::string number = "", std::string pages = "", std::string month = "",
+        std::string volume = "", std::string pages = "", std::string number = "", std::string month = "",
         std::string note = "", std::string key = "")
       : LiteratureReference(bibKey)
     {
@@ -725,7 +734,7 @@ class LiteratureUnpublished : public LiteratureReference
 {
   public:
     LiteratureUnpublished(std::string bibKey, std::string author, std::string title, std::string note, std::string year,
-        std::string month = "", std::string year = "", std::string key = "")
+        std::string month = "", std::string key = "")
       : LiteratureReference(bibKey)
     {
       setPublicationType(unpublished);
@@ -733,30 +742,28 @@ class LiteratureUnpublished : public LiteratureReference
       setAuthor(author);
       setTitle(title);
       setNote(note);
-      setMonth(month);
       setYear(year);
+      setMonth(month);
       setKey(key);
     }
 };
 
-
-class std::ostream;
 class LiteratureManager : public Singleton<LiteratureManager>
 {
   private:
-    typedef std::list<std::string> Descriptions;
+    typedef std::set<std::string> Descriptions;
     typedef std::pair<Descriptions, LiteratureReference> LitRecord;
     typedef std::map<std::string, LitRecord> Records;
     Records records;
 
   public:
     void addReference(std::string description, const LiteratureReference &reference);
-    void writeInformation(std::ostream);
-    void writeBibTex(std::ostream);
+    void writeInformation(std::ostream &, std::string bibfile);
+    void writeBibTex(std::ostream &);
 
 };
 
-std::ostream& operator<<(std::ostream&, const LiteraturReference &);
+std::ostream& operator<<(std::ostream&, const LiteratureReference &);
 
 } // namespace schnek
 

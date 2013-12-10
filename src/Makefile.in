@@ -277,7 +277,8 @@ libschnek_la_LIBADD =
 am_libschnek_la_OBJECTS = functions.lo diagnostic.lo hdfdiagnostic.lo \
 	mpisubdivision.lo deckscanner.lo parser.lo parsertoken.lo \
 	block.lo blockclasses.lo blockparameters.lo dependencies.lo \
-	function_expression.lo variables.lo exceptions.lo factor.lo
+	function_expression.lo variables.lo literature.lo \
+	exceptions.lo factor.lo
 libschnek_la_OBJECTS = $(am_libschnek_la_OBJECTS)
 libschnek_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -447,7 +448,8 @@ libschnek_la_SOURCES = functions.cpp diagnostic/diagnostic.cpp \
 	parser/parsertoken.cpp variables/block.cpp \
 	variables/blockclasses.cpp variables/blockparameters.cpp \
 	variables/dependencies.cpp variables/function_expression.cpp \
-	variables/variables.cpp util/exceptions.cpp util/factor.cpp
+	variables/variables.cpp tools/literature.cpp \
+	util/exceptions.cpp util/factor.cpp
 libschnekinclude_HEADERS = \
   algo.hpp             \
   algo.t               \
@@ -525,7 +527,8 @@ libschnekvariablesinclude_HEADERS = \
 libschnektoolsincludedir = $(includedir)/schnek/tools
 libschnektoolsinclude_HEADERS = \
   tools/fieldtools.hpp \
-  tools/fieldtools.t
+  tools/fieldtools.t \
+  tools/literature.hpp
 
 libschnekutilincludedir = $(includedir)/schnek/util
 libschnekutilinclude_HEADERS = \
@@ -649,6 +652,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/function_expression.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/functions.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdfdiagnostic.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/literature.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpisubdivision.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parsertoken.Plo@am__quote@
@@ -758,6 +762,13 @@ variables.lo: variables/variables.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='variables/variables.cpp' object='variables.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o variables.lo `test -f 'variables/variables.cpp' || echo '$(srcdir)/'`variables/variables.cpp
+
+literature.lo: tools/literature.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT literature.lo -MD -MP -MF $(DEPDIR)/literature.Tpo -c -o literature.lo `test -f 'tools/literature.cpp' || echo '$(srcdir)/'`tools/literature.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/literature.Tpo $(DEPDIR)/literature.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tools/literature.cpp' object='literature.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o literature.lo `test -f 'tools/literature.cpp' || echo '$(srcdir)/'`tools/literature.cpp
 
 exceptions.lo: util/exceptions.cpp
 @am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT exceptions.lo -MD -MP -MF $(DEPDIR)/exceptions.Tpo -c -o exceptions.lo `test -f 'util/exceptions.cpp' || echo '$(srcdir)/'`util/exceptions.cpp
