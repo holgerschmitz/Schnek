@@ -45,6 +45,14 @@ double drand();
 
 int irand(int range);
 
+template<class ArrayType>
+void crossProduct(ArrayType &result, const ArrayType &a, const ArrayType &b)
+{
+    result[0] = a[1]*b[2] - a[2]*b[1];
+    result[1] = a[2]*b[0] - a[0]*b[2];
+    result[2] = a[0]*b[1] - a[1]*b[0];
+}
+
 } // namespace
 
 #endif // SCHNEK_FUNCTIONS_H_

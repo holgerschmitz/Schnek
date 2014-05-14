@@ -39,8 +39,6 @@ template<
 class Vector : public Array<T,length,CheckingPolicy>
 {
   public:
-    T product() const;
-    T sum() const;
 };
 
 }

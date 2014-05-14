@@ -131,6 +131,10 @@ class Array :
      *  Only available if int can be cast to the type T
      */
     static Array<T,length,CheckingPolicy> Unity();
+
+    T product() const;
+    T sum() const;
+    T sqr() const;
 };
 
 

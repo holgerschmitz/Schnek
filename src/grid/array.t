@@ -289,6 +289,31 @@ inline Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::Unity()
 
 
 
+template<class T, int length, template <int> class CheckingPolicy>
+inline T Array<T,length,CheckingPolicy>::product() const
+{
+    T p(1);
+    for (int i=0; i<Length; ++i) p *= at(i);
+    return p;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+inline T Array<T,length,CheckingPolicy>::sum() const
+{
+    T s(0);
+    for (int i=0; i<Length; ++i) s += at(i);
+    return s;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+inline T Array<T,length,CheckingPolicy>::sqr() const
+{
+    T s(0);
+    for (int i=0; i<Length; ++i) {T v = at(i); s += v*v;}
+    return s;
+}
+
+
 } // namespace
 
 
