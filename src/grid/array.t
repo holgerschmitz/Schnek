@@ -25,6 +25,7 @@
  */
 
 #include <boost/static_assert.hpp>
+#include <iostream>
 
 namespace schnek
 {
@@ -34,7 +35,8 @@ inline Array<T,length,CheckingPolicy>::Array()
 {}
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline Array<T,length,CheckingPolicy>::Array(const Array &arr)
+template<template<int> class CheckingPolicy2>
+inline Array<T,length,CheckingPolicy>::Array(const Array<T, length, CheckingPolicy2> &arr)
 {
   for (int i=0; i<length; ++i)
     data[i] = arr[i];
@@ -208,10 +210,36 @@ inline T Array<T,length,CheckingPolicy>::operator[](int pos) const
   return at(pos);
 }
 
+template<class T, int length, template <int> class CheckingPolicy>
+template<class T2, template <int> class CheckingPolicy2>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator=(const Array<T2,length,CheckingPolicy2>& val)
+{
+  for (int i=0; i<length; ++i)
+    data[i] = val[i];
+  return *this;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<class T2, template <int> class CheckingPolicy2>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator+=(const Array<T2,length,CheckingPolicy2>& val)
+{
+  for (int i=0; i<length; ++i)
+    data[i] += val[i];
+  return *this;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<class T2, template <int> class CheckingPolicy2>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator-=(const Array<T2,length,CheckingPolicy2>& val)
+{
+  for (int i=0; i<length; ++i)
+    data[i] -= val[i];
+  return *this;
+}
 
 template<class T, int length, template <int> class CheckingPolicy>
 template<typename T2>
-Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::operator+=(const T2 val)
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator+=(const T2 val)
 {
   for (int i=0; i<length; ++i)
     data[i] += val;
@@ -220,7 +248,7 @@ Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::operator+=(const 
 
 template<class T, int length, template <int> class CheckingPolicy>
 template<typename T2>
-Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::operator-=(const T2 val)
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator-=(const T2 val)
 {
   for (int i=0; i<length; ++i)
     data[i] -= val;
@@ -229,7 +257,7 @@ Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::operator-=(const 
 
 template<class T, int length, template <int> class CheckingPolicy>
 template<typename T2>
-Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::operator*=(const T2 val)
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator*=(const T2 val)
 {
   for (int i=0; i<length; ++i)
     data[i] *= val;
@@ -238,7 +266,7 @@ Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::operator*=(const 
 
 template<class T, int length, template <int> class CheckingPolicy>
 template<typename T2>
-Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::operator/=(const T2 val)
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator/=(const T2 val)
 {
   for (int i=0; i<length; ++i)
     data[i] /= val;

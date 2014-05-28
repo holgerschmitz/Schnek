@@ -2,7 +2,7 @@
 AC_DEFUN([AX_HDF5],
 [
 AC_ARG_WITH([hdf5],
-  [AS_HELP_STRING([--with-hdf5<:@=ARG@:>@],
+  [AS_HELP_STRING([--with-hdf5@<:@=ARG@:>@],
     [use HDF5 library from a standard location (ARG=yes),
      from the specified location (ARG=<path>),
      or disable it (ARG=no)

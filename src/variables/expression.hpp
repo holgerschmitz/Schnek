@@ -79,6 +79,8 @@ template<typename vtype>
 class Expression
 {
   public:
+    virtual ~Expression() {}
+
     /// The virtual method that causes the expression to evaluate
     virtual vtype eval() = 0;
 

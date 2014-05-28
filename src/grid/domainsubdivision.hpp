@@ -120,11 +120,11 @@ class DomainSubdivision {
     const LimitType &getHi() const {return bounds->getDomain().getHi();}
 
     /// Return the local domain size
-    const DomainType &getInnerDomain() { return bounds->getInnerDomain(); }
+    DomainType getInnerDomain() { return bounds->getInnerDomain(); }
     /// Return rectangle minimum
-    const LimitType &getInnerLo() const {return bounds->getInnerDomain().getLo();}
+    LimitType getInnerLo() const {return bounds->getInnerDomain().getLo();}
     /// Return rectangle maximum
-    const LimitType &getInnerHi() const {return bounds->getInnerDomain().getHi();}
+    LimitType getInnerHi() const {return bounds->getInnerDomain().getHi();}
 
     /** @brief Exchange the boundaries of a field function
      *  in the direction given by dim.

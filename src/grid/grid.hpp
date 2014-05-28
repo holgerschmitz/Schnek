@@ -54,18 +54,30 @@ class GridBase : public StoragePolicy, public CheckingPolicy
     typedef T value_type;
     typedef CheckingPolicy CheckingPolicyType;
     typedef StoragePolicy StoragePolicyType;
-    typedef Array<int,rank> IndexType;
+    typedef typename CheckingPolicy::IndexType IndexType;
     typedef GridBase<T,rank,CheckingPolicy,StoragePolicy> GridBaseType;
     enum {Rank = rank};
 
     GridBase();
-    GridBase(const IndexType &size);
-    GridBase(const IndexType &low, const IndexType &high);
+
+    template<template<int> class ArrayCheckingPolicy>
+    GridBase(const Array<int,rank,ArrayCheckingPolicy> &size);
+
+    template<template<int> class ArrayCheckingPolicy>
+    GridBase(const Array<int,rank,ArrayCheckingPolicy> &low, const Array<int,rank,ArrayCheckingPolicy> &high);
 
     /** index operator, writing */
-    T& operator[](const IndexType& pos); // write
+    template<template<int> class ArrayCheckingPolicy>
+    T& operator[](const Array<int,rank,ArrayCheckingPolicy>& pos); // write
     /** index operator, reading */
-    T  operator[](const IndexType& pos) const; // read
+    template<template<int> class ArrayCheckingPolicy>
+    T  operator[](const Array<int,rank,ArrayCheckingPolicy>& pos) const; // read
+
+    /** index operator, for 1D grids, writing */
+    T& operator[](int i);
+    /** index operator, for 1D grids, reading */
+    T  operator[](int i) const;
+
     /** index operator, writing */
     T& operator()(int i);
     /** index operator, reading */

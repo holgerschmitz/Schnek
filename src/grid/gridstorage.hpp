@@ -88,6 +88,7 @@ class SingleArrayLazyAllocation
      *  and upper indices high[0],...,high[rank-1] */
     void resize(const IndexType &low_, const IndexType &high_);
   private:
+    SingleArrayLazyAllocation(const SingleArrayLazyAllocation&);
     /** */
     void deleteData();
     /** */

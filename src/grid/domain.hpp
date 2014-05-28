@@ -59,7 +59,8 @@ class RecDomain : public Range<int, rank, CheckingPolicy>
     /// Assignment operator
     RecDomain &operator=(const RecDomain &domain)
     {
-      return static_cast<RecDomain &>( this->operator=(domain) );
+      Range<int, rank, CheckingPolicy>::operator=(domain);
+      return *this;
     }
 
     /** Forward iterator over the rectangular domain

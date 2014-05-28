@@ -42,7 +42,7 @@ namespace schnek {
  ****************************************************************/
 
 template<class GridType>
-MPICartSubdivision<GridType>::MPICartSubdivision()
+MPICartSubdivision<GridType>::MPICartSubdivision() : comm(0), prevcoord(0), nextcoord(0)
 {}
 
 template<class GridType>
@@ -60,7 +60,7 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
   for (int i=0; i<Rank; ++i)
   {
     box[i] = High[i]-Low[i];
-      periodic[Rank] = true;
+    periodic[Rank] = true;
   }
 
   std::vector<int> eqDims;
@@ -96,7 +96,6 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
       High[i] = High[i]+delta;
 
     exchangeSizeProduct *= (High[i]-Low[i]+1);
-    //std::cout << "Calculating exchange size product: " << exchangeSizeProduct << std::endl;
   }
 
   for (int i=0; i<Rank; ++i)
@@ -105,6 +104,11 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
     //std::cout << "Calculating exchange size "<<i<<": " << exchSize[i] << std::endl;
     sendarr[i] = new value_type[exchSize[i]];
     recvarr[i] = new value_type[exchSize[i]];
+    for (int k=0; k<exchSize[i]; ++k)
+    {
+      sendarr[i][k] = value_type();
+      recvarr[i][k] = value_type();
+    }
   }
 
   this->bounds = typename DomainSubdivision<GridType>::pBoundaryType(new BoundaryType(Low, High, delta));
@@ -118,6 +122,7 @@ MPICartSubdivision<GridType>::~MPICartSubdivision()
     delete[] sendarr[i];
     delete[] recvarr[i];
   }
+  MPI_Comm_free(&comm);
 }
 
 template<class GridType>
@@ -213,7 +218,7 @@ void MPICartSubdivision<GridType>::exchangeData(
 {
   typedef typename BufferType::IndexType Index;
   int sendSize = in.getDims(0);
-  int recvSize;
+  int recvSize = 0;
 
   int sendCoord = (orientation>0)?nextcoord[dim]:prevcoord[dim];
   int recvCoord = (orientation>0)?prevcoord[dim]:nextcoord[dim];

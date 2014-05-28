@@ -56,7 +56,7 @@ class DataBuffer
 
          iterator& operator++()
          {
-           data += sizeof(Particle);
+           data += sizeof(T);
            return *this;
          }
 

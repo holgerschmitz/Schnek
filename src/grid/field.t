@@ -42,8 +42,14 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
+template<
+  template<int> class ArrayCheckingPolicy,
+  template<int> class RangeCheckingPolicy,
+  template<int> class StaggerCheckingPolicy>
 Field<T, rank, CheckingPolicy, StoragePolicy>
-  ::Field(const IndexType &size_, const FieldRange &range_, const Stagger &stagger_, int ghostCells_)
+  ::Field(const Array<int,rank,ArrayCheckingPolicy> &size_,
+      const Range<double, rank,RangeCheckingPolicy> &range_,
+      const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_)
   : Grid<T, rank, CheckingPolicy, StoragePolicy>(),
     range(range_),
     stagger(stagger_),
@@ -69,8 +75,15 @@ template<
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
+template<
+  template<int> class ArrayCheckingPolicy,
+  template<int> class RangeCheckingPolicy,
+  template<int> class StaggerCheckingPolicy>
 Field<T, rank, CheckingPolicy, StoragePolicy>
-  ::Field(const IndexType &low_, const IndexType &high_, const FieldRange &range_, const Stagger &stagger_, int ghostCells_)
+  ::Field(const Array<int,rank,ArrayCheckingPolicy> &low_,
+      const Array<int,rank,ArrayCheckingPolicy> &high_,
+      const Range<double, rank,RangeCheckingPolicy> &range_,
+      const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_)
   : Grid<T, rank, CheckingPolicy, StoragePolicy>(),
     range(range_),
     stagger(stagger_),

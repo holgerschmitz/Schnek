@@ -86,6 +86,9 @@ class Boundary
      */
     int getDelta() { return delta; }
 
+    /** Returns the original domain, including the ghost cells */
+    const DomainType& getDomain() { return size; }
+
     /** Returns the ghost domain, a rectangular region outside the inner domain.
      * The ghost domain has a thickness given by the number of ghost cells, delta.
      *
@@ -108,10 +111,6 @@ class Boundary
 
 
     DomainType getBoundaryDomain(int dim, bound b, bool stagger);
-
-    /** Returns the original domain, including the ghost cells */
-    DomainType getDomain() { return size; }
-
 
     /** Returns the inner domain, excluding the ghost cells */
     DomainType getInnerDomain();

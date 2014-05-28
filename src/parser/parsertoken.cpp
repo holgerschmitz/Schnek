@@ -43,7 +43,7 @@ ParserToken::ParserToken() : context(), type(none), chainedToken()
 
 
 ParserToken::ParserToken(const Token atomTok_, ParserContext context_)
-  : atomTok(atomTok_), context(context_), type(atom)
+  : context(context_), atomTok(atomTok_), type(atom)
 {}
 
 ParserToken::ParserToken(const ParserToken &tok)

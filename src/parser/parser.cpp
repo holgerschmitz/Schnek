@@ -44,8 +44,8 @@ pBlock Parser::parse(std::istream &input, std::string filename)
   const TokenList &tokens = scanner.getTokens();
 
   yyParser* pParser = ParseAlloc();
-  FILE *trace = fopen("parsetrace.out", "w");
-  ParseTrace(trace,"trace: ");
+  //FILE *trace = fopen("parsetrace.out", "w");
+  //ParseTrace(trace,"trace: ");
 
   pBlockTree blockTree(new BlockTree());
   ParserContext context(variables, funcReg, blockClasses, blockTree);
@@ -64,8 +64,6 @@ pBlock Parser::parse(std::istream &input, std::string filename)
   {
     context.blockTree->moveDown();
   }
-
-
 
   BOOST_FOREACH(Token tok, tokens)
   {

@@ -36,14 +36,16 @@ void DataBuffer<T>::makeBuffer(ContainerType &container)
   BufferType::IndexType sz(container.size());
   for (int i=0; i<BufferType::Rank; ++i) sz[i] *= dsize;
   buffer.resize(sz);
-  unsigned char *data = buffer.getRawData();
+
+  int pos = 0;
 
   for (typename ContainerType::iterator it = container.begin(); it != container.end(); ++it)
   {
     // Dereference twice and then take address of because container could
     // contain iterators and not pointers.
+    unsigned char *data = &buffer(pos);
     memcpy(data, &(**it), dsize);
-    data += dsize;
+    pos += dsize;
   }
 }
 

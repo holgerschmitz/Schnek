@@ -27,6 +27,8 @@
 #ifndef SCHNEK_ARRAYCHECK_HPP_
 #define SCHNEK_ARRAYCHECK_HPP_
 
+#include <cassert>
+
 namespace schnek {
 
 /** Class to plug into the Array as CheckingPolicy.
@@ -38,6 +40,20 @@ class ArrayNoArgCheck
   public:
     /** The check method does not do anything */
     void check(int) const {} 
+};
+
+/** Class to plug into the Array as CheckingPolicy.
+ *  Performs no argument checking at all.
+ */
+template<int limit>
+class ArrayAssertArgCheck
+{
+  public:
+    /** The check method does not do anything */
+    void check(int i) const {
+      assert(i>=0);
+      assert(i<limit);
+    }
 };
 
 }

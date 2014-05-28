@@ -67,10 +67,10 @@ class Variable
     VariableTypeInfo type;
     /// fixed is true if a value is stored and false if an expression is stored in the variable
     bool fixed;
-    /// readonly is true if the variable represents a read only variable which cannot be modified by the input deck
-    bool readonly;
     /// Is set to true if the variable has been initialised
     bool initialised;
+    /// readonly is true if the variable represents a read only variable which cannot be modified by the input deck
+    bool readonly;
     /// a unique identifier that is copied with the copy operator and copy constructor
     boost::shared_ptr< Unique<Variable> > uniqueId;
   public:

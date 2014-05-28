@@ -249,10 +249,20 @@ int HdfOStream::open(const char* fname)
 
     MPI_Info_create(&mpi_info);
 
-    MPI_Info_set(mpi_info, "access_style", "write_once");
-    MPI_Info_set(mpi_info, "collective_buffering", "true");
-    MPI_Info_set(mpi_info, "cb_block_size", "1048576");
-    MPI_Info_set(mpi_info, "cb_buffer_size", "4194304");
+    // MPI
+    char access_style[]         = "access_style";
+    char write_once[]           = "write_once";
+    char collective_buffering[] = "collective_buffering";
+    char strue[]                = "true";
+    char cb_block_size[]        = "cb_block_size";
+    char n1048576[]             = "1048576";
+    char cb_buffer_size[]       = "cb_buffer_size";
+    char n4194304[]             = "4194304";
+
+    MPI_Info_set(mpi_info, access_style, write_once);
+    MPI_Info_set(mpi_info, collective_buffering, strue);
+    MPI_Info_set(mpi_info, cb_block_size, n1048576);
+    MPI_Info_set(mpi_info, cb_buffer_size, n4194304);
 
     /* set Parallel access with communicator */
     H5Pset_fapl_mpio(plist_id, mpiComm, mpi_info);
@@ -261,6 +271,7 @@ int HdfOStream::open(const char* fname)
     file_id = H5Fcreate (fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     /* Release file-access template */
     H5Pclose(plist_id);
+    MPI_Info_free(&mpi_info);
 
     dxpl_id = H5Pcreate(H5P_DATASET_XFER);
     SCHNEK_TRACE_LOG(3,"Data Transfer Property List Id (0) " << dxpl_id)

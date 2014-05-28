@@ -46,15 +46,18 @@ class Range {
     LimitType lo, hi;
   public:
     /// Default constructor
-    Range() {};
+    Range() : lo(0), hi(0) {};
 
     /// Construct with rectangle minimum and maximum
-    Range(const LimitType &lo_, const LimitType &hi_)
+
+    template<template<int> class ArrayCheckingPolicy>
+    Range(const Array<T,rank,ArrayCheckingPolicy> &lo_, const Array<T,rank,ArrayCheckingPolicy> &hi_)
     : lo(lo_), hi(hi_) {}
 
     /// Copy constructor
-    Range(const Range &domain)
-    : lo(domain.lo), hi(domain.hi) {}
+    template<template<int> class ArrayCheckingPolicy>
+    Range(const Range<T,rank,ArrayCheckingPolicy> &domain)
+    : lo(domain.getLo()), hi(domain.getHi()) {}
 
     /// Assignment operator
     Range &operator=(const Range &domain)
@@ -65,9 +68,13 @@ class Range {
     }
 
     /// Return rectangle minimum
-    const LimitType &getLo() const {return lo;}
+    const LimitType &getLo() const {
+      return lo;
+    }
     /// Return rectangle maximum
-    const LimitType &getHi() const {return hi;}
+    const LimitType &getHi() const {
+      return hi;
+    }
 
     /// Return rectangle minimum
     LimitType &getLo() {return lo;}

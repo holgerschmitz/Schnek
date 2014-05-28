@@ -59,7 +59,8 @@ class Array :
     /// The default constructor
     Array();
     /// Copy constructor copies the values
-    Array(const Array &);
+    template<template<int> class CheckingPolicy2>
+    Array(const Array<T, length, CheckingPolicy2> &);
     /// Constructor for length=1 arrays setting the data explicitely
     Array(const T&);
     /// Constructor for length=2 arrays setting the data explicitely
@@ -99,18 +100,26 @@ class Array :
     T at(int) const;
 
   public:
+    template<class T2, template <int> class CheckingPolicy2>
+    Array<T,length,CheckingPolicy> &operator=(const Array<T2,length,CheckingPolicy2>&);
+
+    template<class T2, template <int> class CheckingPolicy2>
+    Array<T,length,CheckingPolicy> &operator+=(const Array<T2,length,CheckingPolicy2>&);
+
+    template<class T2, template <int> class CheckingPolicy2>
+    Array<T,length,CheckingPolicy> &operator-=(const Array<T2,length,CheckingPolicy2>&);
 
     template<typename T2>
-    Array<T,length,CheckingPolicy> operator+=(const T2);
+    Array<T,length,CheckingPolicy> &operator+=(const T2);
 
     template<typename T2>
-    Array<T,length,CheckingPolicy> operator-=(const T2);
+    Array<T,length,CheckingPolicy> &operator-=(const T2);
 
     template<typename T2>
-    Array<T,length,CheckingPolicy> operator*=(const T2);
+    Array<T,length,CheckingPolicy> &operator*=(const T2);
 
     template<typename T2>
-    Array<T,length,CheckingPolicy> operator/=(const T2);
+    Array<T,length,CheckingPolicy> &operator/=(const T2);
 
   public:
     /// Sets all fields to zero

@@ -64,9 +64,22 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     /** Constructs a grid with a given number of cells in each direction
      *
      */
-    Field(const IndexType &size, const FieldRange &range_, const Stagger &stagger_, int ghostCells_);
+    template<
+      template<int> class ArrayCheckingPolicy,
+      template<int> class RangeCheckingPolicy,
+      template<int> class StaggerCheckingPolicy>
+    Field(const Array<int,rank,ArrayCheckingPolicy> &size,
+        const Range<double, rank,RangeCheckingPolicy> &range_,
+        const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
 
-    Field(const IndexType &low_, const IndexType &high_, const FieldRange &range_, const Stagger &stagger_, int ghostCells_);
+    template<
+      template<int> class ArrayCheckingPolicy,
+      template<int> class RangeCheckingPolicy,
+      template<int> class StaggerCheckingPolicy>
+    Field(const Array<int,rank,ArrayCheckingPolicy> &low_,
+        const Array<int,rank,ArrayCheckingPolicy> &high_,
+        const Range<double, rank,RangeCheckingPolicy> &range_,
+        const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
 
     /** Get the lo if the inner domain */
     const IndexType& getInnerLo() {return lo_inner;}

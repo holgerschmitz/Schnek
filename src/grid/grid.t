@@ -50,7 +50,8 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const IndexType &size)
+template<template<int> class ArrayCheckingPolicy>
+GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const Array<int,rank,ArrayCheckingPolicy> &size)
   : StoragePolicy(IndexType::Zero(), size-IndexType::Unity())
 {}
 
@@ -60,7 +61,8 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const IndexType &low, const IndexType &high)
+template<template<int> class ArrayCheckingPolicy>
+GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const Array<int,rank,ArrayCheckingPolicy> &low, const Array<int,rank,ArrayCheckingPolicy> &high)
   : StoragePolicy(low,high)
 {}
 
@@ -73,8 +75,9 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
+template<template<int> class ArrayCheckingPolicy>
 inline T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
-  ::operator[](const IndexType& pos)
+  ::operator[](const Array<int,rank,ArrayCheckingPolicy>& pos)
 {
   return this->get(this->check(pos,this->getLo(),this->getHi()));
 }
@@ -85,10 +88,33 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
+template<template<int> class ArrayCheckingPolicy>
 inline T GridBase<T, rank, CheckingPolicy, StoragePolicy>
-  ::operator[](const IndexType& pos) const
+  ::operator[](const Array<int,rank,ArrayCheckingPolicy>& pos) const
 {
   return this->get(this->check(pos,this->getLo(),this->getHi()));
+}
+
+template<
+  typename T,
+  int rank,
+  class CheckingPolicy,
+  class StoragePolicy
+>
+inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i)
+{
+  return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
+}
+
+template<
+  typename T,
+  int rank,
+  class CheckingPolicy,
+  class StoragePolicy
+>
+inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i) const
+{
+  return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
 }
 
 template<
@@ -112,6 +138,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i) c
 {
   return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
 }
+
 
 template<
   typename T,
