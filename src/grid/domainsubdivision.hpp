@@ -45,7 +45,7 @@ namespace schnek {
  *
  *  This interface is used to exchange the boundaries of distribution
  *  functions and scalar fields between processes. Any implementation should
- *  treat the fields as periodic. Othe boundary conditions can be appplied afterwards.
+ *  treat the fields as periodic. The boundary conditions can be appplied afterwards.
  */
 template<class GridType>
 class DomainSubdivision {

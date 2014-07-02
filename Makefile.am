@@ -22,6 +22,9 @@
 # along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
  
  
-SUBDIRS = src testsuite
+SUBDIRS = src testsuite examples
 
 ACLOCAL_AMFLAGS = -I m4
+
+examples:
+	cd examples && make examples

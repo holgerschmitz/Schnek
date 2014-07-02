@@ -179,7 +179,6 @@ inline Array<T,length,CheckingPolicy>::Array(
   data[9] = v9;
 }
 
-
 /// Accessor operator
 template<class T, int length, template <int> class CheckingPolicy>
 inline T& Array<T,length,CheckingPolicy>::at(int pos)

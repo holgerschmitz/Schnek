@@ -28,6 +28,7 @@
 // implementation
 
 #include "domain.hpp"
+#include "arrayexpression.hpp"
 
 namespace schnek
 {

@@ -136,5 +136,6 @@ AC_HEADER_STDC
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
-                 testsuite/Makefile])
+                 testsuite/Makefile
+                 examples/Makefile])
 AC_OUTPUT

@@ -302,11 +302,14 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(libschnekvariablesincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libschnek_la_LIBADD =
-am_libschnek_la_OBJECTS = functions.lo diagnostic.lo hdfdiagnostic.lo \
-	mpisubdivision.lo deckscanner.lo parser.lo parsertoken.lo \
-	block.lo blockclasses.lo blockparameters.lo dependencies.lo \
-	function_expression.lo variables.lo literature.lo \
-	exceptions.lo factor.lo
+am__dirstamp = $(am__leading_dot)dirstamp
+am_libschnek_la_OBJECTS = functions.lo diagnostic/diagnostic.lo \
+	diagnostic/hdfdiagnostic.lo grid/mpisubdivision.lo \
+	parser/deckscanner.lo parser/parser.lo parser/parsertoken.lo \
+	variables/block.lo variables/blockclasses.lo \
+	variables/blockparameters.lo variables/dependencies.lo \
+	variables/function_expression.lo variables/variables.lo \
+	tools/literature.lo util/exceptions.lo util/factor.lo
 libschnek_la_OBJECTS = $(am_libschnek_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -512,6 +515,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+AUTOMAKE_OPTIONS = subdir-objects
 lib_LTLIBRARIES = libschnek.la
 libschnekincludedir = $(includedir)/schnek
 libschnek_la_SOURCES = functions.cpp diagnostic/diagnostic.cpp \
@@ -707,164 +711,145 @@ clean-libLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
+diagnostic/$(am__dirstamp):
+	@$(MKDIR_P) diagnostic
+	@: > diagnostic/$(am__dirstamp)
+diagnostic/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) diagnostic/$(DEPDIR)
+	@: > diagnostic/$(DEPDIR)/$(am__dirstamp)
+diagnostic/diagnostic.lo: diagnostic/$(am__dirstamp) \
+	diagnostic/$(DEPDIR)/$(am__dirstamp)
+diagnostic/hdfdiagnostic.lo: diagnostic/$(am__dirstamp) \
+	diagnostic/$(DEPDIR)/$(am__dirstamp)
+grid/$(am__dirstamp):
+	@$(MKDIR_P) grid
+	@: > grid/$(am__dirstamp)
+grid/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) grid/$(DEPDIR)
+	@: > grid/$(DEPDIR)/$(am__dirstamp)
+grid/mpisubdivision.lo: grid/$(am__dirstamp) \
+	grid/$(DEPDIR)/$(am__dirstamp)
+parser/$(am__dirstamp):
+	@$(MKDIR_P) parser
+	@: > parser/$(am__dirstamp)
+parser/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) parser/$(DEPDIR)
+	@: > parser/$(DEPDIR)/$(am__dirstamp)
+parser/deckscanner.lo: parser/$(am__dirstamp) \
+	parser/$(DEPDIR)/$(am__dirstamp)
+parser/parser.lo: parser/$(am__dirstamp) \
+	parser/$(DEPDIR)/$(am__dirstamp)
+parser/parsertoken.lo: parser/$(am__dirstamp) \
+	parser/$(DEPDIR)/$(am__dirstamp)
+variables/$(am__dirstamp):
+	@$(MKDIR_P) variables
+	@: > variables/$(am__dirstamp)
+variables/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) variables/$(DEPDIR)
+	@: > variables/$(DEPDIR)/$(am__dirstamp)
+variables/block.lo: variables/$(am__dirstamp) \
+	variables/$(DEPDIR)/$(am__dirstamp)
+variables/blockclasses.lo: variables/$(am__dirstamp) \
+	variables/$(DEPDIR)/$(am__dirstamp)
+variables/blockparameters.lo: variables/$(am__dirstamp) \
+	variables/$(DEPDIR)/$(am__dirstamp)
+variables/dependencies.lo: variables/$(am__dirstamp) \
+	variables/$(DEPDIR)/$(am__dirstamp)
+variables/function_expression.lo: variables/$(am__dirstamp) \
+	variables/$(DEPDIR)/$(am__dirstamp)
+variables/variables.lo: variables/$(am__dirstamp) \
+	variables/$(DEPDIR)/$(am__dirstamp)
+tools/$(am__dirstamp):
+	@$(MKDIR_P) tools
+	@: > tools/$(am__dirstamp)
+tools/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tools/$(DEPDIR)
+	@: > tools/$(DEPDIR)/$(am__dirstamp)
+tools/literature.lo: tools/$(am__dirstamp) \
+	tools/$(DEPDIR)/$(am__dirstamp)
+util/$(am__dirstamp):
+	@$(MKDIR_P) util
+	@: > util/$(am__dirstamp)
+util/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) util/$(DEPDIR)
+	@: > util/$(DEPDIR)/$(am__dirstamp)
+util/exceptions.lo: util/$(am__dirstamp) \
+	util/$(DEPDIR)/$(am__dirstamp)
+util/factor.lo: util/$(am__dirstamp) util/$(DEPDIR)/$(am__dirstamp)
 
 libschnek.la: $(libschnek_la_OBJECTS) $(libschnek_la_DEPENDENCIES) $(EXTRA_libschnek_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(libschnek_la_LINK) -rpath $(libdir) $(libschnek_la_OBJECTS) $(libschnek_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f diagnostic/*.$(OBJEXT)
+	-rm -f diagnostic/*.lo
+	-rm -f grid/*.$(OBJEXT)
+	-rm -f grid/*.lo
+	-rm -f parser/*.$(OBJEXT)
+	-rm -f parser/*.lo
+	-rm -f tools/*.$(OBJEXT)
+	-rm -f tools/*.lo
+	-rm -f util/*.$(OBJEXT)
+	-rm -f util/*.lo
+	-rm -f variables/*.$(OBJEXT)
+	-rm -f variables/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/block.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/blockclasses.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/blockparameters.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/deckscanner.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dependencies.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/diagnostic.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exceptions.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/factor.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/function_expression.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/functions.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdfdiagnostic.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/literature.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpisubdivision.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parsertoken.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variables.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@diagnostic/$(DEPDIR)/diagnostic.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@diagnostic/$(DEPDIR)/hdfdiagnostic.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@grid/$(DEPDIR)/mpisubdivision.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@parser/$(DEPDIR)/deckscanner.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@parser/$(DEPDIR)/parser.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@parser/$(DEPDIR)/parsertoken.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/literature.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@util/$(DEPDIR)/exceptions.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@util/$(DEPDIR)/factor.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@variables/$(DEPDIR)/block.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@variables/$(DEPDIR)/blockclasses.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@variables/$(DEPDIR)/blockparameters.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@variables/$(DEPDIR)/dependencies.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@variables/$(DEPDIR)/function_expression.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@variables/$(DEPDIR)/variables.Plo@am__quote@
 
 .cpp.o:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
-
-diagnostic.lo: diagnostic/diagnostic.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT diagnostic.lo -MD -MP -MF $(DEPDIR)/diagnostic.Tpo -c -o diagnostic.lo `test -f 'diagnostic/diagnostic.cpp' || echo '$(srcdir)/'`diagnostic/diagnostic.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/diagnostic.Tpo $(DEPDIR)/diagnostic.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='diagnostic/diagnostic.cpp' object='diagnostic.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o diagnostic.lo `test -f 'diagnostic/diagnostic.cpp' || echo '$(srcdir)/'`diagnostic/diagnostic.cpp
-
-hdfdiagnostic.lo: diagnostic/hdfdiagnostic.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT hdfdiagnostic.lo -MD -MP -MF $(DEPDIR)/hdfdiagnostic.Tpo -c -o hdfdiagnostic.lo `test -f 'diagnostic/hdfdiagnostic.cpp' || echo '$(srcdir)/'`diagnostic/hdfdiagnostic.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/hdfdiagnostic.Tpo $(DEPDIR)/hdfdiagnostic.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='diagnostic/hdfdiagnostic.cpp' object='hdfdiagnostic.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o hdfdiagnostic.lo `test -f 'diagnostic/hdfdiagnostic.cpp' || echo '$(srcdir)/'`diagnostic/hdfdiagnostic.cpp
-
-mpisubdivision.lo: grid/mpisubdivision.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mpisubdivision.lo -MD -MP -MF $(DEPDIR)/mpisubdivision.Tpo -c -o mpisubdivision.lo `test -f 'grid/mpisubdivision.cpp' || echo '$(srcdir)/'`grid/mpisubdivision.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/mpisubdivision.Tpo $(DEPDIR)/mpisubdivision.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='grid/mpisubdivision.cpp' object='mpisubdivision.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mpisubdivision.lo `test -f 'grid/mpisubdivision.cpp' || echo '$(srcdir)/'`grid/mpisubdivision.cpp
-
-deckscanner.lo: parser/deckscanner.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT deckscanner.lo -MD -MP -MF $(DEPDIR)/deckscanner.Tpo -c -o deckscanner.lo `test -f 'parser/deckscanner.cpp' || echo '$(srcdir)/'`parser/deckscanner.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/deckscanner.Tpo $(DEPDIR)/deckscanner.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='parser/deckscanner.cpp' object='deckscanner.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o deckscanner.lo `test -f 'parser/deckscanner.cpp' || echo '$(srcdir)/'`parser/deckscanner.cpp
-
-parser.lo: parser/parser.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT parser.lo -MD -MP -MF $(DEPDIR)/parser.Tpo -c -o parser.lo `test -f 'parser/parser.cpp' || echo '$(srcdir)/'`parser/parser.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/parser.Tpo $(DEPDIR)/parser.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='parser/parser.cpp' object='parser.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o parser.lo `test -f 'parser/parser.cpp' || echo '$(srcdir)/'`parser/parser.cpp
-
-parsertoken.lo: parser/parsertoken.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT parsertoken.lo -MD -MP -MF $(DEPDIR)/parsertoken.Tpo -c -o parsertoken.lo `test -f 'parser/parsertoken.cpp' || echo '$(srcdir)/'`parser/parsertoken.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/parsertoken.Tpo $(DEPDIR)/parsertoken.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='parser/parsertoken.cpp' object='parsertoken.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o parsertoken.lo `test -f 'parser/parsertoken.cpp' || echo '$(srcdir)/'`parser/parsertoken.cpp
-
-block.lo: variables/block.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT block.lo -MD -MP -MF $(DEPDIR)/block.Tpo -c -o block.lo `test -f 'variables/block.cpp' || echo '$(srcdir)/'`variables/block.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/block.Tpo $(DEPDIR)/block.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variables/block.cpp' object='block.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o block.lo `test -f 'variables/block.cpp' || echo '$(srcdir)/'`variables/block.cpp
-
-blockclasses.lo: variables/blockclasses.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT blockclasses.lo -MD -MP -MF $(DEPDIR)/blockclasses.Tpo -c -o blockclasses.lo `test -f 'variables/blockclasses.cpp' || echo '$(srcdir)/'`variables/blockclasses.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/blockclasses.Tpo $(DEPDIR)/blockclasses.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variables/blockclasses.cpp' object='blockclasses.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o blockclasses.lo `test -f 'variables/blockclasses.cpp' || echo '$(srcdir)/'`variables/blockclasses.cpp
-
-blockparameters.lo: variables/blockparameters.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT blockparameters.lo -MD -MP -MF $(DEPDIR)/blockparameters.Tpo -c -o blockparameters.lo `test -f 'variables/blockparameters.cpp' || echo '$(srcdir)/'`variables/blockparameters.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/blockparameters.Tpo $(DEPDIR)/blockparameters.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variables/blockparameters.cpp' object='blockparameters.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o blockparameters.lo `test -f 'variables/blockparameters.cpp' || echo '$(srcdir)/'`variables/blockparameters.cpp
-
-dependencies.lo: variables/dependencies.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT dependencies.lo -MD -MP -MF $(DEPDIR)/dependencies.Tpo -c -o dependencies.lo `test -f 'variables/dependencies.cpp' || echo '$(srcdir)/'`variables/dependencies.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dependencies.Tpo $(DEPDIR)/dependencies.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variables/dependencies.cpp' object='dependencies.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o dependencies.lo `test -f 'variables/dependencies.cpp' || echo '$(srcdir)/'`variables/dependencies.cpp
-
-function_expression.lo: variables/function_expression.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT function_expression.lo -MD -MP -MF $(DEPDIR)/function_expression.Tpo -c -o function_expression.lo `test -f 'variables/function_expression.cpp' || echo '$(srcdir)/'`variables/function_expression.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/function_expression.Tpo $(DEPDIR)/function_expression.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variables/function_expression.cpp' object='function_expression.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o function_expression.lo `test -f 'variables/function_expression.cpp' || echo '$(srcdir)/'`variables/function_expression.cpp
-
-variables.lo: variables/variables.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT variables.lo -MD -MP -MF $(DEPDIR)/variables.Tpo -c -o variables.lo `test -f 'variables/variables.cpp' || echo '$(srcdir)/'`variables/variables.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/variables.Tpo $(DEPDIR)/variables.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variables/variables.cpp' object='variables.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o variables.lo `test -f 'variables/variables.cpp' || echo '$(srcdir)/'`variables/variables.cpp
-
-literature.lo: tools/literature.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT literature.lo -MD -MP -MF $(DEPDIR)/literature.Tpo -c -o literature.lo `test -f 'tools/literature.cpp' || echo '$(srcdir)/'`tools/literature.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/literature.Tpo $(DEPDIR)/literature.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/literature.cpp' object='literature.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o literature.lo `test -f 'tools/literature.cpp' || echo '$(srcdir)/'`tools/literature.cpp
-
-exceptions.lo: util/exceptions.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT exceptions.lo -MD -MP -MF $(DEPDIR)/exceptions.Tpo -c -o exceptions.lo `test -f 'util/exceptions.cpp' || echo '$(srcdir)/'`util/exceptions.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/exceptions.Tpo $(DEPDIR)/exceptions.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='util/exceptions.cpp' object='exceptions.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o exceptions.lo `test -f 'util/exceptions.cpp' || echo '$(srcdir)/'`util/exceptions.cpp
-
-factor.lo: util/factor.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT factor.lo -MD -MP -MF $(DEPDIR)/factor.Tpo -c -o factor.lo `test -f 'util/factor.cpp' || echo '$(srcdir)/'`util/factor.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/factor.Tpo $(DEPDIR)/factor.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='util/factor.cpp' object='factor.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o factor.lo `test -f 'util/factor.cpp' || echo '$(srcdir)/'`util/factor.cpp
 
 mostlyclean-libtool:
 	-rm -f *.lo
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf diagnostic/.libs diagnostic/_libs
+	-rm -rf grid/.libs grid/_libs
+	-rm -rf parser/.libs parser/_libs
+	-rm -rf tools/.libs tools/_libs
+	-rm -rf util/.libs util/_libs
+	-rm -rf variables/.libs variables/_libs
 install-libschnekdiagnosticincludeHEADERS: $(libschnekdiagnosticinclude_HEADERS)
 	@$(NORMAL_INSTALL)
 	@list='$(libschnekdiagnosticinclude_HEADERS)'; test -n "$(libschnekdiagnosticincludedir)" || list=; \
@@ -1129,6 +1114,18 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f diagnostic/$(DEPDIR)/$(am__dirstamp)
+	-rm -f diagnostic/$(am__dirstamp)
+	-rm -f grid/$(DEPDIR)/$(am__dirstamp)
+	-rm -f grid/$(am__dirstamp)
+	-rm -f parser/$(DEPDIR)/$(am__dirstamp)
+	-rm -f parser/$(am__dirstamp)
+	-rm -f tools/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tools/$(am__dirstamp)
+	-rm -f util/$(DEPDIR)/$(am__dirstamp)
+	-rm -f util/$(am__dirstamp)
+	-rm -f variables/$(DEPDIR)/$(am__dirstamp)
+	-rm -f variables/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -1139,7 +1136,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) diagnostic/$(DEPDIR) grid/$(DEPDIR) parser/$(DEPDIR) tools/$(DEPDIR) util/$(DEPDIR) variables/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -1191,7 +1188,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) diagnostic/$(DEPDIR) grid/$(DEPDIR) parser/$(DEPDIR) tools/$(DEPDIR) util/$(DEPDIR) variables/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

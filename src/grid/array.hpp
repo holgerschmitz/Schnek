@@ -86,7 +86,7 @@ class Array :
     /// Constructor for length=10 arrays setting the data explicitely
     Array(const T&, const T&, const T&, const T&, const T&, 
                const T&, const T&, const T&, const T&, const T&);
-    
+
     ~Array() {}
 
     /// Accessor operator
