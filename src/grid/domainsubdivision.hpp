@@ -59,7 +59,7 @@ class DomainSubdivision {
 
     typedef Grid<unsigned char, 1, GridAssertCheck, LazyArrayGridStorage> BufferType;
 
-    typedef RecDomain<Rank> DomainType;
+    typedef Range<int, Rank> DomainType;
     typedef Boundary<Rank> BoundaryType;
     typedef boost::shared_ptr<BoundaryType> pBoundaryType;
 

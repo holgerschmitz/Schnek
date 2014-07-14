@@ -34,7 +34,7 @@ namespace schnek {
 
 /** A rectangular region that is aware of ghost cells.
  *
- * Methods are provided that return RecDomain's to the boundary domains
+ * Methods are provided that return Ranges to the boundary domains
  * on each side of the main domain.
  */
 template<
@@ -44,7 +44,7 @@ template<
 class Boundary
 {
   public:
-    typedef RecDomain<rank, CheckingPolicy> DomainType;
+    typedef Range<int, rank, CheckingPolicy> DomainType;
     typedef typename DomainType::LimitType LimitType;
 
     /** An enum specifying the location of a ghost domain.

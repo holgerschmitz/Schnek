@@ -28,12 +28,12 @@ libschnek_la_SOURCES += \
 libschnekgridincludedir = $(includedir)/schnek/grid
 
 libschnekgridinclude_HEADERS = \
+  grid/arrayexpression.hpp    \
   grid/array.hpp              \
   grid/array.t                \
   grid/arraycheck.hpp         \
   grid/boundary.hpp           \
   grid/boundary.t             \
-  grid/domain.hpp             \
   grid/domainsubdivision.hpp  \
   grid/domainsubdivision.t    \
   grid/field.hpp              \

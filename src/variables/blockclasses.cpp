@@ -52,7 +52,7 @@ bool BlockClassDescriptor::hasChild(std::string child)
 }
 
 
-BlockClassDescriptor &BlockClasses::addBlockClass(std::string blockClass)
+BlockClassDescriptor &BlockClasses::addBlock(std::string blockClass)
 {
   pBlockClassDescriptor bcs(new BlockClassDescriptor());
   (*classDescriptors)[blockClass] = bcs;
@@ -62,7 +62,7 @@ BlockClassDescriptor &BlockClasses::addBlockClass(std::string blockClass)
 BlockClassDescriptor &BlockClasses::get(std::string blockClass)
 {
   if (classDescriptors->count(blockClass) < 1)
-    return addBlockClass(blockClass);
+    return addBlock(blockClass);
 
   return *((*classDescriptors)[blockClass]);
 }

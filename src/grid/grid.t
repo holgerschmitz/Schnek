@@ -27,7 +27,7 @@
 // --------------------------------------------------------------
 // implementation
 
-#include "domain.hpp"
+#include "range.hpp"
 #include "arrayexpression.hpp"
 
 namespace schnek
@@ -315,9 +315,9 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>&
   GridBase<T, rank, CheckingPolicy, StoragePolicy>
     ::operator-=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid)
 {
-  RecDomain<rank> rec(this->getLo(), this->getHi());
-  typename RecDomain<rank>::iterator it = rec.begin();
-  typename RecDomain<rank>::iterator end = rec.end();
+  Range<int, rank> rec(this->getLo(), this->getHi());
+  typename Range<int, rank>::iterator it = rec.begin();
+  typename Range<int, rank>::iterator end = rec.end();
 
   while (it != end)
   {
@@ -372,9 +372,9 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>&
   GridBase<T, rank, CheckingPolicy, StoragePolicy>
     ::operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid)
 {
-  RecDomain<rank> rec(this->getLo(), this->getHi());
-  typename RecDomain<rank>::iterator it = rec.begin();
-  typename RecDomain<rank>::iterator end = rec.end();
+  Range<int, rank> rec(this->getLo(), this->getHi());
+  typename Range<int, rank>::iterator it = rec.begin();
+  typename Range<int, rank>::iterator end = rec.end();
 
   while (it != end)
   {

@@ -28,7 +28,7 @@
 #define SCHNEK_GRIDTRANSFORM_HPP_
 
 #include "grid.hpp"
-#include "domain.hpp"
+#include "range.hpp"
 
 namespace schnek {
 
@@ -195,6 +195,6 @@ class GridTransform
 
 } // namespace schnek
 
-#include "subgrid.t"
+#include "gridtransform.t"
 
 #endif // SCHNEK_SUBGRID_HPP_

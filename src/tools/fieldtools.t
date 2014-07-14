@@ -24,7 +24,7 @@
  *
  */
 
-#include "../grid/domain.hpp"
+#include "../grid/range.hpp"
 #include <boost/foreach.hpp>
 
 namespace schnek
@@ -43,13 +43,13 @@ void fill_field(
     T &value,
     DependencyUpdater &updater)
 {
-  RecDomain<rank> domain(field.getLo(), field.getHi());
+  Range<int, rank> domain(field.getLo(), field.getHi());
 
-  typename RecDomain<rank>::iterator it = domain.begin();
-  typename RecDomain<rank>::iterator end = domain.end();
+  typename Range<int, rank>::iterator it = domain.begin();
+  typename Range<int, rank>::iterator end = domain.end();
   while (it != end)
   {
-    const typename RecDomain<rank>::LimitType &pos=*it;
+    const typename Range<int, rank>::LimitType &pos=*it;
     for (int i=0; i<rank; ++i) coords[i] = field.indexToPosition(i,pos[i]);
     updater.update();
     field.get(pos) = value;

@@ -88,7 +88,7 @@ class BlockClassDescriptor
     BlockClassChildAdder addChildren(std::string child);
     bool hasChild(std::string child);
 
-    template<class B> void setBlockClass()
+    template<class B> void setClass()
     {
         pBlockFactory bf(new GenericBlockFactory<B>());
         blockFactory = bf;
@@ -112,7 +112,7 @@ class BlockClasses
     BlockClasses(const BlockClasses& blockClasses)
         : classDescriptors(blockClasses.classDescriptors), restr(blockClasses.restr) {}
 
-    BlockClassDescriptor &addBlockClass(std::string blockClass);
+    BlockClassDescriptor &addBlock(std::string blockClass);
     BlockClassDescriptor &operator()(std::string blockClass) { return this->get(blockClass); }
     BlockClassDescriptor &get(std::string blockClass);
 

@@ -28,7 +28,6 @@
 #define SCHNEK_FIELD_HPP_
 
 #include "range.hpp"
-#include "domain.hpp"
 #include "grid.hpp"
 
 namespace schnek {

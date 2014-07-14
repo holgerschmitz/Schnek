@@ -36,11 +36,12 @@
 
 namespace schnek {
 
+/*
 /** RecDomain is a rectangular domain that is not bound to any concrete grid data structure.
  *
  *  The rectangular domain is defined by a minimum and maximum. An iterator is provided that
  *  traverses the domain and returns the positions.
- */
+ *
 template<
   int rank,
   template<int> class CheckingPolicy = ArrayNoArgCheck
@@ -65,7 +66,7 @@ class RecDomain : public Range<int, rank, CheckingPolicy>
 
     /** Forward iterator over the rectangular domain
      *  Implements operator* and getPos which both return the current iterator position
-     */
+     *
     class iterator : public std::iterator<std::forward_iterator_tag, LimitType> {
       private:
         friend class RecDomain;
@@ -142,9 +143,11 @@ class RecDomain : public Range<int, rank, CheckingPolicy>
     }
 };
 
+*/
+
 //typedef boost::shared_ptr<RecDomain> pRecDomain;
 //
-///** MultiRecDomain contains a list of RecDomain rectangular domains.
+// /** MultiRecDomain contains a list of RecDomain rectangular domains.
 // *
 // *  New domains can be added by supplying the rectangular domain bounds.
 // */

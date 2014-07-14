@@ -28,7 +28,7 @@
 #define SCHNEK_SUBGRID_HPP_
 
 #include "grid.hpp"
-#include "domain.hpp"
+#include "range.hpp"
 
 namespace schnek {
 
@@ -41,7 +41,7 @@ class SubGridStorage {
   public:
     typedef Array<int,rank> IndexType;
     typedef BaseGrid BaseGridType;
-    typedef RecDomain<rank> DomainType;
+    typedef Range<int, rank> DomainType;
   protected:
     BaseGridType *baseGrid;
     DomainType domain;

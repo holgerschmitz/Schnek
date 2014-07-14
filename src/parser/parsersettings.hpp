@@ -51,10 +51,10 @@ struct ParserSettings
 
     BlockClassDescriptor &addBlockClass(std::string blockClass)
     {
-      return blockClasses.addBlockClass(blockClass);
+      return blockClasses.addBlock(blockClass);
     }
 
-    BlockClassDescriptor &getBlockClass(std::string blockClass)
+    BlockClassDescriptor &getBlock(std::string blockClass)
     {
       return blockClasses(blockClass);
     }

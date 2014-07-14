@@ -1,0 +1,7 @@
+
+float pihalf = 3.14159/2;
+int counter = 7;
+
+size = counter^2;
+dx = 3.056*pihalf;
+name = "data"+counter+".out";
