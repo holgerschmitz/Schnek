@@ -83,6 +83,15 @@ class Range {
     /// Return rectangle maximum
     LimitType &getHi() {return hi;}
 
+    /// Returns true if the argument lies within the range
+    bool inside(const LimitType &p)
+    {
+      for (int i=0; i<rank; ++i)
+        if ((p[i]<lo[i]) || (p[i]>hi[i])) return false;
+
+      return true;
+    }
+
     void grow(const T &s) {
       for (int i=0; i<rank; ++i)
       {

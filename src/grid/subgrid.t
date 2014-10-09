@@ -73,7 +73,7 @@ template<
 SubGrid<BaseGrid, CheckingPolicy>::SubGrid(const IndexType &size, BaseGridType &baseGrid_)
   : ParentType(size)
 {
-    setBaseGrid(baseGrid_);
+    this->setBaseGrid(baseGrid_);
 }
 
 template<
@@ -83,8 +83,19 @@ template<
 SubGrid<BaseGrid, CheckingPolicy>::SubGrid(const IndexType &low, const IndexType &high, BaseGridType &baseGrid_)
   : ParentType(low, high)
 {
-  setBaseGrid(baseGrid_);
+    this->setBaseGrid(baseGrid_);
 }
+
+template<
+  class BaseGrid,
+  template<int> class CheckingPolicy
+>
+SubGrid<BaseGrid, CheckingPolicy>::SubGrid(const RangeType &range, BaseGridType &baseGrid_)
+  : ParentType(range.getLo(), range.getHi())
+{
+  this->setBaseGrid(baseGrid_);
+}
+
 
 
 } // namespace schnek

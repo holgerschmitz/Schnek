@@ -51,7 +51,7 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
   LimitType Low(lo);
   LimitType High(hi);
 
-  MPI_Comm_size(MPI_COMM_WORLD,&ComSize);
+  MPI_Comm_size(MPI_COMM_WORLD, &ComSize);
 
   int periodic[Rank];
 

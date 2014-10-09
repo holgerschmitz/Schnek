@@ -738,122 +738,158 @@ static void yy_reduce(
   */
       case 3: /* statement ::= typedecl decllist SEMICOLON */
 #line 26 "deckgrammar.y"
-{ yymsp[-1].minor.yy0.storeVariable(yymsp[-2].minor.yy0); }
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 1"<< toString(yymsp[-2].minor.yy0.getType()) << " " << yymsp[-2].minor.yy0.getString()); yymsp[-1].minor.yy0.storeVariable(yymsp[-2].minor.yy0); }
 #line 743 "deckgrammar.c"
         break;
       case 4: /* statement ::= assignment SEMICOLON */
 #line 27 "deckgrammar.y"
-{ yymsp[-1].minor.yy0.updateVariable(); }
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 2"<< toString(yymsp[-1].minor.yy0.getType()) << " " << yymsp[-1].minor.yy0.getString()); yymsp[-1].minor.yy0.updateVariable(); }
 #line 748 "deckgrammar.c"
         break;
       case 7: /* statement ::= RBRACE */
 #line 30 "deckgrammar.y"
-{ yymsp[0].minor.yy0.endBlock(); }
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 3"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yymsp[0].minor.yy0.endBlock(); }
 #line 753 "deckgrammar.c"
         break;
       case 9: /* startblock ::= IDENTIFIER IDENTIFIER LBRACE */
 #line 33 "deckgrammar.y"
-{ yymsp[-2].minor.yy0.createBlock(yymsp[-1].minor.yy0); }
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 4"<< toString(yymsp[-1].minor.yy0.getType()) << " " << yymsp[-1].minor.yy0.getString()); yymsp[-2].minor.yy0.createBlock(yymsp[-1].minor.yy0); }
 #line 758 "deckgrammar.c"
         break;
       case 10: /* startblock ::= IDENTIFIER LBRACE */
 #line 34 "deckgrammar.y"
-{ yymsp[-1].minor.yy0.createBlock(yymsp[-1].minor.yy0); }
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 5"<< toString(yymsp[-1].minor.yy0.getType()) << " " << yymsp[-1].minor.yy0.getString()); yymsp[-1].minor.yy0.createBlock(yymsp[-1].minor.yy0); }
 #line 763 "deckgrammar.c"
         break;
       case 11: /* decllist ::= decllist COMMA declaration */
 #line 36 "deckgrammar.y"
-{ yymsp[0].minor.yy0.append(yymsp[-2].minor.yy0); yygotominor.yy0 = yymsp[0].minor.yy0; }
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 6"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yymsp[0].minor.yy0.append(yymsp[-2].minor.yy0); yygotominor.yy0 = yymsp[0].minor.yy0; }
 #line 768 "deckgrammar.c"
         break;
       case 12: /* decllist ::= declaration */
-      case 13: /* declaration ::= IDENTIFIER */ yytestcase(yyruleno==13);
-      case 14: /* declaration ::= assignment */ yytestcase(yyruleno==14);
-      case 17: /* signed_expression ::= PLUS expression */ yytestcase(yyruleno==17);
-      case 19: /* signed_expression ::= expression */ yytestcase(yyruleno==19);
-      case 27: /* expression ::= value */ yytestcase(yyruleno==27);
-      case 35: /* typedecl ::= INT_DECL */ yytestcase(yyruleno==35);
-      case 36: /* typedecl ::= FLOAT_DECL */ yytestcase(yyruleno==36);
-      case 37: /* typedecl ::= STRING_DECL */ yytestcase(yyruleno==37);
 #line 37 "deckgrammar.y"
-{ yygotominor.yy0 = yymsp[0].minor.yy0; }
-#line 781 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 7"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0 = yymsp[0].minor.yy0; }
+#line 773 "deckgrammar.c"
+        break;
+      case 13: /* declaration ::= IDENTIFIER */
+#line 39 "deckgrammar.y"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 8"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0 = yymsp[0].minor.yy0; }
+#line 778 "deckgrammar.c"
+        break;
+      case 14: /* declaration ::= assignment */
+#line 40 "deckgrammar.y"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 9"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0 = yymsp[0].minor.yy0; }
+#line 783 "deckgrammar.c"
         break;
       case 16: /* assignment ::= IDENTIFIER EQUAL signed_expression */
 #line 43 "deckgrammar.y"
-{ yygotominor.yy0.evaluateExpression(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
-#line 786 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 10"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0.evaluateExpression(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
+#line 788 "deckgrammar.c"
+        break;
+      case 17: /* signed_expression ::= PLUS expression */
+#line 45 "deckgrammar.y"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 11"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0 = yymsp[0].minor.yy0; }
+#line 793 "deckgrammar.c"
         break;
       case 18: /* signed_expression ::= MINUS expression */
 #line 46 "deckgrammar.y"
-{ yygotominor.yy0.assignUnaryOperator<expression::OperatorNeg>(yymsp[0].minor.yy0); }
-#line 791 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 12"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0.assignUnaryOperator<expression::OperatorNeg>(yymsp[0].minor.yy0); }
+#line 798 "deckgrammar.c"
+        break;
+      case 19: /* signed_expression ::= expression */
+#line 47 "deckgrammar.y"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 13"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0 = yymsp[0].minor.yy0; }
+#line 803 "deckgrammar.c"
         break;
       case 20: /* expression ::= expression PLUS expression */
 #line 49 "deckgrammar.y"
-{ yygotominor.yy0.assignBinaryOperator<expression::OperatorAdd>(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
-#line 796 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 14"<< toString(yymsp[-2].minor.yy0.getType()) << " " << yymsp[-2].minor.yy0.getString()); yygotominor.yy0.assignBinaryOperator<expression::OperatorAdd>(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
+#line 808 "deckgrammar.c"
         break;
       case 21: /* expression ::= expression MINUS expression */
 #line 50 "deckgrammar.y"
-{ yygotominor.yy0.assignBinaryOperator<expression::OperatorSubtract>(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
-#line 801 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 15"<< toString(yymsp[-2].minor.yy0.getType()) << " " << yymsp[-2].minor.yy0.getString()); yygotominor.yy0.assignBinaryOperator<expression::OperatorSubtract>(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
+#line 813 "deckgrammar.c"
         break;
       case 22: /* expression ::= expression TIMES expression */
 #line 52 "deckgrammar.y"
-{ yygotominor.yy0.assignBinaryOperator<expression::OperatorMultiply>(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
-#line 806 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 16"<< toString(yymsp[-2].minor.yy0.getType()) << " " << yymsp[-2].minor.yy0.getString()); yygotominor.yy0.assignBinaryOperator<expression::OperatorMultiply>(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
+#line 818 "deckgrammar.c"
         break;
       case 23: /* expression ::= expression DIVIDE expression */
 #line 53 "deckgrammar.y"
-{ yygotominor.yy0.assignBinaryOperator<expression::OperatorDivide>(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
-#line 811 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 17"<< toString(yymsp[-2].minor.yy0.getType()) << " " << yymsp[-2].minor.yy0.getString()); yygotominor.yy0.assignBinaryOperator<expression::OperatorDivide>(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
+#line 823 "deckgrammar.c"
         break;
       case 24: /* expression ::= expression EXPONENT expression */
 #line 54 "deckgrammar.y"
-{ yygotominor.yy0.assignBinaryOperator<expression::OperatorExponent>(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
-#line 816 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 18"<< toString(yymsp[-2].minor.yy0.getType()) << " " << yymsp[-2].minor.yy0.getString()); yygotominor.yy0.assignBinaryOperator<expression::OperatorExponent>(yymsp[-2].minor.yy0,yymsp[0].minor.yy0); }
+#line 828 "deckgrammar.c"
         break;
       case 25: /* expression ::= LBRACKET signed_expression RBRACKET */
 #line 56 "deckgrammar.y"
-{ yygotominor.yy0 = yymsp[-1].minor.yy0; }
-#line 821 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 19"<< toString(yymsp[-1].minor.yy0.getType()) << " " << yymsp[-1].minor.yy0.getString()); yygotominor.yy0 = yymsp[-1].minor.yy0; }
+#line 833 "deckgrammar.c"
         break;
       case 26: /* expression ::= IDENTIFIER LBRACKET expressionlist RBRACKET */
 #line 57 "deckgrammar.y"
-{ yygotominor.yy0.assignFunction(yymsp[-3].minor.yy0,yymsp[-1].minor.yy0); }
-#line 826 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 20"<< toString(yymsp[-3].minor.yy0.getType()) << " " << yymsp[-3].minor.yy0.getString()<< " "<< toString(yymsp[-1].minor.yy0.getType()) << " " << yymsp[-1].minor.yy0.getString()); yygotominor.yy0.assignFunction(yymsp[-3].minor.yy0,yymsp[-1].minor.yy0); }
+#line 838 "deckgrammar.c"
+        break;
+      case 27: /* expression ::= value */
+#line 59 "deckgrammar.y"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 21"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0.assignUnaryOperator<expression::OperatorId>(yymsp[0].minor.yy0); }
+#line 843 "deckgrammar.c"
         break;
       case 28: /* expressionlist ::= expressionlist COMMA signed_expression */
 #line 61 "deckgrammar.y"
-{ yymsp[0].minor.yy0.append(yymsp[-2].minor.yy0); yygotominor.yy0=yymsp[0].minor.yy0; }
-#line 831 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 22"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yymsp[0].minor.yy0.append(yymsp[-2].minor.yy0); yygotominor.yy0=yymsp[0].minor.yy0; }
+#line 848 "deckgrammar.c"
         break;
       case 29: /* expressionlist ::= signed_expression */
 #line 62 "deckgrammar.y"
-{ yygotominor.yy0 = yymsp[0].minor.yy0; yygotominor.yy0.makeExpressionList(); }
-#line 836 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 23"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0 = yymsp[0].minor.yy0; yygotominor.yy0.makeExpressionList(); }
+#line 853 "deckgrammar.c"
         break;
       case 30: /* value ::= PATHIDENTIFIER */
-      case 31: /* value ::= IDENTIFIER */ yytestcase(yyruleno==31);
 #line 64 "deckgrammar.y"
-{ yygotominor.yy0.assignIdentifier(yymsp[0].minor.yy0); }
-#line 842 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 24"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0.assignIdentifier(yymsp[0].minor.yy0); }
+#line 858 "deckgrammar.c"
+        break;
+      case 31: /* value ::= IDENTIFIER */
+#line 65 "deckgrammar.y"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 25"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0.assignIdentifier(yymsp[0].minor.yy0); }
+#line 863 "deckgrammar.c"
         break;
       case 32: /* value ::= INTEGER */
 #line 66 "deckgrammar.y"
-{ yygotominor.yy0.assignInteger(yymsp[0].minor.yy0); }
-#line 847 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 26"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0.assignInteger(yymsp[0].minor.yy0); }
+#line 868 "deckgrammar.c"
         break;
       case 33: /* value ::= FLOAT */
 #line 67 "deckgrammar.y"
-{ yygotominor.yy0.assignFloat(yymsp[0].minor.yy0); }
-#line 852 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 27"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0.assignFloat(yymsp[0].minor.yy0); }
+#line 873 "deckgrammar.c"
         break;
       case 34: /* value ::= STRING */
 #line 68 "deckgrammar.y"
-{ yygotominor.yy0.assignString(yymsp[0].minor.yy0); }
-#line 857 "deckgrammar.c"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 28"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0.assignString(yymsp[0].minor.yy0); }
+#line 878 "deckgrammar.c"
+        break;
+      case 35: /* typedecl ::= INT_DECL */
+#line 70 "deckgrammar.y"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 29"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0 = yymsp[0].minor.yy0; }
+#line 883 "deckgrammar.c"
+        break;
+      case 36: /* typedecl ::= FLOAT_DECL */
+#line 71 "deckgrammar.y"
+{  SCHNEK_TRACE_LOG(5,"Parser: Rule 30"<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0 = yymsp[0].minor.yy0; }
+#line 888 "deckgrammar.c"
+        break;
+      case 37: /* typedecl ::= STRING_DECL */
+#line 72 "deckgrammar.y"
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 31 "<< toString(yymsp[0].minor.yy0.getType()) << " " << yymsp[0].minor.yy0.getString()); yygotominor.yy0 = yymsp[0].minor.yy0; }
+#line 893 "deckgrammar.c"
         break;
       default:
       /* (0) deck ::= statementlist */ yytestcase(yyruleno==0);
@@ -924,8 +960,8 @@ static void yy_syntax_error(
 #define TOKEN (yyminor.yy0)
 #line 17 "deckgrammar.y"
 
-  std::cout << "Syntax error!" << std::endl;
-#line 929 "deckgrammar.c"
+  throw ParserInternalError();
+#line 965 "deckgrammar.c"
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 

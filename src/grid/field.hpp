@@ -41,20 +41,15 @@ template<
 class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
 {
   public:
-    typedef Range<double, rank> FieldRange;
+    typedef Range<double, rank> RangeType;
+    typedef typename Range<double, rank>::LimitType RangeLimit;
     typedef Array<bool, rank> Stagger;
     typedef typename Grid<T, rank, CheckingPolicy, StoragePolicy>::IndexType IndexType;
     typedef Field<T, rank, CheckingPolicy, StoragePolicy> FieldType;
     typedef GridBase<T, rank, CheckingPolicy<rank>, StoragePolicy<T,rank> > BaseType;
   private:
-    FieldRange range;
+    RangeType range;
     Stagger stagger;
-    /// Stores the size of the simulation domain
-    IndexType size;
-    /// The low coordinate of the inner region (without the ghost cells)
-    IndexType lo_inner;
-    /// The high coordinate of the inner region (without the ghost cells)
-    IndexType hi_inner;
     int ghostCells;
   public:
     /** default constructor creates an empty grid */
@@ -81,10 +76,10 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
         const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
 
     /** Get the lo if the inner domain */
-    const IndexType& getInnerLo() {return lo_inner;}
+    IndexType getInnerLo() {return this->getLo()+ghostCells;}
 
-    /** Get the lo if the inner domain */
-    const IndexType& getInnerHi() {return hi_inner;}
+    /** Get the hi if the inner domain */
+    IndexType getInnerHi() {return this->getHi()-ghostCells;}
 
     /** copy constructor */
     Field(const Field<T, rank, CheckingPolicy, StoragePolicy>&);
@@ -125,7 +120,6 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
       BaseType::operator=(grid);
       range = grid.range;
       stagger = grid.stagger;
-      size = grid.size;
       ghostCells = grid.ghostCells;
       return *this;
     }

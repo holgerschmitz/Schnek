@@ -1,0 +1,19 @@
+// comment starts with a double forward slash
+
+// definition of local variables
+float pi = 3.14159;
+float clight = 299792458.0;
+
+// definition of simulation parameters
+size = 100;
+dx = 10.0/size; // variables can be used in expressions
+vx = 0.5*clight*sin(pi/3); // sin function supplied through registerCMath
+vy = 0.5*clight*cos(pi/3);
+
+Force forceA {
+  strength = 1.5;
+}
+
+Force forceB {
+  strength = 2.0 * forceA:strength;
+}

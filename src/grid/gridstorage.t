@@ -72,14 +72,70 @@ void SingleArrayInstantAllocation<T, rank>::newData(
   low = low_;
   high = high_;
 
-  for (d = 0; d < rank; d++) {
+  for (d = 0; d < rank; ++d) {
+    dims[d] = high[d] - low[d] + 1;
+    size *= dims[d];
+  }
+  data = new T[size];
+  int p = -low[0];
+
+  for (d = 1; d < rank ; ++d) {
+    p = p*dims[d] - low[d];
+  }
+  data_fast = data + p;
+}
+
+
+
+//=================================================================
+//=========== SingleArrayInstantFortranAllocation =================
+//=================================================================
+
+template<typename T, int rank>
+void SingleArrayInstantFortranAllocation<T, rank>::resize(const IndexType &low_, const IndexType &high_)
+{
+//  if ( (low != low_) || (high != high_) )
+//  {
+  this->deleteData();
+  this->newData(low_,high_);
+//  }
+}
+
+template<typename T, int rank>
+SingleArrayInstantFortranAllocation<T, rank>::~SingleArrayInstantFortranAllocation()
+{
+  this->deleteData();
+}
+
+template<typename T, int rank>
+void SingleArrayInstantFortranAllocation<T, rank>::deleteData()
+{
+  if (data)
+    delete[] data;
+  data = NULL;
+  size = 0;
+}
+
+template<typename T, int rank>
+void SingleArrayInstantFortranAllocation<T, rank>::newData(
+  const IndexType &low_,
+  const IndexType &high_
+)
+{
+  size = 1;
+  int d;
+
+  low = low_;
+  high = high_;
+
+  for (d = 0; d < rank; ++d) {
     dims[d] = high[d] - low[d] + 1;
     size *= dims[d];
   }
   data = new T[size];
   int p = -low[rank-1];
 
-  for (d = rank-2; d >= 0 ; d--) {
+  for (d = rank-2; d >= 0 ; --d) {
     p = p*dims[d] -low[d];
   }
   data_fast = data + p;
@@ -138,7 +194,7 @@ void SingleArrayLazyAllocation<T, rank>::resize(const IndexType &low_, const Ind
 template<typename T, int rank>
 void SingleArrayLazyAllocation<T, rank>::deleteData()
 {
-  SCHNEK_TRACE_LOG(2,"Deleting pointer (" << (void*)data << "): size=" << size << " avgSize="<< avgSize << " avgVar="<<avgVar << " bufSize="<<bufSize);
+  SCHNEK_TRACE_LOG(5,"Deleting pointer (" << (void*)data << "): size=" << size << " avgSize="<< avgSize << " avgVar="<<avgVar << " bufSize="<<bufSize);
   if (data)
     delete[] data;
   data = NULL;
@@ -153,7 +209,7 @@ void SingleArrayLazyAllocation<T, rank>::newData(
 {
   bufSize = newSize + (int)(4*sqrt(avgVar));
   if (bufSize<=0) bufSize=10;
-  std::cerr << "Allocating pointer: size = " << newSize  << " " << bufSize << std::endl;
+  //std::cerr << "Allocating pointer: size = " << newSize  << " " << bufSize << std::endl;
   data = new T[bufSize];
 }
 
@@ -177,8 +233,39 @@ SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBas
   this->resize(low_, high_);
 }
 
+//=================================================================
+//=============== SingleArrayGridCOrderStorageBase ================
+//=================================================================
+
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
-inline T& SingleArrayGridStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
+inline T& SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
+{
+  int pos = index[0];
+  for (int i=1; i<rank; ++i)
+  {
+    pos = index[i] + this->dims[i]*pos;
+  }
+  return this->data_fast[pos];
+}
+
+template<typename T, int rank, template<typename, int> class AllocationPolicy>
+inline const T& SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
+{
+  int pos = index[0];
+  for (int i=1; i<rank; ++i)
+  {
+    pos = index[i] + this->dims[i]*pos;
+  }
+  return this->data_fast[pos];
+}
+
+
+//=================================================================
+//============ SingleArrayGridFortranOrderStorageBase =============
+//=================================================================
+
+template<typename T, int rank, template<typename, int> class AllocationPolicy>
+inline T& SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
 {
   int pos = index[rank-1];
   for (int i=rank-2; i>=0; --i)
@@ -188,8 +275,9 @@ inline T& SingleArrayGridStorageBase<T, rank, AllocationPolicy>::get(const Index
   return this->data_fast[pos];
 }
 
+
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
-inline const T& SingleArrayGridStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
+inline const T& SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
 {
   int pos = index[rank-1];
   for (int i=rank-2; i>=0; --i)
@@ -199,4 +287,4 @@ inline const T& SingleArrayGridStorageBase<T, rank, AllocationPolicy>::get(const
   return this->data_fast[pos];
 }
 
-}
+} // namespace schnek

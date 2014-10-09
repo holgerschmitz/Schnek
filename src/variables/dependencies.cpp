@@ -27,10 +27,14 @@
 #include "dependencies.hpp"
 #include "expression.hpp"
 #include "../exception.hpp"
+#include "../util/logger.hpp"
 
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/foreach.hpp>
 #include <cassert>
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 using namespace schnek;
 
@@ -47,6 +51,7 @@ void DependencyMap::constructMapRecursive(const pBlockVariables vars)
     pVariable v=it.second;
     if (!v->isConstant())
     {
+      SCHNEK_TRACE_LOG(3,"Adding variable " << it.first << " " << v->getId());
       DependenciesGetter depGet;
       DependencySet dep = boost::apply_visitor(depGet, v->getExpression());
       long id = v->getId();
@@ -62,15 +67,20 @@ void DependencyMap::constructMapRecursive(const pBlockVariables vars)
 }
 void DependencyMap::constructMap(const pBlockVariables vars)
 {
-	constructMapRecursive(vars);
+  SCHNEK_TRACE_ENTER_FUNCTION(3);
+  constructMapRecursive(vars);
 
-	BOOST_FOREACH(DepMap::value_type entry, dependencies)
-	{
-	  BOOST_FOREACH(long id, entry.second.dependsOn)
-	  {
-	    dependencies[id].modifies.insert(entry.first);
-	  }
-	}
+  BOOST_FOREACH(DepMap::value_type entry, dependencies)
+  {
+    SCHNEK_TRACE_LOG(3,"Setting Dependency " << entry.first << " " << entry.second.v->getId());
+    BOOST_FOREACH(long id, entry.second.dependsOn)
+    {
+      if (dependencies.count(id)>0) {
+        SCHNEK_TRACE_LOG(3,"Adding to modifies of " << id);
+        dependencies[id].modifies.insert(entry.first);
+      }
+    }
+  }
 
 //  std::cout << "DependencyMap::constructMap";
 //  BOOST_FOREACH(DepMap::value_type info, dependencies)
@@ -82,7 +92,7 @@ void DependencyMap::constructMap(const pBlockVariables vars)
 //     }
 //     std::cout << std::endl;
 //  }
-
+  SCHNEK_TRACE_EXIT_FUNCTION(3);
 }
 
 void DependencyMap::resetCounters()
@@ -306,8 +316,6 @@ pBlockVariables DependencyMap::getBlockVariables()
 
 void DependencyMap::updateAll()
 {
-  std::cout << "DependencyMap::updateAll()\n";
-
   pRefDepMap deps(new RefDepMap());
   BOOST_FOREACH(DepMap::value_type &entry, dependencies)
   {

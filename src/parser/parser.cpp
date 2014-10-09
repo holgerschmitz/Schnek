@@ -35,7 +35,18 @@
 
 using namespace schnek;
 
+struct ParserInternalError : public SchnekException
+{
+    ParserInternalError() : SchnekException() {}
+};
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
+
 #include "deckgrammar.inc"
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 pBlock Parser::parse(std::istream &input, std::string filename)
 {
@@ -55,7 +66,7 @@ pBlock Parser::parse(std::istream &input, std::string filename)
   BlockClassDescriptor &blockClassDescr = context.blockClasses->get(rootClass);
   if (blockClassDescr.hasBlockFactory())
   {
-    pBlock block = blockClassDescr.makeBlock();
+    pBlock block = blockClassDescr.makeBlock(variables.getRootBlock()->getBlockName());
     block->setContext(context.variables->getCurrentBlock());
     block->setup();
     context.blockTree->addChild(block);
@@ -67,7 +78,12 @@ pBlock Parser::parse(std::istream &input, std::string filename)
 
   BOOST_FOREACH(Token tok, tokens)
   {
-    Parse(pParser, tok.getToken(), ParserToken(tok, context));
+    try{
+      Parse(pParser, tok.getToken(), ParserToken(tok, context));
+    }
+    catch (ParserInternalError & e) {
+      throw ParserError("Syntax Error", tok);
+    }
   }
 
   Parse(pParser, 0, ParserToken());

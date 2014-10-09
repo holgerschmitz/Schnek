@@ -4,4 +4,4 @@ int counter = 7;
 
 size = counter^2;
 dx = 3.056*pihalf;
-name = "data"+counter+".out";
+info = "data"+counter+".out";

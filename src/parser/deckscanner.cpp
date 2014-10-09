@@ -23,26 +23,25 @@ using namespace schnek;
 #line 24 "deckscanner.c"
 static const char _deck_actions[] = {
 	0, 1, 0, 1, 1, 1, 2, 1, 
-	3, 1, 4, 1, 14, 1, 15, 1, 
-	16, 1, 17, 1, 18, 1, 19, 1, 
-	20, 1, 21, 1, 22, 1, 23, 1, 
-	24, 1, 25, 1, 26, 1, 27, 1, 
-	29, 1, 30, 1, 31, 1, 32, 1, 
-	33, 1, 34, 1, 35, 1, 36, 1, 
-	37, 2, 0, 27, 2, 0, 28, 2, 
+	3, 1, 4, 1, 13, 1, 14, 1, 
+	15, 1, 16, 1, 17, 1, 18, 1, 
+	19, 1, 20, 1, 21, 1, 22, 1, 
+	23, 1, 24, 1, 25, 1, 26, 1, 
+	28, 1, 29, 1, 30, 1, 31, 1, 
+	32, 1, 33, 1, 34, 1, 35, 1, 
+	36, 2, 0, 26, 2, 0, 27, 2, 
 	4, 5, 2, 4, 6, 2, 4, 7, 
 	2, 4, 8, 2, 4, 9, 2, 4, 
-	10, 2, 4, 11, 2, 4, 12, 2, 
-	4, 13
+	10, 2, 4, 11, 2, 4, 12
 };
 
 static const short _deck_key_offsets[] = {
 	0, 0, 3, 4, 7, 8, 12, 14, 
 	15, 17, 20, 58, 62, 64, 66, 71, 
 	79, 86, 96, 104, 113, 122, 131, 140, 
-	149, 158, 167, 176, 185, 194, 204, 213, 
-	222, 231, 240, 249, 258, 267, 276, 285, 
-	294, 303, 312, 321, 330, 339, 348
+	149, 158, 167, 176, 185, 194, 203, 212, 
+	221, 230, 239, 248, 257, 266, 275, 284, 
+	293, 302, 311
 };
 
 static const char _deck_trans_keys[] = {
@@ -70,35 +69,30 @@ static const char _deck_trans_keys[] = {
 	95, 97, 48, 57, 65, 90, 98, 122, 
 	58, 95, 116, 48, 57, 65, 90, 97, 
 	122, 58, 95, 110, 48, 57, 65, 90, 
-	97, 122, 58, 95, 99, 116, 48, 57, 
-	65, 90, 97, 122, 58, 95, 108, 48, 
-	57, 65, 90, 97, 122, 58, 95, 117, 
+	97, 122, 58, 95, 116, 48, 57, 65, 
+	90, 97, 122, 58, 95, 101, 48, 57, 
+	65, 90, 97, 122, 58, 95, 103, 48, 
+	57, 65, 90, 97, 122, 58, 95, 101, 
 	48, 57, 65, 90, 97, 122, 58, 95, 
-	100, 48, 57, 65, 90, 97, 122, 58, 
+	114, 48, 57, 65, 90, 97, 122, 58, 
 	95, 101, 48, 57, 65, 90, 97, 122, 
-	58, 95, 101, 48, 57, 65, 90, 97, 
-	122, 58, 95, 103, 48, 57, 65, 90, 
-	97, 122, 58, 95, 101, 48, 57, 65, 
+	58, 95, 97, 48, 57, 65, 90, 98, 
+	122, 58, 95, 108, 48, 57, 65, 90, 
+	97, 122, 58, 95, 116, 48, 57, 65, 
 	90, 97, 122, 58, 95, 114, 48, 57, 
-	65, 90, 97, 122, 58, 95, 101, 48, 
-	57, 65, 90, 97, 122, 58, 95, 97, 
-	48, 57, 65, 90, 98, 122, 58, 95, 
-	108, 48, 57, 65, 90, 97, 122, 58, 
-	95, 116, 48, 57, 65, 90, 97, 122, 
-	58, 95, 114, 48, 57, 65, 90, 97, 
-	122, 58, 95, 105, 48, 57, 65, 90, 
-	97, 122, 58, 95, 110, 48, 57, 65, 
-	90, 97, 122, 58, 95, 103, 48, 57, 
-	65, 90, 97, 122, 0
+	65, 90, 97, 122, 58, 95, 105, 48, 
+	57, 65, 90, 97, 122, 58, 95, 110, 
+	48, 57, 65, 90, 97, 122, 58, 95, 
+	103, 48, 57, 65, 90, 97, 122, 0
 };
 
 static const char _deck_single_lengths[] = {
 	0, 3, 1, 3, 1, 2, 0, 1, 
 	2, 3, 24, 2, 0, 2, 3, 2, 
 	1, 4, 2, 3, 3, 3, 3, 3, 
-	3, 3, 3, 3, 3, 4, 3, 3, 
 	3, 3, 3, 3, 3, 3, 3, 3, 
-	3, 3, 3, 3, 3, 3, 0
+	3, 3, 3, 3, 3, 3, 3, 3, 
+	3, 3, 0
 };
 
 static const char _deck_range_lengths[] = {
@@ -107,16 +101,16 @@ static const char _deck_range_lengths[] = {
 	3, 3, 3, 3, 3, 3, 3, 3, 
 	3, 3, 3, 3, 3, 3, 3, 3, 
 	3, 3, 3, 3, 3, 3, 3, 3, 
-	3, 3, 3, 3, 3, 3, 0
+	3, 3, 0
 };
 
 static const short _deck_index_offsets[] = {
 	0, 0, 4, 6, 10, 12, 16, 18, 
 	20, 23, 27, 59, 63, 65, 68, 73, 
 	79, 84, 92, 98, 105, 112, 119, 126, 
-	133, 140, 147, 154, 161, 168, 176, 183, 
-	190, 197, 204, 211, 218, 225, 232, 239, 
-	246, 253, 260, 267, 274, 281, 288
+	133, 140, 147, 154, 161, 168, 175, 182, 
+	189, 196, 203, 210, 217, 224, 231, 238, 
+	245, 252, 259
 };
 
 static const char _deck_indicies[] = {
@@ -141,48 +135,44 @@ static const char _deck_indicies[] = {
 	32, 32, 49, 47, 32, 58, 32, 32, 
 	32, 49, 47, 32, 59, 32, 32, 32, 
 	49, 47, 32, 60, 32, 32, 32, 49, 
-	47, 32, 61, 62, 32, 32, 32, 49, 
-	47, 32, 63, 32, 32, 32, 49, 47, 
-	32, 64, 32, 32, 32, 49, 47, 32, 
-	65, 32, 32, 32, 49, 47, 32, 66, 
-	32, 32, 32, 49, 47, 32, 68, 32, 
-	32, 32, 67, 47, 32, 69, 32, 32, 
-	32, 49, 47, 32, 70, 32, 32, 32, 
-	49, 47, 32, 71, 32, 32, 32, 49, 
-	47, 32, 72, 32, 32, 32, 49, 47, 
-	32, 73, 32, 32, 32, 49, 47, 32, 
-	74, 32, 32, 32, 49, 47, 32, 75, 
-	32, 32, 32, 49, 47, 32, 76, 32, 
-	32, 32, 49, 47, 32, 77, 32, 32, 
-	32, 49, 47, 32, 78, 32, 32, 32, 
-	49, 47, 32, 79, 32, 32, 32, 49, 
-	20, 0
+	47, 32, 61, 32, 32, 32, 49, 47, 
+	32, 63, 32, 32, 32, 62, 47, 32, 
+	64, 32, 32, 32, 49, 47, 32, 65, 
+	32, 32, 32, 49, 47, 32, 66, 32, 
+	32, 32, 49, 47, 32, 67, 32, 32, 
+	32, 49, 47, 32, 68, 32, 32, 32, 
+	49, 47, 32, 69, 32, 32, 32, 49, 
+	47, 32, 70, 32, 32, 32, 49, 47, 
+	32, 71, 32, 32, 32, 49, 47, 32, 
+	72, 32, 32, 32, 49, 47, 32, 73, 
+	32, 32, 32, 49, 47, 32, 74, 32, 
+	32, 32, 49, 20, 0
 };
 
 static const char _deck_trans_targs[] = {
 	1, 1, 10, 2, 3, 3, 10, 4, 
 	10, 6, 12, 10, 7, 10, 8, 8, 
-	9, 46, 10, 10, 0, 10, 10, 10, 
+	9, 42, 10, 10, 0, 10, 10, 10, 
 	10, 10, 10, 11, 13, 14, 10, 10, 
-	15, 17, 10, 19, 24, 28, 38, 41, 
+	15, 17, 10, 19, 24, 28, 34, 37, 
 	10, 10, 10, 5, 10, 10, 10, 16, 
 	10, 10, 18, 20, 21, 22, 23, 15, 
-	25, 26, 27, 15, 29, 30, 34, 31, 
-	32, 33, 15, 10, 35, 36, 37, 15, 
-	39, 40, 15, 42, 43, 44, 45, 15
+	25, 26, 27, 15, 29, 30, 10, 31, 
+	32, 33, 15, 35, 36, 15, 38, 39, 
+	40, 41, 15
 };
 
 static const char _deck_trans_actions[] = {
 	0, 1, 35, 0, 0, 1, 33, 0, 
 	55, 0, 0, 53, 0, 60, 0, 1, 
 	0, 3, 37, 57, 0, 17, 19, 29, 
-	25, 23, 27, 87, 9, 84, 21, 11, 
-	81, 81, 31, 0, 0, 0, 0, 0, 
+	25, 23, 27, 84, 9, 81, 21, 11, 
+	78, 78, 31, 0, 0, 0, 0, 0, 
 	13, 15, 51, 0, 41, 39, 49, 0, 
-	47, 45, 0, 0, 0, 0, 0, 72, 
-	0, 0, 0, 69, 0, 0, 0, 0, 
-	0, 0, 63, 43, 0, 0, 0, 66, 
-	0, 0, 75, 0, 0, 0, 0, 78
+	47, 45, 0, 0, 0, 0, 0, 69, 
+	0, 0, 0, 66, 0, 0, 43, 0, 
+	0, 0, 63, 0, 0, 72, 0, 0, 
+	0, 0, 75
 };
 
 static const char _deck_to_state_actions[] = {
@@ -191,7 +181,7 @@ static const char _deck_to_state_actions[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0
+	0, 0, 0
 };
 
 static const char _deck_from_state_actions[] = {
@@ -200,16 +190,16 @@ static const char _deck_from_state_actions[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0
+	0, 0, 0
 };
 
 static const short _deck_eof_trans[] = {
 	0, 0, 0, 0, 0, 9, 9, 12, 
 	0, 0, 0, 43, 43, 45, 47, 9, 
 	49, 50, 50, 50, 50, 50, 50, 50, 
+	50, 50, 50, 50, 50, 50, 63, 50, 
 	50, 50, 50, 50, 50, 50, 50, 50, 
-	50, 50, 68, 50, 50, 50, 50, 50, 
-	50, 50, 50, 50, 50, 50, 0
+	50, 50, 0
 };
 
 static const int deck_start = 10;
@@ -236,7 +226,7 @@ void DeckScanner::do_scan(TokenList &tlist)
   int done = 0;
 
   
-#line 240 "deckscanner.c"
+#line 230 "deckscanner.c"
 	{
 	cs = deck_start;
 	ts = 0;
@@ -269,7 +259,7 @@ void DeckScanner::do_scan(TokenList &tlist)
     }
             
     
-#line 273 "deckscanner.c"
+#line 263 "deckscanner.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -290,7 +280,7 @@ _resume:
 #line 1 "NONE"
 	{ts = p;}
 	break;
-#line 294 "deckscanner.c"
+#line 284 "deckscanner.c"
 		}
 	}
 
@@ -312,7 +302,7 @@ _resume:
 			else if ( (*p) > *_mid )
 				_lower = _mid + 1;
 			else {
-				_trans += (_mid - _keys);
+				_trans += (unsigned int)(_mid - _keys);
 				goto _match;
 			}
 		}
@@ -335,7 +325,7 @@ _resume:
 			else if ( (*p) > _mid[1] )
 				_lower = _mid + 2;
 			else {
-				_trans += ((_mid - _keys)>>1);
+				_trans += (unsigned int)((_mid - _keys)>>1);
 				goto _match;
 			}
 		}
@@ -369,141 +359,137 @@ _eof_trans:
 	{te = p+1;}
 	break;
 	case 5:
-#line 52 "deckscanner.rl"
-	{act = 13;}
+#line 55 "deckscanner.rl"
+	{act = 14;}
 	break;
 	case 6:
-#line 55 "deckscanner.rl"
+#line 57 "deckscanner.rl"
 	{act = 15;}
 	break;
 	case 7:
-#line 57 "deckscanner.rl"
+#line 58 "deckscanner.rl"
 	{act = 16;}
 	break;
 	case 8:
-#line 58 "deckscanner.rl"
+#line 59 "deckscanner.rl"
 	{act = 17;}
 	break;
 	case 9:
-#line 59 "deckscanner.rl"
+#line 61 "deckscanner.rl"
 	{act = 18;}
 	break;
 	case 10:
-#line 61 "deckscanner.rl"
+#line 65 "deckscanner.rl"
 	{act = 19;}
 	break;
 	case 11:
-#line 65 "deckscanner.rl"
-	{act = 20;}
+#line 89 "deckscanner.rl"
+	{act = 26;}
 	break;
 	case 12:
-#line 89 "deckscanner.rl"
+#line 94 "deckscanner.rl"
 	{act = 27;}
 	break;
 	case 13:
-#line 94 "deckscanner.rl"
-	{act = 28;}
-	break;
-	case 14:
 #line 37 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, EQUAL); }}
 	break;
-	case 15:
+	case 14:
 #line 38 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, LBRACE); }}
 	break;
-	case 16:
+	case 15:
 #line 39 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, RBRACE); }}
 	break;
-	case 17:
+	case 16:
 #line 40 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, LBRACKET); }}
 	break;
-	case 18:
+	case 17:
 #line 41 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, RBRACKET); }}
 	break;
-	case 19:
+	case 18:
 #line 42 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, SEMICOLON); }}
 	break;
-	case 20:
+	case 19:
 #line 43 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, COMMA); }}
 	break;
-	case 21:
+	case 20:
 #line 45 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, PLUS); }}
 	break;
-	case 22:
+	case 21:
 #line 46 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, MINUS); }}
 	break;
-	case 23:
+	case 22:
 #line 47 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, TIMES); }}
 	break;
-	case 24:
+	case 23:
 #line 49 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, EXPONENT); }}
 	break;
-	case 25:
+	case 24:
 #line 72 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, STRING,ts+1,te-ts-2); }}
 	break;
-	case 26:
+	case 25:
 #line 76 "deckscanner.rl"
 	{te = p+1;{ tlist.insert(cur_line, STRING,ts+1,te-ts-2); }}
 	break;
-	case 27:
+	case 26:
 #line 79 "deckscanner.rl"
 	{te = p+1;}
 	break;
-	case 28:
+	case 27:
 #line 84 "deckscanner.rl"
 	{te = p+1;}
 	break;
-	case 29:
+	case 28:
 #line 86 "deckscanner.rl"
 	{te = p+1;{ {cs = 8; goto _again;} }}
 	break;
-	case 30:
+	case 29:
 #line 48 "deckscanner.rl"
 	{te = p;p--;{ tlist.insert(cur_line, DIVIDE); }}
 	break;
-	case 31:
+	case 30:
 #line 54 "deckscanner.rl"
 	{te = p;p--;{ tlist.insert(cur_line, INT_DECL); }}
 	break;
-	case 32:
+	case 31:
 #line 65 "deckscanner.rl"
 	{te = p;p--;{ tlist.insert(cur_line, IDENTIFIER,ts,te-ts); }}
 	break;
-	case 33:
+	case 32:
 #line 68 "deckscanner.rl"
 	{te = p;p--;{ tlist.insert(cur_line, PATHIDENTIFIER,ts,te-ts); }}
 	break;
-	case 34:
+	case 33:
 #line 89 "deckscanner.rl"
 	{te = p;p--;{ tlist.insert(cur_line, INTEGER,ts,te-ts); }}
 	break;
-	case 35:
+	case 34:
 #line 94 "deckscanner.rl"
 	{te = p;p--;{ tlist.insert(cur_line, FLOAT,ts,te-ts); }}
 	break;
-	case 36:
+	case 35:
 #line 48 "deckscanner.rl"
 	{{p = ((te))-1;}{ tlist.insert(cur_line, DIVIDE); }}
 	break;
-	case 37:
+	case 36:
 #line 1 "NONE"
 	{	switch( act ) {
-	case 13:
-	{{p = ((te))-1;} tlist.insert(cur_line, INCLUDE); }
+	case 14:
+	{{p = ((te))-1;} tlist.insert(cur_line, INT_DECL); }
 	break;
 	case 15:
-	{{p = ((te))-1;} tlist.insert(cur_line, INT_DECL); }
+	{{p = ((te))-1;} tlist.insert(cur_line, FLOAT_DECL); }
 	break;
 	case 16:
 	{{p = ((te))-1;} tlist.insert(cur_line, FLOAT_DECL); }
@@ -512,24 +498,21 @@ _eof_trans:
 	{{p = ((te))-1;} tlist.insert(cur_line, FLOAT_DECL); }
 	break;
 	case 18:
-	{{p = ((te))-1;} tlist.insert(cur_line, FLOAT_DECL); }
-	break;
-	case 19:
 	{{p = ((te))-1;} tlist.insert(cur_line, STRING_DECL); }
 	break;
-	case 20:
+	case 19:
 	{{p = ((te))-1;} tlist.insert(cur_line, IDENTIFIER,ts,te-ts); }
 	break;
-	case 27:
+	case 26:
 	{{p = ((te))-1;} tlist.insert(cur_line, INTEGER,ts,te-ts); }
 	break;
-	case 28:
+	case 27:
 	{{p = ((te))-1;} tlist.insert(cur_line, FLOAT,ts,te-ts); }
 	break;
 	}
 	}
 	break;
-#line 533 "deckscanner.c"
+#line 516 "deckscanner.c"
 		}
 	}
 
@@ -542,7 +525,7 @@ _again:
 #line 1 "NONE"
 	{ts = 0;}
 	break;
-#line 546 "deckscanner.c"
+#line 529 "deckscanner.c"
 		}
 	}
 

@@ -1,0 +1,3 @@
+size = 123;
+dx = 2*pi;
+info = "Setup Test";

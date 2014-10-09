@@ -29,6 +29,7 @@
 #include "../variables/block.hpp"
 
 #include "../variables/operators.hpp"
+#include "../util/logger.hpp"
 
 #include <boost/lexical_cast.hpp>
 
@@ -36,23 +37,31 @@
 
 using namespace schnek;
 
-
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 ParserToken::ParserToken() : context(), type(none), chainedToken()
-{}
+{
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
+}
 
 
 ParserToken::ParserToken(const Token atomTok_, ParserContext context_)
   : context(context_), atomTok(atomTok_), type(atom)
-{}
+{
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
+}
 
 ParserToken::ParserToken(const ParserToken &tok)
   : context(tok.context), atomTok(tok.atomTok), type(tok.type),
     data(tok.data), var(tok.var), chainedToken(tok.chainedToken)
-{}
+{
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
+}
 
 ParserToken& ParserToken::operator=(const ParserToken &tok)
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
   context = tok.context;
   atomTok = tok.atomTok;
   type = tok.type;
@@ -69,12 +78,14 @@ ParserToken::TokenType ParserToken::getType() const
 
 void ParserToken::append(ParserToken &parTok)
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
   pParserToken pt(new ParserToken(parTok));
   chainedToken = pt;
 }
 
 void ParserToken::assignInteger(ParserToken &parTok)
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
   context = parTok.context;
   atomTok = parTok.atomTok;
   if (parTok.getType() != atom) throw ParserError("Can't convert non-atom token to integer", atomTok);
@@ -88,6 +99,7 @@ void ParserToken::assignInteger(ParserToken &parTok)
 
 void ParserToken::assignFloat(ParserToken &parTok)
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
   context = parTok.context;
   atomTok = parTok.atomTok;
   if (parTok.getType() != atom) throw ParserError("Can't convert non-atom token to integer", atomTok);
@@ -101,6 +113,7 @@ void ParserToken::assignFloat(ParserToken &parTok)
 
 void ParserToken::assignString(ParserToken &parTok)
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
   context = parTok.context;
   atomTok = parTok.atomTok;
   if (parTok.getType() != atom) throw ParserError("Can't convert non-atom token to integer", atomTok);
@@ -114,6 +127,7 @@ void ParserToken::assignString(ParserToken &parTok)
 
 void ParserToken::assignIdentifier(ParserToken &parTok)
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
   context = parTok.context;
   atomTok = parTok.atomTok;
   if (parTok.getType() != atom) throw ParserError("Can't convert non-atom token to integer", atomTok);
@@ -168,12 +182,15 @@ void ParserToken::assignIdentifier(ParserToken &parTok)
 
 void ParserToken::makeExpressionList()
 {
-  if (type != expression) throw ParserError("Non-expression found in expression list!",atomTok);
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
+  if (type != expression)
+    throw ParserError("Non-expression "+toString(type)+" found in expression list!",atomTok);
   type = expressionlist;
 }
 
 void ParserToken::assignFunction(ParserToken &parTok1, ParserToken &parTok2)
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
   context = parTok2.context;
   atomTok = parTok2.atomTok;
 
@@ -195,9 +212,15 @@ void ParserToken::assignFunction(ParserToken &parTok1, ParserToken &parTok2)
 
 struct evaluateVisitor : public boost::static_visitor<pVariable>
 {
+    Token &atomTok;
+
+    evaluateVisitor(Token &atomTok_) : atomTok(atomTok_) {}
+
     template<class ExpressionPointer>
     pVariable operator()(ExpressionPointer e)
     {
+        SCHNEK_TRACE_ENTER_FUNCTION(4);
+        if (!e) throw ParserError("Could not evaluate empty expression (local variables must be initialised where they are declared)", atomTok);
         if (e->isConstant())
         {
 //          std::cerr << " * evaluating " << e->eval() << std::endl;
@@ -215,6 +238,7 @@ struct evaluateVisitor : public boost::static_visitor<pVariable>
 
 void ParserToken::evaluateExpression(ParserToken &identifier, ParserToken &expression)
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
   context = identifier.context;
   atomTok = identifier.atomTok;
   if (identifier.getType() != atom) throw ParserError("Can't convert non-atom token to identifier (left value)", atomTok);
@@ -231,6 +255,7 @@ class ValueToExpressionVisitor : public boost::static_visitor<ExpressionVariant>
     template<typename T>
     ExpressionVariant operator()(T var)
     {
+      SCHNEK_TRACE_ENTER_FUNCTION(4);
       boost::shared_ptr< Expression<T> > e(new Value<T>(var));
       return e;
     }
@@ -238,7 +263,9 @@ class ValueToExpressionVisitor : public boost::static_visitor<ExpressionVariant>
 
 void ParserToken::storeVariable(ParserToken &parTok)
 {
-  evaluateVisitor visit;
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
+  evaluateVisitor visit(atomTok);;
+
   var = boost::apply_visitor(visit, data);
 
   ensureVariable(parTok);
@@ -252,7 +279,7 @@ void ParserToken::storeVariable(ParserToken &parTok)
   }
   catch (DuplicateVariableException&)
   {
-    throw ParserError("Redeclaration of variable "+varname, atomTok);
+    throw ParserError("Redeclaration of variable '"+varname+"'", atomTok);
   }
 
   if (chainedToken) chainedToken->storeVariable(parTok);
@@ -260,6 +287,7 @@ void ParserToken::storeVariable(ParserToken &parTok)
 
 void ParserToken::updateVariable()
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
   std::string varname = atomTok.getString();
 
   // std::cerr << "Updating variable " << varname << std::endl;
@@ -282,21 +310,22 @@ void ParserToken::updateVariable()
     TypePromoterAssign promote;
     ExpressionVariant typeMatched = boost::apply_visitor(promote, expr, data);
 
-    evaluateVisitor eval;
+    evaluateVisitor eval(atomTok);
     *storedVar = *(boost::apply_visitor(eval, typeMatched));
   }
   catch (VariableNotFoundException&)
   {
-    throw ParserError("Variable "+varname+" was not declared!", atomTok);
+    throw ParserError("Variable '"+varname+"' was not declared!", atomTok);
   }
   catch (ReadOnlyAssignmentException&)
   {
-    throw ParserError("Variable "+varname+" is read only! It can not be assigned a value!", atomTok);
+    throw ParserError("Variable '"+varname+"' is read only! It can not be assigned a value!", atomTok);
   }
 }
 
 void ParserToken::ensureVariable(ParserToken &parTok)
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
 
   Token typedecl = parTok.atomTok;
 
@@ -358,6 +387,7 @@ void ParserToken::ensureVariable(ParserToken &parTok)
 
 void ParserToken::createBlock(ParserToken &parTok)
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
   if (getType() != atom) throw ParserError("Can't convert non-atom token to identifier (block class)", atomTok);
   if (atomTok.getToken() != IDENTIFIER) throw ParserError("Can't convert non-identifier atom to identifier (block class)", atomTok);
 
@@ -367,8 +397,8 @@ void ParserToken::createBlock(ParserToken &parTok)
   std::string blockName = parTok.atomTok.getString();
   std::string blockClass = atomTok.getString();
 
-  std::cerr << "Block name = " << blockName << std::endl;
-  std::cerr << "Block class = " << blockClass << std::endl;
+  //std::cerr << "Block name = " << blockName << std::endl;
+  //std::cerr << "Block class = " << blockClass << std::endl;
   try
   {
     std::string parentClass = context.variables->getCurrentBlock()->getClassName();
@@ -380,7 +410,7 @@ void ParserToken::createBlock(ParserToken &parTok)
     BlockClassDescriptor &blockClassDescr = context.blockClasses->get(blockClass);
     if (blockClassDescr.hasBlockFactory())
     {
-      pBlock block = blockClassDescr.makeBlock();
+      pBlock block = blockClassDescr.makeBlock(blockName);
       block->setContext(context.variables->getCurrentBlock());
       block->setup();
       context.blockTree->addChild(block);
@@ -392,16 +422,17 @@ void ParserToken::createBlock(ParserToken &parTok)
   }
   catch (DuplicateBlockException&)
   {
-    throw ParserError("Duplicate block definition "+ blockName, parTok.atomTok);
+    throw ParserError("Duplicate block definition '"+ blockName+"'", parTok.atomTok);
   }
   catch (BlockNotFoundException&)
   {
-    throw ParserError("Unknown block class "+ blockClass, parTok.atomTok);
+    throw ParserError("Unknown block class '"+ blockClass+"'", parTok.atomTok);
   }
 }
 
 void ParserToken::endBlock()
 {
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
   if (context.variables->getCurrentBlock()->getParent() == 0)
     throw ParserError("Extra } found.", atomTok);
 //  std::cerr << "end block\n";

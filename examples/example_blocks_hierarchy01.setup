@@ -1,0 +1,22 @@
+dt = 0.001;
+totalTime = 1;
+
+Particle A {
+  posx = 0;
+  posy = 0;
+  posz = 0;
+  velocityx = 0;
+  velocityy = 0;
+  velocityz = 0;
+  mass = 10;
+}
+
+Particle B {
+  posx = 1;
+  posy = 0;
+  posz = 0;
+  velocityx = 0;
+  velocityy = 10;
+  velocityz = 0;
+  mass = 1;
+}

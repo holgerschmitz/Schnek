@@ -33,6 +33,12 @@ namespace schnek {
 namespace expression {
 
   template<class vtype>
+  struct OperatorId
+  {
+      static vtype eval(vtype val);
+  };
+
+  template<class vtype>
   struct OperatorNeg
   {
       static vtype eval(vtype val);
@@ -67,6 +73,9 @@ namespace expression {
   {
       static vtype eval(vtype val1, vtype val2);
   };
+
+  template<class vtype>
+  vtype OperatorId<vtype>::eval(vtype val) { return val; }
 
   template<class vtype>
   vtype OperatorNeg<vtype>::eval(vtype val) { return -val; }

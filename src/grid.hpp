@@ -27,11 +27,13 @@
 
 #include "grid/array.hpp"
 #include "grid/arraycheck.hpp"
+#include "grid/arrayexpression.hpp"
 #include "grid/domainsubdivision.hpp"
 #include "grid/field.hpp"
 #include "grid/grid.hpp"
 #include "grid/gridcheck.hpp"
 #include "grid/gridstorage.hpp"
+#include "grid/gridtransform.hpp"
 
 #include "grid/mpisubdivision.hpp"
 

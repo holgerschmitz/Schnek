@@ -56,13 +56,25 @@ class VariableNotFoundException : public SchnekException
     VariableNotFoundException() : SchnekException() {}
 };
 
-class VariableNotInitialisedException : public SchnekException
+class EvaluationException : public SchnekException
+{
+  private:
+    std::string message;
+  public:
+    EvaluationException(std::string message_) : SchnekException(), message(message_) {}
+    const std::string& getMessage() { return message; }
+};
+
+class VariableNotInitialisedException : public EvaluationException
 {
   std::string varName;
   public:
-    VariableNotInitialisedException(std::string varName_) : SchnekException(), varName(varName_) {}
+    VariableNotInitialisedException(std::string varName_)
+      : EvaluationException("Variable was not initialised: " + varName_), varName(varName_)
+    {}
     std::string getVarName() { return varName; }
 };
+
 
 class DuplicateVariableException : public SchnekException
 {
@@ -87,6 +99,7 @@ class ReadOnlyAssignmentException : public SchnekException
   public:
     ReadOnlyAssignmentException() : SchnekException() {}
 };
+
 
 } // namespace
 

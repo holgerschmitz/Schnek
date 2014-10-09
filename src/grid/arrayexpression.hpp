@@ -27,10 +27,11 @@
 #ifndef SCHNEK_ARREXPRESSION_H_
 #define SCHNEK_ARREXPRESSION_H_
 
+#include "array.hpp"
+
 #include <iostream>
 
 namespace schnek {
-
 
 /**Expression template for the Array class.
  * This template will be created when adding or subtracting Arrays and
@@ -55,12 +56,12 @@ class ArrayExpression {
     /**Copy constructor*/
     ArrayExpression(const ArrayExpression &Expr) : Op(Expr.Op) {}
 
-    template<template<int> class CheckingPolicy>
-    operator Array<value_type, Length, CheckingPolicy>() {
-        Array<value_type, Length, CheckingPolicy> value;
-        for (int i=0; i<Length; ++i) value[i] = Op[i];
-        return value;
-    }
+//    template<template<int> class CheckingPolicy>
+//    operator Array<value_type, Length, CheckingPolicy>() {
+//        Array<value_type, Length, CheckingPolicy> value;
+//        for (int i=0; i<Length; ++i) value[i] = Op[i];
+//        return value;
+//    }
 
     /**Return the i-th element of the expression*/
     value_type operator[](int i) const 
@@ -369,6 +370,11 @@ ARR_ARR(ArrayOpPlus,+)
 EXPR_ARR(ArrayOpPlus,+)
 ARR_EXPR(ArrayOpPlus,+)
 
+EXPR_SCAL(ArrayOpPlus,+)
+SCAL_EXPR(ArrayOpPlus,+)
+ARR_SCAL(ArrayOpPlus,+)
+SCAL_ARR(ArrayOpPlus,+)
+
 //======== Minus ======================
 
 EXPR_EXPR(ArrayOpMinus,-)
@@ -376,8 +382,18 @@ ARR_ARR(ArrayOpMinus,-)
 EXPR_ARR(ArrayOpMinus,-)
 ARR_EXPR(ArrayOpMinus,-)
 
+EXPR_SCAL(ArrayOpMinus,-)
+SCAL_EXPR(ArrayOpMinus,-)
+ARR_SCAL(ArrayOpMinus,-)
+SCAL_ARR(ArrayOpMinus,-)
+
 
 //======== Multiplication ======================
+
+EXPR_EXPR(ArrayOpMult,*)
+ARR_ARR(ArrayOpMult,*)
+EXPR_ARR(ArrayOpMult,*)
+ARR_EXPR(ArrayOpMult,*)
 
 EXPR_SCAL(ArrayOpMult,*)
 SCAL_EXPR(ArrayOpMult,*)
@@ -385,6 +401,11 @@ ARR_SCAL(ArrayOpMult,*)
 SCAL_ARR(ArrayOpMult,*)
 
 //======== Division ======================
+
+EXPR_EXPR(ArrayOpDiv,/)
+ARR_ARR(ArrayOpDiv,/)
+EXPR_ARR(ArrayOpDiv,/)
+ARR_EXPR(ArrayOpDiv,/)
 
 EXPR_SCAL(ArrayOpDiv,/)
 SCAL_EXPR(ArrayOpDiv,/)
@@ -402,6 +423,24 @@ SCAL_ARR(ArrayOpDiv,/)
 #undef SCAL_ARR
 
 
+template<class T, int length, template <int> class CheckingPolicy>
+template<class Operator>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator=(const ArrayExpression<Operator, length> &expr)
+{
+    for (int i=0; i<length; ++i)
+      data[i] = expr[i];
+    return *this;
+}
+
+
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<class Operator>
+inline Array<T,length,CheckingPolicy>::Array(const ArrayExpression<Operator, length> &expr)
+{
+    for (int i=0; i<length; ++i)
+      data[i] = expr[i];
+}
 } // namespace schnek
 
 #endif // SCHNEK_ARRAYEXPRESSION_H_

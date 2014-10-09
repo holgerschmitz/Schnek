@@ -53,16 +53,22 @@ namespace bft = boost::function_types;
 
 namespace schnek {
 
-class WrongNumberOfArgsException : public SchnekException
+class WrongNumberOfArgsException : public EvaluationException
 {
   public:
-    WrongNumberOfArgsException() : SchnekException() {}
+    WrongNumberOfArgsException() : EvaluationException("Wrong number of arguments!") {}
 };
 
-class FunctionNotFoundException : public SchnekException
+class FunctionNotFoundException : public EvaluationException
 {
   public:
-    FunctionNotFoundException() : SchnekException() {}
+    FunctionNotFoundException() : EvaluationException("Function not found!") {}
+};
+
+class TypeCastException : public EvaluationException
+{
+  public:
+    TypeCastException() : EvaluationException("Could not convert types") {}
 };
 
 typedef std::set<long> DependencyList;
@@ -306,7 +312,15 @@ class TypecastOp : public Expression<vtype>
     TypecastOp(pExpressionOrig expr_) : expr(expr_) {}
 
     /// Return the modified value
-    vtype eval() { return CastType<vtype>()(expr->eval()); }
+    vtype eval() {
+      try {
+        return CastType<vtype>()(expr->eval());
+      }
+      catch(boost::bad_lexical_cast &e)
+      {
+        throw TypeCastException();
+      }
+    }
 
     /// Constancy depends on the constancy of the expression
     bool isConstant() { return expr->isConstant(); }

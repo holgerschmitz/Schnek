@@ -28,6 +28,7 @@
 #define SCHNEK_GRID_H_
 
 #include "array.hpp"
+#include "range.hpp"
 #include "gridcheck.hpp"
 #include "gridstorage.hpp"
 #include "../typetools.hpp"
@@ -98,6 +99,26 @@ class GridBase : public StoragePolicy, public CheckingPolicy
     T& operator()(int i, int j, int k, int l, int m);
     /** index operator, reading */
     T  operator()(int i, int j, int k, int l, int m) const;
+    /** index operator, writing */
+    T& operator()(int i, int j, int k, int l, int m, int o);
+    /** index operator, reading */
+    T  operator()(int i, int j, int k, int l, int m, int o) const;
+    /** index operator, writing */
+    T& operator()(int i, int j, int k, int l, int m, int o, int p);
+    /** index operator, reading */
+    T  operator()(int i, int j, int k, int l, int m, int o, int p) const;
+    /** index operator, writing */
+    T& operator()(int i, int j, int k, int l, int m, int o, int p, int q);
+    /** index operator, reading */
+    T  operator()(int i, int j, int k, int l, int m, int o, int p, int q) const;
+    /** index operator, writing */
+    T& operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r);
+    /** index operator, reading */
+    T  operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r) const;
+    /** index operator, writing */
+    T& operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s);
+    /** index operator, reading */
+    T  operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s) const;
 
     /** assign another grid */
     template<
@@ -195,7 +216,7 @@ class GridBase : public StoragePolicy, public CheckingPolicy
 template<
   typename T,
   int rank,
-  template<int> class CheckingPolicy = GridAssertCheck,
+  template<int> class CheckingPolicy = GridNoArgCheck,
   template<typename, int> class StoragePolicy = SingleArrayGridStorage
 >
 class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,rank> >
@@ -204,6 +225,7 @@ class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,ran
   public:
     typedef T value_type;
     typedef Array<int,rank> IndexType;
+    typedef Range<int,rank> RangeType;
     typedef Grid<T,rank,CheckingPolicy,StoragePolicy> GridType;
     typedef GridBase<T, rank, CheckingPolicy<rank>, StoragePolicy<T,rank> > BaseType;
     enum {Rank = rank};
@@ -236,6 +258,20 @@ class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,ran
      *  The ranges then extend from low[i] to high[i]
      */
     Grid(const IndexType &low, const IndexType &high);
+
+    /** constructor, which builds Grid with range given by range
+     *
+     *  Example:
+     *  \begin{verbatim}
+     *  Grid<double,2>::IndexType low(-5,-10);
+     *  Grid<double,2>::IndexType high(15,36);
+     *  Grid<double,2>::RangeType range(low, high);
+     *  Grid<double,2> m(range);
+     *  \end{verbatim}
+     *
+     *  The ranges then extend from low[i] to high[i]
+     */
+    Grid(const RangeType &range);
 
     /** copy constructor */
     Grid(const Grid<T, rank, CheckingPolicy, StoragePolicy>&);

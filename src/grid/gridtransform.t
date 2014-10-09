@@ -52,9 +52,9 @@ template<
   template<int> class CheckingPolicy
 >
 GridTransform<BaseGrid, Transformation, CheckingPolicy>::GridTransform(BaseGridType &baseGrid_)
-  : ParentType(size)
+  : ParentType()
 {
-    setBaseGrid(baseGrid_);
+    this->setBaseGrid(baseGrid_);
 }
 
 

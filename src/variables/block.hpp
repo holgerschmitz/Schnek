@@ -66,6 +66,7 @@ class Block : public Unique<Block>
     BlockParameters blockParameters;
     pBlock parent;
     BlockList children;
+    std::string name;
 
     template<typename T>
     bool getData(std::string key, T &data, bool upward);
@@ -83,6 +84,7 @@ class Block : public Unique<Block>
     virtual void preInit() {}
     virtual void init() {}
     virtual void postInit() {}
+    BlockList getChildren() { return BlockList(children); }
   public:
     Block(pBlock parent_ = pBlock()) : parent(parent_) {}
     virtual ~Block() {}
@@ -105,6 +107,9 @@ class Block : public Unique<Block>
     void retrieveData(std::string key, T &data);
 
     void initAll();
+
+    void setName(const std::string &name_) { name = name_; }
+    std::string getName() { return name; }
 };
 
 // template functions

@@ -49,7 +49,7 @@ using namespace schnek;
         '^'   { tlist.insert(cur_line, EXPONENT); };
 
         # Keywords 
-        'include' { tlist.insert(cur_line, INCLUDE); };
+        # 'include' { tlist.insert(cur_line, INCLUDE); };
 	
         'int' { tlist.insert(cur_line, INT_DECL); };
         'integer' { tlist.insert(cur_line, INT_DECL); };

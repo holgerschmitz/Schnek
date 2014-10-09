@@ -26,11 +26,6 @@
 
 namespace schnek {
 
-template<class GridType>
-void DomainSubdivision<GridType>::init(const LimitType &low, const LimitType &high, int delta)
-{
-  this->bounds = pBoundaryType(new BoundaryType(low, high, delta));
-}
 
 template<class GridType>
 SerialSubdivision<GridType>::SerialSubdivision()
@@ -39,6 +34,12 @@ SerialSubdivision<GridType>::SerialSubdivision()
 template<class GridType>
 SerialSubdivision<GridType>::~SerialSubdivision()
 {}
+
+template<class GridType>
+void SerialSubdivision<GridType>::init(const LimitType &low, const LimitType &high, int delta)
+{
+  this->bounds = pBoundaryType(new BoundaryType(low, high, delta));
+}
 
 template<class GridType>
 void SerialSubdivision<GridType>::exchange(GridType &grid, int dim)

@@ -43,9 +43,9 @@ namespace schnek {
 
 /** @brief Interface for wrapping and exchanging boundaries .
  *
- *  This interface is used to exchange the boundaries of distribution
- *  functions and scalar fields between processes. Any implementation should
- *  treat the fields as periodic. The boundary conditions can be appplied afterwards.
+ *  This interface is used to exchange the boundaries of grids
+ *  between processes. Any implementation should treat the fields as periodic.
+ *  The boundary conditions can be appplied afterwards.
  */
 template<class GridType>
 class DomainSubdivision {
@@ -78,13 +78,13 @@ class DomainSubdivision {
 
     int getDelta() { return bounds->getDelta(); }
 
-    /** Initialize the boundary with the extent of the global domain
+    /** Initialize the domain subdivision.
      *
      *  The DomainSubdivision class is responsible for subdividing the domain for
      *  the different processes. The size of the local domain will be returned
      *  by the getDomain, getHi, and getLo methods.
      */
-    virtual void init(const LimitType &low, const LimitType &high, int delta);
+    virtual void init(const LimitType &low, const LimitType &high, int delta) = 0;
 
     /** Convenience method.
      *  Initialise the boundary with the extent of a grid.
@@ -113,17 +113,17 @@ class DomainSubdivision {
     }
 
     /// Return the local domain size
-    const DomainType &getDomain() { return bounds->getDomain(); }
-    /// Return rectangle minimum
+    const DomainType &getDomain() const { return bounds->getDomain(); }
+    /// Return the minimum of the local domain
     const LimitType &getLo() const {return bounds->getDomain().getLo();}
-    /// Return rectangle maximum
+    /// Return the maximum of the local domain
     const LimitType &getHi() const {return bounds->getDomain().getHi();}
 
-    /// Return the local domain size
-    DomainType getInnerDomain() { return bounds->getInnerDomain(); }
-    /// Return rectangle minimum
+    /// Return the local inner domain size
+    DomainType getInnerDomain() const { return bounds->getInnerDomain(); }
+    /// Return the minimum of the local inner domain
     LimitType getInnerLo() const {return bounds->getInnerDomain().getLo();}
-    /// Return rectangle maximum
+    /// Return the maximum of the local inner domain
     LimitType getInnerHi() const {return bounds->getInnerDomain().getHi();}
 
     /** @brief Exchange the boundaries of a field function
@@ -171,6 +171,10 @@ class DomainSubdivision {
      * global domain
      */
     virtual bool isBoundHi(int dim) = 0;
+
+    void exchange(GridType &grid) {
+      for (int i=0; i<Rank; ++i) exchange(grid,i);
+    }
 };
 
 template<class GridType>
@@ -191,10 +195,20 @@ class SerialSubdivision : public DomainSubdivision<GridType>
     LimitType High;
 
   public:
+    using DomainSubdivision<GridType>::init;
+    using DomainSubdivision<GridType>::exchange;
 
     SerialSubdivision();
 
     ~SerialSubdivision();
+
+    /** Initialize the boundary with the extent of the global domain
+     *
+     *  No subdivision is carried out for serial simulations.
+     *  The size of the global domain will be returned
+     *  by the getDomain, getHi, and getLo methods.
+     */
+    void init(const LimitType &low, const LimitType &high, int delta);
 
     /** @brief Exchanges the boundaries in x-direction.
      *

@@ -72,7 +72,7 @@ HdfStream &HdfStream::operator=(const HdfStream& hdf)
   blockname = hdf.blockname;
   active = hdf.active;
   activeModified = hdf.activeModified;
-#ifdef SCHNEK_USE_HDF_PARALLEL
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
   mpiComm = hdf.mpiComm;
   commSet = hdf.commSet;
 #endif

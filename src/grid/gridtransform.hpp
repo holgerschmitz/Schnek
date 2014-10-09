@@ -45,74 +45,47 @@ class GridTransformStorage {
     typedef Transformation TransformationType;
   protected:
     BaseGridType *baseGrid;
+    Transformation transformation;
   public:
-
-    class storage_iterator {
-      protected:
-        typedef BaseGridType::storage_iterator BaseIter;
-        BaseIter baseIter;
-        storage_iterator(BaseIter baseIter_)
-          : baseIter(baseIter) {}
-
-        friend class GridTransformStorage;
-
-      public:
-        T& operator*()
-        { return Transformation(*baseIter);}
-
-        storage_iterator &operator++()
-        {
-          ++baseIter;
-          return *this;
-        }
-
-        bool operator==(const storage_iterator &SI)
-        { return baseIter==SI.baseIter; }
-
-        bool operator!=(const storage_iterator &SI)
-        { return baseIter!=SI.baseIter; }
-    };
 
     class const_storage_iterator {
       protected:
-        typedef BaseGridType::const_storage_iterator BaseIter;
+        typedef typename BaseGridType::const_storage_iterator BaseIter;
         BaseIter baseIter;
-        storage_iterator(BaseIter baseIter_)
+        const_storage_iterator(BaseIter baseIter_)
           : baseIter(baseIter) {}
 
         friend class GridTransformStorage;
 
       public:
-        const T& operator*()
-        { return Transformation(*baseIter);}
+        T operator*()
+        { return transformation(*baseIter);}
 
-        storage_iterator &operator++()
+        const_storage_iterator &operator++()
         {
           ++baseIter;
           return *this;
         }
 
-        bool operator==(const storage_iterator &SI)
+        bool operator==(const const_storage_iterator &SI)
         { return baseIter==SI.baseIter; }
 
-        bool operator!=(const storage_iterator &SI)
+        bool operator!=(const const_storage_iterator &SI)
         { return baseIter!=SI.baseIter; }
     };
 
     GridTransformStorage();
 
-    T &get(const IndexType &index)
+    T&  get(const IndexType &index)
     {
-      CheckingPolicy::check(index, domain.getLo(), domain.getHi());
-      return Transformation(baseGrid->get(index));
+      static T result = transformation(baseGrid->get(index));
+      return result;
     }
 
-    const T &get(const IndexType &index) const
+    T get(const IndexType &index) const
     {
-      CheckingPolicy::check(index, domain.getLo(), domain.getHi());
-      return Transformation(baseGrid->get(index));
+      return transformation(baseGrid->get(index));
     }
-
     /** */
     const IndexType& getLo() const { return baseGrid->getLo(); }
     /** */
@@ -127,14 +100,26 @@ class GridTransformStorage {
     /** */
     int getDims(int k) const { return baseGrid->getDims(k); }
 
-    storage_iterator begin() { return storage_iterator(baseGrid->begin()); }
-    storage_iterator end() { return storage_iterator(baseGrid->end()); }
+    const_storage_iterator begin() { return const_storage_iterator(baseGrid->begin()); }
+    const_storage_iterator end() { return const_storage_iterator(baseGrid->end()); }
 
     const_storage_iterator cbegin() const { return const_storage_iterator(baseGrid->cbegin()); }
     const_storage_iterator cend() const { return const_storage_iterator(baseGrid->cend()); }
 
-    void setBaseGrid(BaseGridType &baseGrid_) { baseGrid = &baseGrid_; }
+    void setBaseGrid(BaseGridType &baseGrid_)
+    {
+      baseGrid = &baseGrid_;
+    }
 
+    Transformation getTransformation() const
+    {
+      return transformation;
+    }
+
+    void setTransformation(const Transformation &transformation)
+    {
+      this->transformation = transformation;
+    }
 };
 
 template<
@@ -162,7 +147,7 @@ class GridTransform
           typename BaseGrid::value_type,
           BaseGrid::Rank,
           CheckingPolicy<BaseGrid::Rank>,
-          SubGridStorage<
+          GridTransformStorage<
             typename BaseGrid::value_type,
             BaseGrid::Rank,
             BaseGrid,

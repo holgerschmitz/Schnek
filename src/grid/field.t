@@ -53,18 +53,14 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
   : Grid<T, rank, CheckingPolicy, StoragePolicy>(),
     range(range_),
     stagger(stagger_),
-    size(size_),
     ghostCells(ghostCells_)
 {
-  lo_inner = IndexType::Zero();
-  hi_inner = size;
   IndexType low(IndexType::Zero());
-  IndexType high(size);
+  IndexType high(size_);
   for (int i=0; i<rank; ++i)
   {
     low[i]  -= ghostCells;
     high[i] += ghostCells - 1;
-    hi_inner[i] -= 1;
   }
   this->resize(low, high);
 }
@@ -89,8 +85,6 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
     stagger(stagger_),
     ghostCells(ghostCells_)
 {
-  lo_inner = low_;
-  hi_inner = high_;
   IndexType low(low_);
   IndexType high(high_);
   for (int i=0; i<rank; ++i)
@@ -98,9 +92,9 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
     low[i]  -= ghostCells;
     high[i] += ghostCells;
   }
-  std::cerr << "Field Constructor " << std::endl;
-  for (int i=0; i<rank; ++i)
-    std::cerr << low[i] << " " << high[i] << std::endl;
+//  std::cerr << "Field Constructor " << std::endl;
+//  for (int i=0; i<rank; ++i)
+//    std::cerr << low[i] << " " << high[i] << std::endl;
 
   this->resize(low, high);
 }
@@ -113,8 +107,11 @@ template<
 >
 inline void Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int dim, double pos, int &index, double &offset)
 {
-    double xnorm = pos*(size[dim]-2*ghostCells)/(range.getHi()[dim] - range.getLo()[dim])
-        - 0.5*int(stagger[dim]) + ghostCells + this->getLo()[dim];
+    int lo = this->getLo()[dim];
+    int hi = this->getHi()[dim];
+    double xnorm = (pos - range.getLo()[dim])*(hi-lo-2*ghostCells)
+        /(range.getHi()[dim] - range.getLo()[dim])
+        - 0.5*int(stagger[dim]) + ghostCells + lo;
     index = int(xnorm);
     offset = xnorm - index;
 }
@@ -127,8 +124,11 @@ template<
 >
 inline int Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int dim, double pos)
 {
-    return int(pos*(size[dim]-2*ghostCells)/(range.getHi()[dim] - range.getLo()[dim])
-        - 0.5*int(stagger[dim])) + ghostCells + this->getLo()[dim];
+  int lo = this->getLo()[dim];
+  int hi = this->getHi()[dim];
+  return int(pos - range.getLo()[dim])*(hi-lo-2*ghostCells)
+      /(range.getHi()[dim] - range.getLo()[dim])
+      - 0.5*int(stagger[dim]) + ghostCells + lo;
 }
 
 template<
@@ -139,8 +139,11 @@ template<
 >
 inline double Field<T, rank, CheckingPolicy, StoragePolicy>::indexToPosition(int dim, int index)
 {
-    return (range.getHi()[dim] - range.getLo()[dim])
-        * (index-this->getLo()[dim]+0.5*int(stagger[dim])-ghostCells)/(size[dim]-2*ghostCells);
+  int lo = this->getLo()[dim];
+  int hi = this->getHi()[dim];
+
+  return (range.getHi()[dim] - range.getLo()[dim])
+      * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells) + range.getLo()[dim];
 }
 
 } // namespace

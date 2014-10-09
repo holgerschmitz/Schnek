@@ -751,16 +751,39 @@ class LiteratureUnpublished : public LiteratureReference
 class LiteratureManager : public Singleton<LiteratureManager>
 {
   private:
+    friend class CreateUsingNew<LiteratureManager>;
     typedef std::set<std::string> Descriptions;
     typedef std::pair<Descriptions, LiteratureReference> LitRecord;
     typedef std::map<std::string, LitRecord> Records;
     Records records;
+    std::string title;
+    std::string subtitle;
 
+    LiteratureManager();
   public:
     void addReference(std::string description, const LiteratureReference &reference);
     void writeInformation(std::ostream &, std::string bibfile);
     void writeBibTex(std::ostream &);
 
+    const std::string& getTitle() const
+    {
+      return title;
+    }
+
+    void setTitle(const std::string& title)
+    {
+      this->title = title;
+    }
+    
+    const std::string& getSubtitle() const
+    {
+      return subtitle;
+    }
+    
+    void setSubtitle(const std::string& subtitle)
+    {
+      this->subtitle = subtitle;
+    }
 };
 
 std::ostream& operator<<(std::ostream&, const LiteratureReference &);

@@ -52,6 +52,8 @@ struct ParserError : public SchnekException
     Token atomToken;
     ParserError(std::string message_, Token atomToken_)
       : SchnekException(), message(message_), atomToken(atomToken_) {}
+    std::string getFilename() { return atomToken.getFilename(); }
+    int getLine() { return atomToken.getLine(); }
 };
 
 
@@ -69,6 +71,7 @@ class ParserToken
     ParserToken& operator=(const ParserToken &tok);
 
     TokenType getType() const;
+    std::string getString() const { return atomTok.getString(); }
 
     void append(ParserToken &parTok);
 
@@ -107,6 +110,41 @@ class ParserToken
     pParserToken chainedToken;
 
 };
+
+inline std::string toString(ParserToken::TokenType type)
+{
+  switch (type)
+  {
+    case ParserToken::deck:
+      return "deck";
+    case ParserToken::blocklist:
+      return "blocklist";
+    case ParserToken::block:
+      return "block";
+    case ParserToken::statementlist:
+      return "statementlist";
+    case ParserToken::statement:
+      return "statement";
+    case ParserToken::expression:
+      return "expression";
+    case ParserToken::expressionlist:
+      return "expressionlist";
+    case ParserToken::value:
+      return "value";
+    case ParserToken::int_type:
+      return "int_type";
+    case ParserToken::float_type:
+      return "float_type";
+    case ParserToken::string_type:
+      return "string_type";
+    case ParserToken::atom:
+      return "atom";
+    case ParserToken::none:
+      return "none";
+    default:
+      return "[Unknown ParserToken::TokenType]";
+  }
+}
 
 
 /** This class creates result types from two argument types and stores them in a

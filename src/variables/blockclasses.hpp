@@ -30,14 +30,12 @@
 #include <set>
 #include <map>
 #include <string>
+#include "block.hpp"
 #include "../exception.hpp"
 
 #include <boost/shared_ptr.hpp>
 
 namespace schnek {
-
-class Block;
-typedef boost::shared_ptr<Block> pBlock;
 
 class BlockNotFoundException : public SchnekException
 {
@@ -48,7 +46,7 @@ class BlockNotFoundException : public SchnekException
 class BlockFactory
 {
   public:
-    virtual pBlock makeBlock() = 0;
+    virtual pBlock makeBlock(const std::string &name) = 0;
 };
 typedef boost::shared_ptr<BlockFactory> pBlockFactory;
 
@@ -56,9 +54,10 @@ template<class B>
 class GenericBlockFactory : public BlockFactory
 {
   public:
-    pBlock makeBlock()
+    pBlock makeBlock(const std::string &name)
     {
       pBlock pb(new B);
+      pb->setName(name);
       return pb;
     }
 };
@@ -95,7 +94,7 @@ class BlockClassDescriptor
     }
 
     bool hasBlockFactory() { return blockFactory; }
-    pBlock makeBlock() { return blockFactory->makeBlock(); }
+    pBlock makeBlock(const std::string &name) { return blockFactory->makeBlock(name); }
 };
 
 typedef boost::shared_ptr<BlockClassDescriptor> pBlockClassDescriptor;

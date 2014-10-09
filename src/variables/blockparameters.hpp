@@ -80,6 +80,7 @@ class Parameter
     Parameter(std::string varName_, pVariable variable_, pParametersGroup allowedDeps_)
       : varName(varName_), variable(variable_), allowedDeps(allowedDeps_)
     {}
+    virtual ~Parameter() {}
 
     bool canEvaluate() { return (variable) && (variable->isInitialised()); }
     pVariable getVariable() { return variable; }
@@ -125,6 +126,26 @@ class ConcreteParameter : public Parameter
     }
 };
 
+
+template<typename T>
+class ConstantParameter : public Parameter
+{
+  protected:
+  public:
+    ConstantParameter(std::string varName_, pVariable variable_, const T &value_)
+      : Parameter(varName_, variable_, pParametersGroup(new ParametersGroup())) {}
+
+    void evaluate()
+    {
+      return;
+    }
+
+    void update()
+    {
+      return;
+    }
+};
+
 class BlockParameters
 {
   private:
@@ -143,7 +164,7 @@ class BlockParameters
                             T* var,
                             pParametersGroup allowedDeps,
                             bool hasDefault = false,
-                            T defaultValue = T(),
+                            const T &defaultValue = T(),
                             Permissions perm=readwrite)
     {
       pVariable variable;
@@ -153,6 +174,7 @@ class BlockParameters
       {
         typedef boost::shared_ptr<Expression<T> > ParExpression;
         ParExpression pexp(new ExternalValue<T>(var));
+        if (hasDefault) *var = defaultValue;
         variable = pVariable(new Variable(pexp, true, true));
       }
       block->addVariable(varName, variable);
@@ -170,10 +192,21 @@ class BlockParameters
     }
 
     template<typename T>
-    pParameter addParameter(std::string varName, T* var, T defaultValue, Permissions perm=readwrite)
+    pParameter addParameter(std::string varName, T* var, const T &defaultValue, Permissions perm=readwrite)
     {
       pParametersGroup empty(new ParametersGroup());
       return addParameter(varName, var, empty, true, defaultValue, perm);
+    }
+
+    template<typename T>
+    pParameter addConstant(std::string varName, const T &value)
+    {
+      pVariable variable(new Variable(value, true, true));
+      block->addVariable(varName, variable);
+
+      pParameter par(new ConstantParameter<T>(varName, variable, value));
+      parameterMap[varName] = par;
+      return par;
     }
 
     template<

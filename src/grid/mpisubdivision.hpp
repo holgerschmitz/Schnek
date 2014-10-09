@@ -82,6 +82,8 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
     int scalarSize;
 
   public:
+    using DomainSubdivision<GridType>::init;
+    using DomainSubdivision<GridType>::exchange;
     ///default constructor
     MPICartSubdivision();
 
@@ -99,10 +101,6 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
     void exchange(GridType &field, int dim);
 
     /**
-     * @todo Create a gridstorage that adjusts the physical size slowly to minimize
-     * allocation requests. Use running average and variance to calculate an internal
-     * buffer size.
-     *
      * @param dim
      * @param orientation
      * @param in

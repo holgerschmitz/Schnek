@@ -309,7 +309,7 @@ inline Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::Zero()
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
-inline Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::Unity()
+inline Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::Ones()
 {
   return Array().fill(1);
 }

@@ -1,0 +1,8 @@
+Nx = 50;
+Ny = 50;
+
+sizex = 2;
+sizey = 2;
+
+float r = x^2 + y^2;
+F = r*sin(10*x*y);

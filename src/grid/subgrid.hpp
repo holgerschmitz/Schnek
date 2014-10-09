@@ -106,14 +106,14 @@ class SubGridStorage {
 
     T &get(const IndexType &index)
     {
-      typename BaseGrid::template CheckingPolicy<rank>::check(index, domain.getLo(), domain.getHi());
-      return baseGrid->get(index);
+      //typename BaseGrid::CheckingPolicy<rank>::check(index, domain.getLo(), domain.getHi());
+      return baseGrid->get(baseGrid->check(index, domain.getLo(), domain.getHi()));
     }
 
     const T &get(const IndexType &index) const
     {
-      typename BaseGrid::template CheckingPolicy<rank>::check(index, domain.getLo(), domain.getHi());
-      return baseGrid->get(index);
+      //typename BaseGrid::CheckingPolicy<rank>::check(index, domain.getLo(), domain.getHi());
+      return baseGrid->get(baseGrid->check(index, domain.getLo(), domain.getHi()));
     }
 
     /** */
@@ -174,6 +174,7 @@ class SubGrid
     enum {Rank = BaseGrid::Rank};
     typedef typename BaseGrid::value_type value_type;
     typedef Array<int,Rank> IndexType;
+    typedef Range<int,Rank> RangeType;
     typedef BaseGrid BaseGridType;
     /** default constructor creates an empty grid */
     SubGrid();
@@ -197,12 +198,26 @@ class SubGrid
      *  \begin{verbatim}
      *  Grid<double,2>::IndexType low(-5,-10);
      *  Grid<double,2>::IndexType high(15,36);
-     *  Grid<double,2> m(l,h);
+     *  Grid<double,2> m(low,high);
      *  \end{verbatim}
      *
      *  The ranges then extend from low[i] to high[i]
      */
     SubGrid(const IndexType &low, const IndexType &high, BaseGridType &baseGrid_);
+
+    /** constructor, which builds Grid spanning the range given by range
+     *
+     *  Example:
+     *  \begin{verbatim}
+     *  Grid<double,2>::IndexType low(-5,-10);
+     *  Grid<double,2>::IndexType high(15,36);
+     *  Grid<double,2>::RangeType range(low,high);
+     *  Grid<double,2> m(range);
+     *  \end{verbatim}
+     *
+     *  The ranges then extends from low[i] to high[i]
+     */
+    SubGrid(const RangeType &range, BaseGridType &baseGrid_);
 
 };
 

@@ -60,6 +60,36 @@ class SingleArrayInstantAllocation
     void newData(const IndexType &low_, const IndexType &high_);
 };
 
+
+template<typename T, int rank>
+class SingleArrayInstantFortranAllocation
+{
+  public:
+    typedef Array<int,rank> IndexType;
+
+  protected:
+    T* data;
+    T* data_fast;
+    int size;
+    IndexType low;
+    IndexType high;
+    IndexType dims;
+
+  public:
+    SingleArrayInstantFortranAllocation()
+      : data(NULL) , data_fast(NULL), size(0) {}
+
+    ~SingleArrayInstantFortranAllocation();
+    /** resizes to grid with lower indices low[0],...,low[rank-1]
+     *  and upper indices high[0],...,high[rank-1] */
+    void resize(const IndexType &low_, const IndexType &high_);
+  private:
+    /** */
+    void deleteData();
+    /** */
+    void newData(const IndexType &low_, const IndexType &high_);
+};
+
 template<typename T, int rank>
 class SingleArrayLazyAllocation
 {
@@ -141,8 +171,6 @@ class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
     
     SingleArrayGridStorageBase(const IndexType &low_, const IndexType &high_);
 
-    T &get(const IndexType &index);
-    const T &get(const IndexType &index) const;
     
     T* getRawData() const { return this->data; }
 
@@ -170,12 +198,42 @@ class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
 
 };
 
+template<typename T, int rank, template<typename, int> class AllocationPolicy>
+class SingleArrayGridCOrderStorageBase : public SingleArrayGridStorageBase<T, rank, AllocationPolicy> {
+  public:
+    typedef SingleArrayGridStorageBase<T, rank, AllocationPolicy> BaseType;
+    typedef typename BaseType::IndexType IndexType;
+
+    SingleArrayGridCOrderStorageBase() : BaseType() {}
+
+    SingleArrayGridCOrderStorageBase(const IndexType &low_, const IndexType &high_)
+        : BaseType(low_, high_) {}
+
+    T &get(const IndexType &index);
+    const T &get(const IndexType &index) const;
+};
+
+template<typename T, int rank, template<typename, int> class AllocationPolicy>
+class SingleArrayGridFortranOrderStorageBase : public SingleArrayGridStorageBase<T, rank, AllocationPolicy> {
+  public:
+    typedef SingleArrayGridStorageBase<T, rank, AllocationPolicy> BaseType;
+    typedef typename BaseType::IndexType IndexType;
+
+    SingleArrayGridFortranOrderStorageBase() : BaseType() {}
+
+    SingleArrayGridFortranOrderStorageBase(const IndexType &low_, const IndexType &high_)
+        : BaseType(low_, high_) {}
+
+    T &get(const IndexType &index);
+    const T &get(const IndexType &index) const;
+};
+
 template<typename T, int rank>
 class SingleArrayGridStorage
-    : public SingleArrayGridStorageBase<T, rank, SingleArrayInstantAllocation>
+    : public SingleArrayGridCOrderStorageBase<T, rank, SingleArrayInstantAllocation>
 {
   public:
-    typedef SingleArrayGridStorageBase<T, rank, SingleArrayInstantAllocation> BaseType;
+    typedef SingleArrayGridCOrderStorageBase<T, rank, SingleArrayInstantAllocation> BaseType;
     typedef typename BaseType::IndexType IndexType;
 
     SingleArrayGridStorage() : BaseType() {}
@@ -184,12 +242,27 @@ class SingleArrayGridStorage
         : BaseType(low_, high_) {}
 };
 
+
 template<typename T, int rank>
-class LazyArrayGridStorage
-    : public SingleArrayGridStorageBase<T, rank, SingleArrayLazyAllocation>
+class SingleArrayGridStorageFortran
+    : public SingleArrayGridFortranOrderStorageBase<T, rank, SingleArrayInstantAllocation>
 {
   public:
-    typedef SingleArrayGridStorageBase<T, rank, SingleArrayLazyAllocation> BaseType;
+    typedef SingleArrayGridFortranOrderStorageBase<T, rank, SingleArrayInstantAllocation> BaseType;
+    typedef typename BaseType::IndexType IndexType;
+
+    SingleArrayGridStorageFortran() : BaseType() {}
+
+    SingleArrayGridStorageFortran(const IndexType &low_, const IndexType &high_)
+        : BaseType(low_, high_) {}
+};
+
+template<typename T, int rank>
+class LazyArrayGridStorage
+    : public SingleArrayGridCOrderStorageBase<T, rank, SingleArrayLazyAllocation>
+{
+  public:
+    typedef SingleArrayGridCOrderStorageBase<T, rank, SingleArrayLazyAllocation> BaseType;
     typedef typename BaseType::IndexType IndexType;
 
     LazyArrayGridStorage() : BaseType() {}

@@ -1,0 +1,6 @@
+string a = "12";
+string b = "34";
+
+size = a+b;
+dx = 3.056;
+name = "Setup Test";

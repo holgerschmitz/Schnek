@@ -28,8 +28,11 @@
 #define SCHNEK_ARRAY_HPP_
 
 #include "arraycheck.hpp"
-
 namespace schnek {
+
+template<class Operator, int Length>
+class ArrayExpression;
+
 
 /**A Fixed size array.
  * The three template parameters are:<br>
@@ -61,6 +64,11 @@ class Array :
     /// Copy constructor copies the values
     template<template<int> class CheckingPolicy2>
     Array(const Array<T, length, CheckingPolicy2> &);
+
+    /// Construct using an array expression
+    template<class Operator>
+    Array(const ArrayExpression<Operator, length> &);
+
     /// Constructor for length=1 arrays setting the data explicitely
     Array(const T&);
     /// Constructor for length=2 arrays setting the data explicitely
@@ -100,24 +108,70 @@ class Array :
     T at(int) const;
 
   public:
+    /** Assignment operator
+     *
+     * The argument can have a different value_type and checking policy.
+     * The value_type of the RHS must be implicitly castable to the value_type
+     * of the LHS.
+     */
     template<class T2, template <int> class CheckingPolicy2>
     Array<T,length,CheckingPolicy> &operator=(const Array<T2,length,CheckingPolicy2>&);
 
+    /// Assignment operator using an array expression
+    template<class Operator>
+    Array<T,length,CheckingPolicy> &operator=(const ArrayExpression<Operator, length> &);
+
+    /** Addition Assignment operator
+     *
+     * The argument can have a different value_type and checking policy.
+     * The value_type of the RHS must be implicitly castable to the value_type
+     * of the LHS.
+     */
     template<class T2, template <int> class CheckingPolicy2>
     Array<T,length,CheckingPolicy> &operator+=(const Array<T2,length,CheckingPolicy2>&);
 
+    /** Subtraction Assignment operator
+     *
+     * The argument can have a different value_type and checking policy.
+     * The value_type of the RHS must be implicitly castable to the value_type
+     * of the LHS.
+     */
     template<class T2, template <int> class CheckingPolicy2>
     Array<T,length,CheckingPolicy> &operator-=(const Array<T2,length,CheckingPolicy2>&);
 
+    /** Addition Assignment operator with scalar RHS.
+     *
+     * The argument can have a different type.
+     * The type of the RHS must be implicitly castable to the value_type
+     * of the LHS.
+     */
     template<typename T2>
     Array<T,length,CheckingPolicy> &operator+=(const T2);
 
+    /** Subtraction Assignment operator with scalar RHS.
+     *
+     * The argument can have a different type.
+     * The type of the RHS must be implicitly castable to the value_type
+     * of the LHS.
+     */
     template<typename T2>
     Array<T,length,CheckingPolicy> &operator-=(const T2);
 
+    /** Multiplication Assignment operator with scalar RHS.
+     *
+     * The argument can have a different type.
+     * The type of the RHS must be implicitly castable to the value_type
+     * of the LHS.
+     */
     template<typename T2>
     Array<T,length,CheckingPolicy> &operator*=(const T2);
 
+    /** Division Assignment operator with scalar RHS.
+     *
+     * The argument can have a different type.
+     * The type of the RHS must be implicitly castable to the value_type
+     * of the LHS.
+     */
     template<typename T2>
     Array<T,length,CheckingPolicy> &operator/=(const T2);
 
@@ -127,6 +181,7 @@ class Array :
     /// Fills all fields with a given value
     Array<T,length,CheckingPolicy>& fill(const T&);
     
+    /// projects the Array onto an Array of shorter length
     template<int destLength>
     Array<T,destLength,CheckingPolicy> project();
 
@@ -139,10 +194,15 @@ class Array :
     /** Returns an array filled with ones.
      *  Only available if int can be cast to the type T
      */
-    static Array<T,length,CheckingPolicy> Unity();
+    static Array<T,length,CheckingPolicy> Ones();
 
+    /// Returns the product of all elements
     T product() const;
+
+    /// Returns the sum of all elements
     T sum() const;
+
+    /// Returns the sum of squares of all elements
     T sqr() const;
 };
 
