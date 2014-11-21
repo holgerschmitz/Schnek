@@ -73,6 +73,8 @@ template<
 SubGrid<BaseGrid, CheckingPolicy>::SubGrid(const IndexType &size, BaseGridType &baseGrid_)
   : ParentType(size)
 {
+	this->check(this->getLo(), baseGrid_.getLo(), baseGrid_.getHi());
+	this->check(this->getHi(), baseGrid_.getLo(), baseGrid_.getHi());
     this->setBaseGrid(baseGrid_);
 }
 
@@ -83,6 +85,8 @@ template<
 SubGrid<BaseGrid, CheckingPolicy>::SubGrid(const IndexType &low, const IndexType &high, BaseGridType &baseGrid_)
   : ParentType(low, high)
 {
+	this->check(this->getLo(), baseGrid_.getLo(), baseGrid_.getHi());
+	this->check(this->getHi(), baseGrid_.getLo(), baseGrid_.getHi());
     this->setBaseGrid(baseGrid_);
 }
 
@@ -93,6 +97,8 @@ template<
 SubGrid<BaseGrid, CheckingPolicy>::SubGrid(const RangeType &range, BaseGridType &baseGrid_)
   : ParentType(range.getLo(), range.getHi())
 {
+  this->check(this->getLo(), baseGrid_.getLo(), baseGrid_.getHi());
+  this->check(this->getHi(), baseGrid_.getLo(), baseGrid_.getHi());
   this->setBaseGrid(baseGrid_);
 }
 

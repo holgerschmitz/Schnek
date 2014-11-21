@@ -111,7 +111,7 @@ class BlockClasses
     BlockClasses(const BlockClasses& blockClasses)
         : classDescriptors(blockClasses.classDescriptors), restr(blockClasses.restr) {}
 
-    BlockClassDescriptor &addBlock(std::string blockClass);
+    BlockClassDescriptor &registerBlock(std::string blockClass);
     BlockClassDescriptor &operator()(std::string blockClass) { return this->get(blockClass); }
     BlockClassDescriptor &get(std::string blockClass);
 

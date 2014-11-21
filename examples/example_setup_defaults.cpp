@@ -44,7 +44,7 @@ int main()
 {
   BlockClasses blocks;
 
-  blocks.addBlock("sim").setClass<SimulationBlock>();
+  blocks.registerBlock("sim").setClass<SimulationBlock>();
 
 //  blocks.addBlock("sim");
 //  blocks("sim").setClass<SimulationBlock>();

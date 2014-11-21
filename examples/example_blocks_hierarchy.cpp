@@ -69,8 +69,8 @@ int main()
 {
   BlockClasses blocks;
 
-  blocks.addBlock("NBody").setClass<NBody>();
-  blocks.addBlock("Particle").setClass<Particle>();
+  blocks.registerBlock("NBody").setClass<NBody>();
+  blocks.registerBlock("Particle").setClass<Particle>();
 
   blocks("NBody").addChildren("Particle");
 

@@ -21,6 +21,9 @@ below.  The lack of an optional feature in a given package is not
 necessarily a bug.  More recommendations for GNU packages can be found
 in *note Makefile Conventions: (standards)Makefile Conventions.
 
+You can build the examples by changing examples/ directory and running
+  make examples
+
    The `configure' shell script attempts to guess correct values for
 various system-dependent variables used during compilation.  It uses
 those values to create a `Makefile' in each directory of the package.
@@ -214,6 +217,33 @@ execution of `make' will be.  For these packages, running `./configure
 overridden with `make V=1'; while running `./configure
 --disable-silent-rules' sets the default to verbose, which can be
 overridden with `make V=0'.
+
+Additional Options
+=================
+
+
+  --with-boost[=ARG]      use Boost library from a standard location
+                          (ARG=yes), from the specified location (ARG=<path>),
+                          or disable it (ARG=no) [ARG=yes]
+  --with-boost-libdir=LIB_DIR
+                          Force given directory for boost libraries. Note that
+                          this will override library path detection, so use
+                          this parameter only if default library detection
+                          fails and you know exactly where your boost
+                          libraries are located.
+  --with-mpi              compile with MPI (parallelization) support. If none
+                          is found, MPI is not used. Default: auto
+
+  --with-hdf5[=ARG]       use HDF5 library from a standard location (ARG=yes),
+                          from the specified location (ARG=<path>), or disable
+                          it (ARG=no) [ARG=yes]
+  --with-hdf5-libdir=LIB_DIR
+                          Force given directory for HDF5 libraries. Note that
+                          this will override library path detection, so use
+                          this parameter only if default library detection
+                          fails and you know exactly where your HDF5 libraries
+                          are located.
+
 
 Particular systems
 ==================

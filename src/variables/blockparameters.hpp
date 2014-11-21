@@ -32,6 +32,7 @@
 #include "expression.hpp"
 
 #include "../grid/array.hpp"
+#include "../util/exceptions.hpp"
 
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
@@ -220,6 +221,9 @@ class BlockParameters
         Permissions perm=readwrite,
         std::string extension = "xyzuvw")
     {
+        SCHNEK_REQUIRE(rank<=extension.length(), "addArrayParameter: extension string not long enough! Rank = "
+        		+ boost::lexical_cast<std::string>(rank) + ",  extension.length = "+ boost::lexical_cast<std::string>(extension.length())
+				+ " (\"" +extension+"\")");
         Array<pParameter, rank, CheckingPolicy>  result;
         for (int i=0; i<rank; ++i)
           result[i] = addParameter(varName+extension[i], &(var[i]), perm);
@@ -238,6 +242,9 @@ class BlockParameters
         Permissions perm=readwrite,
         std::string extension = "xyzuvw")
     {
+        SCHNEK_REQUIRE(rank<=extension.length(), "addArrayParameter: extension string not long enough! Rank = "
+        		+ boost::lexical_cast<std::string>(rank) + ",  extension.length = "+ boost::lexical_cast<std::string>(extension.length())
+				+ " (\"" +extension+"\")");
         Array<pParameter, rank, CheckingPolicy>  result;
         for (int i=0; i<rank; ++i)
           result[i] = addParameter(varName+extension[i], &(var[i]), default_values[i], perm);
@@ -256,6 +263,9 @@ class BlockParameters
         Permissions perm=readwrite,
         std::string extension = "xyzuvw")
     {
+        SCHNEK_REQUIRE(rank<=extension.length(), "addArrayParameter: extension string not long enough! Rank = "
+        		+ boost::lexical_cast<std::string>(rank) + ",  extension.length = "+ boost::lexical_cast<std::string>(extension.length())
+				+ " (\"" +extension+"\")");
         Array<pParameter, rank, CheckingPolicy>  result;
         for (int i=0; i<rank; ++i)
           result[i] = addParameter(varName+extension[i], &(var[i]), default_value, perm);

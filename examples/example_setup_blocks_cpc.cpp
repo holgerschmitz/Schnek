@@ -75,8 +75,8 @@ int main()
   {
     BlockClasses blocks;
 
-    blocks.addBlock("sim").setClass<SimulationBlock>();
-    blocks.addBlock("Force").setClass<ForceModule>();
+    blocks.registerBlock("sim").setClass<SimulationBlock>();
+    blocks.registerBlock("Force").setClass<ForceModule>();
     blocks("sim").addChildren("Force");
 
     std::ifstream in("example_setup_blocks_cpc.setup");

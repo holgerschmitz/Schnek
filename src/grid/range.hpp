@@ -99,6 +99,165 @@ class Range {
         hi[i] += s;
       }
     }
+
+    void grow(const T &d0, const T &d1)
+    {
+      BOOST_STATIC_ASSERT(2==rank);
+      lo[0] -= d0;
+      hi[0] += d0;
+      lo[1] -= d1;
+      hi[1] += d1;
+    }
+
+    void grow(const T &d0, const T &d1, const T &d2)
+    {
+      BOOST_STATIC_ASSERT(3==rank);
+      lo[0] -= d0;
+      hi[0] += d0;
+      lo[1] -= d1;
+      hi[1] += d1;
+      lo[2] -= d2;
+      hi[2] += d2;
+    }
+
+    void grow(const T &d0, const T &d1, const T &d2, const T &d3)
+    {
+      BOOST_STATIC_ASSERT(4==rank);
+      lo[0] -= d0;
+      hi[0] += d0;
+      lo[1] -= d1;
+      hi[1] += d1;
+      lo[2] -= d2;
+      hi[2] += d2;
+      lo[3] -= d3;
+      hi[3] += d3;
+    }
+
+    void grow(const T &d0, const T &d1, const T &d2, const T &d3, const T &d4)
+    {
+      BOOST_STATIC_ASSERT(5==rank);
+      lo[0] -= d0;
+      hi[0] += d0;
+      lo[1] -= d1;
+      hi[1] += d1;
+      lo[2] -= d2;
+      hi[2] += d2;
+      lo[3] -= d3;
+      hi[3] += d3;
+      lo[4] -= d4;
+      hi[4] += d4;
+    }
+
+    void grow(const T &d0, const T &d1, const T &d2, const T &d3, const T &d4,
+              const T &d5)
+    {
+      BOOST_STATIC_ASSERT(6==rank);
+      lo[0] -= d0;
+      hi[0] += d0;
+      lo[1] -= d1;
+      hi[1] += d1;
+      lo[2] -= d2;
+      hi[2] += d2;
+      lo[3] -= d3;
+      hi[3] += d3;
+      lo[4] -= d4;
+      hi[4] += d4;
+      lo[5] -= d5;
+      hi[5] += d5;
+    }
+
+    void grow(const T &d0, const T &d1, const T &d2, const T &d3, const T &d4,
+              const T &d5, const T &d6)
+    {
+      BOOST_STATIC_ASSERT(7==rank);
+      lo[0] -= d0;
+      hi[0] += d0;
+      lo[1] -= d1;
+      hi[1] += d1;
+      lo[2] -= d2;
+      hi[2] += d2;
+      lo[3] -= d3;
+      hi[3] += d3;
+      lo[4] -= d4;
+      hi[4] += d4;
+      lo[5] -= d5;
+      hi[5] += d5;
+      lo[6] -= d6;
+      hi[6] += d6;
+    }
+
+    void grow(const T &d0, const T &d1, const T &d2, const T &d3, const T &d4,
+              const T &d5, const T &d6, const T &d7)
+    {
+      BOOST_STATIC_ASSERT(8==rank);
+      lo[0] -= d0;
+      hi[0] += d0;
+      lo[1] -= d1;
+      hi[1] += d1;
+      lo[2] -= d2;
+      hi[2] += d2;
+      lo[3] -= d3;
+      hi[3] += d3;
+      lo[4] -= d4;
+      hi[4] += d4;
+      lo[5] -= d5;
+      hi[5] += d5;
+      lo[6] -= d6;
+      hi[6] += d6;
+      lo[7] -= d7;
+      hi[7] += d7;
+    }
+
+    void grow(const T &d0, const T &d1, const T &d2, const T &d3, const T &d4,
+              const T &d5, const T &d6, const T &d7, const T &d8)
+    {
+      BOOST_STATIC_ASSERT(9==rank);
+      lo[0] -= d0;
+      hi[0] += d0;
+      lo[1] -= d1;
+      hi[1] += d1;
+      lo[2] -= d2;
+      hi[2] += d2;
+      lo[3] -= d3;
+      hi[3] += d3;
+      lo[4] -= d4;
+      hi[4] += d4;
+      lo[5] -= d5;
+      hi[5] += d5;
+      lo[6] -= d6;
+      hi[6] += d6;
+      lo[7] -= d7;
+      hi[7] += d7;
+      lo[8] -= d8;
+      hi[8] += d8;
+    }
+
+    void grow(const T &d0, const T &d1, const T &d2, const T &d3, const T &d4,
+              const T &d5, const T &d6, const T &d7, const T &d8, const T &d9)
+    {
+      BOOST_STATIC_ASSERT(10==rank);
+      lo[0] -= d0;
+      hi[0] += d0;
+      lo[1] -= d1;
+      hi[1] += d1;
+      lo[2] -= d2;
+      hi[2] += d2;
+      lo[3] -= d3;
+      hi[3] += d3;
+      lo[4] -= d4;
+      hi[4] += d4;
+      lo[5] -= d5;
+      hi[5] += d5;
+      lo[6] -= d6;
+      hi[6] += d6;
+      lo[7] -= d7;
+      hi[7] += d7;
+      lo[8] -= d8;
+      hi[8] += d8;
+      lo[9] -= d9;
+      hi[9] += d9;
+    }
+
     /** Forward iterator over the rectangular domain
      *  Implements operator* and getPos which both return the current iterator position
      */

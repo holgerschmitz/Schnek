@@ -49,7 +49,7 @@ int main()
 {
   BlockClasses blocks;
 
-  blocks.addBlock("sim").setClass<SimulationBlock>();
+  blocks.registerBlock("sim").setClass<SimulationBlock>();
 
   std::ifstream in("example_setup_cpc.setup");
   try
