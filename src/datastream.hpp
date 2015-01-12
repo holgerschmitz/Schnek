@@ -32,47 +32,79 @@
 #include "array.hpp"
 #include "grid.hpp"
 
+/** A simple stream operator for the Array template class
+ *
+ * This operator writes out the elements of the array separated by spaces.
+ */
 template<
   class T, 
   int length, 
   template<int> class CheckingPolicy
 >
-      std::ostream &operator<<(std::ostream&, const schnek::Array<T,length,CheckingPolicy>&);
+std::ostream &operator<<(std::ostream&, const schnek::Array<T,length,CheckingPolicy>&);
 
+/** A simple stream operator for the Grid template specialised for rank 1
+ *
+ * This operator writes out the elements of the grid separated by spaces.
+ */
 template<
   typename T,
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-    std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 1, CheckingPolicy, StoragePolicy>&);
+std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 1, CheckingPolicy, StoragePolicy>&);
 
+/** A simple stream operator for the Grid template specialised for rank 2
+ *
+ * This operator writes out the elements of the grid separated by spaces.
+ * Each row is followed by a newline character
+ */
 template<
   typename T,
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-    std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 2, CheckingPolicy, StoragePolicy>&);
+std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 2, CheckingPolicy, StoragePolicy>&);
 
+/** A simple stream operator for the Grid template specialised for rank 3
+ *
+ * This operator writes out the elements of the grid separated by spaces.
+ * Each row is followed by a newline character and each 2-d slice is followed
+ * by an extra newline character
+ */
 template<
   typename T,
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-    std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 3, CheckingPolicy, StoragePolicy>&);
+std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 3, CheckingPolicy, StoragePolicy>&);
 
+/** A simple stream operator for the Grid template specialised for rank 4
+ *
+ * This operator writes out the elements of the grid separated by spaces.
+ * Each row is followed by a newline character and each 2-d slice is followed
+ * by an extra newline character
+ */
 template<
   typename T,
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-    std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 4, CheckingPolicy, StoragePolicy>&);
+std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 4, CheckingPolicy, StoragePolicy>&);
 
+
+/** A simple stream operator for the Grid template specialised for rank 5
+ *
+ * This operator writes out the elements of the grid separated by spaces.
+ * Each row is followed by a newline character and each 2-d slice is followed
+ * by an extra newline character
+ */
 template<
   typename T,
   template<int> class CheckingPolicy,
   template<typename, int> class StoragePolicy
 >
-    std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 5, CheckingPolicy, StoragePolicy>&);
+std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 5, CheckingPolicy, StoragePolicy>&);
 
 #include "datastream.t"
 
