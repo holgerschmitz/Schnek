@@ -25,6 +25,3 @@
 SUBDIRS = src testsuite examples
 
 ACLOCAL_AMFLAGS = -I m4
-
-examples:
-	cd examples && make examples

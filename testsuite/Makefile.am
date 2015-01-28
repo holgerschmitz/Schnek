@@ -1,4 +1,6 @@
+
 check_PROGRAMS = testgrid testfixarr test_parser
+TESTS = testgrid testfixarr test_parser
 
 AM_CXXFLAGS = -I../src
 

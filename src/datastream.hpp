@@ -29,8 +29,8 @@
 #ifndef SCHNEK_DATASTREAM_H_
 #define SCHNEK_DATASTREAM_H_
 
-#include "array.hpp"
-#include "grid.hpp"
+#include "grid/array.hpp"
+#include "grid/grid.hpp"
 
 /** A simple stream operator for the Array template class
  *

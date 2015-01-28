@@ -28,9 +28,13 @@
 
 #include "../util/factor.hpp"
 #include "../util/logger.hpp"
+#include "../util/exceptions.hpp"
+#include "../datastream.hpp"
 
 #undef LOGLEVEL
 #define LOGLEVEL 0
+
+#include <boost/lexical_cast.hpp>
 
 #include <iostream>
 #include <vector>
@@ -60,7 +64,7 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
   for (int i=0; i<Rank; ++i)
   {
     box[i] = High[i]-Low[i];
-    periodic[Rank] = true;
+    periodic[i] = true;
   }
 
   std::vector<int> eqDims;
@@ -68,11 +72,14 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
   equalFactors(ComSize, Rank, eqDims, box);
 
   std::copy(eqDims.begin(), eqDims.end(), dims);
+  int errorCode;
+  errorCode = MPI_Cart_create(MPI_COMM_WORLD,Rank,dims,periodic,true,&comm);
+  SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "Could not create MPI Cartesian topology ("+boost::lexical_cast<std::string>(errorCode)+")");
+  errorCode = MPI_Comm_rank(comm,&ComRank);
+  SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "Could not determine MPI rank ("+boost::lexical_cast<std::string>(errorCode)+")");
 
-  MPI_Cart_create(MPI_COMM_WORLD,Rank,dims,periodic,true,&comm);
-  MPI_Comm_rank(comm,&ComRank);
-
-  MPI_Cart_coords(comm,ComRank,Rank,mycoord);
+  errorCode = MPI_Cart_coords(comm,ComRank,Rank,mycoord);
+  SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "Could not determine MPI Cartesian coordinates ("+boost::lexical_cast<std::string>(errorCode)+")");
 
   double width[Rank];
   int exchangeSizeProduct = delta;
@@ -81,7 +88,8 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
 
   for (int i=0; i<Rank; ++i)
   {
-    MPI_Cart_shift(comm,i,1,&prevcoord[i],&nextcoord[i]);
+    errorCode = MPI_Cart_shift(comm,i,1,&prevcoord[i],&nextcoord[i]);
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "Could not shift Cartesian coordinates ("+boost::lexical_cast<std::string>(errorCode)+")");
 
     width[i] = (High[i]-1.)/double(dims[i]);
 
@@ -152,7 +160,8 @@ void MPICartSubdivision<GridType>::exchange(GridType &grid, int dim)
 
     while (domIt != domEnd)
     {
-      send[arr_ind++] = grid[*domIt];
+      send[arr_ind] = grid[*domIt];
+      ++arr_ind;
       ++domIt;
     }
     if (arr_ind!=exchSize[dim]) {
@@ -170,7 +179,8 @@ void MPICartSubdivision<GridType>::exchange(GridType &grid, int dim)
 
     while (domIt != domEnd)
     {
-      grid[*domIt] = recv[arr_ind++];
+      grid[*domIt] = recv[arr_ind];
+      ++arr_ind;
       ++domIt;
     }
   }
@@ -184,7 +194,8 @@ void MPICartSubdivision<GridType>::exchange(GridType &grid, int dim)
 
     while (domIt != domEnd)
     {
-      send[arr_ind++] = grid[*domIt];
+      send[arr_ind] = grid[*domIt];
+      ++arr_ind;
       ++domIt;
     }
     if (arr_ind!=exchSize[dim]) {
@@ -202,7 +213,8 @@ void MPICartSubdivision<GridType>::exchange(GridType &grid, int dim)
 
     while (domIt != domEnd)
     {
-      grid[*domIt] = recv[arr_ind++];
+      grid[*domIt] = recv[arr_ind];
+      ++arr_ind;
       ++domIt;
     }
   }

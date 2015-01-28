@@ -27,6 +27,9 @@
 #ifndef SCHNEK_EXCEPTION_HPP_
 #define SCHNEK_EXCEPTION_HPP_
 
+/** The base class for Schnek exceptions
+ *
+ */
 class SchnekException
 {};
 

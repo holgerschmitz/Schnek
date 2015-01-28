@@ -3,8 +3,8 @@
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME           = schnek.kdevelop
-PROJECT_NUMBER         = 0.1
+PROJECT_NAME           = schnek
+PROJECT_NUMBER         = 1.0.1
 OUTPUT_DIRECTORY       = doc/
 CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = English
@@ -80,11 +80,12 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = .
+INPUT                  = ./src
 FILE_PATTERNS          = *.c \
                          *.cc \
                          *.cxx \
                          *.cpp \
+                         *.t \
                          *.c++ \
                          *.java \
                          *.ii \
@@ -141,7 +142,7 @@ FILTER_SOURCE_FILES    = NO
 #---------------------------------------------------------------------------
 # configuration options related to source browsing
 #---------------------------------------------------------------------------
-SOURCE_BROWSER         = NO
+SOURCE_BROWSER         = YES
 INLINE_SOURCES         = NO
 STRIP_CODE_COMMENTS    = YES
 REFERENCED_BY_RELATION = YES
@@ -150,7 +151,7 @@ VERBATIM_HEADERS       = YES
 #---------------------------------------------------------------------------
 # configuration options related to the alphabetical class index
 #---------------------------------------------------------------------------
-ALPHABETICAL_INDEX     = NO
+ALPHABETICAL_INDEX     = YES
 COLS_IN_ALPHA_INDEX    = 5
 IGNORE_PREFIX          = 
 #---------------------------------------------------------------------------
@@ -248,12 +249,12 @@ PERL_PATH              = /usr/bin/perl
 #---------------------------------------------------------------------------
 CLASS_DIAGRAMS         = YES
 HIDE_UNDOC_RELATIONS   = YES
-HAVE_DOT               = NO
+HAVE_DOT               = YES
 CLASS_GRAPH            = YES
 COLLABORATION_GRAPH    = YES
 GROUP_GRAPHS           = YES
-UML_LOOK               = NO
-TEMPLATE_RELATIONS     = NO
+UML_LOOK               = YES
+TEMPLATE_RELATIONS     = YES
 INCLUDE_GRAPH          = YES
 INCLUDED_BY_GRAPH      = YES
 CALL_GRAPH             = NO

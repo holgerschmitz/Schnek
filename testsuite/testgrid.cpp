@@ -1,5 +1,5 @@
-#include <grid.h>
-#include <datastream.h>
+#include <grid/grid.hpp>
+#include <datastream.hpp>
 #include <iostream>
 
 void testmatrix()
