@@ -158,8 +158,6 @@ class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType> {
   protected:
     HdfOStream output;
     GridContainer<Type> container;
-
-
   protected:
     typedef typename Type::IndexType IndexType;
     void open(const std::string &);

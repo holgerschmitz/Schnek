@@ -142,8 +142,22 @@ inline double Field<T, rank, CheckingPolicy, StoragePolicy>::indexToPosition(int
   int lo = this->getLo()[dim];
   int hi = this->getHi()[dim];
 
+//  if ((dim==0) && (index==200))
+//  {
+//    double pos = (range.getHi()[dim] - range.getLo()[dim])
+//        * (double)(index- lo + 0.5*int(stagger[dim])-ghostCells)/(double)(hi - lo - 2*ghostCells + 1)
+//        + range.getLo()[dim];
+//    std::cerr << index << " " << lo << " " << hi << " "
+//        << range.getLo()[dim] << " " << range.getHi()[dim] << " "
+//        << ghostCells << " " << int(stagger[dim]) << std::endl;
+//    std::cerr << (range.getHi()[dim] - range.getLo()[dim]) << " "
+//        << (index- lo + 0.5*int(stagger[dim])-ghostCells) << " "
+//        << (hi - lo - 2*ghostCells + 1) << " "
+//        << pos << std::endl;
+//  }
+
   return (range.getHi()[dim] - range.getLo()[dim])
-      * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells) + range.getLo()[dim];
+      * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells + 1) + range.getLo()[dim];
 }
 
 } // namespace
