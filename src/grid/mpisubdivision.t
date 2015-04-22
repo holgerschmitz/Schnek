@@ -222,6 +222,147 @@ void MPICartSubdivision<GridType>::exchange(GridType &grid, int dim)
 
 
 template<class GridType>
+void MPICartSubdivision<GridType>::accumulate(GridType &grid, int dim)
+{
+  // This algorithm uses four MPI communication calls.
+  // For the usual bounds class this could be reduced to two calls but we will only do this
+  // when we find that the latency overhead becomes important.
+
+  // nothing to be done
+  //if (dims[dim]==1) return;
+
+  DomainType loGhost = this->bounds->getGhostDomain(dim, BoundaryType::Min);
+  DomainType hiGhost = this->bounds->getGhostDomain(dim, BoundaryType::Max);
+  DomainType loSource = this->bounds->getGhostSourceDomain(dim, BoundaryType::Min);
+  DomainType hiSource = this->bounds->getGhostSourceDomain(dim, BoundaryType::Max);
+
+  MPI_Status stat;
+
+  value_type *send = sendarr[dim];
+  value_type *recv = recvarr[dim];
+
+  MPI_Datatype mpiType = MpiValueType<value_type>::value;
+
+  // == 1 ==
+  // Add the lower ghost cells to the vales from higher source cells
+  // in the neighbouring process
+
+  // fill send buffer with values from inner cells
+  {
+    int arr_ind = 0;
+    typename DomainType::iterator domIt  = hiSource.begin();
+    typename DomainType::iterator domEnd = hiSource.end();
+
+    while (domIt != domEnd)
+    {
+      send[arr_ind] = grid[*domIt];
+      ++arr_ind;
+      ++domIt;
+    }
+    if (arr_ind!=exchSize[dim]) {
+      std::cerr << "Error "<< dim << "-min: "<< arr_ind << " vs " << exchSize[dim] << std::endl;
+    }
+  }
+  // send to neighbour
+  MPI_Sendrecv(send, exchSize[dim], mpiType, nextcoord[dim], 0,
+               recv, exchSize[dim], mpiType, prevcoord[dim], 0,
+               comm, &stat);
+  // add to the ghost cells and fill send array with the result
+  {
+    int arr_ind = 0;
+    typename DomainType::iterator domIt  = loGhost.begin();
+    typename DomainType::iterator domEnd = loGhost.end();
+
+    while (domIt != domEnd)
+    {
+      grid[*domIt] += recv[arr_ind];
+      send[arr_ind] = grid[*domIt];
+      ++arr_ind;
+      ++domIt;
+    }
+  }
+  // send back to neighbour
+  MPI_Sendrecv(send, exchSize[dim], mpiType, nextcoord[dim], 0,
+               recv, exchSize[dim], mpiType, prevcoord[dim], 0,
+               comm, &stat);
+  // save result back to inner cells
+  {
+    int arr_ind = 0;
+    typename DomainType::iterator domIt  = hiSource.begin();
+    typename DomainType::iterator domEnd = hiSource.end();
+
+    while (domIt != domEnd)
+    {
+      grid[*domIt] = send[arr_ind];
+      ++arr_ind;
+      ++domIt;
+    }
+    if (arr_ind!=exchSize[dim]) {
+      std::cerr << "Error "<< dim << "-min: "<< arr_ind << " vs " << exchSize[dim] << std::endl;
+    }
+  }
+
+  // == 2 ==
+  // Add the upper ghost cells to the vales from lower source cells
+  // in the neighbouring process
+
+  // fill send buffer with values from inner cells
+  {
+    int arr_ind = 0;
+    typename DomainType::iterator domIt  = loSource.begin();
+    typename DomainType::iterator domEnd = loSource.end();
+
+    while (domIt != domEnd)
+    {
+      send[arr_ind] = grid[*domIt];
+      ++arr_ind;
+      ++domIt;
+    }
+    if (arr_ind!=exchSize[dim]) {
+      std::cerr << "Error "<< dim << "-max: "<< arr_ind << " vs " << exchSize[dim] << std::endl;
+    }
+  }
+  // send to neighbour
+  MPI_Sendrecv(send, exchSize[dim], mpiType, prevcoord[dim], 0,
+               recv, exchSize[dim], mpiType, nextcoord[dim], 0,
+               comm, &stat);
+  // add to the ghost cells and fill send array with the result
+  {
+    int arr_ind = 0;
+    typename DomainType::iterator domIt  = hiGhost.begin();
+    typename DomainType::iterator domEnd = hiGhost.end();
+
+    while (domIt != domEnd)
+    {
+      grid[*domIt] += recv[arr_ind];
+      send[arr_ind] = grid[*domIt];
+      ++arr_ind;
+      ++domIt;
+    }
+  }
+  // send result back to neighbour
+  MPI_Sendrecv(send, exchSize[dim], mpiType, prevcoord[dim], 0,
+               recv, exchSize[dim], mpiType, nextcoord[dim], 0,
+               comm, &stat);
+  // save result back to inner cells
+  {
+    int arr_ind = 0;
+    typename DomainType::iterator domIt  = loSource.begin();
+    typename DomainType::iterator domEnd = loSource.end();
+
+    while (domIt != domEnd)
+    {
+      grid[*domIt] = send[arr_ind];
+      ++arr_ind;
+      ++domIt;
+    }
+    if (arr_ind!=exchSize[dim]) {
+      std::cerr << "Error "<< dim << "-max: "<< arr_ind << " vs " << exchSize[dim] << std::endl;
+    }
+  }
+}
+
+template<class GridType>
 void MPICartSubdivision<GridType>::exchangeData(
         int dim,
         int orientation,

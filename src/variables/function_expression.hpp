@@ -235,7 +235,7 @@ class FunctionRegistry
 
     ExpressionVariant getExpression(std::string fname, ExpressionList &args)
     {
-      if (funcs->count(fname) == 0) throw FunctionNotFoundException();
+      if (funcs->count(fname) == 0) throw FunctionNotFoundException(fname);
       return (*funcs)[fname]->getExpression(args);
     }
 

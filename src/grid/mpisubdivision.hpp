@@ -93,12 +93,17 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
     ///initialize
     void init(const LimitType &low, const LimitType &high, int delta);
 
-    /** @brief Exchanges the boundaries in x-direction.
+    /** @brief Exchanges the boundaries in direction specified by dim.
      *
-     *  The two outmost simulated cells are sent and the surrounding
-     *  two ghost cells are filled with values
+     *  The outermost simulated cells are sent and the surrounding
+     *  ghost cells are filled with values
      */
     void exchange(GridType &field, int dim);
+
+    /** @brief Exchange the boundaries of a field function
+     *  summing the data from ghost cells and inner cells
+     */
+    void accumulate(GridType &grid, int dim);
 
     /**
      * @param dim

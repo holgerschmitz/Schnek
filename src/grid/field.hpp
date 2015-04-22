@@ -41,6 +41,7 @@ template<
 class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
 {
   public:
+    typedef T value_type;
     typedef Range<double, rank> RangeType;
     typedef typename Range<double, rank>::LimitType RangeLimit;
     typedef Array<bool, rank> Stagger;

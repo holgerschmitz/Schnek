@@ -157,7 +157,7 @@ inline double Field<T, rank, CheckingPolicy, StoragePolicy>::indexToPosition(int
 //  }
 
   return (range.getHi()[dim] - range.getLo()[dim])
-      * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells + 1) + range.getLo()[dim];
+      * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells) + range.getLo()[dim];
 }
 
 } // namespace

@@ -25,14 +25,14 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([Schnek],[1.0.0])
+AC_INIT([Schnek],[1.0.1])
 
 AC_CONFIG_SRCDIR([src/grid.hpp])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([src/config.hpp src/schnek_config.hpp:src/schnek_config.hpp.in])
   
 AM_INIT_AUTOMAKE
-VERSION="1.0.0"
+VERSION="1.0.1"
 PACKAGE="schnek"
 
 AC_LANG(C++)

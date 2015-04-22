@@ -75,6 +75,41 @@ void SerialSubdivision<GridType>::exchange(GridType &grid, int dim)
 }
 
 template<class GridType>
+void SerialSubdivision<GridType>::accumulate(GridType &grid, int dim)
+{
+  DomainType loGhost = this->bounds->getGhostDomain(dim, BoundaryType::Min);
+  DomainType hiGhost = this->bounds->getGhostDomain(dim, BoundaryType::Max);
+  DomainType loSource = this->bounds->getGhostSourceDomain(dim, BoundaryType::Min);
+  DomainType hiSource = this->bounds->getGhostSourceDomain(dim, BoundaryType::Max);
+
+  {
+    typename DomainType::iterator loIt = loGhost.begin();
+    typename DomainType::iterator hiIt = hiSource.begin();
+    typename DomainType::iterator loEnd = loGhost.end();
+
+    while (loIt != loEnd)
+    {
+      grid[*loIt] += grid[*hiIt];
+      grid[*hiIt] = grid[*loIt];
+      ++loIt; ++hiIt;
+    }
+  }
+
+  {
+    typename DomainType::iterator loIt = loSource.begin();
+    typename DomainType::iterator hiIt = hiGhost.begin();
+    typename DomainType::iterator loEnd = loSource.end();
+
+    while (loIt != loEnd)
+    {
+      grid[*hiIt] += grid[*loIt];
+      grid[*loIt] = grid[*hiIt];
+      ++loIt; ++hiIt;
+    }
+  }
+}
+
+template<class GridType>
 void SerialSubdivision<GridType>::exchangeData(int dim, int orientation, BufferType &in, BufferType &out)
 {
   out = in;

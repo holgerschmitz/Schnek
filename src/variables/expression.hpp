@@ -62,7 +62,7 @@ class WrongNumberOfArgsException : public EvaluationException
 class FunctionNotFoundException : public EvaluationException
 {
   public:
-    FunctionNotFoundException() : EvaluationException("Function not found!") {}
+    FunctionNotFoundException(std::string functionName) : EvaluationException("Function '"+functionName+"' was not defined!") {}
 };
 
 class TypeCastException : public EvaluationException

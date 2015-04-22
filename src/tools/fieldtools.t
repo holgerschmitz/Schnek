@@ -50,7 +50,15 @@ void fill_field(
   while (it != end)
   {
     const typename Range<int, rank>::LimitType &pos=*it;
-    for (int i=0; i<rank; ++i) coords[i] = field.indexToPosition(i,pos[i]);
+//    std::cerr << " fill_field (";
+//    for (int i=0; i<rank; ++i)
+//      std::cerr << " " << pos[i];
+//    std::cerr << ") (";
+    for (int i=0; i<rank; ++i) {
+      coords[i] = field.indexToPosition(i,pos[i]);
+//      std::cerr << " " << coords[i];
+    }
+//    std::cerr << ")" << std::endl;
     updater.update();
     field.get(pos) = value;
     ++it;

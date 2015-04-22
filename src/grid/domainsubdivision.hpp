@@ -131,6 +131,11 @@ class DomainSubdivision {
      */
     virtual void exchange(GridType &grid, int dim) = 0;
 
+    /** @brief Exchange the boundaries of a field function
+     *  summing the data from ghost cells and inner cells
+     */
+    virtual void accumulate(GridType &grid, int dim) = 0;
+
     virtual void exchangeData(int dim, int orientation, BufferType &in, BufferType &out) = 0;
 
     /// Return the average of a single value over all the processes
@@ -175,6 +180,10 @@ class DomainSubdivision {
     void exchange(GridType &grid) {
       for (int i=0; i<Rank; ++i) exchange(grid,i);
     }
+
+    void accumulate(GridType &grid) {
+      for (int i=0; i<Rank; ++i) accumulate(grid,i);
+    }
 };
 
 template<class GridType>
@@ -210,12 +219,17 @@ class SerialSubdivision : public DomainSubdivision<GridType>
      */
     void init(const LimitType &low, const LimitType &high, int delta);
 
-    /** @brief Exchanges the boundaries in x-direction.
+    /** @brief Exchanges the boundaries in direction specified by dim.
      *
-     *  The two outmost simulated cells are sent and the surrounding
-     *  two ghost cells are filled with values
+     *  The outermost simulated cells are sent and the surrounding
+     *  ghost cells are filled with values
      */
     void exchange(GridType &grid, int dim);
+
+    /** @brief Exchange the boundaries of a field function
+     *  summing the data from ghost cells and inner cells
+     */
+    void accumulate(GridType &grid, int dim);
 
     void exchangeData(int dim, int orientation, BufferType &in, BufferType &out);
 
