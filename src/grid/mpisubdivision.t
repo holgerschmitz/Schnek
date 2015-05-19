@@ -275,15 +275,17 @@ void MPICartSubdivision<GridType>::accumulate(GridType &grid, int dim)
 
     while (domIt != domEnd)
     {
-      grid[*domIt] += recv[arr_ind];
-      send[arr_ind] = grid[*domIt];
+      value_type &v = grid[*domIt];
+      v = v + recv[arr_ind];
+      grid[*domIt] = v;
+      send[arr_ind] = v;
       ++arr_ind;
       ++domIt;
     }
   }
   // send back to neighbour
-  MPI_Sendrecv(send, exchSize[dim], mpiType, nextcoord[dim], 0,
-               recv, exchSize[dim], mpiType, prevcoord[dim], 0,
+  MPI_Sendrecv(send, exchSize[dim], mpiType, prevcoord[dim], 0,
+               recv, exchSize[dim], mpiType, nextcoord[dim], 0,
                comm, &stat);
   // save result back to inner cells
   {
@@ -293,7 +295,7 @@ void MPICartSubdivision<GridType>::accumulate(GridType &grid, int dim)
 
     while (domIt != domEnd)
     {
-      grid[*domIt] = send[arr_ind];
+      grid[*domIt] = recv[arr_ind];
       ++arr_ind;
       ++domIt;
     }
@@ -334,15 +336,17 @@ void MPICartSubdivision<GridType>::accumulate(GridType &grid, int dim)
 
     while (domIt != domEnd)
     {
-      grid[*domIt] += recv[arr_ind];
-      send[arr_ind] = grid[*domIt];
+      value_type &v = grid[*domIt];
+      v = v + recv[arr_ind];
+      grid[*domIt] = v;
+      send[arr_ind] = v;
       ++arr_ind;
       ++domIt;
     }
   }
   // send result back to neighbour
-  MPI_Sendrecv(send, exchSize[dim], mpiType, prevcoord[dim], 0,
-               recv, exchSize[dim], mpiType, nextcoord[dim], 0,
+  MPI_Sendrecv(send, exchSize[dim], mpiType, nextcoord[dim], 0,
+               recv, exchSize[dim], mpiType, prevcoord[dim], 0,
                comm, &stat);
   // save result back to inner cells
   {
@@ -352,7 +356,7 @@ void MPICartSubdivision<GridType>::accumulate(GridType &grid, int dim)
 
     while (domIt != domEnd)
     {
-      grid[*domIt] = send[arr_ind];
+      grid[*domIt] = recv[arr_ind];
       ++arr_ind;
       ++domIt;
     }

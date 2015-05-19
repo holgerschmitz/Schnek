@@ -93,8 +93,8 @@ class Boundary
     /** Returns the ghost domain, a rectangular region outside the inner domain.
      * The ghost domain has a thickness given by the number of ghost cells, delta.
      *
-     * @param dim the dimanesion index of the side on which the ghost domain lies.
-     * @param b the location of the gost domain. Min will return the lower ghost
+     * @param dim the dimension index of the side on which the ghost domain lies.
+     * @param b the location of the ghost domain. Min will return the lower ghost
      *        domain and Max will return the upper ghost domain
      * @return A rectangular domain of ghost cells
      */
@@ -103,7 +103,7 @@ class Boundary
     /** Returns the inner domain corresponding to the ghost domain of the neighbouring
      * process. The domain has a thickness given by the number of ghost cells, delta.
      *
-     * @param dim the dimanesion index of the side on which the inner domain lies.
+     * @param dim the dimension index of the side on which the inner domain lies.
      * @param b the location of the inner domain. Min will return the domain on the lower side
      *        and Max will return the domain on the upper side
      * @return A rectangular domain of source cells

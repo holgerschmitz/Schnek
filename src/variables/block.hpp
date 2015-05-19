@@ -94,6 +94,19 @@ class Block : public Unique<Block>
       blockParameters.setContext(context);
     }
 
+    pBlockVariables getLocalVariables()
+    {
+      return blockParameters.getContext();
+    }
+
+    pBlockVariables getVariables()
+    {
+      pBlockVariables vars = blockParameters.getContext();
+      while (vars->getParent()) vars = vars->getParent();
+      return vars;
+    }
+
+
     void setup();
     void addChild(pBlock child);
     void evaluateParameters();

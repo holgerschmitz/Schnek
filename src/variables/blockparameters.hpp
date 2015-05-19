@@ -159,6 +159,11 @@ class BlockParameters
       block = context;
     }
 
+    pBlockVariables getContext()
+    {
+      return block;
+    }
+
 
     template<typename T>
     pParameter addParameter(std::string varName,
