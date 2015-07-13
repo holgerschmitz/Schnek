@@ -355,6 +355,7 @@ void DependencyUpdater::addIndependent(pParameter p)
 
 void DependencyUpdater::addDependent(pParameter p)
 {
+  assert(!!p);
   // only non-constant variables have to be updated using the DependencyUpdater
   if (p->getVariable()->isConstant())
   {

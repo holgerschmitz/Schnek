@@ -67,7 +67,7 @@ void HdfIStream::readGrid(GridContainer<FieldType> &g)
     memstart[i] = llo[i] - mlo[i];
   }
 
-  T *data = *g.grid->getRawData();
+  T *data = g.grid->getRawData();
 
   /* open the dataset collectively */
 #if H5Dopen_vers == 2

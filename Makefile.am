@@ -26,6 +26,6 @@ SUBDIRS = src testsuite examples
 
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = doc
+EXTRA_DIST = 
 dist-hook:
 	rm -rf `find $(distdir)/doc -type d -name .svn`
