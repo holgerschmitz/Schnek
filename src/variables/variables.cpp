@@ -183,7 +183,7 @@ pVariable BlockVariables::getVariable(std::list<std::string> path, bool upward)
 
   if (upward && parent) return parent->getVariable(path, true);
 
-  throw VariableNotFoundException();
+  throw VariableNotFoundException("Could not find Block variable "+path.back());
 }
 
 pVariable BlockVariables::getVariable(std::string name)

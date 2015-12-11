@@ -116,11 +116,20 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
     /// Use MPIALLReduce to calculate the sum and then divide by the number of processes.
     double avgReduce(double val) const;
 
+    /// Use MPIALLReduce to calculate the sum and then divide by the number of processes.
+    int avgReduce(int val) const;
+
     /// Use MPIALLReduce to calculate the maximum
     double maxReduce(double val) const;
 
     /// Use MPIALLReduce to calculate the maximum
+    int maxReduce(int val) const;
+
+    /// Use MPIALLReduce to calculate the maximum
     double sumReduce(double val) const;
+
+    /// Use MPIALLReduce to calculate the maximum
+    int sumReduce(int val) const;
 
     /// The process with the rank zero is designated master process
     bool master() const { return ComRank==0; }

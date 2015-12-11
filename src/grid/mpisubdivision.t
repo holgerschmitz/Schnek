@@ -277,7 +277,7 @@ void MPICartSubdivision<GridType>::accumulate(GridType &grid, int dim)
     {
       value_type &v = grid[*domIt];
       v = v + recv[arr_ind];
-      grid[*domIt] = v;
+      // grid[*domIt] = v;
       send[arr_ind] = v;
       ++arr_ind;
       ++domIt;
@@ -338,7 +338,7 @@ void MPICartSubdivision<GridType>::accumulate(GridType &grid, int dim)
     {
       value_type &v = grid[*domIt];
       v = v + recv[arr_ind];
-      grid[*domIt] = v;
+      // grid[*domIt] = v;
       send[arr_ind] = v;
       ++arr_ind;
       ++domIt;
@@ -406,9 +406,23 @@ double MPICartSubdivision<GridType>::avgReduce(double val) const {
 }
 
 template<class GridType>
+int MPICartSubdivision<GridType>::avgReduce(int val) const {
+  int result;
+  MPI_Allreduce(&val, &result, 1, MPI_INT, MPI_SUM, comm);
+  return result/double(ComSize);
+}
+
+template<class GridType>
 double MPICartSubdivision<GridType>::maxReduce(double val) const {
   double result;
   MPI_Allreduce(&val, &result, 1, MPI_DOUBLE, MPI_MAX, comm);
+  return result;
+}
+
+template<class GridType>
+int MPICartSubdivision<GridType>::maxReduce(int val) const {
+  int result;
+  MPI_Allreduce(&val, &result, 1, MPI_INT, MPI_MAX, comm);
   return result;
 }
 
@@ -417,6 +431,14 @@ double MPICartSubdivision<GridType>::sumReduce(double val) const
 {
   double result;
   MPI_Allreduce(&val, &result, 1, MPI_DOUBLE, MPI_SUM, comm);
+  return result;
+}
+
+template<class GridType>
+int MPICartSubdivision<GridType>::sumReduce(int val) const
+{
+  int result;
+  MPI_Allreduce(&val, &result, 1, MPI_INT, MPI_SUM, comm);
   return result;
 }
 

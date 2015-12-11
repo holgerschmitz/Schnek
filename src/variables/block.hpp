@@ -158,7 +158,7 @@ void Block::addData(std::string key, T &data)
 template<typename T>
 void Block::retrieveData(std::string key, T &data)
 {
-  if (!getData(key, data, true)) throw VariableNotFoundException();
+  if (!getData(key, data, true)) throw VariableNotFoundException("Could not find Block variable "+key);
 }
 
 

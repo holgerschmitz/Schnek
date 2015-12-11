@@ -1,0 +1,6 @@
+// value = exp(-t/5);
+
+float decay = exp(-t/5);
+float phase = 2*t;
+float oscillation = sin(phase);
+value = oscillation*decay;

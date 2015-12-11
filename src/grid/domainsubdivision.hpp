@@ -57,7 +57,8 @@ class DomainSubdivision {
     typedef typename GridType::CheckingPolicyType CheckingPolicyType;
     typedef typename GridType::StoragePolicyType StoragePolicyType;
 
-    typedef Grid<unsigned char, 1, GridAssertCheck, LazyArrayGridStorage> BufferType;
+    //typedef Grid<unsigned char, 1, GridAssertCheck, LazyArrayGridStorage> BufferType;
+    typedef Grid<unsigned char, 1, GridAssertCheck> BufferType;
 
     typedef Range<int, Rank> DomainType;
     typedef Boundary<Rank> BoundaryType;
@@ -142,10 +143,20 @@ class DomainSubdivision {
     virtual double avgReduce(double) const = 0;
 
     /// Return the average of a single value over all the processes
+    virtual int avgReduce(int) const = 0;
+
+    /// Return the average of a single value over all the processes
     virtual double sumReduce(double) const = 0;
+
+    /// Return the average of a single value over all the processes
+    virtual int sumReduce(int) const = 0;
 
     /// Return the maximum of a single value over all the processes
     virtual double maxReduce(double) const = 0;
+
+    /// Return the maximum of a single value over all the processes
+    virtual int maxReduce(int) const = 0;
+
 
     /// Return true if this is the master process and false otherwise
     virtual bool master() const = 0;
@@ -236,11 +247,20 @@ class SerialSubdivision : public DomainSubdivision<GridType>
     /// The average of a single value is the value
     double avgReduce(double val) const { return val; }
 
+    /// The average of a single value is the value
+    int avgReduce(int val) const { return val; }
+
     /// The maximum of a single value is the value
     double maxReduce(double val) const { return val; }
 
+    /// The maximum of a single value is the value
+    int maxReduce(int val) const { return val; }
+
     /// The sum of a single value is the value
     double sumReduce(double val) const { return val; }
+
+    /// The sum of a single value is the value
+    int sumReduce(int val) const { return val; }
 
     /// The process with the rank zero is designated master process
     bool master() const { return true; }

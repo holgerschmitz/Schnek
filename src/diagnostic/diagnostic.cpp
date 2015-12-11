@@ -45,7 +45,7 @@ void DiagnosticInterface::execute(bool master, int rank, int timeCounter)
   if (singleOut() && !master) return;
 
   if ((0 == timeCounter) && appending()) open(fname);
-  if ((timeCounter % interval) == 0)
+  if ((timeCounter < 0) || ((timeCounter % interval) == 0))
   {
     if (!appending()) open(parsedFileName(rank, timeCounter));
     write();
@@ -73,11 +73,16 @@ std::string DiagnosticInterface::parsedFileName(int rank, int timeCounter)
   std::string parsed = fname;
   std::string comrank = boost::lexical_cast<std::string>(rank);
   std::string tstep = boost::lexical_cast<std::string>(timeCounter);
+  if (timeCounter<0) tstep = "final";
 
   SCHNEK_TRACE_LOG(2, "DiagnosticInterface::parsedFileName " << rank << " " << comrank << " "<< timeCounter)
   size_t pos;
+
+#if !defined(H5_HAVE_PARALLEL) || !defined(SCHNEK_USE_HDF_PARALLEL)
   pos = parsed.find("#p");
   if (pos != std::string::npos) parsed.replace(pos, 2, comrank);
+#endif
+
   pos = parsed.find("#t");
   if (pos != std::string::npos) parsed.replace(pos, 2, tstep);
 

@@ -283,17 +283,12 @@ void HDFGridDiagnostic<Type, PointerType>::close()
   output.close();
 }
 
-
 template<typename InnerType>
 struct CopyToContainer
 {
-  static void copy(InnerType *field, GridContainer<InnerType> &container)
-  {
-    container.grid = field;
-    container.local_min = field->getLo();
-    container.local_max = field->getHi();
-  }
+    static void copy(InnerType *field, GridContainer<InnerType> &container);
 };
+
 
 template<
   typename T,
@@ -303,15 +298,34 @@ template<
 >
 struct CopyToContainer<Field<T, rank, CheckingPolicy, StoragePolicy> >
 {
-  static void copy(Field<T, rank, CheckingPolicy, StoragePolicy> *field,
-           GridContainer<Field<T, rank, CheckingPolicy, StoragePolicy> > &container)
-  {
-    container.grid = field;
-    container.local_min = field->getInnerLo();
-    container.local_max = field->getInnerHi();
-
-  }
+    static void copy(Field<T, rank, CheckingPolicy, StoragePolicy> *field,
+                     GridContainer<Field<T, rank, CheckingPolicy, StoragePolicy> > &container);
 };
+
+template<
+  typename T,
+  int rank,
+  template<int> class CheckingPolicy,
+  template<typename, int> class StoragePolicy
+>
+inline void CopyToContainer<Field<T, rank, CheckingPolicy, StoragePolicy> >::copy(Field<T, rank, CheckingPolicy, StoragePolicy> *field,
+         GridContainer<Field<T, rank, CheckingPolicy, StoragePolicy> > &container)
+{
+  container.grid = field;
+  container.local_min = field->getInnerLo();
+  container.local_max = field->getInnerHi();
+
+}
+
+
+template<typename InnerType>
+inline void CopyToContainer<InnerType>::copy(InnerType *field, GridContainer<InnerType> &container)
+{
+  container.grid = field;
+  container.local_min = field->getLo();
+  container.local_max = field->getHi();
+}
+
 
 template<typename Type, typename PointerType>
 void HDFGridDiagnostic<Type, PointerType>::init()

@@ -37,7 +37,8 @@ template<class T>
 class DataBuffer
 {
   public:
-    typedef Grid<unsigned char, 1, GridAssertCheck, LazyArrayGridStorage> BufferType;
+    //typedef Grid<unsigned char, 1, GridAssertCheck, LazyArrayGridStorage> BufferType;
+    typedef Grid<unsigned char, 1, GridAssertCheck> BufferType;
   private:
     BufferType buffer;
   public:

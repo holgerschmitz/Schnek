@@ -52,8 +52,12 @@ typedef boost::variant<pIntExpression, pFloatExpression, pStringExpression> Expr
 
 class VariableNotFoundException : public SchnekException
 {
+  private:
+    std::string message;
   public:
-    VariableNotFoundException() : SchnekException() {}
+    VariableNotFoundException(std::string message_) : SchnekException(), message(message_) {}
+    //VariableNotFoundException() : SchnekException() {}
+    const std::string& getMessage() { return message; }
 };
 
 class EvaluationException : public SchnekException

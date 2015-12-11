@@ -74,9 +74,9 @@ T &BlockData<T>::get(long blockId, std::string key)
   SCHNEK_TRACE_LOG(2, "BlockData<T>::get(" <<blockId << ", " << key << ")")
 
   if (0 == blockDataMap.count(blockId))
-    throw VariableNotFoundException();
+    throw VariableNotFoundException("Could not find Block that holds variable "+key);
   if (0 == blockDataMap[blockId]->count(key))
-    throw VariableNotFoundException();
+    throw VariableNotFoundException("Could not find Block variable "+key);
 
   return *(*blockDataMap[blockId])[key];
 }

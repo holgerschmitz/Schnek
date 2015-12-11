@@ -109,7 +109,7 @@ inline void Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int d
 {
     int lo = this->getLo()[dim];
     int hi = this->getHi()[dim];
-    double xnorm = (pos - range.getLo()[dim])*(hi-lo-2*ghostCells)
+    double xnorm = (pos - range.getLo()[dim])*(hi-lo-2*ghostCells+1)
         /(range.getHi()[dim] - range.getLo()[dim])
         - 0.5*int(stagger[dim]) + ghostCells + lo;
     index = int(xnorm);
@@ -126,7 +126,7 @@ inline int Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int di
 {
   int lo = this->getLo()[dim];
   int hi = this->getHi()[dim];
-  return int(pos - range.getLo()[dim])*(hi-lo-2*ghostCells)
+  return int(pos - range.getLo()[dim])*(hi-lo-2*ghostCells+1)
       /(range.getHi()[dim] - range.getLo()[dim])
       - 0.5*int(stagger[dim]) + ghostCells + lo;
 }
@@ -142,11 +142,10 @@ inline double Field<T, rank, CheckingPolicy, StoragePolicy>::indexToPosition(int
   int lo = this->getLo()[dim];
   int hi = this->getHi()[dim];
 
-//  if ((dim==0) && (index==200))
+//  if ((dim==0) && (index==50))
 //  {
 //    double pos = (range.getHi()[dim] - range.getLo()[dim])
-//        * (double)(index- lo + 0.5*int(stagger[dim])-ghostCells)/(double)(hi - lo - 2*ghostCells + 1)
-//        + range.getLo()[dim];
+//          * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells + 1) + range.getLo()[dim];
 //    std::cerr << index << " " << lo << " " << hi << " "
 //        << range.getLo()[dim] << " " << range.getHi()[dim] << " "
 //        << ghostCells << " " << int(stagger[dim]) << std::endl;
@@ -157,7 +156,7 @@ inline double Field<T, rank, CheckingPolicy, StoragePolicy>::indexToPosition(int
 //  }
 
   return (range.getHi()[dim] - range.getLo()[dim])
-      * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells) + range.getLo()[dim];
+      * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells + 1) + range.getLo()[dim];
 }
 
 } // namespace

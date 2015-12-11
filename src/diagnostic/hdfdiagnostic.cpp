@@ -233,8 +233,8 @@ int HdfOStream::open(const char* fname)
 #if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
 
   int sieve_buf_size = 262144;
-  int align_threshold = 524288;
-  int alignment = 262144;
+  int align_threshold = 1; //524288;
+  int alignment = 1; // 262144;
 
   MPI_Info mpi_info;
 
@@ -283,6 +283,8 @@ int HdfOStream::open(const char* fname)
 
   dxpl_id = H5P_DEFAULT;
 #endif
+
+  assert(file_id != -1);
 
   SCHNEK_TRACE_LOG(3,"Data Transfer Property List Id " << dxpl_id)
 
