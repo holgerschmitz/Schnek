@@ -1,9 +1,9 @@
 /*
- * example_fields_cpc.cpp
+ * example_fields_basics.cpp
  *
- *  Created on: 2 Jul 2014
- *      Author: Holger Schmitz
- *       Email: holger@notjustphysics.com
+ *  Created on: 5 Apr 2016
+ *  Author: Holger Schmitz
+ *  Email: holger@notjustphysics.com
  */
 
 #include "../src/grid.hpp"
