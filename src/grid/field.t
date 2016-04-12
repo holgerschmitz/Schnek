@@ -112,7 +112,7 @@ inline void Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int d
     double xnorm = (pos - range.getLo()[dim])*(hi-lo-2*ghostCells+1)
         /(range.getHi()[dim] - range.getLo()[dim])
         - 0.5*int(stagger[dim]) + ghostCells + lo;
-    index = int(xnorm);
+    index = int(floor(xnorm));
     offset = xnorm - index;
 }
 
@@ -126,9 +126,9 @@ inline int Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int di
 {
   int lo = this->getLo()[dim];
   int hi = this->getHi()[dim];
-  return int(pos - range.getLo()[dim])*(hi-lo-2*ghostCells+1)
+  return int(floor((pos - range.getLo()[dim])*(hi-lo-2*ghostCells+1)
       /(range.getHi()[dim] - range.getLo()[dim])
-      - 0.5*int(stagger[dim]) + ghostCells + lo;
+      - 0.5*int(stagger[dim]) + ghostCells + lo));
 }
 
 template<

@@ -34,6 +34,7 @@ EXTRA_PROGRAMS = \
   example_setup_constant \
   example_setup_array \
   example_setup_evaluate \
+  example_setup_fillfield \
   example_setup_cpc \
   example_setup_blocks_cpc \
   example_setup_updater_cpc \
@@ -44,6 +45,7 @@ EXTRA_PROGRAMS = \
   example_subgrid_cpc \
   example_gridtransform_cpc \
   example_fields_cpc \
+  example_fields_basics \
   example_mpisub_cpc \
 	example_boundary
 
@@ -80,6 +82,9 @@ example_setup_array_LDADD = -L../src -lschnek
 example_setup_evaluate_SOURCES = example_setup_evaluate.cpp
 example_setup_evaluate_LDADD = -L../src -lschnek
 
+example_setup_fillfield_SOURCES = example_setup_fillfield.cpp
+example_setup_fillfield_LDADD = -L../src -lschnek
+
 example_setup_cpc_SOURCES = example_setup_cpc.cpp
 example_setup_cpc_LDADD = -L../src -lschnek
 
@@ -110,6 +115,9 @@ example_gridtransform_cpc_LDADD = -L../src -lschnek
 example_fields_cpc_SOURCES = example_fields_cpc.cpp
 example_fields_cpc_LDADD = -L../src -lschnek
 
+example_fields_basics_SOURCES = example_fields_basics.cpp
+example_fields_basics_LDADD = -L../src -lschnek
+
 example_mpisub_cpc_SOURCES = example_mpisub_cpc.cpp
 example_mpisub_cpc_LDADD = -L../src -lschnek
 
@@ -138,6 +146,7 @@ SCHNEK_EXAMPLES_OBJ = \
   example_subgrid_cpc$(EXEEXT) \
   example_gridtransform_cpc$(EXEEXT) \
   example_fields_cpc$(EXEEXT) \
+  example_fields_basics$(EXEEXT) \
   example_mpisub_cpc$(EXEEXT) \
 	example_boundary$(EXEEXT)
 

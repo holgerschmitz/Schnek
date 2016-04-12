@@ -1,5 +1,5 @@
 /*
- * example_grids_basics.cpp
+ * example_fields_cpc.cpp
  *
  *  Created on: 2 Jul 2014
  *      Author: Holger Schmitz

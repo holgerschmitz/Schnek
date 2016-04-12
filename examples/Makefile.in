@@ -106,14 +106,16 @@ EXTRA_PROGRAMS = example_grids_basics$(EXEEXT) \
 	example_setup_first$(EXEEXT) example_setup_errors$(EXEEXT) \
 	example_setup_defaults$(EXEEXT) \
 	example_setup_constant$(EXEEXT) example_setup_array$(EXEEXT) \
-	example_setup_evaluate$(EXEEXT) example_setup_cpc$(EXEEXT) \
+	example_setup_evaluate$(EXEEXT) \
+	example_setup_fillfield$(EXEEXT) example_setup_cpc$(EXEEXT) \
 	example_setup_blocks_cpc$(EXEEXT) \
 	example_setup_updater_cpc$(EXEEXT) \
 	example_blocks_hierarchy$(EXEEXT) \
 	example_literature_cpc$(EXEEXT) example_range$(EXEEXT) \
 	example_range_cpc$(EXEEXT) example_subgrid_cpc$(EXEEXT) \
 	example_gridtransform_cpc$(EXEEXT) example_fields_cpc$(EXEEXT) \
-	example_mpisub_cpc$(EXEEXT) example_boundary$(EXEEXT)
+	example_fields_basics$(EXEEXT) example_mpisub_cpc$(EXEEXT) \
+	example_boundary$(EXEEXT)
 subdir = examples
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/mkinstalldirs $(top_srcdir)/depcomp
@@ -153,6 +155,9 @@ example_blocks_hierarchy_DEPENDENCIES =
 am_example_boundary_OBJECTS = example_boundary.$(OBJEXT)
 example_boundary_OBJECTS = $(am_example_boundary_OBJECTS)
 example_boundary_DEPENDENCIES =
+am_example_fields_basics_OBJECTS = example_fields_basics.$(OBJEXT)
+example_fields_basics_OBJECTS = $(am_example_fields_basics_OBJECTS)
+example_fields_basics_DEPENDENCIES =
 am_example_fields_cpc_OBJECTS = example_fields_cpc.$(OBJEXT)
 example_fields_cpc_OBJECTS = $(am_example_fields_cpc_OBJECTS)
 example_fields_cpc_DEPENDENCIES =
@@ -202,6 +207,11 @@ example_setup_errors_DEPENDENCIES =
 am_example_setup_evaluate_OBJECTS = example_setup_evaluate.$(OBJEXT)
 example_setup_evaluate_OBJECTS = $(am_example_setup_evaluate_OBJECTS)
 example_setup_evaluate_DEPENDENCIES =
+am_example_setup_fillfield_OBJECTS =  \
+	example_setup_fillfield.$(OBJEXT)
+example_setup_fillfield_OBJECTS =  \
+	$(am_example_setup_fillfield_OBJECTS)
+example_setup_fillfield_DEPENDENCIES =
 am_example_setup_first_OBJECTS = example_setup_first.$(OBJEXT)
 example_setup_first_OBJECTS = $(am_example_setup_first_OBJECTS)
 example_setup_first_DEPENDENCIES =
@@ -250,8 +260,9 @@ am__v_CXXLD_1 =
 SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_array_functions_SOURCES) \
 	$(example_blocks_hierarchy_SOURCES) \
-	$(example_boundary_SOURCES) $(example_fields_cpc_SOURCES) \
-	$(example_grids_basics_SOURCES) $(example_grids_cpc_SOURCES) \
+	$(example_boundary_SOURCES) $(example_fields_basics_SOURCES) \
+	$(example_fields_cpc_SOURCES) $(example_grids_basics_SOURCES) \
+	$(example_grids_cpc_SOURCES) \
 	$(example_gridtransform_cpc_SOURCES) \
 	$(example_literature_cpc_SOURCES) \
 	$(example_mpisub_cpc_SOURCES) $(example_range_SOURCES) \
@@ -261,14 +272,16 @@ SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_setup_defaults_SOURCES) \
 	$(example_setup_errors_SOURCES) \
 	$(example_setup_evaluate_SOURCES) \
+	$(example_setup_fillfield_SOURCES) \
 	$(example_setup_first_SOURCES) \
 	$(example_setup_updater_cpc_SOURCES) \
 	$(example_subgrid_cpc_SOURCES)
 DIST_SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_array_functions_SOURCES) \
 	$(example_blocks_hierarchy_SOURCES) \
-	$(example_boundary_SOURCES) $(example_fields_cpc_SOURCES) \
-	$(example_grids_basics_SOURCES) $(example_grids_cpc_SOURCES) \
+	$(example_boundary_SOURCES) $(example_fields_basics_SOURCES) \
+	$(example_fields_cpc_SOURCES) $(example_grids_basics_SOURCES) \
+	$(example_grids_cpc_SOURCES) \
 	$(example_gridtransform_cpc_SOURCES) \
 	$(example_literature_cpc_SOURCES) \
 	$(example_mpisub_cpc_SOURCES) $(example_range_SOURCES) \
@@ -278,6 +291,7 @@ DIST_SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_setup_defaults_SOURCES) \
 	$(example_setup_errors_SOURCES) \
 	$(example_setup_evaluate_SOURCES) \
+	$(example_setup_fillfield_SOURCES) \
 	$(example_setup_first_SOURCES) \
 	$(example_setup_updater_cpc_SOURCES) \
 	$(example_subgrid_cpc_SOURCES)
@@ -457,6 +471,8 @@ example_setup_array_SOURCES = example_setup_array.cpp
 example_setup_array_LDADD = -L../src -lschnek
 example_setup_evaluate_SOURCES = example_setup_evaluate.cpp
 example_setup_evaluate_LDADD = -L../src -lschnek
+example_setup_fillfield_SOURCES = example_setup_fillfield.cpp
+example_setup_fillfield_LDADD = -L../src -lschnek
 example_setup_cpc_SOURCES = example_setup_cpc.cpp
 example_setup_cpc_LDADD = -L../src -lschnek
 example_setup_blocks_cpc_SOURCES = example_setup_blocks_cpc.cpp
@@ -477,6 +493,8 @@ example_gridtransform_cpc_SOURCES = example_gridtransform_cpc.cpp
 example_gridtransform_cpc_LDADD = -L../src -lschnek
 example_fields_cpc_SOURCES = example_fields_cpc.cpp
 example_fields_cpc_LDADD = -L../src -lschnek
+example_fields_basics_SOURCES = example_fields_basics.cpp
+example_fields_basics_LDADD = -L../src -lschnek
 example_mpisub_cpc_SOURCES = example_mpisub_cpc.cpp
 example_mpisub_cpc_LDADD = -L../src -lschnek
 example_boundary_SOURCES = example_boundary.cpp
@@ -503,6 +521,7 @@ SCHNEK_EXAMPLES_OBJ = \
   example_subgrid_cpc$(EXEEXT) \
   example_gridtransform_cpc$(EXEEXT) \
   example_fields_cpc$(EXEEXT) \
+  example_fields_basics$(EXEEXT) \
   example_mpisub_cpc$(EXEEXT) \
 	example_boundary$(EXEEXT)
 
@@ -560,6 +579,10 @@ example_blocks_hierarchy$(EXEEXT): $(example_blocks_hierarchy_OBJECTS) $(example
 example_boundary$(EXEEXT): $(example_boundary_OBJECTS) $(example_boundary_DEPENDENCIES) $(EXTRA_example_boundary_DEPENDENCIES) 
 	@rm -f example_boundary$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(example_boundary_OBJECTS) $(example_boundary_LDADD) $(LIBS)
+
+example_fields_basics$(EXEEXT): $(example_fields_basics_OBJECTS) $(example_fields_basics_DEPENDENCIES) $(EXTRA_example_fields_basics_DEPENDENCIES) 
+	@rm -f example_fields_basics$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(example_fields_basics_OBJECTS) $(example_fields_basics_LDADD) $(LIBS)
 
 example_fields_cpc$(EXEEXT): $(example_fields_cpc_OBJECTS) $(example_fields_cpc_DEPENDENCIES) $(EXTRA_example_fields_cpc_DEPENDENCIES) 
 	@rm -f example_fields_cpc$(EXEEXT)
@@ -621,6 +644,10 @@ example_setup_evaluate$(EXEEXT): $(example_setup_evaluate_OBJECTS) $(example_set
 	@rm -f example_setup_evaluate$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(example_setup_evaluate_OBJECTS) $(example_setup_evaluate_LDADD) $(LIBS)
 
+example_setup_fillfield$(EXEEXT): $(example_setup_fillfield_OBJECTS) $(example_setup_fillfield_DEPENDENCIES) $(EXTRA_example_setup_fillfield_DEPENDENCIES) 
+	@rm -f example_setup_fillfield$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(example_setup_fillfield_OBJECTS) $(example_setup_fillfield_LDADD) $(LIBS)
+
 example_setup_first$(EXEEXT): $(example_setup_first_OBJECTS) $(example_setup_first_DEPENDENCIES) $(EXTRA_example_setup_first_DEPENDENCIES) 
 	@rm -f example_setup_first$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(example_setup_first_OBJECTS) $(example_setup_first_LDADD) $(LIBS)
@@ -644,6 +671,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_array_functions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_blocks_hierarchy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_boundary.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_fields_basics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_fields_cpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_grids_basics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_grids_cpc.Po@am__quote@
@@ -659,6 +687,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_setup_defaults.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_setup_errors.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_setup_evaluate.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_setup_fillfield.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_setup_first.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_setup_updater_cpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_subgrid_cpc.Po@am__quote@
