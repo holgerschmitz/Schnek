@@ -1,10 +1,8 @@
-Nx = 10;
-Ny = 10;
-Lx = 10;
-Ly = 10;
+Nx = 50;
+Ny = 50;
+Lx = 20;
+Ly = 20;
 
 float radius = sqrt(x^2 + y^2);
-float decay = exp(-radius/5);
-float phase = 2*radius;
-float oscillation = sin(phase);
-F = oscillation*decay;
+float decay = exp(-radius/10);
+F = decay*sin(radius);

@@ -45,7 +45,7 @@ class SimulationBlock : public Block
     }
 
   public:
-    void printValues()
+    void fillValues()
     {
       Range<double, 2> range(Array<double, 2>(0,0), L);
 
@@ -75,6 +75,7 @@ class SimulationBlock : public Block
         }
         std::cout << std::endl;
       }
+      return;
       std::cout << std::endl;
       for (int i=0; i<=N[0]; ++i)
       {
@@ -104,7 +105,7 @@ int main()
     SimulationBlock &mysim = dynamic_cast<SimulationBlock&>(*application);
     mysim.evaluateParameters();
 
-    mysim.printValues();
+    mysim.fillValues();
 
   }
   catch (ParserError &e)

@@ -511,6 +511,7 @@ SCHNEK_EXAMPLES_OBJ = \
   example_setup_constant$(EXEEXT) \
   example_setup_array$(EXEEXT) \
   example_setup_evaluate$(EXEEXT) \
+  example_setup_fillfield$(EXEEXT) \
   example_setup_cpc$(EXEEXT) \
   example_setup_blocks_cpc$(EXEEXT) \
   example_setup_updater_cpc$(EXEEXT) \
