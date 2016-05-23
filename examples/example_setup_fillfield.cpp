@@ -1,7 +1,7 @@
 /*
  * example_setup_first.cpp
  *
- *  Created on: 8 Jul 2014
+ *  Created on: 12 Apr 2016
  *      Author: Holger Schmitz
  *       Email: holger@notjustphysics.com
  */
