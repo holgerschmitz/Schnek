@@ -1,0 +1,3 @@
+float c = normal(0.2);
+n = length("Setup Test");
+value = series(c, 3);

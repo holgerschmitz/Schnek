@@ -29,6 +29,8 @@
 using namespace schnek;
 
 
+#ifdef SCHNEK_HAVE_MPI
+
 /* **************************************************************
  *                 MpiValueType                                 *
  ****************************************************************/
@@ -66,4 +68,4 @@ const MPI_Datatype MpiValueType<double>::value = MPI_DOUBLE;
 template<>
 const MPI_Datatype MpiValueType<long double>::value = MPI_LONG_DOUBLE;
 
-
+#endif

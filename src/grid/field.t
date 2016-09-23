@@ -99,6 +99,21 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
   this->resize(low, high);
 }
 
+
+template<
+  typename T,
+  int rank,
+  template<int> class CheckingPolicy,
+  template<typename, int> class StoragePolicy
+>
+Field<T, rank, CheckingPolicy, StoragePolicy>::Field(const Field<T, rank, CheckingPolicy, StoragePolicy> &field)
+  : Grid<T, rank, CheckingPolicy, StoragePolicy>(field),
+    range(field.range),
+    stagger(field.stagger),
+    ghostCells(field.ghostCells)
+{
+}
+
 template<
   typename T,
   int rank,

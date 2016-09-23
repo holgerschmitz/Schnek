@@ -107,7 +107,8 @@ EXTRA_PROGRAMS = example_grids_basics$(EXEEXT) \
 	example_setup_defaults$(EXEEXT) \
 	example_setup_constant$(EXEEXT) example_setup_array$(EXEEXT) \
 	example_setup_evaluate$(EXEEXT) \
-	example_setup_fillfield$(EXEEXT) example_setup_cpc$(EXEEXT) \
+	example_setup_fillfield$(EXEEXT) \
+	example_setup_functions$(EXEEXT) example_setup_cpc$(EXEEXT) \
 	example_setup_blocks_cpc$(EXEEXT) \
 	example_setup_updater_cpc$(EXEEXT) \
 	example_blocks_hierarchy$(EXEEXT) \
@@ -215,6 +216,11 @@ example_setup_fillfield_DEPENDENCIES =
 am_example_setup_first_OBJECTS = example_setup_first.$(OBJEXT)
 example_setup_first_OBJECTS = $(am_example_setup_first_OBJECTS)
 example_setup_first_DEPENDENCIES =
+am_example_setup_functions_OBJECTS =  \
+	example_setup_functions.$(OBJEXT)
+example_setup_functions_OBJECTS =  \
+	$(am_example_setup_functions_OBJECTS)
+example_setup_functions_DEPENDENCIES =
 am_example_setup_updater_cpc_OBJECTS =  \
 	example_setup_updater_cpc.$(OBJEXT)
 example_setup_updater_cpc_OBJECTS =  \
@@ -274,6 +280,7 @@ SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_setup_evaluate_SOURCES) \
 	$(example_setup_fillfield_SOURCES) \
 	$(example_setup_first_SOURCES) \
+	$(example_setup_functions_SOURCES) \
 	$(example_setup_updater_cpc_SOURCES) \
 	$(example_subgrid_cpc_SOURCES)
 DIST_SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
@@ -293,6 +300,7 @@ DIST_SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_setup_evaluate_SOURCES) \
 	$(example_setup_fillfield_SOURCES) \
 	$(example_setup_first_SOURCES) \
+	$(example_setup_functions_SOURCES) \
 	$(example_setup_updater_cpc_SOURCES) \
 	$(example_subgrid_cpc_SOURCES)
 am__can_run_installinfo = \
@@ -473,6 +481,8 @@ example_setup_evaluate_SOURCES = example_setup_evaluate.cpp
 example_setup_evaluate_LDADD = -L../src -lschnek
 example_setup_fillfield_SOURCES = example_setup_fillfield.cpp
 example_setup_fillfield_LDADD = -L../src -lschnek
+example_setup_functions_SOURCES = example_setup_functions.cpp
+example_setup_functions_LDADD = -L../src -lschnek
 example_setup_cpc_SOURCES = example_setup_cpc.cpp
 example_setup_cpc_LDADD = -L../src -lschnek
 example_setup_blocks_cpc_SOURCES = example_setup_blocks_cpc.cpp
@@ -512,6 +522,7 @@ SCHNEK_EXAMPLES_OBJ = \
   example_setup_array$(EXEEXT) \
   example_setup_evaluate$(EXEEXT) \
   example_setup_fillfield$(EXEEXT) \
+  example_setup_functions$(EXEEXT) \
   example_setup_cpc$(EXEEXT) \
   example_setup_blocks_cpc$(EXEEXT) \
   example_setup_updater_cpc$(EXEEXT) \
@@ -653,6 +664,10 @@ example_setup_first$(EXEEXT): $(example_setup_first_OBJECTS) $(example_setup_fir
 	@rm -f example_setup_first$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(example_setup_first_OBJECTS) $(example_setup_first_LDADD) $(LIBS)
 
+example_setup_functions$(EXEEXT): $(example_setup_functions_OBJECTS) $(example_setup_functions_DEPENDENCIES) $(EXTRA_example_setup_functions_DEPENDENCIES) 
+	@rm -f example_setup_functions$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(example_setup_functions_OBJECTS) $(example_setup_functions_LDADD) $(LIBS)
+
 example_setup_updater_cpc$(EXEEXT): $(example_setup_updater_cpc_OBJECTS) $(example_setup_updater_cpc_DEPENDENCIES) $(EXTRA_example_setup_updater_cpc_DEPENDENCIES) 
 	@rm -f example_setup_updater_cpc$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(example_setup_updater_cpc_OBJECTS) $(example_setup_updater_cpc_LDADD) $(LIBS)
@@ -690,6 +705,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_setup_evaluate.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_setup_fillfield.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_setup_first.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_setup_functions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_setup_updater_cpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_subgrid_cpc.Po@am__quote@
 

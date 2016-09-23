@@ -32,6 +32,8 @@
 #include "../util/unique.hpp"
 
 #include <boost/shared_ptr.hpp>
+#include <boost/algorithm/string.hpp>
+
 #include <stack>
 
 namespace schnek {
@@ -134,6 +136,21 @@ bool Block::getData(std::string key, T &data, bool upward)
   {
     data = BlockData<T>::instance().get(this->getId(), key);
     return true;
+  }
+
+  boost::iterator_range<std::string::iterator> dot = boost::find_first(key,".");
+  if (!dot.empty())
+  {
+    std::string head = std::string(key.begin(), dot.begin());
+    std::string tail = std::string(dot.end(), key.end());
+    int count = 0;
+    BOOST_FOREACH(pBlock child, children)
+    {
+      if ((child->getName()==head) && child->getData(tail, data, false)) ++count;
+    }
+
+    if (count>1) throw DuplicateVariableException();
+    else if (count==1) return true;
   }
 
   if (upward && parent)

@@ -47,7 +47,13 @@ namespace schnek {
 
 template<class GridType>
 MPICartSubdivision<GridType>::MPICartSubdivision() : comm(0), prevcoord(0), nextcoord(0)
-{}
+{
+  for (int i=0; i<Rank; ++i)
+  {
+    sendarr[i] = 0;
+    recvarr[i] = 0;
+  }
+}
 
 template<class GridType>
 void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi, int delta)
@@ -127,10 +133,10 @@ MPICartSubdivision<GridType>::~MPICartSubdivision()
 {
   for (int i=0; i<Rank; ++i)
   {
-    delete[] sendarr[i];
-    delete[] recvarr[i];
+    if (sendarr[i]!=0) delete[] sendarr[i];
+    if (recvarr[i]!=0) delete[] recvarr[i];
   }
-  MPI_Comm_free(&comm);
+  if (comm!=0) MPI_Comm_free(&comm);
 }
 
 template<class GridType>

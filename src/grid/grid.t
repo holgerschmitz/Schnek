@@ -345,6 +345,21 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
+GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+  GridBase<T, rank, CheckingPolicy, StoragePolicy>
+    ::operator=(const GridBase<T, rank, CheckingPolicy, StoragePolicy> &grid)
+{
+  this->resize(grid);
+  this->copyFromGrid(grid);
+  return *this;
+}
+
+template<
+  typename T,
+  int rank,
+  class CheckingPolicy,
+  class StoragePolicy
+>
 template<
   typename T2,
   class CheckingPolicy2,
@@ -557,7 +572,7 @@ void GridBase<T, rank, CheckingPolicy, StoragePolicy>
   Iterator dest = this->begin();
   while (src != srcEnd)
   {
-    *dest = *src;
+    *dest = static_cast<T2>(*src);
     ++src;
     ++dest;
   }

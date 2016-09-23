@@ -93,7 +93,7 @@ class BlockClassDescriptor
         blockFactory = bf;
     }
 
-    bool hasBlockFactory() { return blockFactory; }
+    bool hasBlockFactory() { return (bool)blockFactory; }
     pBlock makeBlock(const std::string &name) { return blockFactory->makeBlock(name); }
 };
 

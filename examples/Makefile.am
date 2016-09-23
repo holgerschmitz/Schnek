@@ -35,6 +35,7 @@ EXTRA_PROGRAMS = \
   example_setup_array \
   example_setup_evaluate \
   example_setup_fillfield \
+  example_setup_functions \
   example_setup_cpc \
   example_setup_blocks_cpc \
   example_setup_updater_cpc \
@@ -84,6 +85,9 @@ example_setup_evaluate_LDADD = -L../src -lschnek
 
 example_setup_fillfield_SOURCES = example_setup_fillfield.cpp
 example_setup_fillfield_LDADD = -L../src -lschnek
+
+example_setup_functions_SOURCES = example_setup_functions.cpp
+example_setup_functions_LDADD = -L../src -lschnek
 
 example_setup_cpc_SOURCES = example_setup_cpc.cpp
 example_setup_cpc_LDADD = -L../src -lschnek
@@ -137,6 +141,7 @@ SCHNEK_EXAMPLES_OBJ = \
   example_setup_array$(EXEEXT) \
   example_setup_evaluate$(EXEEXT) \
   example_setup_fillfield$(EXEEXT) \
+  example_setup_functions$(EXEEXT) \
   example_setup_cpc$(EXEEXT) \
   example_setup_blocks_cpc$(EXEEXT) \
   example_setup_updater_cpc$(EXEEXT) \

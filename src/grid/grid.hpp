@@ -121,6 +121,10 @@ class GridBase : public StoragePolicy, public CheckingPolicy
     T  operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s) const;
 
     /** assign another grid */
+    GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+      operator=(const GridBase<T, rank, CheckingPolicy, StoragePolicy>&);
+
+    /** assign another grid */
     template<
       typename T2,
       class CheckingPolicy2,
@@ -292,6 +296,13 @@ class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,ran
     GridType& operator=(const T &val)
     {
       BaseType::operator=(val);
+      return *this;
+    }
+
+    /** assign another grid */
+    GridType& operator=(const GridType &grid)
+    {
+      BaseType::operator=(grid);
       return *this;
     }
 

@@ -76,14 +76,14 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
         const Range<double, rank,RangeCheckingPolicy> &range_,
         const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
 
+    /** copy constructor */
+    Field(const FieldType&);
+
     /** Get the lo if the inner domain */
     IndexType getInnerLo() {return this->getLo()+ghostCells;}
 
     /** Get the hi if the inner domain */
     IndexType getInnerHi() {return this->getHi()-ghostCells;}
-
-    /** copy constructor */
-    Field(const Field<T, rank, CheckingPolicy, StoragePolicy>&);
 
     /** Calculates index and offset from a position on the field
      *
@@ -107,6 +107,16 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     FieldType& operator=(const T &val)
     {
       BaseType::operator=(val);
+      return *this;
+    }
+
+    /** assign another grid */
+    FieldType& operator=(const FieldType &grid)
+    {
+      BaseType::operator=(grid);
+      range = grid.range;
+      stagger = grid.stagger;
+      ghostCells = grid.ghostCells;
       return *this;
     }
 

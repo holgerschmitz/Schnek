@@ -176,10 +176,10 @@ struct MpiValueType
 
 } // namespace schnek
 
-#endif // HAVE_MPI
 
 #include "mpisubdivision.t"
 
+#endif // HAVE_MPI
 
 #endif // SCHNEK_MPISUBDIVISION_HPP
 
