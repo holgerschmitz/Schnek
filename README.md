@@ -1,6 +1,5 @@
 # Schnek
-
-## A C++ library for parallel physics simulations on regular grids  
+## A C++ library for developing parallel simulations on Cartesian grids
 
 ![Logo](http://www.notjustphysics.com/wp-content/uploads/2014/06/SchnekLogo.png)
 
@@ -47,18 +46,18 @@ Features of Schnek are
 - literature reference system to encourage collaborative development of large 
   codes
   
-##  Documentation
+## Documentation
 
 Documentation and tutorials can be found on the Schnek website at
 
   http://www.notjustphysics.com/schnek/
 
  
-# Installation
+## Installation
 
 ### Step 1: Download
 
-You can obtain the latest release of Schnek on the Github releases page, here. This should be relatively bug-free. If you want to use Schnek for your own projects then this is your choice.
+You can obtain the latest release of Schnek on the GitHub Releases page, here. This should be relatively bug-free. If you want to use Schnek for your own projects then this is your choice.
 
 If you are interested in contributing and helping to improve Schnek, you are very welcome to do so. In this case you can grab the latest development version using Subversion. The command is
 
@@ -128,7 +127,7 @@ or
 
 depending on the installation directory.
 
-###Step 5: Include Schnek in your projects
+### Step 5: Include Schnek in your projects
 
 By default the Schnek headers are located in /usr/local/include/schnek/. To include the headers in your C++ files, you should include them like this.
 
@@ -136,9 +135,9 @@ By default the Schnek headers are located in /usr/local/include/schnek/. To incl
   #include <schnek/grid.hpp>
 ```
 
-You need to link your code to the Schnek libraries. For most compilers this should be achieved by adding -lschnek to your linker flags.
+You nee to link your code to the Schnek libraries. For most compilers this should be achieved by adding -lschnek to your linker flags.
 
-##  License and Disclaimer
+## License and Disclaimer
 
 Schnek is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
