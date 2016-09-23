@@ -1,7 +1,7 @@
 # Schnek
 ## A C++ library for developing parallel simulations on Cartesian grids
 
-![Logo](http://www.notjustphysics.com/wp-content/uploads/2014/06/SchnekLogo.png)
+<img align="left" src="http://www.notjustphysics.com/wp-content/uploads/2014/06/SchnekLogo.png" width="300">
 
 Schnek is a new library for C++ that makes it easy to develop large parallel 
 simulation codes. The library is intended mainly for use in physics simulations 
@@ -57,7 +57,7 @@ Documentation and tutorials can be found on the Schnek website at
 
 ### Step 1: Download
 
-You can obtain the latest release of Schnek on the GitHub Releases page, here. This should be relatively bug-free. If you want to use Schnek for your own projects then this is your choice.
+You can obtain the latest release of Schnek on the GitHub Releases page, (https://github.com/holgerschmitz/Schnek/releases). This should be relatively bug-free. If you want to use Schnek for your own projects then this is your choice.
 
 If you are interested in contributing and helping to improve Schnek, you are very welcome to do so. In this case you can grab the latest development version using Subversion. The command is
 
