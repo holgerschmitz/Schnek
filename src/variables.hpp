@@ -26,6 +26,7 @@
 
 #include "variables/block.hpp"
 #include "variables/blockclasses.hpp"
+#include "variables/blockcontainer.hpp"
 #include "variables/blockdata.hpp"
 #include "variables/blockparameters.hpp"
 #include "variables/dependencies.hpp"
