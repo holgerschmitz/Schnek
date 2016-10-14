@@ -101,7 +101,10 @@ void DiagnosticManager::addDiagnostic(DiagnosticInterface *diag)
 
 void DiagnosticManager::execute()
 {
-  SCHNEK_TRACE_LOG(2, "DiagnosticManager::execute " << rank << " "<< *timecounter)
+  SCHNEK_TRACE_LOG(2, "DiagnosticManager::execute " << rank << " "<< *timecounter);
+
+  if (!timecounter) throw schnek::VariableNotInitialisedException("In DiagnosticManager: A time counter must be specified!");
+
   BOOST_FOREACH(DiagnosticInterface *diag, diags)
   {
     diag->execute(master, rank, *timecounter);

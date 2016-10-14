@@ -591,6 +591,7 @@ libschnekvariablesincludedir = $(includedir)/schnek/variables
 libschnekvariablesinclude_HEADERS = \
   variables/block.hpp  \
   variables/blockclasses.hpp  \
+  variables/blockcontainer.hpp  \
   variables/blockdata.hpp  \
   variables/blockparameters.hpp  \
   variables/dependencies.hpp  \

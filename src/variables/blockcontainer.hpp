@@ -5,15 +5,17 @@
  *  Author: Holger Schmitz
  */
 
-#ifndef SRC_BLOCKCONTAINER_HPP_
-#define SRC_BLOCKCONTAINER_HPP_
+#ifndef SCHNEK_BLOCKCONTAINER_HPP_
+#define SCHNEK_BLOCKCONTAINER_HPP_
 
+#include "block.hpp"
 
-#include <schnek/variables.hpp>
+#include <boost/range.hpp>
 
 #include <list>
 
-#include <boost/range.hpp>
+namespace schnek
+{
 
 template<class BlockType>
 class ChildBlock;
@@ -49,17 +51,13 @@ class ChildBlock : public schnek::Block
   protected:
     void preInit()
     {
-      boost::shared_ptr<BlockContainer<BlockType> > parent
-        = boost::dynamic_pointer_cast<BlockContainer<BlockType> >(getParent());
-      if (parent) {
-        try {
-          BlockType *self = dynamic_cast<BlockType *>(this);
-          parent->addChild(self);
-        }
-        catch (std::bad_cast &e) {}
-      }
+      schnek::Block *pParent = getParent().get();
+      BlockContainer<BlockType>* parent = dynamic_cast<BlockContainer<BlockType> *>(getParent().get());
+      BlockType *self = dynamic_cast<BlockType *>(this);
+      if (parent && self) parent->addChild(self);
     }
 };
 
+} // namespace
 
-#endif /* SRC_BLOCKCONTAINER_HPP_ */
+#endif // SCHNEK_BLOCKCONTAINER_HPP_

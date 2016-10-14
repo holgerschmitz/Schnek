@@ -177,7 +177,7 @@ struct ArrayOpDiv {
     <                                                                           \
       ArrayExpression<exp1, length>,                                            \
       ArrayExpression<exp2, length>,                                            \
-      op<typename exp1::value_typelength>                                       \
+      op<typename exp1::value_type>                                             \
     >  OperatorType;                                                            \
                                                                                 \
     return ArrayExpression<OperatorType, length>(OperatorType(A,B));            \
