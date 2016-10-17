@@ -50,21 +50,45 @@ class DiagnosticInterface : public Block
     std::string fname;
     /// Append data at every write to the same file?
     int append;
-    /// The interval at which to write
-    int interval;
   public:
-      DiagnosticInterface();
-      virtual ~DiagnosticInterface() {}
-      void execute(bool master, int rank, int timeCounter);
+    DiagnosticInterface();
+    virtual ~DiagnosticInterface() {}
   protected:
     virtual void open(const std::string &) {}
     virtual void write() {}
     virtual void close() {}
     virtual bool singleOut() { return false; }
     void initParameters(BlockParameters&);
-  private:
+
     bool appending();
     std::string parsedFileName(int rank, int timeCounter);
+    std::string parsedFileName(int rank, double physicalTime);
+};
+
+class IntervalDiagnostic : public DiagnosticInterface
+{
+  private:
+    /// The interval at which to write
+    int interval;
+  public:
+    IntervalDiagnostic();
+    void execute(bool master, int rank, int timeCounter);
+  protected:
+    void initParameters(BlockParameters&);
+};
+
+class DeltaTimeDiagnostic : public DiagnosticInterface
+{
+  private:
+    /// The physical time interval at which to write
+    double deltaTime;
+    double nextOutput;
+  public:
+    DeltaTimeDiagnostic();
+    void execute(bool master, int rank, double physicalTime);
+    double getNextOutput();
+  protected:
+    void initParameters(BlockParameters&);
 };
 
 typedef boost::shared_ptr<DiagnosticInterface> pDiagnosticInterface;
@@ -73,28 +97,35 @@ typedef std::list<pDiagnosticInterface> DiagList;
 class DiagnosticManager : public Singleton<DiagnosticManager>
 {
   private:
-    std::list<DiagnosticInterface*> diags;
+    std::list<IntervalDiagnostic*> intervalDiags;
+    std::list<DeltaTimeDiagnostic*> deltaTimeDiags;
 
     /// The current time step
     int *timecounter;
+    double *physicalTime;
+    bool usePhysicalTime;
     bool master;
     int rank;
 
     friend class Singleton<DiagnosticManager>;
     friend class CreateUsingNew<DiagnosticManager>;
   public:
-    void addDiagnostic(DiagnosticInterface*);
+    void addIntervalDiagnostic(IntervalDiagnostic*);
+    void addDeltaTimeDiagnostic(DeltaTimeDiagnostic*);
     void execute();
 
-    void setTimeCounter(int *timecounter_) { timecounter = timecounter_; }
-    void setMaster(bool master_) { master = master_; }
-    void setRank(int rank_) { rank = rank_; }
+    void setTimeCounter(int *timecounter);
+    void setPhysicalTime(double *physicalTime);
+    void setMaster(bool master);
+    void setRank(int rank);
+
+    double adjustDeltaT(double deltaT);
   private:
     DiagnosticManager();
 };
 
-template<class Type, typename PointerType = boost::shared_ptr<Type> >
-class SimpleDiagnostic : public DiagnosticInterface
+template<class Type, typename PointerType = boost::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic >
+class SimpleDiagnostic : public DiagnosticType
 {
   private:
     /// The name of the field to write out
@@ -123,8 +154,8 @@ class SimpleDiagnostic : public DiagnosticInterface
     void setSingleOut(bool single_out_) { single_out = single_out_; }
 };
 
-template<class Type, typename PointerType = boost::shared_ptr<Type> >
-class SimpleFileDiagnostic : public SimpleDiagnostic<Type, PointerType>
+template<class Type, typename PointerType = boost::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic >
+class SimpleFileDiagnostic : public SimpleDiagnostic<Type, PointerType, DiagnosticType>
 {
   private:
     std::ofstream output;

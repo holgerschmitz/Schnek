@@ -153,8 +153,8 @@ struct H5DataType{
   static const hid_t type;
 };
 
-template<typename Type, typename PointerType = boost::shared_ptr<Type> >
-class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType> {
+template<typename Type, typename PointerType = boost::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic >
+class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType, DiagnosticType> {
   protected:
     HdfOStream output;
     GridContainer<Type> container;
