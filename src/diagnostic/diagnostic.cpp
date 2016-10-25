@@ -44,7 +44,6 @@ void DiagnosticInterface::initParameters(BlockParameters &blockPars)
 
   blockPars.addParameter("file", &fname);
   blockPars.addParameter("append", &append);
-  blockPars.addParameter("deltaT", &deltaTime, 1.0);
 }
 
 bool DiagnosticInterface::appending()
@@ -121,7 +120,7 @@ void IntervalDiagnostic::initParameters(BlockParameters &blockPars)
 }
 
 
-DeltaTimeDiagnostic::DeltaTimeDiagnostic() : deltaTime(1.0), nextOutput(0.0)
+DeltaTimeDiagnostic::DeltaTimeDiagnostic() : deltaTime(1.0), nextOutput(0.0), count(0)
 {
   DiagnosticManager::instance().addDeltaTimeDiagnostic(this);
 }
@@ -135,10 +134,11 @@ void DeltaTimeDiagnostic::execute(bool master, int rank, double physicalTime)
 
   if (physicalTime >= nextOutput)
   {
-    if (!appending()) open(parsedFileName(rank, physicalTime));
+    if (!appending()) open(parsedFileName(rank, count));
     write();
     if (!appending()) close();
     nextOutput += deltaTime;
+    ++count;
   }
 }
 
@@ -219,7 +219,7 @@ double DiagnosticManager::adjustDeltaT(double deltaT)
 
   BOOST_FOREACH(DeltaTimeDiagnostic *diag, deltaTimeDiags)
   {
-    double dt = diag->getNextOutput() - physicalTime;
+    double dt = diag->getNextOutput() - *physicalTime;
     if (dt>0) adjustedDt = std::min(adjustedDt, dt);
   }
 

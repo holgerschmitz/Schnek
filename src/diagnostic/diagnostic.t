@@ -33,42 +33,42 @@
 namespace schnek {
 
 
-template<class Type, typename PointerType>
-SimpleDiagnostic<Type, PointerType>::~SimpleDiagnostic()
+template<class Type, typename PointerType, class DiagnosticType>
+SimpleDiagnostic<Type, PointerType, DiagnosticType>::~SimpleDiagnostic()
 {
-  close();
+  this->close();
   pow(1.0,1.0);
 }
 
-template<class Type, typename PointerType>
-void SimpleDiagnostic<Type, PointerType>::initParameters(BlockParameters &blockPars)
+template<class Type, typename PointerType, class DiagnosticType>
+void SimpleDiagnostic<Type, PointerType, DiagnosticType>::initParameters(BlockParameters &blockPars)
 {
-  DiagnosticInterface::initParameters(blockPars);
+  DiagnosticType::initParameters(blockPars);
   blockPars.addParameter("field", &fieldName);
 }
 
-template<class Type, typename PointerType>
-void SimpleDiagnostic<Type, PointerType>::init()
+template<class Type, typename PointerType, class DiagnosticType>
+void SimpleDiagnostic<Type, PointerType, DiagnosticType>::init()
 {
-  if (!isDerived()) retrieveData(fieldName, field);
-  SCHNEK_TRACE_LOG(2, "got field " << field)
+  if (!isDerived()) this->retrieveData(fieldName, field);
+  SCHNEK_TRACE_LOG(2, "got field " << field);
 }
 
-template<class Type, typename PointerType>
-void SimpleFileDiagnostic<Type, PointerType>::open(const std::string &fname)
+template<class Type, typename PointerType, class DiagnosticType>
+void SimpleFileDiagnostic<Type, PointerType, DiagnosticType>::open(const std::string &fname)
 {
   output.open(fname.c_str());
 //  output.precision(14);
 }
 
-template<class Type, typename PointerType>
-void SimpleFileDiagnostic<Type, PointerType>::write()
+template<class Type, typename PointerType, class DiagnosticType>
+void SimpleFileDiagnostic<Type, PointerType, DiagnosticType>::write()
 {
   output << *(this->field);
 }
 
-template<class Type, typename PointerType>
-void SimpleFileDiagnostic<Type, PointerType>::close()
+template<class Type, typename PointerType, class DiagnosticType>
+void SimpleFileDiagnostic<Type, PointerType, DiagnosticType>::close()
 {
   output.close();
 }
