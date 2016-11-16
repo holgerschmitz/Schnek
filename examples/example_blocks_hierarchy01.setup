@@ -1,4 +1,4 @@
-dt = 0.001;
+dt = 0.01;
 totalTime = 1;
 
 Particle A {
