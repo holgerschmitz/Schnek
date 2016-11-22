@@ -11,6 +11,7 @@
 #include "block.hpp"
 
 #include <boost/range.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <list>
 
@@ -25,14 +26,14 @@ class BlockContainer
 {
   friend ChildBlock<ChildType>;
   private:
-    std::list<ChildType*> children;
+    std::list<boost::shared_ptr<ChildType> > children;
 
-    void addChild(ChildType *child)
+    void addChild(boost::shared_ptr<ChildType> child)
     {
       children.push_back(child);
     }
   protected:
-    typedef boost::iterator_range<typename std::list<ChildType*>::const_iterator> child_iterator_range;
+    typedef boost::iterator_range<typename std::list<boost::shared_ptr<ChildType> >::const_iterator> child_iterator_range;
     child_iterator_range childBlocks()
     {
       return child_iterator_range(children.begin(), children.end());
@@ -46,14 +47,14 @@ class BlockContainer
 };
 
 template<class BlockType>
-class ChildBlock : public schnek::Block
+class ChildBlock : public schnek::Block, public boost::enable_shared_from_this<ChildBlock<BlockType> >
 {
   protected:
     void preInit()
     {
       schnek::Block *pParent = getParent().get();
-      BlockContainer<BlockType>* parent = dynamic_cast<BlockContainer<BlockType> *>(getParent().get());
-      BlockType *self = dynamic_cast<BlockType *>(this);
+      BlockContainer<BlockType>* parent = dynamic_cast<BlockContainer<BlockType> *>(pParent);
+      boost::shared_ptr<BlockType> self = boost::dynamic_pointer_cast<BlockType>(this->shared_from_this());
       if (parent && self) parent->addChild(self);
     }
 };
