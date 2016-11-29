@@ -1,7 +1,7 @@
 /*
- * example_blocks_hieararchy.cpp
+ * example_blocks_storage.cpp
  *
- *  Created on: 11 Aug 2014
+ *  Created on: 28 Nov 2016
  *      Author: Holger Schmitz
  *       Email: holger@notjustphysics.com
  */

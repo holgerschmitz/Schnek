@@ -1,7 +1,7 @@
 /*
- * example_blocks_hieararchy.cpp
+ * example_blocks_childblocks.cpp
  *
- *  Created on: 11 Aug 2014
+ *  Created on: 21 Nov 2016
  *      Author: Holger Schmitz
  *       Email: holger@notjustphysics.com
  */
