@@ -71,7 +71,7 @@ class Block : public Unique<Block>
     std::string name;
 
     template<typename T>
-    bool getData(std::string key, T &data, bool upward);
+    bool getData(std::string key, T* &data, bool upward);
 
     void registerHierarchy();
     void preInitHierarchy();
@@ -119,6 +119,9 @@ class Block : public Unique<Block>
     void addData(std::string key, T &data);
 
     template<typename T>
+    void retrieveData(std::string key, T* &data);
+
+    template<typename T>
     void retrieveData(std::string key, T &data);
 
     void initAll();
@@ -130,7 +133,7 @@ class Block : public Unique<Block>
 // template functions
 
 template<typename T>
-bool Block::getData(std::string key, T &data, bool upward)
+bool Block::getData(std::string key, T* &data, bool upward)
 {
   if (BlockData<T>::instance().exists(this->getId(), key))
   {
@@ -173,9 +176,23 @@ void Block::addData(std::string key, T &data)
 }
 
 template<typename T>
+void Block::retrieveData(std::string key, T* &data)
+{
+  T **datap;
+  if (getData(key, datap, true)) {
+    data = *datap;
+  }
+  else if (!getData(key, data, true))
+    throw VariableNotFoundException("Could not find Block variable "+key);
+}
+
+template<typename T>
 void Block::retrieveData(std::string key, T &data)
 {
-  if (!getData(key, data, true)) throw VariableNotFoundException("Could not find Block variable "+key);
+  T *datap;
+  if (!getData(key, datap, true))
+    throw VariableNotFoundException("Could not find Block variable "+key);
+  data = *datap;
 }
 
 

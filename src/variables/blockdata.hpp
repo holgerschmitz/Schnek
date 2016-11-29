@@ -50,7 +50,7 @@ class BlockData : public Singleton<BlockData<T> >
 
   public:
     void add(long blockId, std::string key, T &data);
-    T &get(long blockId, std::string key);
+    T* get(long blockId, std::string key);
     bool exists(long blockId, std::string key);
 };
 
@@ -69,7 +69,7 @@ void BlockData<T>::add(long blockId, std::string key, T &data)
 }
 
 template<typename T>
-T &BlockData<T>::get(long blockId, std::string key)
+T* BlockData<T>::get(long blockId, std::string key)
 {
   SCHNEK_TRACE_LOG(2, "BlockData<T>::get(" <<blockId << ", " << key << ")")
 
@@ -78,7 +78,7 @@ T &BlockData<T>::get(long blockId, std::string key)
   if (0 == blockDataMap[blockId]->count(key))
     throw VariableNotFoundException("Could not find Block variable "+key);
 
-  return *(*blockDataMap[blockId])[key];
+  return (*blockDataMap[blockId])[key];
 }
 
 template<typename T>

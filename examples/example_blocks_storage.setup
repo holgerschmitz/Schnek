@@ -1,0 +1,50 @@
+dt = 0.01;
+totalTime = 100;
+
+Particle A {
+  posx = 0.0;
+  posy = 0.2;
+  posz = 0;
+  velocityx = 0;
+  velocityy = 0;
+  velocityz = 0;
+  mass = 10;
+}
+
+Particle B {
+  posx = 1.0;
+  posy = 0.2;
+  posz = 0;
+  velocityx = 0;
+  velocityy = 0;
+  velocityz = 0;
+  mass = 5;
+}
+
+LinearForce linear {
+  centerx = 1;
+  centery = 0;
+  centerz = 0;
+  k = 0.5;
+}
+
+NonLinearForce right {
+  centerx = 0;
+  centery = 1;
+  centerz = 0;
+  k = 2;
+  d = 0.1;
+  
+}
+
+NonLinearForce up {
+  centerx = 1;
+  centery = 0;
+  centerz = 1;
+  k = 1;
+  d = 0.1;
+}
+
+WriteVector {
+  value = "B.velocity";
+}
