@@ -1,0 +1,11 @@
+Particle A { 
+  Nested N1 { }
+}
+
+Force B { }
+
+Force C { }
+
+Particle D { 
+  Nested N2 { }
+}

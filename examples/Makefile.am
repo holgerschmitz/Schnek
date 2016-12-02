@@ -41,6 +41,7 @@ EXTRA_PROGRAMS = \
   example_setup_updater_cpc \
 	example_blocks_childblocks \
 	example_blocks_hierarchy \
+	example_blocks_lifecycle \
 	example_blocks_storage \
   example_literature_cpc \
 	example_range \
@@ -106,6 +107,9 @@ example_blocks_childblocks_LDADD = -L../src -lschnek
 example_blocks_hierarchy_SOURCES = example_blocks_hierarchy.cpp
 example_blocks_hierarchy_LDADD = -L../src -lschnek
 
+example_blocks_lifecycle_SOURCES = example_blocks_lifecycle.cpp
+example_blocks_lifecycle_LDADD = -L../src -lschnek
+
 example_blocks_storage_SOURCES = example_blocks_storage.cpp
 example_blocks_storage_LDADD = -L../src -lschnek
 
@@ -155,6 +159,7 @@ SCHNEK_EXAMPLES_OBJ = \
   example_setup_updater_cpc$(EXEEXT) \
 	example_blocks_childblocks$(EXEEXT) \
 	example_blocks_hierarchy$(EXEEXT) \
+	example_blocks_lifecycle$(EXEEXT) \
 	example_blocks_storage$(EXEEXT) \
   example_literature_cpc$(EXEEXT) \
 	example_range$(EXEEXT) \

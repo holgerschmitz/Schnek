@@ -113,6 +113,7 @@ EXTRA_PROGRAMS = example_grids_basics$(EXEEXT) \
 	example_setup_updater_cpc$(EXEEXT) \
 	example_blocks_childblocks$(EXEEXT) \
 	example_blocks_hierarchy$(EXEEXT) \
+	example_blocks_lifecycle$(EXEEXT) \
 	example_blocks_storage$(EXEEXT) \
 	example_literature_cpc$(EXEEXT) example_range$(EXEEXT) \
 	example_range_cpc$(EXEEXT) example_subgrid_cpc$(EXEEXT) \
@@ -160,6 +161,11 @@ am_example_blocks_hierarchy_OBJECTS =  \
 example_blocks_hierarchy_OBJECTS =  \
 	$(am_example_blocks_hierarchy_OBJECTS)
 example_blocks_hierarchy_DEPENDENCIES =
+am_example_blocks_lifecycle_OBJECTS =  \
+	example_blocks_lifecycle.$(OBJEXT)
+example_blocks_lifecycle_OBJECTS =  \
+	$(am_example_blocks_lifecycle_OBJECTS)
+example_blocks_lifecycle_DEPENDENCIES =
 am_example_blocks_storage_OBJECTS = example_blocks_storage.$(OBJEXT)
 example_blocks_storage_OBJECTS = $(am_example_blocks_storage_OBJECTS)
 example_blocks_storage_DEPENDENCIES =
@@ -277,6 +283,7 @@ SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_array_functions_SOURCES) \
 	$(example_blocks_childblocks_SOURCES) \
 	$(example_blocks_hierarchy_SOURCES) \
+	$(example_blocks_lifecycle_SOURCES) \
 	$(example_blocks_storage_SOURCES) $(example_boundary_SOURCES) \
 	$(example_fields_basics_SOURCES) $(example_fields_cpc_SOURCES) \
 	$(example_grids_basics_SOURCES) $(example_grids_cpc_SOURCES) \
@@ -298,6 +305,7 @@ DIST_SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_array_functions_SOURCES) \
 	$(example_blocks_childblocks_SOURCES) \
 	$(example_blocks_hierarchy_SOURCES) \
+	$(example_blocks_lifecycle_SOURCES) \
 	$(example_blocks_storage_SOURCES) $(example_boundary_SOURCES) \
 	$(example_fields_basics_SOURCES) $(example_fields_cpc_SOURCES) \
 	$(example_grids_basics_SOURCES) $(example_grids_cpc_SOURCES) \
@@ -505,6 +513,8 @@ example_blocks_childblocks_SOURCES = example_blocks_childblocks.cpp
 example_blocks_childblocks_LDADD = -L../src -lschnek
 example_blocks_hierarchy_SOURCES = example_blocks_hierarchy.cpp
 example_blocks_hierarchy_LDADD = -L../src -lschnek
+example_blocks_lifecycle_SOURCES = example_blocks_lifecycle.cpp
+example_blocks_lifecycle_LDADD = -L../src -lschnek
 example_blocks_storage_SOURCES = example_blocks_storage.cpp
 example_blocks_storage_LDADD = -L../src -lschnek
 example_literature_cpc_SOURCES = example_literature_cpc.cpp
@@ -544,6 +554,7 @@ SCHNEK_EXAMPLES_OBJ = \
   example_setup_updater_cpc$(EXEEXT) \
 	example_blocks_childblocks$(EXEEXT) \
 	example_blocks_hierarchy$(EXEEXT) \
+	example_blocks_lifecycle$(EXEEXT) \
 	example_blocks_storage$(EXEEXT) \
   example_literature_cpc$(EXEEXT) \
 	example_range$(EXEEXT) \
@@ -609,6 +620,10 @@ example_blocks_childblocks$(EXEEXT): $(example_blocks_childblocks_OBJECTS) $(exa
 example_blocks_hierarchy$(EXEEXT): $(example_blocks_hierarchy_OBJECTS) $(example_blocks_hierarchy_DEPENDENCIES) $(EXTRA_example_blocks_hierarchy_DEPENDENCIES) 
 	@rm -f example_blocks_hierarchy$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(example_blocks_hierarchy_OBJECTS) $(example_blocks_hierarchy_LDADD) $(LIBS)
+
+example_blocks_lifecycle$(EXEEXT): $(example_blocks_lifecycle_OBJECTS) $(example_blocks_lifecycle_DEPENDENCIES) $(EXTRA_example_blocks_lifecycle_DEPENDENCIES) 
+	@rm -f example_blocks_lifecycle$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(example_blocks_lifecycle_OBJECTS) $(example_blocks_lifecycle_LDADD) $(LIBS)
 
 example_blocks_storage$(EXEEXT): $(example_blocks_storage_OBJECTS) $(example_blocks_storage_DEPENDENCIES) $(EXTRA_example_blocks_storage_DEPENDENCIES) 
 	@rm -f example_blocks_storage$(EXEEXT)
@@ -713,6 +728,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_array_functions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_blocks_childblocks.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_blocks_hierarchy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_blocks_lifecycle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_blocks_storage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_boundary.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_fields_basics.Po@am__quote@
