@@ -151,6 +151,7 @@ void DeltaTimeDiagnostic::initParameters(BlockParameters &blockPars)
 {
   DiagnosticInterface::initParameters(blockPars);
   blockPars.addParameter("deltaTime", &deltaTime, 1.0);
+  blockPars.addParameter("delay", &nextOutput, 0.0);
 }
 
 DiagnosticManager::DiagnosticManager() :

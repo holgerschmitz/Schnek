@@ -101,7 +101,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 EXTRA_PROGRAMS = example_grids_basics$(EXEEXT) \
-	example_grids_cpc$(EXEEXT) example_array$(EXEEXT) \
+	example_grids_cpc$(EXEEXT) example_grids_subgrid$(EXEEXT) \
+	example_grids_transform$(EXEEXT) example_array$(EXEEXT) \
 	example_array_functions$(EXEEXT) example_array_cpc$(EXEEXT) \
 	example_setup_first$(EXEEXT) example_setup_errors$(EXEEXT) \
 	example_setup_defaults$(EXEEXT) \
@@ -184,6 +185,14 @@ example_grids_basics_DEPENDENCIES =
 am_example_grids_cpc_OBJECTS = example_grids_cpc.$(OBJEXT)
 example_grids_cpc_OBJECTS = $(am_example_grids_cpc_OBJECTS)
 example_grids_cpc_DEPENDENCIES =
+am_example_grids_subgrid_OBJECTS = example_grids_subgrid.$(OBJEXT)
+example_grids_subgrid_OBJECTS = $(am_example_grids_subgrid_OBJECTS)
+example_grids_subgrid_DEPENDENCIES =
+am_example_grids_transform_OBJECTS =  \
+	example_grids_transform.$(OBJEXT)
+example_grids_transform_OBJECTS =  \
+	$(am_example_grids_transform_OBJECTS)
+example_grids_transform_DEPENDENCIES =
 am_example_gridtransform_cpc_OBJECTS =  \
 	example_gridtransform_cpc.$(OBJEXT)
 example_gridtransform_cpc_OBJECTS =  \
@@ -287,6 +296,8 @@ SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_blocks_storage_SOURCES) $(example_boundary_SOURCES) \
 	$(example_fields_basics_SOURCES) $(example_fields_cpc_SOURCES) \
 	$(example_grids_basics_SOURCES) $(example_grids_cpc_SOURCES) \
+	$(example_grids_subgrid_SOURCES) \
+	$(example_grids_transform_SOURCES) \
 	$(example_gridtransform_cpc_SOURCES) \
 	$(example_literature_cpc_SOURCES) \
 	$(example_mpisub_cpc_SOURCES) $(example_range_SOURCES) \
@@ -309,6 +320,8 @@ DIST_SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_blocks_storage_SOURCES) $(example_boundary_SOURCES) \
 	$(example_fields_basics_SOURCES) $(example_fields_cpc_SOURCES) \
 	$(example_grids_basics_SOURCES) $(example_grids_cpc_SOURCES) \
+	$(example_grids_subgrid_SOURCES) \
+	$(example_grids_transform_SOURCES) \
 	$(example_gridtransform_cpc_SOURCES) \
 	$(example_literature_cpc_SOURCES) \
 	$(example_mpisub_cpc_SOURCES) $(example_range_SOURCES) \
@@ -481,6 +494,10 @@ example_grids_basics_SOURCES = example_grids_basics.cpp
 example_grids_basics_LDADD = -L../src -lschnek
 example_grids_cpc_SOURCES = example_grids_cpc.cpp
 example_grids_cpc_LDADD = -L../src -lschnek
+example_grids_subgrid_SOURCES = example_grids_subgrid.cpp
+example_grids_subgrid_LDADD = -L../src -lschnek
+example_grids_transform_SOURCES = example_grids_transform.cpp
+example_grids_transform_LDADD = -L../src -lschnek
 example_array_SOURCES = example_array.cpp
 example_array_LDADD = -L../src -lschnek
 example_array_functions_SOURCES = example_array_functions.cpp
@@ -538,6 +555,8 @@ example_boundary_LDADD = -L../src -lschnek
 SCHNEK_EXAMPLES_OBJ = \
   example_grids_basics$(EXEEXT) \
   example_grids_cpc$(EXEEXT) \
+  example_grids_subgrid$(EXEEXT) \
+  example_grids_transform$(EXEEXT) \
 	example_array$(EXEEXT) \
   example_array_functions$(EXEEXT) \
   example_array_cpc$(EXEEXT) \
@@ -649,6 +668,14 @@ example_grids_cpc$(EXEEXT): $(example_grids_cpc_OBJECTS) $(example_grids_cpc_DEP
 	@rm -f example_grids_cpc$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(example_grids_cpc_OBJECTS) $(example_grids_cpc_LDADD) $(LIBS)
 
+example_grids_subgrid$(EXEEXT): $(example_grids_subgrid_OBJECTS) $(example_grids_subgrid_DEPENDENCIES) $(EXTRA_example_grids_subgrid_DEPENDENCIES) 
+	@rm -f example_grids_subgrid$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(example_grids_subgrid_OBJECTS) $(example_grids_subgrid_LDADD) $(LIBS)
+
+example_grids_transform$(EXEEXT): $(example_grids_transform_OBJECTS) $(example_grids_transform_DEPENDENCIES) $(EXTRA_example_grids_transform_DEPENDENCIES) 
+	@rm -f example_grids_transform$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(example_grids_transform_OBJECTS) $(example_grids_transform_LDADD) $(LIBS)
+
 example_gridtransform_cpc$(EXEEXT): $(example_gridtransform_cpc_OBJECTS) $(example_gridtransform_cpc_DEPENDENCIES) $(EXTRA_example_gridtransform_cpc_DEPENDENCIES) 
 	@rm -f example_gridtransform_cpc$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(example_gridtransform_cpc_OBJECTS) $(example_gridtransform_cpc_LDADD) $(LIBS)
@@ -735,6 +762,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_fields_cpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_grids_basics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_grids_cpc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_grids_subgrid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_grids_transform.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_gridtransform_cpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_literature_cpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_mpisub_cpc.Po@am__quote@

@@ -26,7 +26,6 @@
 
 namespace schnek {
 
-
 template<class GridType>
 SerialSubdivision<GridType>::SerialSubdivision()
 {}

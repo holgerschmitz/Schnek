@@ -62,7 +62,7 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
     low[i]  -= ghostCells;
     high[i] += ghostCells - 1;
   }
-  this->resize(low, high);
+  this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(low, high);
 }
 
 template<
@@ -96,7 +96,7 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
 //  for (int i=0; i<rank; ++i)
 //    std::cerr << low[i] << " " << high[i] << std::endl;
 
-  this->resize(low, high);
+  this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(low, high);
 }
 
 
@@ -130,6 +130,66 @@ inline void Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int d
     index = int(floor(xnorm));
     offset = xnorm - index;
 }
+
+template<
+  typename T,
+  int rank,
+  template<int> class CheckingPolicy,
+  template<typename, int> class StoragePolicy
+>
+template<
+  template<int> class ArrayCheckingPolicy,
+  template<int> class RangeCheckingPolicy,
+  template<int> class StaggerCheckingPolicy
+>
+void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
+            const Array<int,rank,ArrayCheckingPolicy> &size_,
+            const Range<double, rank,RangeCheckingPolicy> &range_,
+            const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_)
+{
+  range = range_;
+  stagger = stagger_;
+  ghostCells = ghostCells_;
+  IndexType low(IndexType::Zero());
+  IndexType high(size_);
+  for (int i=0; i<rank; ++i)
+  {
+    low[i]  -= ghostCells;
+    high[i] += ghostCells - 1;
+  }
+  this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(low, high);
+}
+
+template<
+  typename T,
+  int rank,
+  template<int> class CheckingPolicy,
+  template<typename, int> class StoragePolicy
+>
+template<
+  template<int> class ArrayCheckingPolicy,
+  template<int> class RangeCheckingPolicy,
+  template<int> class StaggerCheckingPolicy>
+void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
+            const Array<int,rank,ArrayCheckingPolicy> &low_,
+            const Array<int,rank,ArrayCheckingPolicy> &high_,
+            const Range<double, rank,RangeCheckingPolicy> &range_,
+            const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_)
+{
+  range = range_;
+  stagger = stagger_;
+  ghostCells = ghostCells_;
+  IndexType low(low_);
+  IndexType high(high_);
+  for (int i=0; i<rank; ++i)
+  {
+    low[i]  -= ghostCells;
+    high[i] += ghostCells;
+  }
+
+  this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(low, high);
+}
+
 
 template<
   typename T,
