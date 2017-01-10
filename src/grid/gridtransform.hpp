@@ -78,7 +78,8 @@ class GridTransformStorage {
 
     T&  get(const IndexType &index)
     {
-      static T result = transformation(baseGrid->get(index));
+      static T result;
+      result = transformation(baseGrid->get(index));
       return result;
     }
 
@@ -125,7 +126,7 @@ class GridTransformStorage {
 template<
   class BaseGrid,
   typename Transformation,
-  template<int> class CheckingPolicy = GridAssertCheck
+  template<int> class CheckingPolicy = GridNoArgCheck
 >
 class GridTransform
   : public GridBase

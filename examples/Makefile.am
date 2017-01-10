@@ -25,6 +25,8 @@
 EXTRA_PROGRAMS = \
   example_grids_basics \
   example_grids_cpc \
+  example_grids_subgrid \
+  example_grids_transform \
 	example_array \
   example_array_functions \
   example_array_cpc \
@@ -57,6 +59,12 @@ example_grids_basics_LDADD = -L../src -lschnek
 
 example_grids_cpc_SOURCES = example_grids_cpc.cpp
 example_grids_cpc_LDADD = -L../src -lschnek
+
+example_grids_subgrid_SOURCES = example_grids_subgrid.cpp
+example_grids_subgrid_LDADD = -L../src -lschnek
+
+example_grids_transform_SOURCES = example_grids_transform.cpp
+example_grids_transform_LDADD = -L../src -lschnek
 
 example_array_SOURCES = example_array.cpp
 example_array_LDADD = -L../src -lschnek
@@ -139,6 +147,8 @@ example_boundary_LDADD = -L../src -lschnek
 SCHNEK_EXAMPLES_OBJ = \
   example_grids_basics$(EXEEXT) \
   example_grids_cpc$(EXEEXT) \
+  example_grids_subgrid$(EXEEXT) \
+  example_grids_transform$(EXEEXT) \
 	example_array$(EXEEXT) \
   example_array_functions$(EXEEXT) \
   example_array_cpc$(EXEEXT) \

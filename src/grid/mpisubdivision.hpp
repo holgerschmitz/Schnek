@@ -81,6 +81,7 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
     /// The size of the scalar fields when reducing
     int scalarSize;
 
+    DomainType globalDomain;
   public:
     using DomainSubdivision<GridType>::init;
     using DomainSubdivision<GridType>::exchange;
@@ -92,6 +93,9 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
 
     ///initialize
     void init(const LimitType &low, const LimitType &high, int delta);
+
+    /// Return the global domain size excluding ghost cells
+    const DomainType &getGlobalDomain() const { return globalDomain; }
 
     /** @brief Exchanges the boundaries in direction specified by dim.
      *

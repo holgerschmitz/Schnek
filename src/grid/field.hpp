@@ -35,7 +35,7 @@ namespace schnek {
 template<
   typename T,
   int rank,
-  template<int> class CheckingPolicy = GridAssertCheck,
+  template<int> class CheckingPolicy = GridNoArgCheck,
   template<typename, int> class StoragePolicy = SingleArrayGridStorage
 >
 class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
@@ -100,7 +100,10 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     /// Calculates the position of a grid point
     double indexToPosition(int dim, int index);
 
+    /// Get all three components of the grid stagger
     Stagger& getStagger() { return stagger; }
+
+    /// Get a single component of the grid stagger
     bool getStagger(int i) { return stagger[i]; }
 
     /** assign a value to the field*/
@@ -146,6 +149,27 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
       BaseType::operator=(grid);
       return *this;
     }
+
+    /** Constructs a grid with a given number of cells in each direction
+     *
+     */
+    template<
+      template<int> class ArrayCheckingPolicy,
+      template<int> class RangeCheckingPolicy,
+      template<int> class StaggerCheckingPolicy>
+    void resize(const Array<int,rank,ArrayCheckingPolicy> &size,
+                const Range<double, rank,RangeCheckingPolicy> &range_,
+                const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
+
+    template<
+      template<int> class ArrayCheckingPolicy,
+      template<int> class RangeCheckingPolicy,
+      template<int> class StaggerCheckingPolicy>
+    void resize(const Array<int,rank,ArrayCheckingPolicy> &low_,
+                const Array<int,rank,ArrayCheckingPolicy> &high_,
+                const Range<double, rank,RangeCheckingPolicy> &range_,
+                const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
+
 };
 
 } //namespace

@@ -113,6 +113,9 @@ class DomainSubdivision {
       init(LimitType(0), sizem, delta);
     }
 
+    /// Return the global domain size excluding ghost cells
+    virtual const DomainType &getGlobalDomain() const = 0;
+
     /// Return the local domain size
     const DomainType &getDomain() const { return bounds->getDomain(); }
     /// Return the minimum of the local domain
@@ -126,6 +129,34 @@ class DomainSubdivision {
     LimitType getInnerLo() const {return bounds->getInnerDomain().getLo();}
     /// Return the maximum of the local inner domain
     LimitType getInnerHi() const {return bounds->getInnerDomain().getHi();}
+
+
+    /// Return the local inner physical extent
+    template<typename T, template<int> class CheckingPolicy>
+    Range<T, Rank, CheckingPolicy> getInnerExtent(const Range<T, Rank, CheckingPolicy> &globalExtent) const
+    {
+      const DomainType &globalGridSize = this->getGlobalDomain();
+      typename Range<T, Rank, CheckingPolicy>::LimitType localDomainMin, localDomainMax;
+      for (int i=0; i<Rank; ++i)
+      {
+        const T &lo = globalExtent.getLo()[i];
+        T dx = (globalExtent.getHi()[i]-lo) / (T)(globalGridSize.getHi()[i] - globalGridSize.getLo()[i] + 1);
+        localDomainMin[i] = lo + this->getInnerLo()[i]*dx;
+        localDomainMax[i] = lo + this->getInnerHi()[i]*dx;
+      }
+      return Range<T, Rank, CheckingPolicy>(localDomainMin,localDomainMax);
+    }
+
+    /** Return the local inner physical extent
+     *
+     * Convenience method. This assumes the lower bound of the global extent is 0.0
+     */
+    template<typename T, template<int> class CheckingPolicy>
+    Range<T, Rank, CheckingPolicy> getInnerExtent(const Array<T, Rank, CheckingPolicy> &globalExtent) const
+    {
+      return this->getInnerExtent(
+          Range<T, Rank, CheckingPolicy>(Array<T, Rank, CheckingPolicy>(0), globalExtent));
+    }
 
     /** @brief Exchange the boundaries of a field function
      *  in the direction given by dim.
@@ -213,7 +244,6 @@ class SerialSubdivision : public DomainSubdivision<GridType>
 
     /// The positions of the upper corner of the local piece of the grid
     LimitType High;
-
   public:
     using DomainSubdivision<GridType>::init;
     using DomainSubdivision<GridType>::exchange;
@@ -229,6 +259,9 @@ class SerialSubdivision : public DomainSubdivision<GridType>
      *  by the getDomain, getHi, and getLo methods.
      */
     void init(const LimitType &low, const LimitType &high, int delta);
+
+    /// Return the global domain size excluding ghost cells
+    const DomainType &getGlobalDomain() const { return this->bounds->getDomain(); }
 
     /** @brief Exchanges the boundaries in direction specified by dim.
      *
