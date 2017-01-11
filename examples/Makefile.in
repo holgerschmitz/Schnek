@@ -115,12 +115,12 @@ EXTRA_PROGRAMS = example_grids_basics$(EXEEXT) \
 	example_blocks_childblocks$(EXEEXT) \
 	example_blocks_hierarchy$(EXEEXT) \
 	example_blocks_lifecycle$(EXEEXT) \
-	example_blocks_storage$(EXEEXT) \
-	example_literature_cpc$(EXEEXT) example_range$(EXEEXT) \
-	example_range_cpc$(EXEEXT) example_subgrid_cpc$(EXEEXT) \
+	example_blocks_storage$(EXEEXT) example_literature$(EXEEXT) \
+	example_range$(EXEEXT) example_range_cpc$(EXEEXT) \
+	example_subgrid_cpc$(EXEEXT) \
 	example_gridtransform_cpc$(EXEEXT) example_fields_cpc$(EXEEXT) \
 	example_fields_basics$(EXEEXT) example_mpisub_cpc$(EXEEXT) \
-	example_boundary$(EXEEXT)
+	example_mpisub$(EXEEXT) example_boundary$(EXEEXT)
 subdir = examples
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/mkinstalldirs $(top_srcdir)/depcomp
@@ -198,9 +198,12 @@ am_example_gridtransform_cpc_OBJECTS =  \
 example_gridtransform_cpc_OBJECTS =  \
 	$(am_example_gridtransform_cpc_OBJECTS)
 example_gridtransform_cpc_DEPENDENCIES =
-am_example_literature_cpc_OBJECTS = example_literature_cpc.$(OBJEXT)
-example_literature_cpc_OBJECTS = $(am_example_literature_cpc_OBJECTS)
-example_literature_cpc_DEPENDENCIES =
+am_example_literature_OBJECTS = example_literature.$(OBJEXT)
+example_literature_OBJECTS = $(am_example_literature_OBJECTS)
+example_literature_DEPENDENCIES =
+am_example_mpisub_OBJECTS = example_mpisub.$(OBJEXT)
+example_mpisub_OBJECTS = $(am_example_mpisub_OBJECTS)
+example_mpisub_DEPENDENCIES =
 am_example_mpisub_cpc_OBJECTS = example_mpisub_cpc.$(OBJEXT)
 example_mpisub_cpc_OBJECTS = $(am_example_mpisub_cpc_OBJECTS)
 example_mpisub_cpc_DEPENDENCIES =
@@ -299,7 +302,7 @@ SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_grids_subgrid_SOURCES) \
 	$(example_grids_transform_SOURCES) \
 	$(example_gridtransform_cpc_SOURCES) \
-	$(example_literature_cpc_SOURCES) \
+	$(example_literature_SOURCES) $(example_mpisub_SOURCES) \
 	$(example_mpisub_cpc_SOURCES) $(example_range_SOURCES) \
 	$(example_range_cpc_SOURCES) $(example_setup_array_SOURCES) \
 	$(example_setup_blocks_cpc_SOURCES) \
@@ -323,7 +326,7 @@ DIST_SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_grids_subgrid_SOURCES) \
 	$(example_grids_transform_SOURCES) \
 	$(example_gridtransform_cpc_SOURCES) \
-	$(example_literature_cpc_SOURCES) \
+	$(example_literature_SOURCES) $(example_mpisub_SOURCES) \
 	$(example_mpisub_cpc_SOURCES) $(example_range_SOURCES) \
 	$(example_range_cpc_SOURCES) $(example_setup_array_SOURCES) \
 	$(example_setup_blocks_cpc_SOURCES) \
@@ -534,8 +537,8 @@ example_blocks_lifecycle_SOURCES = example_blocks_lifecycle.cpp
 example_blocks_lifecycle_LDADD = -L../src -lschnek
 example_blocks_storage_SOURCES = example_blocks_storage.cpp
 example_blocks_storage_LDADD = -L../src -lschnek
-example_literature_cpc_SOURCES = example_literature_cpc.cpp
-example_literature_cpc_LDADD = -L../src -lschnek
+example_literature_SOURCES = example_literature.cpp
+example_literature_LDADD = -L../src -lschnek
 example_range_SOURCES = example_range.cpp
 example_range_LDADD = -L../src -lschnek
 example_range_cpc_SOURCES = example_range_cpc.cpp
@@ -550,6 +553,8 @@ example_fields_basics_SOURCES = example_fields_basics.cpp
 example_fields_basics_LDADD = -L../src -lschnek
 example_mpisub_cpc_SOURCES = example_mpisub_cpc.cpp
 example_mpisub_cpc_LDADD = -L../src -lschnek
+example_mpisub_SOURCES = example_mpisub.cpp
+example_mpisub_LDADD = -L../src -lschnek
 example_boundary_SOURCES = example_boundary.cpp
 example_boundary_LDADD = -L../src -lschnek
 SCHNEK_EXAMPLES_OBJ = \
@@ -575,7 +580,7 @@ SCHNEK_EXAMPLES_OBJ = \
 	example_blocks_hierarchy$(EXEEXT) \
 	example_blocks_lifecycle$(EXEEXT) \
 	example_blocks_storage$(EXEEXT) \
-  example_literature_cpc$(EXEEXT) \
+  example_literature$(EXEEXT) \
 	example_range$(EXEEXT) \
   example_range_cpc$(EXEEXT) \
   example_subgrid_cpc$(EXEEXT) \
@@ -583,6 +588,7 @@ SCHNEK_EXAMPLES_OBJ = \
   example_fields_cpc$(EXEEXT) \
   example_fields_basics$(EXEEXT) \
   example_mpisub_cpc$(EXEEXT) \
+  example_mpisub$(EXEEXT) \
 	example_boundary$(EXEEXT)
 
 all: all-am
@@ -680,9 +686,13 @@ example_gridtransform_cpc$(EXEEXT): $(example_gridtransform_cpc_OBJECTS) $(examp
 	@rm -f example_gridtransform_cpc$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(example_gridtransform_cpc_OBJECTS) $(example_gridtransform_cpc_LDADD) $(LIBS)
 
-example_literature_cpc$(EXEEXT): $(example_literature_cpc_OBJECTS) $(example_literature_cpc_DEPENDENCIES) $(EXTRA_example_literature_cpc_DEPENDENCIES) 
-	@rm -f example_literature_cpc$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(example_literature_cpc_OBJECTS) $(example_literature_cpc_LDADD) $(LIBS)
+example_literature$(EXEEXT): $(example_literature_OBJECTS) $(example_literature_DEPENDENCIES) $(EXTRA_example_literature_DEPENDENCIES) 
+	@rm -f example_literature$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(example_literature_OBJECTS) $(example_literature_LDADD) $(LIBS)
+
+example_mpisub$(EXEEXT): $(example_mpisub_OBJECTS) $(example_mpisub_DEPENDENCIES) $(EXTRA_example_mpisub_DEPENDENCIES) 
+	@rm -f example_mpisub$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(example_mpisub_OBJECTS) $(example_mpisub_LDADD) $(LIBS)
 
 example_mpisub_cpc$(EXEEXT): $(example_mpisub_cpc_OBJECTS) $(example_mpisub_cpc_DEPENDENCIES) $(EXTRA_example_mpisub_cpc_DEPENDENCIES) 
 	@rm -f example_mpisub_cpc$(EXEEXT)
@@ -765,7 +775,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_grids_subgrid.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_grids_transform.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_gridtransform_cpc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_literature_cpc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_literature.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_mpisub.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_mpisub_cpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_range.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_range_cpc.Po@am__quote@

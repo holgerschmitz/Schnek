@@ -45,7 +45,7 @@ EXTRA_PROGRAMS = \
 	example_blocks_hierarchy \
 	example_blocks_lifecycle \
 	example_blocks_storage \
-  example_literature_cpc \
+  example_literature \
 	example_range \
   example_range_cpc \
   example_subgrid_cpc \
@@ -53,6 +53,7 @@ EXTRA_PROGRAMS = \
   example_fields_cpc \
   example_fields_basics \
   example_mpisub_cpc \
+  example_mpisub \
 	example_boundary
 
 example_grids_basics_SOURCES = example_grids_basics.cpp
@@ -121,8 +122,8 @@ example_blocks_lifecycle_LDADD = -L../src -lschnek
 example_blocks_storage_SOURCES = example_blocks_storage.cpp
 example_blocks_storage_LDADD = -L../src -lschnek
 
-example_literature_cpc_SOURCES = example_literature_cpc.cpp
-example_literature_cpc_LDADD = -L../src -lschnek
+example_literature_SOURCES = example_literature.cpp
+example_literature_LDADD = -L../src -lschnek
 
 example_range_SOURCES = example_range.cpp
 example_range_LDADD = -L../src -lschnek
@@ -144,6 +145,9 @@ example_fields_basics_LDADD = -L../src -lschnek
 
 example_mpisub_cpc_SOURCES = example_mpisub_cpc.cpp
 example_mpisub_cpc_LDADD = -L../src -lschnek
+
+example_mpisub_SOURCES = example_mpisub.cpp
+example_mpisub_LDADD = -L../src -lschnek
 
 example_boundary_SOURCES = example_boundary.cpp
 example_boundary_LDADD = -L../src -lschnek
@@ -171,7 +175,7 @@ SCHNEK_EXAMPLES_OBJ = \
 	example_blocks_hierarchy$(EXEEXT) \
 	example_blocks_lifecycle$(EXEEXT) \
 	example_blocks_storage$(EXEEXT) \
-  example_literature_cpc$(EXEEXT) \
+  example_literature$(EXEEXT) \
 	example_range$(EXEEXT) \
   example_range_cpc$(EXEEXT) \
   example_subgrid_cpc$(EXEEXT) \
@@ -179,6 +183,7 @@ SCHNEK_EXAMPLES_OBJ = \
   example_fields_cpc$(EXEEXT) \
   example_fields_basics$(EXEEXT) \
   example_mpisub_cpc$(EXEEXT) \
+  example_mpisub$(EXEEXT) \
 	example_boundary$(EXEEXT)
 
 examples: $(SCHNEK_EXAMPLES_OBJ)
