@@ -52,6 +52,7 @@ EXTRA_PROGRAMS = \
   example_gridtransform_cpc \
   example_fields_cpc \
   example_fields_basics \
+  example_diagnostic_hdf5 \
   example_mpisub_cpc \
   example_mpisub \
 	example_boundary
@@ -143,6 +144,9 @@ example_fields_cpc_LDADD = -L../src -lschnek
 example_fields_basics_SOURCES = example_fields_basics.cpp
 example_fields_basics_LDADD = -L../src -lschnek
 
+example_diagnostic_hdf5_SOURCES = example_diagnostic_hdf5.cpp
+example_diagnostic_hdf5_LDADD = -L../src -lschnek
+
 example_mpisub_cpc_SOURCES = example_mpisub_cpc.cpp
 example_mpisub_cpc_LDADD = -L../src -lschnek
 
@@ -182,6 +186,7 @@ SCHNEK_EXAMPLES_OBJ = \
   example_gridtransform_cpc$(EXEEXT) \
   example_fields_cpc$(EXEEXT) \
   example_fields_basics$(EXEEXT) \
+  example_diagnostic_hdf5$(EXEEXT) \
   example_mpisub_cpc$(EXEEXT) \
   example_mpisub$(EXEEXT) \
 	example_boundary$(EXEEXT)

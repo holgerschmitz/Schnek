@@ -30,6 +30,7 @@
 #include "../util/logger.hpp"
 #include "../util/exceptions.hpp"
 #include "../datastream.hpp"
+#include "../diagnostic/diagnostic.hpp"
 
 #undef LOGLEVEL
 #define LOGLEVEL 0
@@ -127,6 +128,9 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
   }
 
   this->bounds = typename DomainSubdivision<GridType>::pBoundaryType(new BoundaryType(Low, High, delta));
+
+  DiagnosticManager::instance().setMaster(this->master());
+  DiagnosticManager::instance().setRank(this->procnum());
 }
 
 template<class GridType>

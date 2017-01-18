@@ -43,7 +43,7 @@ void DiagnosticInterface::initParameters(BlockParameters &blockPars)
   Block::initParameters(blockPars);
 
   blockPars.addParameter("file", &fname);
-  blockPars.addParameter("append", &append);
+  blockPars.addParameter("append", &append, 0);
 }
 
 bool DiagnosticInterface::appending()

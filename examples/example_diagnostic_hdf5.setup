@@ -1,0 +1,6 @@
+
+Diagnostic Field {
+  file = "Field_#t.h5";
+  field = "field";
+  deltaTime = 0.2;
+}

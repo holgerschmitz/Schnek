@@ -119,7 +119,8 @@ EXTRA_PROGRAMS = example_grids_basics$(EXEEXT) \
 	example_range$(EXEEXT) example_range_cpc$(EXEEXT) \
 	example_subgrid_cpc$(EXEEXT) \
 	example_gridtransform_cpc$(EXEEXT) example_fields_cpc$(EXEEXT) \
-	example_fields_basics$(EXEEXT) example_mpisub_cpc$(EXEEXT) \
+	example_fields_basics$(EXEEXT) \
+	example_diagnostic_hdf5$(EXEEXT) example_mpisub_cpc$(EXEEXT) \
 	example_mpisub$(EXEEXT) example_boundary$(EXEEXT)
 subdir = examples
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
@@ -173,6 +174,11 @@ example_blocks_storage_DEPENDENCIES =
 am_example_boundary_OBJECTS = example_boundary.$(OBJEXT)
 example_boundary_OBJECTS = $(am_example_boundary_OBJECTS)
 example_boundary_DEPENDENCIES =
+am_example_diagnostic_hdf5_OBJECTS =  \
+	example_diagnostic_hdf5.$(OBJEXT)
+example_diagnostic_hdf5_OBJECTS =  \
+	$(am_example_diagnostic_hdf5_OBJECTS)
+example_diagnostic_hdf5_DEPENDENCIES =
 am_example_fields_basics_OBJECTS = example_fields_basics.$(OBJEXT)
 example_fields_basics_OBJECTS = $(am_example_fields_basics_OBJECTS)
 example_fields_basics_DEPENDENCIES =
@@ -297,6 +303,7 @@ SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_blocks_hierarchy_SOURCES) \
 	$(example_blocks_lifecycle_SOURCES) \
 	$(example_blocks_storage_SOURCES) $(example_boundary_SOURCES) \
+	$(example_diagnostic_hdf5_SOURCES) \
 	$(example_fields_basics_SOURCES) $(example_fields_cpc_SOURCES) \
 	$(example_grids_basics_SOURCES) $(example_grids_cpc_SOURCES) \
 	$(example_grids_subgrid_SOURCES) \
@@ -321,6 +328,7 @@ DIST_SOURCES = $(example_array_SOURCES) $(example_array_cpc_SOURCES) \
 	$(example_blocks_hierarchy_SOURCES) \
 	$(example_blocks_lifecycle_SOURCES) \
 	$(example_blocks_storage_SOURCES) $(example_boundary_SOURCES) \
+	$(example_diagnostic_hdf5_SOURCES) \
 	$(example_fields_basics_SOURCES) $(example_fields_cpc_SOURCES) \
 	$(example_grids_basics_SOURCES) $(example_grids_cpc_SOURCES) \
 	$(example_grids_subgrid_SOURCES) \
@@ -551,6 +559,8 @@ example_fields_cpc_SOURCES = example_fields_cpc.cpp
 example_fields_cpc_LDADD = -L../src -lschnek
 example_fields_basics_SOURCES = example_fields_basics.cpp
 example_fields_basics_LDADD = -L../src -lschnek
+example_diagnostic_hdf5_SOURCES = example_diagnostic_hdf5.cpp
+example_diagnostic_hdf5_LDADD = -L../src -lschnek
 example_mpisub_cpc_SOURCES = example_mpisub_cpc.cpp
 example_mpisub_cpc_LDADD = -L../src -lschnek
 example_mpisub_SOURCES = example_mpisub.cpp
@@ -587,6 +597,7 @@ SCHNEK_EXAMPLES_OBJ = \
   example_gridtransform_cpc$(EXEEXT) \
   example_fields_cpc$(EXEEXT) \
   example_fields_basics$(EXEEXT) \
+  example_diagnostic_hdf5$(EXEEXT) \
   example_mpisub_cpc$(EXEEXT) \
   example_mpisub$(EXEEXT) \
 	example_boundary$(EXEEXT)
@@ -657,6 +668,10 @@ example_blocks_storage$(EXEEXT): $(example_blocks_storage_OBJECTS) $(example_blo
 example_boundary$(EXEEXT): $(example_boundary_OBJECTS) $(example_boundary_DEPENDENCIES) $(EXTRA_example_boundary_DEPENDENCIES) 
 	@rm -f example_boundary$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(example_boundary_OBJECTS) $(example_boundary_LDADD) $(LIBS)
+
+example_diagnostic_hdf5$(EXEEXT): $(example_diagnostic_hdf5_OBJECTS) $(example_diagnostic_hdf5_DEPENDENCIES) $(EXTRA_example_diagnostic_hdf5_DEPENDENCIES) 
+	@rm -f example_diagnostic_hdf5$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(example_diagnostic_hdf5_OBJECTS) $(example_diagnostic_hdf5_LDADD) $(LIBS)
 
 example_fields_basics$(EXEEXT): $(example_fields_basics_OBJECTS) $(example_fields_basics_DEPENDENCIES) $(EXTRA_example_fields_basics_DEPENDENCIES) 
 	@rm -f example_fields_basics$(EXEEXT)
@@ -768,6 +783,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_blocks_lifecycle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_blocks_storage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_boundary.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_diagnostic_hdf5.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_fields_basics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_fields_cpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example_grids_basics.Po@am__quote@
