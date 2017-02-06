@@ -37,7 +37,6 @@ template<class Type, typename PointerType, class DiagnosticType>
 SimpleDiagnostic<Type, PointerType, DiagnosticType>::~SimpleDiagnostic()
 {
   this->close();
-  pow(1.0,1.0);
 }
 
 template<class Type, typename PointerType, class DiagnosticType>
