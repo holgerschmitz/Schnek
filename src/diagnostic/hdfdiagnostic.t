@@ -265,23 +265,25 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 }
 
 
-template<typename Type, typename PointerType>
-void HDFGridDiagnostic<Type, PointerType>::open(const std::string &fname)
+template<typename Type, typename PointerType, class DiagnosticType>
+void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::open(const std::string &fname)
 {
   output.open(fname.c_str());
 }
 
-template<typename Type, typename PointerType>
-void HDFGridDiagnostic<Type, PointerType>::write()
+template<typename Type, typename PointerType, class DiagnosticType>
+void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::write()
 {
   output.writeGrid(container);
 }
 
-template<typename Type, typename PointerType>
-void HDFGridDiagnostic<Type, PointerType>::close()
+template<typename Type, typename PointerType, class DiagnosticType>
+void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::close()
 {
   output.close();
 }
+
+
 
 template<typename InnerType>
 struct CopyToContainer
@@ -326,11 +328,10 @@ inline void CopyToContainer<InnerType>::copy(InnerType *field, GridContainer<Inn
   container.local_max = field->getHi();
 }
 
-
-template<typename Type, typename PointerType>
-void HDFGridDiagnostic<Type, PointerType>::init()
+template<typename Type, typename PointerType, class DiagnosticType>
+void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::init()
 {
-  SimpleDiagnostic<Type, PointerType>::init();
+  SimpleDiagnostic<Type, PointerType, DiagnosticType>::init();
 
   if (!this->isDerived())
   {
@@ -339,7 +340,6 @@ void HDFGridDiagnostic<Type, PointerType>::init()
     container.global_max = this->getGlobalMax();
   }
 }
-
 #undef LOGLEVEL
 #define LOGLEVEL 0
 

@@ -45,7 +45,7 @@ namespace schnek {
  */
 class DiagnosticInterface : public Block
 {
-  private:
+  protected:
     /// The file name into which to write
     std::string fname;
     /// Append data at every write to the same file?
@@ -83,6 +83,7 @@ class DeltaTimeDiagnostic : public DiagnosticInterface
     /// The physical time interval at which to write
     double deltaTime;
     double nextOutput;
+    int count;
   public:
     DeltaTimeDiagnostic();
     void execute(bool master, int rank, double physicalTime);
@@ -124,7 +125,7 @@ class DiagnosticManager : public Singleton<DiagnosticManager>
     DiagnosticManager();
 };
 
-template<class Type, typename PointerType = boost::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic >
+template<class Type, typename PointerType = boost::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic>
 class SimpleDiagnostic : public DiagnosticType
 {
   private:
