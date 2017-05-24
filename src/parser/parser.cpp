@@ -41,7 +41,7 @@ struct ParserInternalError : public SchnekException
 };
 
 #undef LOGLEVEL
-#define LOGLEVEL 0
+#define LOGLEVEL 5
 
 #include "deckgrammar.inc"
 

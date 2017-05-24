@@ -58,6 +58,7 @@ term_expression(LHS) ::= exp_expression(A) TIMES term_expression(B). { SCHNEK_TR
 term_expression(LHS) ::= exp_expression(A) DIVIDE term_expression(B). { SCHNEK_TRACE_LOG(5,"Parser: Rule 21"<< toString(A.getType()) << " " << A.getString()); LHS.assignBinaryOperator<expression::OperatorDivide>(A,B); }  // --done--
 term_expression(LHS) ::= exp_expression(RHS). { SCHNEK_TRACE_LOG(5,"Parser: Rule 22"<< toString(RHS.getType()) << " " << RHS.getString()); LHS = RHS; }  // --done--
 exp_expression(LHS) ::= atomic_expression(A) EXPONENT signed_atomic_expression(B). { SCHNEK_TRACE_LOG(5,"Parser: Rule 23"<< toString(A.getType()) << " " << A.getString()); LHS.assignBinaryOperator<expression::OperatorExponent>(A,B); }  // --done--
+exp_expression(LHS) ::= atomic_expression(RHS). { SCHNEK_TRACE_LOG(5,"Parser: Rule 23b"<< toString(RHS.getType()) << " " << RHS.getString()); LHS = RHS; }  // --done--
 
 signed_atomic_expression(LHS) ::= PLUS atomic_expression(RHS). { SCHNEK_TRACE_LOG(5,"Parser: Rule 24"<< toString(RHS.getType()) << " " << RHS.getString()); LHS = RHS; }  // --done--
 signed_atomic_expression(LHS) ::= MINUS atomic_expression(A). { SCHNEK_TRACE_LOG(5,"Parser: Rule 25"<< toString(A.getType()) << " " << A.getString()); LHS.assignUnaryOperator<expression::OperatorNeg>(A); }  // --done--

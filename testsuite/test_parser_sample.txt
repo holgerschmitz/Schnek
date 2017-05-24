@@ -5,6 +5,8 @@ string hello = "Hello";
 string greet = hello + " world!";
 int n = 7^3;
 int a = n/6;
+int m = n + a;
+int k = - n + a;
 string assembled = a + "." + n;
 greet = greet + " Again!";
 
