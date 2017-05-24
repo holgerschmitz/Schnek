@@ -77,8 +77,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-check_PROGRAMS = test_grid$(EXEEXT)
-TESTS = test_grid$(EXEEXT)
+check_PROGRAMS = test_grid$(EXEEXT) test_fixarr$(EXEEXT) \
+	test_parser$(EXEEXT)
+TESTS = test_grid$(EXEEXT) test_fixarr$(EXEEXT) test_parser$(EXEEXT)
 subdir = testsuite
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/mkinstalldirs $(top_srcdir)/depcomp \
@@ -96,13 +97,19 @@ CONFIG_HEADER = $(top_builddir)/src/config.hpp \
 	$(top_builddir)/src/schnek_config.hpp
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am_test_grid_OBJECTS = test_grid.$(OBJEXT)
-test_grid_OBJECTS = $(am_test_grid_OBJECTS)
-test_grid_LDADD = $(LDADD)
+am_test_fixarr_OBJECTS = test_fixarr.$(OBJEXT)
+test_fixarr_OBJECTS = $(am_test_fixarr_OBJECTS)
+test_fixarr_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_test_grid_OBJECTS = test_grid.$(OBJEXT)
+test_grid_OBJECTS = $(am_test_grid_OBJECTS)
+test_grid_LDADD = $(LDADD)
+am_test_parser_OBJECTS = test_parser.$(OBJEXT)
+test_parser_OBJECTS = $(am_test_parser_OBJECTS)
+test_parser_DEPENDENCIES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -137,8 +144,10 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(test_grid_SOURCES)
-DIST_SOURCES = $(test_grid_SOURCES)
+SOURCES = $(test_fixarr_SOURCES) $(test_grid_SOURCES) \
+	$(test_parser_SOURCES)
+DIST_SOURCES = $(test_fixarr_SOURCES) $(test_grid_SOURCES) \
+	$(test_parser_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -497,8 +506,6 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-#  test_fixarr \
-#  test_parser
 AM_CXXFLAGS = -I../src
 test_grid_SOURCES = test_grid.cpp
 test_fixarr_SOURCES = test_fixarr.cpp
@@ -548,9 +555,17 @@ clean-checkPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+test_fixarr$(EXEEXT): $(test_fixarr_OBJECTS) $(test_fixarr_DEPENDENCIES) $(EXTRA_test_fixarr_DEPENDENCIES) 
+	@rm -f test_fixarr$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_fixarr_OBJECTS) $(test_fixarr_LDADD) $(LIBS)
+
 test_grid$(EXEEXT): $(test_grid_OBJECTS) $(test_grid_DEPENDENCIES) $(EXTRA_test_grid_DEPENDENCIES) 
 	@rm -f test_grid$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_grid_OBJECTS) $(test_grid_LDADD) $(LIBS)
+
+test_parser$(EXEEXT): $(test_parser_OBJECTS) $(test_parser_DEPENDENCIES) $(EXTRA_test_parser_DEPENDENCIES) 
+	@rm -f test_parser$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_parser_OBJECTS) $(test_parser_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -558,7 +573,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_fixarr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_grid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_parser.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -783,6 +800,20 @@ recheck: all $(check_PROGRAMS)
 test_grid.log: test_grid$(EXEEXT)
 	@p='test_grid$(EXEEXT)'; \
 	b='test_grid'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_fixarr.log: test_fixarr$(EXEEXT)
+	@p='test_fixarr$(EXEEXT)'; \
+	b='test_fixarr'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_parser.log: test_parser$(EXEEXT)
+	@p='test_parser$(EXEEXT)'; \
+	b='test_parser'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

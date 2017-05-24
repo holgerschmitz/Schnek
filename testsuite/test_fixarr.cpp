@@ -1,6 +1,7 @@
 
 
-#include <fixedarray.h>
+#include <grid/array.hpp>
+#include <grid/arrayexpression.hpp>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -14,9 +15,9 @@ template<int size>
 
 void testConstructor()
 {
-  FixedArray<int, 3>  A(2,6,24);
-  FixedArray<int, 5>  B(4,9,16,25,36);
-  FixedArray<int, 10> C(100,81,64,49,36,25,16,9,4,1);
+  Array<int, 3>  A(2,6,24);
+  Array<int, 5>  B(4,9,16,25,36);
+  Array<int, 10> C(100,81,64,49,36,25,16,9,4,1);
   
   int i;
   int x,y;
@@ -69,10 +70,10 @@ template<int size>
   std::vector<int> result(size);
   int i;
   
-  FixedArray<int, size> A;
-  FixedArray<int, size> B;
-  FixedArray<int, size> C;
-  FixedArray<int, size> D;
+  Array<int, size> A;
+  Array<int, size> B;
+  Array<int, size> C;
+  Array<int, size> D;
   for (i=0; i<size; ++i)
   {
     int a = rand() % 10000;

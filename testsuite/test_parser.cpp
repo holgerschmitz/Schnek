@@ -84,11 +84,11 @@ int main()
   freg.registerFunction("sin", sin);
   freg.registerFunction("cos", cos);
 
-  blocks.addBlockClass("app");
+  blocks.registerBlock("app");
   blocks("app").addChildren("Collection");
-  blocks("app").setBlockClass<SimulationBlock>();
+  blocks("app").setClass<SimulationBlock>();
 
-  blocks.addBlockClass("Collection").addChildren("Values")("Constants");
+  blocks.registerBlock("Collection").addChildren("Values")("Constants");
 
   Parser P(vars, freg, blocks);
   pBlock application;
