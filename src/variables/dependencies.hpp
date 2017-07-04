@@ -42,7 +42,8 @@ namespace schnek {
 
 class DependencyUpdater;
 
-/** DependencyMap contains a directed graph whose edges are oriented from the independent to the dependent variables.
+/** DependencyMap contains a directed graph whose edges are oriented from the
+ *  independent to the dependent variables.
  *
  */
 class DependencyMap
