@@ -56,6 +56,11 @@ class ArrayExpression {
     /**Copy constructor*/
     ArrayExpression(const ArrayExpression &Expr) : Op(Expr.Op) {}
 
+    template<template<int> class CheckingPolicy>
+    operator Array<value_type, Length, CheckingPolicy> () {
+      return Array<value_type, Length, CheckingPolicy>(*this);
+    }
+
 //    template<template<int> class CheckingPolicy>
 //    operator Array<value_type, Length, CheckingPolicy>() {
 //        Array<value_type, Length, CheckingPolicy> value;
