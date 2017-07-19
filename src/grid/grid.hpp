@@ -41,6 +41,8 @@ class IndexedGrid;
 template<class IndexType>
 struct IndexCast;
 
+template<class Operator, int Length>
+class ArrayExpression;
 
 /** An elementary grid class */
 template<
@@ -73,6 +75,13 @@ class GridBase : public StoragePolicy, public CheckingPolicy
     /** index operator, reading */
     template<template<int> class ArrayCheckingPolicy>
     T  operator[](const Array<int,rank,ArrayCheckingPolicy>& pos) const; // read
+
+    /** index operator, writing */
+    template<class Operator, int Length>
+    T& operator[](const ArrayExpression<Operator, Length>& pos); // write
+    /** index operator, reading */
+    template<class Operator, int Length>
+    T  operator[](const ArrayExpression<Operator, Length>& pos) const; // read
 
     /** index operator, for 1D grids, writing */
     T& operator[](int i);

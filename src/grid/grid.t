@@ -102,6 +102,32 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
+template<class Operator, int Length>
+inline T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
+  ::operator[](const ArrayExpression<Operator, Length>& pos)
+{
+  return this->operator[](IndexType(pos));
+}
+
+template<
+  typename T,
+  int rank,
+  class CheckingPolicy,
+  class StoragePolicy
+>
+template<class Operator, int Length>
+inline T GridBase<T, rank, CheckingPolicy, StoragePolicy>
+  ::operator[](const ArrayExpression<Operator, Length>& pos) const
+{
+  return this->operator[](IndexType(pos));
+}
+
+template<
+  typename T,
+  int rank,
+  class CheckingPolicy,
+  class StoragePolicy
+>
 inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i)
 {
   return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
