@@ -98,7 +98,8 @@ CONFIG_HEADER = $(top_builddir)/src/config.hpp \
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am_schnek_test_OBJECTS = main.$(OBJEXT) utility.$(OBJEXT) \
-	test_grid.$(OBJEXT) test_array.$(OBJEXT)
+	test_grid.$(OBJEXT) test_array.$(OBJEXT) \
+	test_arrayexpression.$(OBJEXT)
 schnek_test_OBJECTS = $(am_schnek_test_OBJECTS)
 schnek_test_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -529,7 +530,8 @@ schnek_test_SOURCES = \
 	main.cpp \
 	utility.cpp \
 	test_grid.cpp \
-	test_array.cpp
+	test_array.cpp \
+	test_arrayexpression.cpp
 
 test_parser_SOURCES = test_parser.cpp
 test_parser_LDADD = -L../src -lschnek
@@ -597,6 +599,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_array.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_arrayexpression.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_fixarr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_grid.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_parser.Po@am__quote@

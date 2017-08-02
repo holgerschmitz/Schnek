@@ -56,6 +56,10 @@ class ArrayExpression {
     /**Copy constructor*/
     ArrayExpression(const ArrayExpression &Expr) : Op(Expr.Op) {}
 
+    operator Array<value_type, Length, ArrayNoArgCheck> () {
+      return Array<value_type, Length, ArrayNoArgCheck>(*this);
+    }
+
     template<template<int> class CheckingPolicy>
     operator Array<value_type, Length, CheckingPolicy> () {
       return Array<value_type, Length, CheckingPolicy>(*this);
@@ -77,6 +81,32 @@ class ArrayExpression {
       return Op[i];
     }
 };
+
+/**Operator class implementing binary operators for the ArrayExpression.
+ * Holds const references to the expressions and type information of the
+ * operator
+ */
+template<class Exp1, class OperatorType>
+class ArrayUnaryOp {
+  private:
+    /// Expression A
+    Exp1 A;
+  public:
+    typedef typename OperatorType::value_type value_type;
+
+    /**Construct passing the two references to the expressions*/
+    ArrayUnaryOp(const Exp1 &A_) : A(A_) {}
+
+    /**Copy constructor*/
+    ArrayUnaryOp(const ArrayUnaryOp &Op) : A(Op.A) {}
+
+    /**Return the i-th element of the operator expression
+     * Gets the i-th elements of A and B and asks the static OperatorType::apply
+     * method to perform the calculation
+     */
+    value_type operator[](int i) const { return OperatorType::apply(A[i]); }
+};
+
 
 /**Operator class implementing binary operators for the ArrayExpression.
  * Holds const references to the expressions and type information of the
@@ -153,6 +183,26 @@ struct ArrayOpDiv {
 
   /// Returns the sum of the two elements
   static value_type apply(value_type x, value_type y) { return x/y; }
+};
+
+/**An operator type implementing division
+ */
+template<typename T>
+struct ArrayOpUnaryPlus {
+  typedef T value_type;
+
+  /// Returns the sum of the two elements
+  static value_type apply(value_type x) { return x; }
+};
+
+/**An operator type implementing division
+ */
+template<typename T>
+struct ArrayOpUnaryMinus {
+  typedef T value_type;
+
+  /// Returns the sum of the two elements
+  static value_type apply(value_type x) { return -x; }
 };
 
 
@@ -367,6 +417,59 @@ operator symbol (const Array<T,length,CheckingPolicy> &A, const T &B)           
   return ArrayExpression<OperatorType, length> (OperatorType(A,B));             \
 }                                                                                 
 
+/* Unary Operator for Arrays */
+#define UNARY_ARR(op, symbol)                                                   \
+template <                                                                      \
+  class T,                                                                      \
+  int length,                                                                   \
+  template<int> class CheckingPolicy1                                           \
+>                                                                               \
+ArrayExpression<                                                                \
+  ArrayUnaryOp<                                                                 \
+    ArrayExpression< Array<T,length,CheckingPolicy1>, length >,                 \
+    op<T>                                                                       \
+  >,                                                                            \
+  length                                                                        \
+>                                                                               \
+operator symbol (                                                               \
+  const Array<T,length,CheckingPolicy1> &A                                      \
+)                                                                               \
+{                                                                               \
+  typedef ArrayUnaryOp<                                                         \
+    ArrayExpression< Array<T,length,CheckingPolicy1>, length >,                 \
+    op<T>                                                                       \
+  > OperatorType;                                                               \
+                                                                                \
+  return ArrayExpression<OperatorType, length> (OperatorType(A));               \
+}
+
+
+/* Operator for a Array and a ArrayExpression object */
+#define UNARY_EXPR(op, symbol)                                                  \
+template<                                                                       \
+  class exp,                                                                    \
+  class T,                                                                      \
+  int length,                                                                   \
+  template<int> class CheckingPolicy                                            \
+>                                                                               \
+ArrayExpression<                                                                \
+  ArrayUnaryOp<                                                                 \
+    ArrayExpression<exp, length>,                                               \
+    op<T>                                                                       \
+  >,                                                                            \
+  length                                                                        \
+>                                                                               \
+operator symbol (                                                               \
+  const ArrayExpression<exp, length> &A                                         \
+)                                                                               \
+{                                                                               \
+  typedef ArrayUnaryOp<                                                         \
+    ArrayExpression<exp, length>,                                               \
+    op<T>                                                                       \
+  > OperatorType;                                                               \
+                                                                                \
+  return ArrayExpression<OperatorType, length> (OperatorType(A));               \
+}
 
 //======== Plus ======================
 
@@ -418,6 +521,14 @@ ARR_SCAL(ArrayOpDiv,/)
 SCAL_ARR(ArrayOpDiv,/)
 
 
+//======== Unary Plus and Minus ======================
+
+UNARY_ARR(ArrayOpUnaryPlus,+)
+UNARY_EXPR(ArrayOpUnaryPlus,+)
+
+UNARY_ARR(ArrayOpUnaryMinus,-)
+UNARY_EXPR(ArrayOpUnaryMinus,-)
+
 #undef EXPR_EXPR
 #undef ARR_ARR
 #undef ARR_EXPR
@@ -426,6 +537,8 @@ SCAL_ARR(ArrayOpDiv,/)
 #undef SCAL_EXPR
 #undef ARR_SCAL
 #undef SCAL_ARR
+#undef UNARY_ARR
+#undef UNARY_EXPR
 
 
 template<class T, int length, template <int> class CheckingPolicy>

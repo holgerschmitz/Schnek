@@ -15,7 +15,8 @@ schnek_test_SOURCES = \
 	main.cpp \
 	utility.cpp \
 	test_grid.cpp \
-	test_array.cpp
+	test_array.cpp \
+	test_arrayexpression.cpp
 
 test_parser_SOURCES = test_parser.cpp
 

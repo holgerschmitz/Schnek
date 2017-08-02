@@ -1,3 +1,9 @@
+/*
+ * test_array.cpp
+ *
+ *  Created on: 25 Jul 2017
+ *      Author: Holger Schmitz
+ */
 
 #include "utility.hpp"
 
@@ -39,9 +45,9 @@ struct ArrayTest
     {
       std::vector<int> result(size);
 
-      Array<int, size> A;
-      Array<int, size> B;
-      Array<int, size> C;
+      Array<int, size, ArrayBoostTestArgCheck> A;
+      Array<int, size, ArrayBoostTestArgCheck> B;
+      Array<int, size, ArrayBoostTestArgCheck> C;
       for (int i=0; i<size; ++i)
       {
         int a = idist_small(rGen);
@@ -64,9 +70,9 @@ struct ArrayTest
     {
       std::vector<int> result(size);
 
-      Array<int, size> A;
-      Array<int, size> B;
-      Array<int, size> C;
+      Array<int, size, ArrayBoostTestArgCheck> A;
+      Array<int, size, ArrayBoostTestArgCheck> B;
+      Array<int, size, ArrayBoostTestArgCheck> C;
       for (int i=0; i<size; ++i)
       {
         int a = idist_small(rGen);
@@ -90,9 +96,9 @@ struct ArrayTest
       std::vector<double> result(size);
 
       double A;
-      Array<double, size> B;
-      Array<double, size> C;
-      Array<double, size> D;
+      Array<double, size, ArrayBoostTestArgCheck> B;
+      Array<double, size, ArrayBoostTestArgCheck> C;
+      Array<double, size, ArrayBoostTestArgCheck> D;
       A = dist(rGen);
       for (int i=0; i<size; ++i)
       {
@@ -117,8 +123,8 @@ struct ArrayTest
       std::vector<double> result(size);
 
       double A;
-      Array<double, size> B;
-      Array<double, size> C;
+      Array<double, size, ArrayBoostTestArgCheck> B;
+      Array<double, size, ArrayBoostTestArgCheck> C;
       A = dist(rGen);
       while (fabs(A)<1e-6) A = dist(rGen);
 
@@ -145,10 +151,10 @@ struct ArrayTest
 
       double F1;
       double F2;
-      Array<double, size> A;
-      Array<double, size> B;
-      Array<double, size> C;
-      Array<double, size> D;
+      Array<double, size, ArrayBoostTestArgCheck> A;
+      Array<double, size, ArrayBoostTestArgCheck> B;
+      Array<double, size, ArrayBoostTestArgCheck> C;
+      Array<double, size, ArrayBoostTestArgCheck> D;
 
       F1 = dist(rGen);
       F2 = dist(rGen);
@@ -185,7 +191,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_1d, ArrayTest )
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
-    Array<int, 1> test(v1);
+    Array<int, 1, ArrayBoostTestArgCheck> test(v1);
     BOOST_CHECK_EQUAL(v1, test[0]);
 
     ++show_progress;
@@ -200,7 +206,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_2d, ArrayTest )
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
     int v2 = idist(rGen);
-    Array<int, 2> test(v1, v2);
+    Array<int, 2, ArrayBoostTestArgCheck> test(v1, v2);
     BOOST_CHECK_EQUAL(v1, test[0]);
     BOOST_CHECK_EQUAL(v2, test[1]);
 
@@ -217,7 +223,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_3d, ArrayTest )
     int v1 = idist(rGen);
     int v2 = idist(rGen);
     int v3 = idist(rGen);
-    Array<int, 3> test(v1, v2, v3);
+    Array<int, 3, ArrayBoostTestArgCheck> test(v1, v2, v3);
     BOOST_CHECK_EQUAL(v1, test[0]);
     BOOST_CHECK_EQUAL(v2, test[1]);
     BOOST_CHECK_EQUAL(v3, test[2]);
@@ -236,7 +242,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_4d, ArrayTest )
     int v2 = idist(rGen);
     int v3 = idist(rGen);
     int v4 = idist(rGen);
-    Array<int, 4> test(v1, v2, v3, v4);
+    Array<int, 4, ArrayBoostTestArgCheck> test(v1, v2, v3, v4);
     BOOST_CHECK_EQUAL(v1, test[0]);
     BOOST_CHECK_EQUAL(v2, test[1]);
     BOOST_CHECK_EQUAL(v3, test[2]);
@@ -257,7 +263,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_5d, ArrayTest )
     int v3 = idist(rGen);
     int v4 = idist(rGen);
     int v5 = idist(rGen);
-    Array<int, 5> test(v1, v2, v3, v4, v5);
+    Array<int, 5, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5);
     BOOST_CHECK_EQUAL(v1, test[0]);
     BOOST_CHECK_EQUAL(v2, test[1]);
     BOOST_CHECK_EQUAL(v3, test[2]);
@@ -280,7 +286,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_6d, ArrayTest )
     int v4 = idist(rGen);
     int v5 = idist(rGen);
     int v6 = idist(rGen);
-    Array<int, 6> test(v1, v2, v3, v4, v5, v6);
+    Array<int, 6, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6);
     BOOST_CHECK_EQUAL(v1, test[0]);
     BOOST_CHECK_EQUAL(v2, test[1]);
     BOOST_CHECK_EQUAL(v3, test[2]);
@@ -305,7 +311,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_7d, ArrayTest )
     int v5 = idist(rGen);
     int v6 = idist(rGen);
     int v7 = idist(rGen);
-    Array<int, 7> test(v1, v2, v3, v4, v5, v6, v7);
+    Array<int, 7, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7);
     BOOST_CHECK_EQUAL(v1, test[0]);
     BOOST_CHECK_EQUAL(v2, test[1]);
     BOOST_CHECK_EQUAL(v3, test[2]);
@@ -332,7 +338,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_8d, ArrayTest )
     int v6 = idist(rGen);
     int v7 = idist(rGen);
     int v8 = idist(rGen);
-    Array<int, 8> test(v1, v2, v3, v4, v5, v6, v7, v8);
+    Array<int, 8, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7, v8);
     BOOST_CHECK_EQUAL(v1, test[0]);
     BOOST_CHECK_EQUAL(v2, test[1]);
     BOOST_CHECK_EQUAL(v3, test[2]);
@@ -361,7 +367,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_9d, ArrayTest )
     int v7 = idist(rGen);
     int v8 = idist(rGen);
     int v9 = idist(rGen);
-    Array<int, 9> test(v1, v2, v3, v4, v5, v6, v7, v8, v9);
+    Array<int, 9, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7, v8, v9);
     BOOST_CHECK_EQUAL(v1, test[0]);
     BOOST_CHECK_EQUAL(v2, test[1]);
     BOOST_CHECK_EQUAL(v3, test[2]);
@@ -392,7 +398,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_10d, ArrayTest )
     int v8 = idist(rGen);
     int v9 = idist(rGen);
     int v10 = idist(rGen);
-    Array<int, 10> test(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10);
+    Array<int, 10, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10);
     BOOST_CHECK_EQUAL(v1, test[0]);
     BOOST_CHECK_EQUAL(v2, test[1]);
     BOOST_CHECK_EQUAL(v3, test[2]);
