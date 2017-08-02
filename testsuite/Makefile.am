@@ -1,17 +1,19 @@
 
 check_PROGRAMS = \
-  test_grid \
+  schnek_test \
   test_fixarr \
   test_parser
   
 TESTS = \
-  test_grid \
+  schnek_test \
   test_fixarr \
   test_parser
 
 AM_CXXFLAGS = -I../src
 
-test_grid_SOURCES = test_grid.cpp
+schnek_test_SOURCES = \
+	main.cpp \
+	test_grid.cpp
 
 test_fixarr_SOURCES = test_fixarr.cpp
 
