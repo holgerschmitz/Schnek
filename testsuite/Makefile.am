@@ -13,9 +13,9 @@ AM_CXXFLAGS = -I../src
 
 schnek_test_SOURCES = \
 	main.cpp \
-	test_grid.cpp
-
-test_fixarr_SOURCES = test_fixarr.cpp
+	utility.cpp \
+	test_grid.cpp \
+	test_array.cpp
 
 test_parser_SOURCES = test_parser.cpp
 

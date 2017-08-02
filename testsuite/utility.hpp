@@ -2,7 +2,7 @@
  * utility.hpp
  *
  *  Created on: 19 Jul 2017
- *      Author: holger
+ *      Author: Holger Schmitz
  */
 
 #ifndef TESTSUITE_UTILITY_HPP_
@@ -11,12 +11,9 @@
 #include <schnek/grid/array.hpp>
 #include <boost/test/unit_test.hpp>
 
+
 // safe comparison of two floating point numbers
-bool is_equal(double a, double b)
-{
-  return ((a==0.0) && (b==0.0)) ||
-      ( fabs(a-b)/(fabs(a)+fabs(b)) < 100*std::numeric_limits<double>::epsilon() );
-}
+bool is_equal(double a, double b);
 
 /** Class to plug into the Array as CheckingPolicy.
  *  Performs Boost Test argument checking for unit tests.
