@@ -245,10 +245,10 @@ class SingleArrayGridStorage
 
 template<typename T, int rank>
 class SingleArrayGridStorageFortran
-    : public SingleArrayGridFortranOrderStorageBase<T, rank, SingleArrayInstantAllocation>
+    : public SingleArrayGridFortranOrderStorageBase<T, rank, SingleArrayInstantFortranAllocation>
 {
   public:
-    typedef SingleArrayGridFortranOrderStorageBase<T, rank, SingleArrayInstantAllocation> BaseType;
+    typedef SingleArrayGridFortranOrderStorageBase<T, rank, SingleArrayInstantFortranAllocation> BaseType;
     typedef typename BaseType::IndexType IndexType;
 
     SingleArrayGridStorageFortran() : BaseType() {}
