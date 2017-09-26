@@ -42,7 +42,7 @@ template<class Operator, int Length>
 class ArrayExpression {
   private:
     /**The operator type. The operator will hold the information about
-     * the type of operation and refernces to all the arguments
+     * the type of operation and references to all the arguments
      */
     Operator Op;
   public:
