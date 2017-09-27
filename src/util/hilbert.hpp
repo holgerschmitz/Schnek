@@ -26,6 +26,8 @@
 #ifndef SCHNEK_UTIL_HILBERT_HPP_
 #define SCHNEK_UTIL_HILBERT_HPP_
 
+#include "../grid/array.hpp"
+
 namespace schnek {
 
 /** @brief Transform in-place between index on a Hilbert curve and geometrical axes
@@ -43,7 +45,7 @@ namespace schnek {
  * Skilling, J., 2004, April. Programming the Hilbert curve.
  *   In AIP Conference Proceedings (Vol. 707, No. 1, pp. 381-387)
  */
-class HilberCurve
+class HilbertCurve
 {
   public:
 
@@ -125,7 +127,7 @@ class HilberCurve
 
   /** @brief Convert Hilbert curve index to a Hilbert Transpose
    *
-   * The conversion is done in-place. The input @X is replaced
+   * The parameter @X is filled with the result.
    *
    * @param X Outputs the Hilbert transpose
    * @param index The Hilbert curve index
@@ -140,7 +142,7 @@ class HilberCurve
     {
       for (int d=dim-1; d>=0; --d)
       {
-        X[d] |= (v & 1) << b;
+        X[d] |= (v & 1) << bi;
         v = v>>1;
       }
     }
@@ -160,11 +162,26 @@ class HilberCurve
     {
       for (int d=0; d<dim; ++d)
       {
-        v |= (X[d] & (1<<b)) >> b;
         v = v<<1;
+        v |= (X[d] & (1<<bi)) >> bi;
       }
     }
     return v;
+  }
+
+  /** @brief Convert Hilbert curve index to axes coordinates
+   *
+   * The parameter @X is filled with the result.
+   *
+   * @param X Outputs the axes coordinates
+   * @param index The Hilbert curve index
+   * @param b The bit depth, i.e. the level of the curve
+   */
+  template<int dim>
+  static void indexToAxes(Array<unsigned long, dim> &X, unsigned long index, int b)
+  {
+    indexToTranspose(X, index, b);
+    transposeToAxes(X, b);
   }
 };
 
