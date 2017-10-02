@@ -56,8 +56,8 @@ class HilbertCurve
    * @param X Input the Hilbert transpose and output the axes coordinates
    * @param b The bit depth, i.e. the level of the curve
    */
-  template<int dim>
-  static void transposeToAxes(Array<unsigned long, dim> &X, int b)
+  template<int dim, template<int> class CheckingPolicy>
+  static void transposeToAxes(Array<unsigned long, dim, CheckingPolicy> &X, int b)
   {
     unsigned long N = 2 << (b-1), P, Q, t;
     int i;
@@ -92,8 +92,8 @@ class HilbertCurve
    * @param X Input the axes coordinates and output the Hilbert transpose
    * @param b The bit depth, i.e. the level of the curve
    */
-  template<int dim>
-  static void axesToTranspose(Array<unsigned long, dim> &X, int b)
+  template<int dim, template<int> class CheckingPolicy>
+  static void axesToTranspose(Array<unsigned long, dim, CheckingPolicy> &X, int b)
   {
     unsigned long M = 1 << (b-1), P, Q, t;
     int i;
@@ -133,8 +133,8 @@ class HilbertCurve
    * @param index The Hilbert curve index
    * @param b The bit depth, i.e. the level of the curve
    */
-  template<int dim>
-  static void indexToTranspose(Array<unsigned long, dim> &X, unsigned long index, int b)
+  template<int dim, template<int> class CheckingPolicy>
+  static void indexToTranspose(Array<unsigned long, dim, CheckingPolicy> &X, unsigned long index, int b)
   {
     X = 0;
     unsigned long v = index;
@@ -154,8 +154,8 @@ class HilbertCurve
    * @param b The bit depth, i.e. the level of the curve
    * @return The Hilbert curve index
    */
-  template<int dim>
-  static unsigned long transposeToIndex(const Array<unsigned long, dim> &X, int b)
+  template<int dim, template<int> class CheckingPolicy>
+  static unsigned long transposeToIndex(const Array<unsigned long, dim, CheckingPolicy> &X, int b)
   {
     unsigned long v = 0;
     for (int bi=b-1; bi>=0; --bi)
@@ -177,11 +177,26 @@ class HilbertCurve
    * @param index The Hilbert curve index
    * @param b The bit depth, i.e. the level of the curve
    */
-  template<int dim>
-  static void indexToAxes(Array<unsigned long, dim> &X, unsigned long index, int b)
+  template<int dim, template<int> class CheckingPolicy>
+  static void indexToAxes(Array<unsigned long, dim, CheckingPolicy> &X, unsigned long index, int b)
   {
     indexToTranspose(X, index, b);
     transposeToAxes(X, b);
+  }
+
+  /** @brief Convert Hilbert axes coordinates to curve index
+   *
+   * The parameter @X, passed by reference, is destroyed.
+   *
+   * @param X Input the axes coordinates
+   * @param b The bit depth, i.e. the level of the curve
+   * @return The Hilbert curve index
+   */
+  template<int dim, template<int> class CheckingPolicy>
+  static unsigned long axesToIndex(Array<unsigned long, dim, CheckingPolicy> &X, int b)
+  {
+    axesToTranspose(X, b);
+    return transposeToIndex(X, b);
   }
 };
 
