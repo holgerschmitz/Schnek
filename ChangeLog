@@ -1,4 +1,6 @@
 
 
+* Implemented compound assignment for ArrayExpressions.
+* Implemented compound assignment operators *= and /= for Array. 
 * Allowing for different output types when using GridTransform. 
   The transformation must have value_type defined.
