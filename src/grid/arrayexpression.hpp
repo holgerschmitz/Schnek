@@ -82,7 +82,7 @@ class ArrayExpression {
     }
 };
 
-/**Operator class implementing binary operators for the ArrayExpression.
+/**Operator class implementing unary operators for the ArrayExpression.
  * Holds const references to the expressions and type information of the
  * operator
  */
@@ -94,7 +94,7 @@ class ArrayUnaryOp {
   public:
     typedef typename OperatorType::value_type value_type;
 
-    /**Construct passing the two references to the expressions*/
+    /**Construct passing the reference to the expressions*/
     ArrayUnaryOp(const Exp1 &A_) : A(A_) {}
 
     /**Copy constructor*/

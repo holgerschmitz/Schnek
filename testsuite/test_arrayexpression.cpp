@@ -48,6 +48,175 @@ struct ArrayExpressionTest
 
 BOOST_AUTO_TEST_SUITE( arrayexpression )
 
+
+BOOST_FIXTURE_TEST_CASE( array_expression, ArrayExpressionTest )
+{
+  const int N = 10000;
+  boost::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    Array<int,3> s1(idist(rGen), idist(rGen), idist(rGen));
+    Array<int,3> s2(idist(rGen), idist(rGen), idist(rGen));
+
+    {
+      Array<int,3> s3 = s1+s2;
+      Array<int,3> s4;
+      BOOST_CHECK_EQUAL(s3[0], s1[0]+s2[0]);
+      BOOST_CHECK_EQUAL(s3[1], s1[1]+s2[1]);
+      BOOST_CHECK_EQUAL(s3[2], s1[2]+s2[2]);
+
+      s4 = s1+s2;
+      BOOST_CHECK_EQUAL(s4[0], s1[0]+s2[0]);
+      BOOST_CHECK_EQUAL(s4[1], s1[1]+s2[1]);
+      BOOST_CHECK_EQUAL(s4[2], s1[2]+s2[2]);
+    }
+
+    {
+      Array<int,3> s3 = s1-s2;
+      Array<int,3> s4;
+      BOOST_CHECK_EQUAL(s3[0], s1[0]-s2[0]);
+      BOOST_CHECK_EQUAL(s3[1], s1[1]-s2[1]);
+      BOOST_CHECK_EQUAL(s3[2], s1[2]-s2[2]);
+
+      s4 = s1-s2;
+      BOOST_CHECK_EQUAL(s4[0], s1[0]-s2[0]);
+      BOOST_CHECK_EQUAL(s4[1], s1[1]-s2[1]);
+      BOOST_CHECK_EQUAL(s4[2], s1[2]-s2[2]);
+    }
+
+    {
+      Array<int,3> s3 = s1*s2;
+      Array<int,3> s4;
+      BOOST_CHECK_EQUAL(s3[0], s1[0]*s2[0]);
+      BOOST_CHECK_EQUAL(s3[1], s1[1]*s2[1]);
+      BOOST_CHECK_EQUAL(s3[2], s1[2]*s2[2]);
+
+      s4 = s1*s2;
+      BOOST_CHECK_EQUAL(s4[0], s1[0]*s2[0]);
+      BOOST_CHECK_EQUAL(s4[1], s1[1]*s2[1]);
+      BOOST_CHECK_EQUAL(s4[2], s1[2]*s2[2]);
+    }
+
+    {
+      Array<int,3> s3 = s1/s2;
+      Array<int,3> s4;
+      BOOST_CHECK_EQUAL(s3[0], s1[0]/s2[0]);
+      BOOST_CHECK_EQUAL(s3[1], s1[1]/s2[1]);
+      BOOST_CHECK_EQUAL(s3[2], s1[2]/s2[2]);
+
+      s4 = s1/s2;
+      BOOST_CHECK_EQUAL(s4[0], s1[0]/s2[0]);
+      BOOST_CHECK_EQUAL(s4[1], s1[1]/s2[1]);
+      BOOST_CHECK_EQUAL(s4[2], s1[2]/s2[2]);
+    }
+
+
+    {
+      Array<int,3> s3(idist(rGen), idist(rGen), idist(rGen));
+      Array<int,3> s4(idist(rGen), idist(rGen), idist(rGen));
+      Array<int,3> s5 = ((s1+s2)*s3 - s4)/(s2-s3);
+      Array<int,3> s6;
+      BOOST_CHECK_EQUAL(s5[0], ((s1[0]+s2[0])*s3[0] - s4[0])/(s2[0]-s3[0]));
+      BOOST_CHECK_EQUAL(s5[1], ((s1[1]+s2[1])*s3[1] - s4[1])/(s2[1]-s3[1]));
+      BOOST_CHECK_EQUAL(s5[2], ((s1[2]+s2[2])*s3[2] - s4[2])/(s2[2]-s3[2]));
+
+      s4 = ((s1+s2)*s3 - s4)/(s2-s3);
+      BOOST_CHECK_EQUAL(s4[0], ((s1[0]+s2[0])*s3[0] - s4[0])/(s2[0]-s3[0]));
+      BOOST_CHECK_EQUAL(s4[1], ((s1[1]+s2[1])*s3[1] - s4[1])/(s2[1]-s3[1]));
+      BOOST_CHECK_EQUAL(s4[2], ((s1[2]+s2[2])*s3[2] - s4[2])/(s2[2]-s3[2]));
+    }
+
+    ++show_progress;
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE( compound_assignment, ArrayExpressionTest )
+{
+  const int N = 10000;
+  boost::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    Array<int,3> s1(idist(rGen), idist(rGen), idist(rGen));
+    Array<int,3> s2(idist(rGen), idist(rGen), idist(rGen));
+    Array<int,3> s3(idist(rGen), idist(rGen), idist(rGen));
+
+
+    {
+      Array<int,3> s4 = s3;
+      s4 += s1;
+
+      BOOST_CHECK_EQUAL(s4[0], s3[0]+s1[0]);
+      BOOST_CHECK_EQUAL(s4[1], s3[1]+s1[1]);
+      BOOST_CHECK_EQUAL(s4[2], s3[2]+s1[2]);
+    }
+
+    {
+      Array<int,3> s4 = s3;
+      s4 -= s1;
+
+      BOOST_CHECK_EQUAL(s4[0], s3[0]-s1[0]);
+      BOOST_CHECK_EQUAL(s4[1], s3[1]-s1[1]);
+      BOOST_CHECK_EQUAL(s4[2], s3[2]-s1[2]);
+    }
+
+    {
+      Array<int,3> s4 = s3;
+      s4 *= s1;
+
+      BOOST_CHECK_EQUAL(s4[0], s3[0]*s1[0]);
+      BOOST_CHECK_EQUAL(s4[1], s3[1]*s1[1]);
+      BOOST_CHECK_EQUAL(s4[2], s3[2]*s1[2]);
+    }
+
+    {
+      Array<int,3> s4 = s3;
+      s4 /= s1;
+
+      BOOST_CHECK_EQUAL(s4[0], s3[0]/s1[0]);
+      BOOST_CHECK_EQUAL(s4[1], s3[1]/s1[1]);
+      BOOST_CHECK_EQUAL(s4[2], s3[2]/s1[2]);
+    }
+
+    {
+      Array<int,3> s4 = s3;
+      s4 += (s1 + s2);
+
+      BOOST_CHECK_EQUAL(s4[0], s3[0]+s1[0]+s2[0]);
+      BOOST_CHECK_EQUAL(s4[1], s3[1]+s1[1]+s2[1]);
+      BOOST_CHECK_EQUAL(s4[2], s3[2]+s1[2]+s2[2]);
+    }
+
+    {
+      Array<int,3> s4 = s3;
+      s4 -= (s1 + s2);
+
+      BOOST_CHECK_EQUAL(s4[0], s3[0]-s1[0]-s2[0]);
+      BOOST_CHECK_EQUAL(s4[1], s3[1]-s1[1]-s2[1]);
+      BOOST_CHECK_EQUAL(s4[2], s3[2]-s1[2]-s2[2]);
+    }
+
+    {
+      Array<int,3> s4 = s3;
+      s4 *= (s1 + s2);
+
+      BOOST_CHECK_EQUAL(s4[0], s3[0]*(s1[0]+s2[0]));
+      BOOST_CHECK_EQUAL(s4[1], s3[1]*(s1[1]+s2[1]));
+      BOOST_CHECK_EQUAL(s4[2], s3[2]*(s1[2]+s2[2]));
+    }
+
+    {
+      Array<int,3> s4 = s3;
+      s4 /= (s1 + s2);
+
+      BOOST_CHECK_EQUAL(s4[0], s3[0]/(s1[0]+s2[0]));
+      BOOST_CHECK_EQUAL(s4[1], s3[1]/(s1[1]+s2[1]));
+      BOOST_CHECK_EQUAL(s4[2], s3[2]/(s1[2]+s2[2]));
+    }
+
+    ++show_progress;
+  }
+}
+
 BOOST_FIXTURE_TEST_CASE( grid_constructor, ArrayExpressionTest )
 {
   const int N = 10000;
