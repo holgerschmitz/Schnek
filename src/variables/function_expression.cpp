@@ -31,33 +31,33 @@ using namespace schnek;
 
 void schnek::registerCMath(FunctionRegistry &freg)
 {
-  freg.registerFunction("cos", cos);
-  freg.registerFunction("sin", sin);
-  freg.registerFunction("tan", tan);
-  freg.registerFunction("acos", acos);
-  freg.registerFunction("asin", asin);
-  freg.registerFunction("atan", atan);
-  freg.registerFunction("atan2", atan2);
+  freg.registerFunction("cos", static_cast<double (*)(double)>(cos));
+  freg.registerFunction("sin", static_cast<double (*)(double)>(sin));
+  freg.registerFunction("tan", static_cast<double (*)(double)>(tan));
+  freg.registerFunction("acos", static_cast<double (*)(double)>(acos));
+  freg.registerFunction("asin", static_cast<double (*)(double)>(asin));
+  freg.registerFunction("atan", static_cast<double (*)(double)>(atan));
+  freg.registerFunction("atan2", static_cast<double (*)(double, double)>(atan2));
 
-  freg.registerFunction("cosh", cosh);
-  freg.registerFunction("sinh", sinh);
-  freg.registerFunction("tanh", tanh);
+  freg.registerFunction("cosh", static_cast<double (*)(double)>(cosh));
+  freg.registerFunction("sinh", static_cast<double (*)(double)>(sinh));
+  freg.registerFunction("tanh", static_cast<double (*)(double)>(tanh));
 
-  freg.registerFunction("exp", exp);
-  freg.registerFunction("ldexp", ldexp);
-  freg.registerFunction("log", log);
-  freg.registerFunction("log10", log10);
+  freg.registerFunction("exp", static_cast<double (*)(double)>(exp));
+  freg.registerFunction("ldexp", static_cast<double (*)(double, int)>(ldexp));
+  freg.registerFunction("log", static_cast<double (*)(double)>(log));
+  freg.registerFunction("log10", static_cast<double (*)(double)>(log10));
 
 //  The function frexp and modf take pointers as arguments and have side effects
 //  This behaviour is not supported
 //  freg.registerFunction("frexp", frexp);
 //  freg.registerFunction("modf", modf);
 
-  freg.registerFunction("pow", pow);
-  freg.registerFunction("sqrt", sqrt);
+  freg.registerFunction("pow", static_cast<double (*)(double, double)>(pow));
+  freg.registerFunction("sqrt", static_cast<double (*)(double)>(sqrt));
 
-  freg.registerFunction("ceil", ceil);
-  freg.registerFunction("fabs", fabs);
-  freg.registerFunction("floor", floor);
-  freg.registerFunction("fmod", fmod);
+  freg.registerFunction("ceil", static_cast<double (*)(double)>(ceil));
+  freg.registerFunction("fabs", static_cast<double (*)(double)>(fabs));
+  freg.registerFunction("floor", static_cast<double (*)(double)>(floor));
+  freg.registerFunction("fmod", static_cast<double (*)(double, double)>(fmod));
 }
