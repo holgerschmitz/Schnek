@@ -130,6 +130,24 @@ class Array :
     template<class T2, template <int> class CheckingPolicy2>
     Array<T,length,CheckingPolicy> &operator+=(const Array<T2,length,CheckingPolicy2>&);
 
+    /** Element-wise multiplication assignment operator
+     *
+     * The argument can have a different value_type and checking policy.
+     * The value_type of the RHS must be implicitly castable to the value_type
+     * of the LHS.
+     */
+    template<class T2, template <int> class CheckingPolicy2>
+    Array<T,length,CheckingPolicy> &operator*=(const Array<T2,length,CheckingPolicy2>&);
+
+    /** Element-wise division assignment operator
+     *
+     * The argument can have a different value_type and checking policy.
+     * The value_type of the RHS must be implicitly castable to the value_type
+     * of the LHS.
+     */
+    template<class T2, template <int> class CheckingPolicy2>
+    Array<T,length,CheckingPolicy> &operator/=(const Array<T2,length,CheckingPolicy2>&);
+
     /** Subtraction Assignment operator
      *
      * The argument can have a different value_type and checking policy.
@@ -174,6 +192,23 @@ class Array :
      */
     template<typename T2>
     Array<T,length,CheckingPolicy> &operator/=(const T2);
+
+
+    /// Addition Assignment operator using an array expression
+    template<class Operator>
+    Array<T,length,CheckingPolicy> &operator+=(const ArrayExpression<Operator, length> &);
+
+    /// Subtraction Assignment operator using an array expression
+    template<class Operator>
+    Array<T,length,CheckingPolicy> &operator-=(const ArrayExpression<Operator, length> &);
+
+    /// Element-wise multiplication assignment operator using an array expression
+    template<class Operator>
+    Array<T,length,CheckingPolicy> &operator*=(const ArrayExpression<Operator, length> &);
+
+    /// Element-wise multiplication assignment operator using an array expression
+    template<class Operator>
+    Array<T,length,CheckingPolicy> &operator/=(const ArrayExpression<Operator, length> &);
 
   public:
     /// Sets all fields to zero

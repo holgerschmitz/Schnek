@@ -550,6 +550,42 @@ Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator=(const 
     return *this;
 }
 
+template<class T, int length, template <int> class CheckingPolicy>
+template<class Operator>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator+=(const ArrayExpression<Operator, length> &expr)
+{
+    for (int i=0; i<length; ++i)
+      data[i] += expr[i];
+    return *this;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<class Operator>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator-=(const ArrayExpression<Operator, length> &expr)
+{
+    for (int i=0; i<length; ++i)
+      data[i] -= expr[i];
+    return *this;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<class Operator>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator*=(const ArrayExpression<Operator, length> &expr)
+{
+    for (int i=0; i<length; ++i)
+      data[i] *= expr[i];
+    return *this;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<class Operator>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator/=(const ArrayExpression<Operator, length> &expr)
+{
+    for (int i=0; i<length; ++i)
+      data[i] /= expr[i];
+    return *this;
+}
+
 
 
 template<class T, int length, template <int> class CheckingPolicy>

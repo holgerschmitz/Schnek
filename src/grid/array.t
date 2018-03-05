@@ -237,6 +237,24 @@ Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator-=(const
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
+template<class T2, template <int> class CheckingPolicy2>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator*=(const Array<T2,length,CheckingPolicy2>& val)
+{
+  for (int i=0; i<length; ++i)
+    data[i] *= val[i];
+  return *this;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<class T2, template <int> class CheckingPolicy2>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator/=(const Array<T2,length,CheckingPolicy2>& val)
+{
+  for (int i=0; i<length; ++i)
+    data[i] /= val[i];
+  return *this;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
 template<typename T2>
 Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator+=(const T2 val)
 {

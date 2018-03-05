@@ -114,16 +114,16 @@ BOOST_FIXTURE_TEST_CASE( array_expression, ArrayExpressionTest )
     {
       Array<int,3> s3(idist(rGen), idist(rGen), idist(rGen));
       Array<int,3> s4(idist(rGen), idist(rGen), idist(rGen));
-      Array<int,3> s5 = ((s1+s2)*s3 - s4)/(s2-s3);
+      Array<int,3> s5 = ((s1+s2)*s3 - s4)/(s2+s3);
       Array<int,3> s6;
-      BOOST_CHECK_EQUAL(s5[0], ((s1[0]+s2[0])*s3[0] - s4[0])/(s2[0]-s3[0]));
-      BOOST_CHECK_EQUAL(s5[1], ((s1[1]+s2[1])*s3[1] - s4[1])/(s2[1]-s3[1]));
-      BOOST_CHECK_EQUAL(s5[2], ((s1[2]+s2[2])*s3[2] - s4[2])/(s2[2]-s3[2]));
+      BOOST_CHECK_EQUAL(s5[0], ((s1[0]+s2[0])*s3[0] - s4[0])/(s2[0]+s3[0]));
+      BOOST_CHECK_EQUAL(s5[1], ((s1[1]+s2[1])*s3[1] - s4[1])/(s2[1]+s3[1]));
+      BOOST_CHECK_EQUAL(s5[2], ((s1[2]+s2[2])*s3[2] - s4[2])/(s2[2]+s3[2]));
 
-      s4 = ((s1+s2)*s3 - s4)/(s2-s3);
-      BOOST_CHECK_EQUAL(s4[0], ((s1[0]+s2[0])*s3[0] - s4[0])/(s2[0]-s3[0]));
-      BOOST_CHECK_EQUAL(s4[1], ((s1[1]+s2[1])*s3[1] - s4[1])/(s2[1]-s3[1]));
-      BOOST_CHECK_EQUAL(s4[2], ((s1[2]+s2[2])*s3[2] - s4[2])/(s2[2]-s3[2]));
+      s6 = ((s1+s2)*s3 - s4)/(s2+s3);
+      BOOST_CHECK_EQUAL(s6[0], ((s1[0]+s2[0])*s3[0] - s4[0])/(s2[0]+s3[0]));
+      BOOST_CHECK_EQUAL(s6[1], ((s1[1]+s2[1])*s3[1] - s4[1])/(s2[1]+s3[1]));
+      BOOST_CHECK_EQUAL(s6[2], ((s1[2]+s2[2])*s3[2] - s4[2])/(s2[2]+s3[2]));
     }
 
     ++show_progress;
