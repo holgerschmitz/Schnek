@@ -1,0 +1,4 @@
+
+
+* Allowing for different output types when using GridTransform. 
+  The transformation must have value_type defined.

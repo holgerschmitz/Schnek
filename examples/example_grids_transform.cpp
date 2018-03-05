@@ -12,6 +12,8 @@
 using namespace schnek;
 
 class SuperGauss {
+  public:
+    typedef double value_type;
   private:
     double r;
   public:
