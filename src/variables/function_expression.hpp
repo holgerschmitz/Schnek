@@ -240,6 +240,7 @@ class FunctionRegistry
     }
 
 };
+
  /** Registers many functions supplied by cmath with the function registry.
   * This allows the functions to be used in the input deck and for evaluating variables.
   *
@@ -248,6 +249,21 @@ class FunctionRegistry
   * ldexp, log, log10, pow, sqrt, ceil, fabs, floor, fmod
   */
 void registerCMath(FunctionRegistry &freg);
+
+/** Registers some utility functions
+ *
+ * Currently the following functions are registered:
+ * min, max, minI, maxI
+ */
+void registerUtilityFunctions(FunctionRegistry &freg);
+
+/** Registers some special functions from Boost Math
+ *
+ * Currently the following functions are registered:
+ * gamma, lgamma, digamma, besselj, bessely, normal
+ */
+void registerSpecialFunctions(FunctionRegistry &freg);
+void registerAllFunctions(FunctionRegistry &freg);
 
 } // namespace schnek
 

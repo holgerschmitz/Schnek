@@ -25,7 +25,28 @@
  */
 
 #include "function_expression.hpp"
+
+#include <boost/math/special_functions/gamma.hpp>
+#include <boost/math/special_functions/digamma.hpp>
+#include <boost/math/special_functions/bessel.hpp>
+
 #include <cmath>
+#include <algorithm>
+
+
+namespace schnek {
+  namespace detail {
+    double min(double a, double b) { return std::min(a,b); }
+    double max(double a, double b) { return std::max(a,b); }
+    double minI(int a, int b) { return std::min(a,b); }
+    double maxI(int a, int b) { return std::max(a,b); }
+    double normal(double x, double sigma, double m)
+    {
+      double y = (x-m)/sigma;
+      return exp(-y*y/2.0);
+    }
+  }
+}
 
 using namespace schnek;
 
@@ -60,4 +81,33 @@ void schnek::registerCMath(FunctionRegistry &freg)
   freg.registerFunction("fabs", static_cast<double (*)(double)>(fabs));
   freg.registerFunction("floor", static_cast<double (*)(double)>(floor));
   freg.registerFunction("fmod", static_cast<double (*)(double, double)>(fmod));
+}
+
+void schnek::registerUtilityFunctions(FunctionRegistry &freg)
+{
+  freg.registerFunction("min", schnek::detail::min);
+  freg.registerFunction("max", schnek::detail::max);
+  freg.registerFunction("minI", schnek::detail::minI);
+  freg.registerFunction("maxI", schnek::detail::maxI);
+}
+
+
+void schnek::registerSpecialFunctions(FunctionRegistry &freg)
+{
+  freg.registerFunction("gamma", static_cast<double (*)(double)>(boost::math::tgamma));
+  freg.registerFunction("lgamma", static_cast<double (*)(double)>(boost::math::lgamma));
+  freg.registerFunction("digamma", static_cast<double (*)(double)>(boost::math::digamma));
+
+  freg.registerFunction("besselj", static_cast<double (*)(int, double)>(boost::math::cyl_bessel_j));
+  freg.registerFunction("bessely", static_cast<double (*)(int, double)>(boost::math::cyl_neumann));
+
+  freg.registerFunction("normal", schnek::detail::normal);
+}
+
+
+void schnek::registerAllFunctions(FunctionRegistry &freg)
+{
+  schnek::registerCMath(freg);
+  schnek::registerUtilityFunctions(freg);
+  schnek::registerSpecialFunctions(freg);
 }

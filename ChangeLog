@@ -4,3 +4,4 @@
 * Implemented compound assignment operators *= and /= for Array. 
 * Allowing for different output types when using GridTransform. 
   The transformation must have value_type defined.
+* Added test suite based on Boost Test
