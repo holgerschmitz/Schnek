@@ -129,6 +129,12 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
     /// Use MPIALLReduce to calculate the maximum
     int maxReduce(int val) const;
 
+    /// Use MPIALLReduce to calculate the minimum
+    double minReduce(double val) const;
+
+    /// Use MPIALLReduce to calculate the minimum
+    int minReduce(int val) const;
+
     /// Use MPIALLReduce to calculate the maximum
     double sumReduce(double val) const;
 
