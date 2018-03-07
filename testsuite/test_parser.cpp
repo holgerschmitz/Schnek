@@ -16,12 +16,63 @@
 #include <variables/dependencies.hpp>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <cmath>
 
 #include <boost/foreach.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace schnek;
 
+std::string parser_input =
+"// general test of variables assignment and evaluation\n"
+"float var = 2/1.9;\n"
+"string hello = \"Hello\";\n"
+"string greet = hello + \" world!\";\n"
+"int n = 7^3;\n"
+"int a = n/6;\n"
+"int m = n + a;\n"
+"int k = - n + a;\n"
+"string assembled = a + \".\" + n;\n"
+"greet = greet + \" Again!\";\n"
+"\n"
+"float e = exp(a);\n"
+"float s = sin(var);\n"
+"\n"
+"\n"
+"Collection globals {\n"
+"  float a = exp(s);\n"
+"  float b = cos(e);\n"
+"  string result = \"Result is \"+a;\n"
+"  Values physics {\n"
+"    float qe = 1.602e-19;\n"
+"  }\n"
+"  Constants maths {\n"
+"    float pi = 3.14159;\n"
+"  }\n"
+"}\n"
+"\n"
+"float other = globals:a;\n"
+"\n"
+"nsteps = n;\n"
+"output = hello;\n"
+"\n"
+"//dx = 1.0;\n"
+"//dy = 1.0;\n"
+"\n"
+"// from here on we test dependencies\n"
+"\n"
+"float depA = x;\n"
+"float depB = y+x;\n"
+"float depC = depA * depB;\n"
+"float depD = depC / (y+1);\n"
+"float depE = depA * depD;\n"
+"\n"
+"dx = depB*depD;\n"
+"dy = depC;\n"
+"\n"
+"// initialising without using independent variables\n"
+"dz = 1.0;\n";
 
 int NSteps;
 
@@ -40,123 +91,133 @@ pParameter dxVar;
 pParameter dyVar;
 pParameter dzVar;
 
-class SimulationBlock : public Block
+struct ParserTest
 {
-  protected:
-    void initParameters(BlockParameters &blockPars)
-    {
-      xVar = blockPars.addParameter("x", &x, BlockParameters::readonly);
-      yVar = blockPars.addParameter("y", &y, BlockParameters::readonly);
-
-      dxVar = blockPars.addParameter("dx", &dx);
-      dyVar = blockPars.addParameter("dy", &dy);
-      dzVar = blockPars.addParameter("dz", &dz);
-
-      blockPars.addParameter("nsteps", &NSteps);
-      blockPars.addParameter("output", &output);
-
-    }
-};
-
-void writeBlockVars(pBlockVariables block)
-{
-  std::cout << "Block: " << block->getBlockName() << "(" << block->getClassName() << ")" << std::endl;
-  typedef std::pair<std::string, pVariable> VMapType;
-  BOOST_FOREACH(VMapType var, block->getVariables())
-  {
-    std::cout << "  " << var.first << " = " << var.second->getValue() << std::endl;
-  }
-  BOOST_FOREACH(pBlockVariables child, block->getChildren())
-  {
-    std::cout << "==================\n";
-    writeBlockVars(child);
-    std::cout << "========END=======\n";
-  }
-}
-
-int main()
-{
-  VariableStorage vars("test_parser", "app");
+  VariableStorage vars;
   FunctionRegistry freg;
   BlockClasses blocks;
-
-  freg.registerFunction("exp", exp);
-  freg.registerFunction("sin", sin);
-  freg.registerFunction("cos", cos);
-
-  blocks.registerBlock("app");
-  blocks("app").addChildren("Collection");
-  blocks("app").setClass<SimulationBlock>();
-
-  blocks.registerBlock("Collection").addChildren("Values")("Constants");
-
-  Parser P(vars, freg, blocks);
   pBlock application;
 
-  std::ifstream in("test_parser_sample.txt");
-  if (!in) {
-    std::cerr << "Could not open file\n";
-  }
-  try
+  class SimulationBlock : public Block
   {
-    application = P.parse(in, "test_parser_sample.txt");
-  }
-  catch (ParserError &e)
-  {
-    std::cerr << "Parse error, " << e.atomToken.getFilename() << "(" << e.atomToken.getLine() << "): "<< e.message << "\n";
-    throw -1;
-  }
+    protected:
+      void initParameters(BlockParameters &blockPars)
+      {
+        xVar = blockPars.addParameter("x", &x, BlockParameters::readonly);
+        yVar = blockPars.addParameter("y", &y, BlockParameters::readonly);
 
-  x = 1;
-  application->evaluateParameters();
-  writeBlockVars(vars.getRootBlock());
+        dxVar = blockPars.addParameter("dx", &dx);
+        dyVar = blockPars.addParameter("dy", &dy);
+        dzVar = blockPars.addParameter("dz", &dz);
 
-  x = 2;
-  application->evaluateParameters();
-  writeBlockVars(vars.getRootBlock());
+        blockPars.addParameter("nsteps", &NSteps);
+        blockPars.addParameter("output", &output);
+      }
+  };
 
-  std::cout << "\n\n";
-  std::cout << "Application variables:\n";
-  std::cout << "NSteps = " << NSteps << std::endl;
-  std::cout << "dx = " << dx << std::endl;
-  std::cout << "dy = " << dy << std::endl;
-  std::cout << "output = " << output << std::endl;
+  ParserTest() : vars("test_parser", "app") {
+    registerCMath(freg);
 
+    blocks.registerBlock("app");
+    blocks("app").setClass<SimulationBlock>();
+    blocks("app").addChildren("Collection");
 
-  std::cout << "Automatic update:\n";
-  std::cout << "id(x) = " << xVar->getVariable()->getId() << std::endl;
-  std::cout << "id(y) = " << yVar->getVariable()->getId() << std::endl;
-  std::cout << "id(dx) = " << dxVar->getVariable()->getId() << std::endl;
-  std::cout << "id(dy) = " << dyVar->getVariable()->getId() << std::endl;
+    blocks("Collection").setClass<Block>();
+    blocks("Values").setClass<Block>();
+    blocks("Constants").setClass<Block>();
 
-  pDependencyMap depMap(new DependencyMap(vars.getRootBlock()));
-  DependencyUpdater updater(depMap);
+    blocks("Collection").addChildren("Values")("Constants");
 
-  updater.addIndependent(xVar);
-  updater.addIndependent(yVar);
-  updater.addDependent(dxVar);
-  updater.addDependent(dyVar);
+    Parser P(vars, freg, blocks);
 
-  for (x=0.0; x<=1.0; x+= 0.125)
-    for (y=0.0; y<=1.0; y+= 0.125)
+    std::istringstream in(parser_input);
+    try
     {
-      updater.update();
-      std::cout << x << " " << y << " " << dx << " " << dy << std::endl;
+      application = P.parse(in);
     }
-
-  std::cout << "Automatic update for constant expressions:\n";
-  DependencyUpdater updater_const(depMap);
-
-  updater_const.addIndependent(xVar);
-  updater_const.addIndependent(yVar);
-  updater_const.addDependent(dzVar);
-
-  for (x=0.0; x<=1.0; x+= 0.125)
-    for (y=0.0; y<=1.0; y+= 0.125)
+    catch (ParserError &e)
     {
-      updater_const.update();
-      std::cout << x << " " << y << " " << dz << std::endl;
+      std::cerr << "Parse error, " << e.atomToken.getFilename() << "(" << e.atomToken.getLine() << "): "<< e.message << "\n";
+      throw -1;
     }
+  }
 
+  void checkParsedVars(double x_) {
+    x = x_;
+    application->evaluateParameters();
+
+    BOOST_CHECK_EQUAL(output, "Hello");
+    BOOST_CHECK_EQUAL(NSteps, 7*7*7);
+    BOOST_CHECK_EQUAL(dz, 1.0);
+  }
+
+  void checkDependency(VariableStorage &vars) {
+    pDependencyMap depMap(new DependencyMap(vars.getRootBlock()));
+    DependencyUpdater updater(depMap);
+
+    updater.addIndependent(xVar);
+    updater.addIndependent(yVar);
+    updater.addDependent(dxVar);
+    updater.addDependent(dyVar);
+
+    for (x=1.0; x<=2.0; x+= 0.01)
+      for (y=1.0; y<=2.0; y+= 0.01)
+      {
+        double x_save = x;
+        double y_save = y;
+        updater.update();
+        BOOST_CHECK_CLOSE(x_save, x, 1e-10);
+        BOOST_CHECK_CLOSE(y_save, y, 1e-10);
+
+        BOOST_CHECK_CLOSE(dx, (y+x) * x * (y+x) / (y+1), 1e-10);
+        BOOST_CHECK_CLOSE(dy, x * (y+x), 1e-10);
+      }
+  }
+
+  void checkIndependency(VariableStorage &vars) {
+    pDependencyMap depMap(new DependencyMap(vars.getRootBlock()));
+    DependencyUpdater updater(depMap);
+
+    updater.addIndependent(xVar);
+    updater.addIndependent(yVar);
+    updater.addDependent(dzVar);
+
+    double dx_save = dx;
+    double dy_save = dy;
+
+    for (x=0.0; x<=1.0; x+= 0.125)
+      for (y=0.0; y<=1.0; y+= 0.125)
+      {
+        double x_save = x;
+        double y_save = y;
+        updater.update();
+        BOOST_CHECK_CLOSE(x_save, x, 1e-10);
+        BOOST_CHECK_CLOSE(y_save, y, 1e-10);
+        BOOST_CHECK_CLOSE(dx_save, dx, 1e-10);
+        BOOST_CHECK_CLOSE(dy_save, dy, 1e-10);
+
+        BOOST_CHECK_CLOSE(dz, 1.0, 1e-10);
+      }
+  }
+};
+
+BOOST_AUTO_TEST_SUITE( parser )
+
+BOOST_FIXTURE_TEST_CASE( parser_values, ParserTest )
+{
+  checkParsedVars(1.0);
+  checkParsedVars(2.0);
 }
 
+BOOST_FIXTURE_TEST_CASE( parser_dependency, ParserTest )
+{
+  checkDependency(vars);
+}
+
+BOOST_FIXTURE_TEST_CASE( parser_independency, ParserTest )
+{
+  checkIndependency(vars);
+}
+
+
+BOOST_AUTO_TEST_SUITE_END()

@@ -1,23 +1,18 @@
 
 check_PROGRAMS = \
-  schnek_test \
-  test_fixarr \
-  test_parser
+  schnek_test
   
 TESTS = \
-  schnek_test \
-  test_fixarr \
-  test_parser
+  schnek_test
 
 AM_CXXFLAGS = -I../src
+
+schnek_test_LDADD = -L../src -lschnek
 
 schnek_test_SOURCES = \
 	main.cpp \
 	utility.cpp \
 	test_grid.cpp \
 	test_array.cpp \
-	test_arrayexpression.cpp
-
-test_parser_SOURCES = test_parser.cpp
-
-test_parser_LDADD = -L../src -lschnek
+	test_arrayexpression.cpp \
+	test_parser.cpp
