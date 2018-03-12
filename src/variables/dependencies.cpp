@@ -97,10 +97,10 @@ void DependencyMap::constructMap(const pBlockVariables vars)
 
 void DependencyMap::resetCounters()
 {
-	BOOST_FOREACH(DepMap::value_type entry, dependencies)
-	{
-	  entry.second.counter = entry.second.dependsOn.size();
-	}
+  BOOST_FOREACH(DepMap::value_type entry, dependencies)
+  {
+    entry.second.counter = entry.second.dependsOn.size();
+  }
 }
 
 void DependencyMap::makeUpdateList(const VariableSet &independentVars, const VariableSet &dependentVars, VariableList &updateList)
@@ -129,7 +129,7 @@ void DependencyMap::makeUpdateList(const VariableSet &independentVars, const Var
 //    std::cout << "Var " << v->getId()  << std::endl;
 //  }
 
-  pRefDepMap reverseDeps = makeUpdatePredecessors(dependentVars);
+  pRefDepMap reverseDeps = makeUpdatePredecessors(independentVars, dependentVars);
 
 //  std::cout << " ======== Reverse dependencies ========\n";
 //  BOOST_FOREACH(RefDepMap::value_type entry, *reverseDeps)
@@ -161,7 +161,8 @@ void DependencyMap::makeUpdateList(const VariableSet &independentVars, const Var
   makeUpdateOrder(deps, updateList);
 }
 
-DependencyMap::pRefDepMap DependencyMap::makeUpdatePredecessors(const VariableSet &dependentVars)
+DependencyMap::pRefDepMap DependencyMap::makeUpdatePredecessors(const VariableSet &independentVars,
+                                                                const VariableSet &dependentVars)
 {
   std::list<VarInfo*> workingSet;
   pRefDepMap predecessors_p(new RefDepMap());
@@ -187,10 +188,29 @@ DependencyMap::pRefDepMap DependencyMap::makeUpdatePredecessors(const VariableSe
       // check if we already considered this variable
       if (predecessors.count(id) > 0) continue;
 
-      // if not, put predecessors in the working set and in the map
-      VarInfo *pred = &(dependencies[id]);
-      workingSet.push_back(pred);
-      predecessors[id] = pred;
+      // A negative id signals that the expression should be re-evaluated for every change.
+      // To do this we add all independent variables to the predecessors list.
+      if (id<0)
+      {
+        BOOST_FOREACH(pVariable indVar, independentVars)
+        {
+          long indId = indVar->getId();
+          if (predecessors.count(indId) == 0)
+          {
+            // if not, put predecessors in the working set and in the map
+            VarInfo *pred = &(dependencies[indId]);
+            workingSet.push_back(pred);
+            predecessors[indId] = pred;
+          }
+        }
+      }
+      else
+      {
+        // if not, put predecessors in the working set and in the map
+        VarInfo *pred = &(dependencies[id]);
+        workingSet.push_back(pred);
+        predecessors[id] = pred;
+      }
     }
   }
 
@@ -290,23 +310,23 @@ void DependencyMap::makeUpdateOrder(pRefDepMap deps_p, VariableList &updateList)
   }
 }
 
-bool DependencyMap::hasRoots(pVariable v, pParametersGroup roots)
-{
-  VariableSet deps;
-  deps.insert(v);
-  pRefDepMap predecessors = makeUpdatePredecessors(deps);
-
-  // roots are all the predecessord that do not depend on anything else.
-  std::set<long> allRoots;
-  BOOST_FOREACH(RefDepMap::value_type entry, *predecessors)
-  {
-    if (entry.second->dependsOn.empty())
-      allRoots.insert(entry.second->v->getId());
-  }
-
-  return roots->hasElements(allRoots);
-
-}
+//bool DependencyMap::hasRoots(pVariable v, pParametersGroup roots)
+//{
+//  VariableSet deps;
+//  deps.insert(v);
+//  pRefDepMap predecessors = makeUpdatePredecessors(deps);
+//
+//  // roots are all the predecessord that do not depend on anything else.
+//  std::set<long> allRoots;
+//  BOOST_FOREACH(RefDepMap::value_type entry, *predecessors)
+//  {
+//    if (entry.second->dependsOn.empty())
+//      allRoots.insert(entry.second->v->getId());
+//  }
+//
+//  return roots->hasElements(allRoots);
+//
+//}
 
 
 pBlockVariables DependencyMap::getBlockVariables()

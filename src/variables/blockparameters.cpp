@@ -55,8 +55,8 @@ bool ParametersGroup::hasElements(std::set<long> &ids)
   return ids.empty();
 }
 
-bool Parameter::depsAllowed(pDependencyMap deps)
-{
-  return deps->hasRoots(variable, allowedDeps);
-}
+//bool Parameter::depsAllowed(pDependencyMap deps)
+//{
+//  return deps->hasRoots(variable, allowedDeps);
+//}
 

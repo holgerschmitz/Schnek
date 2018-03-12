@@ -83,8 +83,9 @@ class FunctionExpression : public Expression<vtype>
 
     ExpressionList args;
     func f;
+    bool updateAlways;
   public:
-    FunctionExpression(func f_, ExpressionList &args_);
+    FunctionExpression(func f_, ExpressionList &args_, bool updateAlways);
 
     /// Return the modified value
     vtype eval();
@@ -149,8 +150,8 @@ struct FunctionExpressionConverter
 };
 
 template<class vtype, typename func>
-FunctionExpression<vtype, func>::FunctionExpression(func f_, ExpressionList &args_)
-  : f(f_)
+FunctionExpression<vtype, func>::FunctionExpression(func f_, ExpressionList &args_, bool updateAlways_)
+  : f(f_), updateAlways(updateAlways_)
 {
     FunctionExpressionConverter<vtype, func>::makeList(args_.begin(), args_.end(), args);
 }
@@ -185,6 +186,7 @@ DependencyList FunctionExpression<vtype, func>::getDependencies()
     DependencyList dep = boost::apply_visitor(visit, ex);
     result.insert(dep.begin(), dep.end());
   }
+  if (updateAlways) result.insert(-1);
   return result;
 }
 
@@ -208,12 +210,13 @@ class FunctionRegistry
         typedef FunctionExpression<rtype, func> FExprType;
 
         func f;
+        bool updateAlways;
       public:
-        Entry(func f_) : f(f_) {}
+        Entry(func f_, bool updateAlways_) : f(f_), updateAlways(updateAlways_) {}
 
         ExpressionVariant getExpression(ExpressionList &args)
         {
-          boost::shared_ptr<Expression<rtype> > eP(new FunctionExpression<rtype, func>(f, args));
+          boost::shared_ptr<Expression<rtype> > eP(new FunctionExpression<rtype, func>(f, args, updateAlways));
           return eP;
         }
     };
@@ -227,9 +230,9 @@ class FunctionRegistry
     FunctionRegistry(const FunctionRegistry &reg) : funcs(reg.funcs) {}
 
     template<typename func>
-    void registerFunction(std::string fname, func f)
+    void registerFunction(std::string fname, func f, bool updateAlways = false)
     {
-      pEntryBase eB(new Entry<func>(f));
+      pEntryBase eB(new Entry<func>(f, updateAlways));
       (*funcs)[fname] = eB;
     }
 

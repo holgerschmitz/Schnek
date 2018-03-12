@@ -87,7 +87,7 @@ class Parameter
     pVariable getVariable() { return variable; }
     pParametersGroup getAllowedDeps() { return allowedDeps; }
 
-    bool depsAllowed(pDependencyMap deps);
+//    bool depsAllowed(pDependencyMap deps);
 
     virtual void evaluate() = 0;
     virtual void update() = 0;

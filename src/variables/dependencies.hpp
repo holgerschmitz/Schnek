@@ -82,7 +82,7 @@ class DependencyMap
     void resetCounters();
 
     void makeUpdateList(const VariableSet &independentVars, const VariableSet &dependentVars, VariableList &updateList);
-    pRefDepMap makeUpdatePredecessors(const VariableSet &dependentVars);
+    pRefDepMap makeUpdatePredecessors(const VariableSet &independentVars, const VariableSet &dependentVars);
     pRefDepMap makeUpdateFollowers(const VariableSet &independentVars, pRefDepMap reverseDeps);
     void makeUpdateOrder(pRefDepMap deps, VariableList &updateList);
 
@@ -92,7 +92,7 @@ class DependencyMap
     pBlockVariables getBlockVariables();
     void updateAll();
 
-    bool hasRoots(pVariable v, pParametersGroup roots);
+//    bool hasRoots(pVariable v, pParametersGroup roots);
 };
 
 typedef boost::shared_ptr<DependencyMap> pDependencyMap;
