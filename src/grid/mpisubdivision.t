@@ -438,6 +438,20 @@ int MPICartSubdivision<GridType>::maxReduce(int val) const {
 }
 
 template<class GridType>
+double MPICartSubdivision<GridType>::minReduce(double val) const {
+  double result;
+  MPI_Allreduce(&val, &result, 1, MPI_DOUBLE, MPI_MIN, comm);
+  return result;
+}
+
+template<class GridType>
+int MPICartSubdivision<GridType>::minReduce(int val) const {
+  int result;
+  MPI_Allreduce(&val, &result, 1, MPI_INT, MPI_MIN, comm);
+  return result;
+}
+
+template<class GridType>
 double MPICartSubdivision<GridType>::sumReduce(double val) const
 {
   double result;

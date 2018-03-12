@@ -1,0 +1,13 @@
+
+
+* Implemented compound assignment for ArrayExpressions.
+* Implemented compound assignment operators *= and /= for Array. 
+* Allowing for different output types when using GridTransform. 
+  The transformation must have value_type defined.
+* Added test suite based on Boost Test
+* Added functions registerUtilityFunctions and registerSpecialFunctions to 
+  register some more functions.
+* Added a minReduce function in DomainSubdivision that is equivalent to the 
+  maxReduce but will find the minimum across all processes.
+* Added projectDim for Array. 
+* Added project and projectDim for Range.

@@ -188,6 +188,12 @@ class DomainSubdivision {
     /// Return the maximum of a single value over all the processes
     virtual int maxReduce(int) const = 0;
 
+    /// Return the minimum of a single value over all the processes
+    virtual double minReduce(double) const = 0;
+
+    /// Return the minimum of a single value over all the processes
+    virtual int minReduce(int) const = 0;
+
 
     /// Return true if this is the master process and false otherwise
     virtual bool master() const = 0;
@@ -288,6 +294,12 @@ class SerialSubdivision : public DomainSubdivision<GridType>
 
     /// The maximum of a single value is the value
     int maxReduce(int val) const { return val; }
+
+    /// Return the minimum of a single value over all the processes
+    double minReduce(double val) const { return val; }
+
+    /// Return the minimum of a single value over all the processes
+    int minReduce(int val) const { return val; }
 
     /// The sum of a single value is the value
     double sumReduce(double val) const { return val; }

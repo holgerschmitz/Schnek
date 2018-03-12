@@ -121,7 +121,9 @@ std::ostream &operator<<(std::ostream &out, const LiteratureReference &lit)
 LiteratureManager::LiteratureManager()
   : title("Algorithms and Methods"),
     subtitle("The following algorithms and methods have been used during this simulation run.")
-{}
+{
+
+}
 
 void LiteratureManager::addReference(std::string description,
     const LiteratureReference &reference)

@@ -25,6 +25,9 @@ template<class ChildType>
 class BlockContainer
 {
   friend ChildBlock<ChildType>;
+  public:
+    typedef boost::iterator_range<typename std::list<boost::shared_ptr<ChildType> >::const_iterator> iterator_range;
+    typedef typename iterator_range::iterator iterator;
   private:
     std::list<boost::shared_ptr<ChildType> > children;
 
@@ -33,17 +36,15 @@ class BlockContainer
       children.push_back(child);
     }
   protected:
-    typedef boost::iterator_range<typename std::list<boost::shared_ptr<ChildType> >::const_iterator> child_iterator_range;
-    child_iterator_range childBlocks()
+    iterator_range childBlocks()
     {
-      return child_iterator_range(children.begin(), children.end());
+      return iterator_range(children.begin(), children.end());
     }
 
     size_t numChildren()
     {
       return children.size();
     }
-
 };
 
 template<class BlockType>
