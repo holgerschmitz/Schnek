@@ -9,3 +9,5 @@
   register some more functions.
 * Added a minReduce function in DomainSubdivision that is equivalent to the 
   maxReduce but will find the minimum across all processes.
+* Added projectDim for Array. 
+* Added project and projectDim for Range.
