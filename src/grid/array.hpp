@@ -218,7 +218,9 @@ class Array :
     
     /// projects the Array onto an Array of shorter length
     template<int destLength>
-    Array<T,destLength,CheckingPolicy> project();
+    Array<T,destLength,CheckingPolicy> project() const;
+
+    Array<T,length-1,CheckingPolicy> projectDim(int dim) const;
 
 
     /** Returns an array filled with zeros.
