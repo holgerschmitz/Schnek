@@ -113,6 +113,13 @@ std::string parser_input_special_functions_normal =
     "test3 = normal(x,y,2.0);\n"
     "test4 = normal(x,y,-2.0);\n";
 
+
+std::string parser_input_count_evaluation =
+    "test4 = eval4();\n"
+    "test2 = eval2(x);\n"
+    "test1 = eval1();\n"
+    "test3 = eval3(x,y);\n";
+
 int NSteps;
 
 double dx;
@@ -545,4 +552,96 @@ BOOST_FIXTURE_TEST_CASE( parser_special_functions_normal, ParserTest )
     ++show_progress;
   }
 }
+
+int evaluation_counter1;
+int evaluation_counter2;
+int evaluation_counter3;
+int evaluation_counter4;
+double evaluation_counter4_return_value;
+
+double count_evaluation1() {
+  ++evaluation_counter1;
+  return 2.0;
+}
+
+double count_evaluation2(double x) {
+  ++evaluation_counter2;
+  return 2.0*x;
+}
+
+double count_evaluation3(double x, double y) {
+  ++evaluation_counter3;
+  return 2.0*x + 3.0*y;
+}
+
+double count_evaluation4() {
+  ++evaluation_counter4;
+  return evaluation_counter4_return_value;
+}
+
+BOOST_FIXTURE_TEST_CASE( parser_count_evaluations, ParserTest )
+{
+  const int N = 5;
+
+  freg.registerFunction("eval1", count_evaluation1);
+  freg.registerFunction("eval2", count_evaluation2);
+  freg.registerFunction("eval3", count_evaluation3);
+  freg.registerFunction("eval4", count_evaluation4, true);
+
+  init(parser_input_count_evaluation);
+
+  boost::progress_display show_progress(N*N);
+
+  boost::random::mt19937 rGen;
+  boost::random::uniform_real_distribution<> dist(1.0, 10.0);
+
+  pDependencyMap depMap(new DependencyMap(vars.getRootBlock()));
+  DependencyUpdater updater(depMap);
+
+  updater.addIndependent(xVar);
+  updater.addIndependent(yVar);
+  updater.addDependent(test1Var);
+  updater.addDependent(test2Var);
+  updater.addDependent(test3Var);
+  updater.addDependent(test4Var);
+  updater.addDependent(test5Var);
+
+  int evaluation_counter1_ref = 0;
+  int evaluation_counter2_ref = 0;
+  int evaluation_counter3_ref = 0;
+  int evaluation_counter4_ref = 0;
+
+  evaluation_counter1 = 0;
+  evaluation_counter2 = 0;
+  evaluation_counter3 = 0;
+  evaluation_counter4 = 0;
+
+  for (int i=0; i<N; ++i)
+  {
+    x = 2.0*i;
+    for (int j=0; j<N; ++j)
+    {
+      y = 3.0*j;
+      evaluation_counter4_return_value = 3.0*x - 2.0*y;
+
+      ++evaluation_counter2_ref;
+      ++evaluation_counter3_ref;
+      ++evaluation_counter4_ref;
+
+      updater.update();
+      BOOST_CHECK_CLOSE(test1, 2.0, 1e-8);
+      BOOST_CHECK_CLOSE(test2, 2.0*x, 1e-8);
+      BOOST_CHECK_CLOSE(test3, 2.0*x + 3.0*y, 1e-8);
+      BOOST_CHECK_CLOSE(test4, evaluation_counter4_return_value, 1e-8);
+
+      BOOST_CHECK_EQUAL(evaluation_counter1, evaluation_counter1_ref);
+      BOOST_CHECK_EQUAL(evaluation_counter2, evaluation_counter2_ref);
+      BOOST_CHECK_EQUAL(evaluation_counter3, evaluation_counter3_ref);
+      BOOST_CHECK_EQUAL(evaluation_counter4, evaluation_counter4_ref);
+
+      ++show_progress;
+    }
+  }
+}
+
 BOOST_AUTO_TEST_SUITE_END()

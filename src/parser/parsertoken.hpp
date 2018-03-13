@@ -89,6 +89,7 @@ class ParserToken
 
     void makeExpressionList();
     void assignFunction(ParserToken &parTok1, ParserToken &parTok2);
+    void assignFunction(ParserToken &parTok1);
 
     void evaluateExpression(ParserToken &identifier, ParserToken &expression);
 
