@@ -40,6 +40,18 @@ using namespace schnek;
 
 DependencyMap::DependencyMap(const pBlockVariables vars)
 {
+
+  static int dummyInt = 0;
+  typedef boost::shared_ptr<Expression<int> > ParExpression;
+  ParExpression pexp(new ExternalValue<int>(&dummyInt));
+  pVariable tmp(new Variable(pexp, true, true));
+  dummyVar = tmp;
+
+  VarInfo dummyInfo(dummyVar, DependencySet(), DependencySet());
+  //dependencies[-1] = dummyInfo;
+  dependencies[dummyVar->getId()] = dummyInfo;
+//  std::cerr << "DUMMY Id = " << dummyVar->getId() << std::endl;
+
   blockVars = vars;
   constructMap(vars);
 }
@@ -54,6 +66,12 @@ void DependencyMap::constructMapRecursive(const pBlockVariables vars)
       SCHNEK_TRACE_LOG(3,"Adding variable " << it.first << " " << v->getId());
       DependenciesGetter depGet;
       DependencySet dep = boost::apply_visitor(depGet, v->getExpression());
+      if (dep.count(-1)>0)
+      {
+        dep.erase(-1);
+        dep.insert(dummyVar->getId());
+      }
+
       long id = v->getId();
       if (dependencies.count(id)>0) throw SchnekException();
       dependencies[id] = VarInfo(v, dep, DependencySet());
@@ -68,6 +86,8 @@ void DependencyMap::constructMapRecursive(const pBlockVariables vars)
 void DependencyMap::constructMap(const pBlockVariables vars)
 {
   SCHNEK_TRACE_ENTER_FUNCTION(3);
+
+
   constructMapRecursive(vars);
 
   BOOST_FOREACH(DepMap::value_type entry, dependencies)
@@ -82,15 +102,15 @@ void DependencyMap::constructMap(const pBlockVariables vars)
     }
   }
 
-//  std::cout << "DependencyMap::constructMap";
+//  std::cerr << "DependencyMap::constructMap";
 //  BOOST_FOREACH(DepMap::value_type info, dependencies)
 //  {
-//     std::cout << "Variable " << info.first << "("<< info.second.v->getId() << "): ";
+//     std::cerr << "Variable " << info.first << "("<< info.second.v->getId() << "): ";
 //     BOOST_FOREACH(long id, info.second.dependsOn)
 //     {
-//       std::cout << id << " ";
+//       std::cerr << id << " ";
 //     }
-//     std::cout << std::endl;
+//     std::cerr << std::endl;
 //  }
   SCHNEK_TRACE_EXIT_FUNCTION(3);
 }
@@ -105,57 +125,58 @@ void DependencyMap::resetCounters()
 
 void DependencyMap::makeUpdateList(const VariableSet &independentVars, const VariableSet &dependentVars, VariableList &updateList)
 {
-//  std::cout << " ======== All dependencies ========\n";
+//  std::cerr << " ======== All dependencies ========\n";
 //  BOOST_FOREACH(DepMap::value_type entry, dependencies)
 //  {
-//    std::cout << "Var " << entry.second.v->getId()  << std::endl;
-//    std::cout << "  depends on ";
-//    BOOST_FOREACH(long id, entry.second.dependsOn) std::cout << id << " ";
-//    std::cout << std::endl;
-//    std::cout << "  modifies ";
-//    BOOST_FOREACH(long id, entry.second.modifies) std::cout << id << " ";
-//    std::cout << std::endl;
+//    std::cerr << "Varentry " << entry.first  << std::endl;
+//    std::cerr << "Var " << entry.second.v->getId()  << std::endl;
+//    std::cerr << "  depends on ";
+//    BOOST_FOREACH(long id, entry.second.dependsOn) std::cerr << id << " ";
+//    std::cerr << std::endl;
+//    std::cerr << "  modifies ";
+//    BOOST_FOREACH(long id, entry.second.modifies) std::cerr << id << " ";
+//    std::cerr << std::endl;
 //  }
 //
 //  std::cout << " ======== Dependent Vars ========\n";
 //  BOOST_FOREACH(pVariable v, dependentVars)
 //  {
-//    std::cout << "Var " << v->getId()  << std::endl;
+//    std::cerr << "Var " << v->getId()  << std::endl;
 //  }
 //
 //  std::cout << " ======== Independent Vars ========\n";
 //  BOOST_FOREACH(pVariable v, independentVars)
 //  {
-//    std::cout << "Var " << v->getId()  << std::endl;
+//    std::cerr << "Var " << v->getId()  << std::endl;
 //  }
 
   pRefDepMap reverseDeps = makeUpdatePredecessors(independentVars, dependentVars);
 
-//  std::cout << " ======== Reverse dependencies ========\n";
+//  std::cerr << " ======== Reverse dependencies ========\n";
 //  BOOST_FOREACH(RefDepMap::value_type entry, *reverseDeps)
 //  {
-//    std::cout << "Var " << entry.second->v->getId()  << std::endl;
-//    std::cout << "  depends on ";
-//    BOOST_FOREACH(long id, entry.second->dependsOn) std::cout << id << " ";
-//    std::cout << std::endl;
-//    std::cout << "  modifies ";
-//    BOOST_FOREACH(long id, entry.second->modifies) std::cout << id << " ";
-//    std::cout << std::endl;
+//    std::cerr << "Varentry " << entry.first  << std::endl;
+//    std::cerr << "Var " << entry.second->v->getId()  << std::endl;
+//    std::cerr << "  depends on ";
+//    BOOST_FOREACH(long id, entry.second->dependsOn) std::cerr << id << " ";
+//    std::cerr << std::endl;
+//    std::cerr << "  modifies ";
+//    BOOST_FOREACH(long id, entry.second->modifies) std::cerr << id << " ";
+//    std::cerr << std::endl;
 //  }
 
   pRefDepMap deps = makeUpdateFollowers(independentVars, reverseDeps);
 
-
-//  std::cout << " ======== Trimmed dependencies ========\n";
+//  std::cerr << " ======== Trimmed dependencies ========\n";
 //  BOOST_FOREACH(RefDepMap::value_type entry, *deps)
 //  {
-//    std::cout << "Var " << entry.second->v->getId()  << std::endl;
-//    std::cout << "  depends on ";
-//    BOOST_FOREACH(long id, entry.second->dependsOn) std::cout << id << " ";
-//    std::cout << std::endl;
-//    std::cout << "  modifies ";
-//    BOOST_FOREACH(long id, entry.second->modifies) std::cout << id << " ";
-//    std::cout << std::endl;
+//    std::cerr << "Var " << entry.second->v->getId()  << std::endl;
+//    std::cerr << "  depends on ";
+//    BOOST_FOREACH(long id, entry.second->dependsOn) std::cerr << id << " ";
+//    std::cerr << std::endl;
+//    std::cerr << "  modifies ";
+//    BOOST_FOREACH(long id, entry.second->modifies) std::cerr << id << " ";
+//    std::cerr << std::endl;
 //  }
 
   makeUpdateOrder(deps, updateList);
@@ -344,12 +365,12 @@ void DependencyMap::updateAll()
 
 //  BOOST_FOREACH(RefDepMap::value_type info, *deps)
 //  {
-//     std::cout << "Variable " << info.first << "("<< info.second->v->getId() << "): ";
+//     std::cerr << "Variable " << info.first << "("<< info.second->v->getId() << "): ";
 //     BOOST_FOREACH(long id, info.second->dependsOn)
 //     {
-//       std::cout << id << " ";
+//       std::cerr << id << " ";
 //     }
-//     std::cout << std::endl;
+//     std::cerr << std::endl;
 //  }
 
   VariableList updateList;
@@ -357,6 +378,7 @@ void DependencyMap::updateAll()
   makeUpdateOrder(deps, updateList);
 
   BOOST_FOREACH(pVariable v, updateList) {
+//    std::cerr << "Evaluating expression for " << v->getId() << std::endl;
     v->evaluateExpression();
   }
 }
@@ -364,7 +386,11 @@ void DependencyMap::updateAll()
 
 DependencyUpdater::DependencyUpdater(pDependencyMap dependencies_)
   : dependencies(dependencies_), isValid(true)
-{}
+{
+  assert(dependencies->dummyVar->isReadOnly());
+  independentVars.insert(dependencies->dummyVar);
+}
+
 
 void DependencyUpdater::addIndependent(pParameter p)
 {

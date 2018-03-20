@@ -165,6 +165,7 @@ vtype FunctionExpression<vtype, func>::eval()
 template<class vtype, typename func>
 bool FunctionExpression<vtype, func>::isConstant()
 {
+  if (updateAlways) return false;
   bool result = true;
   isConstantVisitor visit;
   BOOST_FOREACH(ExpressionVariant ex, args)

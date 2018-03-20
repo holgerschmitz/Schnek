@@ -11,3 +11,4 @@
   maxReduce but will find the minimum across all processes.
 * Added projectDim for Array. 
 * Added project and projectDim for Range.
+* Parser now supports functions without arguments.

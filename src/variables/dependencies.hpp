@@ -75,6 +75,8 @@ class DependencyMap
     DepMap dependencies;
     pBlockVariables blockVars;
 
+    pVariable dummyVar;
+
     friend class DependencyUpdater;
 
     void constructMapRecursive(const pBlockVariables vars);

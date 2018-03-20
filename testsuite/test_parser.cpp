@@ -581,7 +581,8 @@ double count_evaluation4() {
 
 BOOST_FIXTURE_TEST_CASE( parser_count_evaluations, ParserTest )
 {
-  const int N = 5;
+  evaluation_counter4_return_value = 1.0;
+  const int N = 100;
 
   freg.registerFunction("eval1", count_evaluation1);
   freg.registerFunction("eval2", count_evaluation2);
@@ -604,7 +605,6 @@ BOOST_FIXTURE_TEST_CASE( parser_count_evaluations, ParserTest )
   updater.addDependent(test2Var);
   updater.addDependent(test3Var);
   updater.addDependent(test4Var);
-  updater.addDependent(test5Var);
 
   int evaluation_counter1_ref = 0;
   int evaluation_counter2_ref = 0;
@@ -622,7 +622,7 @@ BOOST_FIXTURE_TEST_CASE( parser_count_evaluations, ParserTest )
     for (int j=0; j<N; ++j)
     {
       y = 3.0*j;
-      evaluation_counter4_return_value = 3.0*x - 2.0*y;
+      evaluation_counter4_return_value = N*x + y;
 
       ++evaluation_counter2_ref;
       ++evaluation_counter3_ref;

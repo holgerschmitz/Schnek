@@ -185,6 +185,8 @@ class BlockParameters
       }
       block->addVariable(varName, variable);
 
+      if (varName=="test4") std::cerr << "test4: ID = " << variable->getId();
+
       pParameter par(new ConcreteParameter<T>(varName, variable, var, allowedDeps));
       parameterMap[varName] = par;
       return par;
