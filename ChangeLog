@@ -12,3 +12,4 @@
 * Added projectDim for Array. 
 * Added project and projectDim for Range.
 * Parser now supports functions without arguments.
+* Added capability for non-deterministic functions in configuration file parser
