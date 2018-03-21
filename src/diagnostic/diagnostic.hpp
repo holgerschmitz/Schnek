@@ -51,9 +51,12 @@ class DiagnosticInterface : public Block
     /// Append data at every write to the same file?
     int append;
   public:
+    /// Default constructor
     DiagnosticInterface();
+    /// Virtual destructor
     virtual ~DiagnosticInterface() {}
   protected:
+
     virtual void open(const std::string &) {}
     virtual void write() {}
     virtual void close() {}
