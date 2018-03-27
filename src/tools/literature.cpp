@@ -122,7 +122,15 @@ LiteratureManager::LiteratureManager()
   : title("Algorithms and Methods"),
     subtitle("The following algorithms and methods have been used during this simulation run.")
 {
-
+  LiteratureArticle schnek("Schmitz2018",
+                           "Schmitz, Holger",
+                           "Schnek: A {C}++ library for the development of parallel simulation codes on regular grids",
+                           "Computer Physics Communications",
+                           "2018",
+                           "226",
+                           "151--164");
+  schnek.setUrl("https://doi.org/10.1016/j.cpc.2017.12.023");
+  addReference("Parallel simulation framework based on the Schnek Library", schnek);
 }
 
 void LiteratureManager::addReference(std::string description,
@@ -208,6 +216,7 @@ std::ostream& schnek::operator<<(std::ostream &out,
   if (ref.getNote() != "") out << ",\n  note={" << ref.getNote() << "}";
   if (ref.getType() != "") out << ",\n  type={" << ref.getType() << "}";
   if (ref.getUrl() != "") out << ",\n  url={" << ref.getUrl() << "}";
+  if (ref.getDoi() != "") out << ",\n  doi={" << ref.getDoi() << "}";
 
   out << "\n}\n\n";
   return out;

@@ -71,6 +71,7 @@ private:
     std::string title; // The title of the work
     std::string type; // The field overriding the default type of publication (e.g. "Research Note" for techreport, "{PhD} dissertation" for phdthesis, "Section" for inbook/incollection)
     std::string url; // The WWW address
+    std::string doi; // The DOI address
     std::string volume; // The volume of a journal or multi-volume book
     std::string year; // The year of publication (or, if unpublished, the year of creation)
 
@@ -105,6 +106,7 @@ private:
       title(ref.title),
       type(ref.type),
       url(ref.url),
+      doi(ref.doi),
       volume(ref.volume),
       year(ref.year),
       bibKey(ref.bibKey),
@@ -137,6 +139,7 @@ private:
       title = ref.title;
       type = ref.type;
       url = ref.url;
+      doi = ref.doi;
       volume = ref.volume;
       year = ref.year;
       bibKey = ref.bibKey;
@@ -270,6 +273,11 @@ private:
     std::string getUrl() const
     {
         return url;
+    }
+
+    std::string getDoi() const
+    {
+        return doi;
     }
 
     std::string getVolume() const
@@ -410,6 +418,11 @@ private:
     void setUrl(std::string url)
     {
         this->url = url;
+    }
+
+    void setDoi(std::string doi)
+    {
+        this->doi = doi;
     }
 
     void setVolume(std::string volume)
