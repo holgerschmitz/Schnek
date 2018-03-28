@@ -7,6 +7,8 @@ TESTS = \
 
 AM_CXXFLAGS = -I../src
 
+schnek_testdir = $(includedir)/schnek/testsuite
+
 schnek_test_LDADD = -L../src -lschnek
 
 schnek_test_SOURCES = \
@@ -17,3 +19,6 @@ schnek_test_SOURCES = \
 	test_arrayexpression.cpp \
 	test_parser.cpp \
 	test_range.cpp
+	
+schnek_test_HEADERS = \
+	utility.hpp
