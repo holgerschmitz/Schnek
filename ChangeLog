@@ -1,4 +1,5 @@
 
+Version 1.1.0
 
 * Implemented compound assignment for ArrayExpressions.
 * Implemented compound assignment operators *= and /= for Array. 
@@ -13,3 +14,16 @@
 * Added project and projectDim for Range.
 * Parser now supports functions without arguments.
 * Added capability for non-deterministic functions in configuration file parser
+
+Version 1.0.2
+
+* Bug fixes and minor improvements
+* Added some more examples
+
+Version 1.0.1
+
+* Some bug fixes
+
+Version 1.0.0
+
+* First production release
