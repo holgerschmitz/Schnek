@@ -15976,6 +15976,8 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
+# This sets BOOST_CPPFLAGS and BOOST_LDFLAGS
+# They will be added to CPPFLAGS and LDFLAGS once we know the outcome of the HDF5 tests
 
 
 # Check whether --with-boost was given.
@@ -16242,8 +16244,6 @@ fi
 
 
 
-CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
 
 # Search for MPI support
 # allows the  --with-mpi option (yes, no, auto)
@@ -16471,16 +16471,23 @@ if test "${with_hdf5+set}" = set; then :
   withval=$with_hdf5;
     if test "$withval" = "no"; then
         want_hdf5="no"
+        want_hdf5_path="no"
     elif test "$withval" = "yes"; then
         want_hdf5="yes"
+        want_hdf5_path="no"
         ac_hdf5_path=""
     else
         want_hdf5="yes"
+        want_hdf5_path="yes"
         ac_hdf5_path="$withval"
     fi
 
 else
-  want_hdf5="yes"
+
+      want_hdf5="yes"
+      want_hdf5_path="no"
+      ac_hdf5_path=""
+
 fi
 
 
@@ -16608,9 +16615,9 @@ $as_echo "#define HAVE_HDF5 /**/" >>confdefs.h
 
 $as_echo "#define SCHNEK_HAVE_HDF5 1" >>confdefs.h
 
-  EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $HDF5_CFLAGS"
-  EXTRA_LDFLAGS="$EXTRA_LDFLAGS $HDF5_LDFLAGS"
-  EXTRA_LIBS="$EXTRA_LIBS $HDF5_LIBS"
+  EXTRA_HDF5_CPPFLAGS="$HDF5_CFLAGS"
+  EXTRA_HDF5_LDFLAGS="$HDF5_LDFLAGS"
+  EXTRA_HDF5_LIBS="$HDF5_LIBS"
 
     fi
 
@@ -16619,6 +16626,18 @@ $as_echo "#define SCHNEK_HAVE_HDF5 1" >>confdefs.h
 fi
 
 
+
+if test "x$want_hdf5_path" = "xyes"; then
+  # HDF5 flags should have priority over boost when a path is specified with --with-hdf5
+  CPPFLAGS="$CPPFLAGS $EXTRA_HDF5_CPPFLAGS $BOOST_CPPFLAGS"
+  LDFLAGS="$LDFLAGS $EXTRA_HDF5_LDFLAGS $BOOST_LDFLAGS"
+  LIBS="$LIBS $EXTRA_HDF5_LIBS"
+else
+  # otherwise boost takes precedence
+  CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS $EXTRA_HDF5_CPPFLAGS"
+  LDFLAGS="$LDFLAGS $BOOST_LDFLAGS $EXTRA_HDF5_LDFLAGS"
+  LIBS="$LIBS $EXTRA_HDF5_LIBS"
+fi
 
 # Check whether --enable-parallel_hdf5 was given.
 if test "${enable_parallel_hdf5+set}" = set; then :
@@ -16633,11 +16652,6 @@ $as_echo "#define SCHNEK_USE_HDF_PARALLEL 1" >>confdefs.h
 
 
 fi
-
-
-CPPFLAGS="$CPPFLAGS $EXTRA_CPPFLAGS"
-LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
-LIBS="$LIBS $EXTRA_LIBS"
 
 #End :: Check HDF5 suport
 

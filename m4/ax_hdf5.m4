@@ -10,15 +10,22 @@ AC_ARG_WITH([hdf5],
     [
     if test "$withval" = "no"; then
         want_hdf5="no"
+        want_hdf5_path="no"
     elif test "$withval" = "yes"; then
         want_hdf5="yes"
+        want_hdf5_path="no"
         ac_hdf5_path=""
     else
         want_hdf5="yes"
+        want_hdf5_path="yes"
         ac_hdf5_path="$withval"
     fi
     ],
-    [want_hdf5="yes"])
+    [
+      want_hdf5="yes"
+      want_hdf5_path="no"
+      ac_hdf5_path=""
+    ])
 
 
 AC_ARG_WITH([hdf5-libdir],

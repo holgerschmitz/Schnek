@@ -52,10 +52,10 @@ AC_SUBST([LIBTOOL_DEPS])
 
 AC_LANG_PUSH([C++])
 
+# This sets BOOST_CPPFLAGS and BOOST_LDFLAGS
+# They will be added to CPPFLAGS and LDFLAGS once we know the outcome of the HDF5 tests
 AX_BOOST_BASE([1.48.0],,[AC_MSG_ERROR([Schnek needs Boost version 1.48.0 to compile!])])
 
-CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
 
 # Search for MPI support
 # allows the  --with-mpi option (yes, no, auto)
@@ -89,12 +89,24 @@ fi
 
 AX_HDF5([
   AC_DEFINE([SCHNEK_HAVE_HDF5],[1],[Define this macro if Schnek is compiled with HDF5 support])
-  EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $HDF5_CFLAGS"
-  EXTRA_LDFLAGS="$EXTRA_LDFLAGS $HDF5_LDFLAGS"
-  EXTRA_LIBS="$EXTRA_LIBS $HDF5_LIBS"
+  EXTRA_HDF5_CPPFLAGS="$HDF5_CFLAGS"
+  EXTRA_HDF5_LDFLAGS="$HDF5_LDFLAGS"
+  EXTRA_HDF5_LIBS="$HDF5_LIBS"
 ],[
   AC_MSG_WARN([Couldn't find the HDF5 library!!  Switching to --without-hdf5.])
 ])
+
+if test "x$want_hdf5_path" = "xyes"; then
+  # HDF5 flags should have priority over boost when a path is specified with --with-hdf5
+  CPPFLAGS="$CPPFLAGS $EXTRA_HDF5_CPPFLAGS $BOOST_CPPFLAGS"
+  LDFLAGS="$LDFLAGS $EXTRA_HDF5_LDFLAGS $BOOST_LDFLAGS"
+  LIBS="$LIBS $EXTRA_HDF5_LIBS"
+else
+  # otherwise boost takes precedence
+  CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS $EXTRA_HDF5_CPPFLAGS"
+  LDFLAGS="$LDFLAGS $BOOST_LDFLAGS $EXTRA_HDF5_LDFLAGS"
+  LIBS="$LIBS $EXTRA_HDF5_LIBS"
+fi
 
 AC_ARG_ENABLE([parallel_hdf5],
           [AS_HELP_STRING([--enable-parallel-hdf5], [use parallel file access for HDF5 (mpio) if available.])], [])
@@ -103,11 +115,6 @@ AS_IF([test "x$enable_parallel_hdf5" != "xno"], [
     AC_DEFINE([SCHNEK_USE_HDF_PARALLEL],[1],[Defined if we use parallel file access for HDF5 (mpio) if available.])
   ])
   
-
-CPPFLAGS="$CPPFLAGS $EXTRA_CPPFLAGS"
-LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
-LIBS="$LIBS $EXTRA_LIBS"
-
 #End :: Check HDF5 suport
 
 
