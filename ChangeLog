@@ -1,3 +1,6 @@
+Version 1.2.0
+* Fixed issues when specifying --with-hdf5 with a folder in configure script
+* Added HDF5 dataset attributes to HDF5GridDiagnostic 
 
 Version 1.1.0
 
