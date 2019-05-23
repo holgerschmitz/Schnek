@@ -101,7 +101,6 @@ void Block::addChild(pBlock child)
 
 void Block::registerHierarchy()
 {
-  std::cout << "Block::registerHierarchy() " << getId() << "  " << this << std::endl;
   this->registerData();
   BOOST_FOREACH(pBlock child, children)
   {
