@@ -3,6 +3,13 @@
 .settings/
 
 /Debug/
+/doc
+
+/parser/deckgrammar.c
+/parser/deckgrammar.h
+/parser/deckgrammar.out
+/parser/deckscanner.c
+/parser/lemon
 
 # Compiled Object files
 *.slo

@@ -87,7 +87,7 @@ class Parameter
     pVariable getVariable() { return variable; }
     pParametersGroup getAllowedDeps() { return allowedDeps; }
 
-    bool depsAllowed(pDependencyMap deps);
+//    bool depsAllowed(pDependencyMap deps);
 
     virtual void evaluate() = 0;
     virtual void update() = 0;
@@ -184,6 +184,8 @@ class BlockParameters
         variable = pVariable(new Variable(pexp, true, true));
       }
       block->addVariable(varName, variable);
+
+      if (varName=="test4") std::cerr << "test4: ID = " << variable->getId();
 
       pParameter par(new ConcreteParameter<T>(varName, variable, var, allowedDeps));
       parameterMap[varName] = par;

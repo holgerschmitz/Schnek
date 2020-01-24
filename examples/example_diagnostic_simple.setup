@@ -1,0 +1,15 @@
+x = 1.0;
+y = 0.0;
+vx = 0.0;
+vy = 1.0;
+G = 1.0;
+dt = 0.1;
+Nsteps = 100;
+
+
+Diagnostic {
+  file = "Trajectory.out";
+  field = "pos";
+  interval = 1;
+  append = 1;
+}

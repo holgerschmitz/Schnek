@@ -35,7 +35,8 @@
 
 namespace schnek {
 
-/** Interface for diagnostic tasks.
+/**
+ * Interface for diagnostic tasks.
  *
  * This interface can be used to implement different types of diagnostics.
  * The DiagnosticInterface is closely related to the DiagnosticManager. When an
@@ -51,12 +52,18 @@ class DiagnosticInterface : public Block
     /// Append data at every write to the same file?
     int append;
   public:
+    /// Default constructor
     DiagnosticInterface();
+    /// Virtual destructor
     virtual ~DiagnosticInterface() {}
   protected:
+    /// Open the output file
     virtual void open(const std::string &) {}
+    /// Write into the touput file
     virtual void write() {}
+    /// Close the output file
     virtual void close() {}
+
     virtual bool singleOut() { return false; }
     void initParameters(BlockParameters&);
 
