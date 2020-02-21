@@ -367,8 +367,8 @@ BOOST_FIXTURE_TEST_CASE( parser_precedence, ParserTest )
   double dx_save = dx;
   double dy_save = dy;
 
-  for (xi=2; xi<=2; ++xi)
-    for (int yi=3; yi<=3; ++yi)
+  for (xi=-5; xi<=5; ++xi)
+    for (yi=-5; yi<=5; ++yi)
     {
       int a = xi;
       int b = yi;
