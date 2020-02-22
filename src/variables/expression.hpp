@@ -43,6 +43,8 @@
 #include <boost/mpl/next.hpp>
 #include <boost/mpl/deref.hpp>
 
+#include <boost/foreach.hpp>
+
 #include <string>
 #include <iostream>
 #include <set>
@@ -226,35 +228,108 @@ template<class oper, class vtype>
 class BinaryOp : public Expression<vtype>
 {
   private:
+    typedef BinaryOp<oper, vtype> SelfType;
     typedef typename Expression<vtype>::pExpression pExpression;
+
+    typedef BinaryOp<typename oper::Inverted, vtype> InvType;
+    typedef boost::shared_ptr<InvType> pInvType;
+    friend class BinaryOp<typename oper::Inverted, vtype>;
+
     /// pointers to the expressions to modify
-    typename Expression<vtype>::pExpression expr1, expr2;
+    std::list<typename Expression<vtype>::pExpression> expressions;
   public:
     BinaryOp(pExpression expr1_, pExpression expr2_)
-      : expr1(expr1_), expr2(expr2_) {}
+    {
+      typedef boost::shared_ptr<BinaryOp<oper, vtype>> pBinaryOp;
+
+      pBinaryOp binaryExpr1 = boost::dynamic_pointer_cast<SelfType>(expr1_);
+      pInvType invExpr1 = boost::dynamic_pointer_cast<InvType>(expr1_);
+
+      pBinaryOp binaryExpr2 = boost::dynamic_pointer_cast<SelfType>(expr2_);
+      pInvType invExpr2 = boost::dynamic_pointer_cast<InvType>(expr2_);
+
+      if (binaryExpr1)
+      {
+        expressions.insert(expressions.end(), binaryExpr1->expressions.begin(), binaryExpr1->expressions.end());
+      }
+      else if (invExpr1)
+      {
+        expressions.insert(expressions.end(), invExpr1->expressions.begin(), invExpr1->expressions.end());
+      }
+      else
+      {
+        expressions.push_back(expr1_);
+      }
+
+      if (binaryExpr2)
+      {
+        typename std::list<typename Expression<vtype>::pExpression>::iterator it = binaryExpr2->expressions.begin();
+        if (!oper::isPositive)
+        {
+          expressions.push_back(oper::negate(*it));
+          ++it;
+        }
+        expressions.insert(expressions.end(), it, binaryExpr2->expressions.end());
+      }
+      else if (invExpr2)
+      {
+        typename std::list<typename Expression<vtype>::pExpression>::iterator it = invExpr2->expressions.begin();
+        if (!oper::isPositive)
+        {
+          expressions.push_back(oper::negate(*it));
+          ++it;
+        }
+        expressions.insert(expressions.end(), it, invExpr2->expressions.end());
+      }
+      else
+      {
+        expressions.push_back(oper::isPositive ? expr2_ : oper::negate(expr2_));
+      }
+    }
 
     /// Return the calculated value
-    vtype eval() { return oper::eval(expr1->eval(), expr2->eval()); }
+    vtype eval() {
+      typedef typename oper::Normalized opNorm;
+      typename std::list<typename Expression<vtype>::pExpression>::iterator it = expressions.begin();
+
+      vtype val = (*it)->eval();
+
+      while (++it != expressions.end())
+      {
+        val = opNorm::eval(val, (*it)->eval());
+      }
+      return val;
+    }
 
     /// Constancy depends on the constancy of both expressions
-    bool isConstant() { return expr1->isConstant() && expr2->isConstant(); }
+    bool isConstant() {
+      BOOST_FOREACH(typename Expression<vtype>::pExpression exp, expressions)
+      {
+          if (!exp->isConstant()) return false;
+      }
+      return true;
+    }
 
     /// returns the joint dependencies of both sub expression
     DependencyList getDependencies()
     {
-        DependencyList dep1 = expr1->getDependencies();
-        DependencyList dep2 = expr2->getDependencies();
-        dep1.insert(dep2.begin(), dep2.end());
-        return dep1;
+      DependencyList dependencies;
+
+      BOOST_FOREACH(typename Expression<vtype>::pExpression exp, expressions)
+      {
+        DependencyList dep = exp->getDependencies();
+        dependencies.insert(dep.begin(), dep.end());
+      }
+      return dependencies;
     }
 };
 
 template<class vtype>
 struct FastCast
 {
-    vtype operator()(int a);
-    vtype operator()(double a);
-    vtype operator()(std::string a);
+  vtype operator()(int a);
+  vtype operator()(double a);
+  vtype operator()(std::string a);
 };
 
 template<>
