@@ -83,6 +83,17 @@ std::string parser_input_basic =
 "// initialising without using independent variables\n"
 "dz = 1.0;\n";
 
+std::string parser_input_precedence =
+    "int a = xi;\n"
+    "int b = yi;\n"
+    "int c = 2;\n"
+    "test_int1 = 2*a - b;\n"
+    "test_int2 = 2*a - b - 3;\n"
+    "test_int3 = 2*a - b - c;\n"
+    "test_int4 = 2* a-3 *b + c;\n"
+    "test_int5 = 2*(a-3)*b + c;\n"
+    ;
+
 std::string parser_input_utility =
     "test1 = min(x,y);\n"
     "test2 = max(x,y);\n"
@@ -112,7 +123,6 @@ std::string parser_input_special_functions_normal =
     "test2 = normal(x,y,-1.0);\n"
     "test3 = normal(x,y,2.0);\n"
     "test4 = normal(x,y,-2.0);\n";
-
 
 std::string parser_input_count_evaluation =
     "test4 = eval4();\n"
@@ -337,6 +347,41 @@ BOOST_FIXTURE_TEST_CASE( parser_independency, ParserTest )
       BOOST_CHECK_CLOSE(dz, 1.0, 1e-10);
     }
 }
+
+BOOST_FIXTURE_TEST_CASE( parser_precedence, ParserTest )
+{
+  registerCMath(freg);
+  init(parser_input_precedence);
+
+  pDependencyMap depMap(new DependencyMap(vars.getRootBlock()));
+  DependencyUpdater updater(depMap);
+
+  updater.addIndependent(xiVar);
+  updater.addIndependent(yiVar);
+  updater.addDependent(test_int1Var);
+  updater.addDependent(test_int2Var);
+  updater.addDependent(test_int3Var);
+  updater.addDependent(test_int4Var);
+  updater.addDependent(test_int5Var);
+
+  double dx_save = dx;
+  double dy_save = dy;
+
+  for (xi=-5; xi<=5; ++xi)
+    for (yi=-5; yi<=5; ++yi)
+    {
+      int a = xi;
+      int b = yi;
+      int c = 2;
+      updater.update();
+      BOOST_CHECK_EQUAL(test_int1, 2*a - b);
+      BOOST_CHECK_EQUAL(test_int2, 2*a - b - 3);
+      BOOST_CHECK_EQUAL(test_int3, 2*a - b - c);
+      BOOST_CHECK_EQUAL(test_int4, 2* a-3 *b + c);
+      BOOST_CHECK_EQUAL(test_int5, 2*(a-3)*b + c);
+    }
+}
+
 
 BOOST_FIXTURE_TEST_CASE( parser_utility, ParserTest )
 {
