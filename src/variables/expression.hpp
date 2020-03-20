@@ -28,6 +28,7 @@
 #define SCHNEK_EXPRESSION_HPP_
 
 #include "variables.hpp"
+#include "../util/logger.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
@@ -48,6 +49,9 @@
 #include <string>
 #include <iostream>
 #include <set>
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 namespace fusion = boost::fusion;
 namespace mpl = boost::mpl;
@@ -125,7 +129,11 @@ class Value : public Expression<vtype>
     /// Construct with a value
     Value(vtype val_) : val(val_) {}
     /// Return the stored value
-    vtype eval() { return val; }
+    vtype eval()
+    {
+      SCHNEK_TRACE_LOG(5, "Value<vtype>::eval(" << val << ")")
+      return val;
+    }
     /// A literal is a constant
     bool isConstant() { return true; }
     /// Return a reference to the value
@@ -155,6 +163,7 @@ class ReferencedValue : public Expression<vtype>
 //      else
 //        return boost::get<vtype>(var->evaluateExpression());
        // it is assumed that the referenced variable has been evaluated
+      SCHNEK_TRACE_LOG(5, "ReferencedValue<vtype>::eval(" << var->getValue() << ")")
       return boost::get<vtype>(var->getValue());
     }
     /// Constancy depends on the constancy of the variable
@@ -184,6 +193,7 @@ class ExternalValue : public Expression<vtype>
     /// Return the value
     vtype eval() {
 //      std::cout << "Returning value " << *var << "\n";
+      SCHNEK_TRACE_LOG(5, "ExternalValue<vtype>::eval(" << *var << ")")
       return *var;
     }
 
@@ -219,6 +229,14 @@ class UnaryOp : public Expression<vtype>
     }
 };
 
+template<class vtype>
+struct ExpressionInfo {
+  bool positive;
+  typename Expression<vtype>::pExpression expression;
+  ExpressionInfo(bool positive_, typename Expression<vtype>::pExpression expression_)
+    : positive(positive_), expression(expression_) {}
+};
+
 /** Binary operator expression
  *
  * This expression calculates a value from two arguments according to a
@@ -236,7 +254,7 @@ class BinaryOp : public Expression<vtype>
     friend class BinaryOp<typename oper::Inverted, vtype>;
 
     /// pointers to the expressions to modify
-    std::list<typename Expression<vtype>::pExpression> expressions;
+    std::list<ExpressionInfo<vtype>> expressions;
   public:
     BinaryOp(pExpression expr1_, pExpression expr2_)
     {
@@ -258,54 +276,57 @@ class BinaryOp : public Expression<vtype>
       }
       else
       {
-        expressions.push_back(expr1_);
+        expressions.push_back(ExpressionInfo<vtype>(true, expr1_));
       }
 
       if (binaryExpr2)
       {
-        typename std::list<typename Expression<vtype>::pExpression>::iterator it = binaryExpr2->expressions.begin();
+        typename std::list<ExpressionInfo<vtype>>::iterator it = binaryExpr2->expressions.begin();
         if (!oper::isPositive)
         {
-          expressions.push_back(oper::negate(*it));
+          expressions.push_back(ExpressionInfo<vtype>(!it->positive, it->expression));
           ++it;
         }
         expressions.insert(expressions.end(), it, binaryExpr2->expressions.end());
       }
       else if (invExpr2)
       {
-        typename std::list<typename Expression<vtype>::pExpression>::iterator it = invExpr2->expressions.begin();
+        typename std::list<ExpressionInfo<vtype>>::iterator it = invExpr2->expressions.begin();
         if (!oper::isPositive)
         {
-          expressions.push_back(oper::negate(*it));
+          expressions.push_back(ExpressionInfo<vtype>(!it->positive, it->expression));
           ++it;
         }
         expressions.insert(expressions.end(), it, invExpr2->expressions.end());
       }
       else
       {
-        expressions.push_back(oper::isPositive ? expr2_ : oper::negate(expr2_));
+        expressions.push_back(ExpressionInfo<vtype>(oper::isPositive, expr2_));
       }
     }
 
     /// Return the calculated value
     vtype eval() {
-      typedef typename oper::Normalized opNorm;
-      typename std::list<typename Expression<vtype>::pExpression>::iterator it = expressions.begin();
-
-      vtype val = (*it)->eval();
+      typedef typename oper::Positive opPositive;
+      typedef typename oper::Negative opNegative;
+      typename std::list<ExpressionInfo<vtype>>::iterator it = expressions.begin();
+//      std::cout << std::endl << "EVAL: " << expressions.size() << std::endl;
+      vtype val = it->expression->eval();
 
       while (++it != expressions.end())
       {
-        val = opNorm::eval(val, (*it)->eval());
+//        std::cout << "    : " << val << " " << it->positive << " " << it->expression->eval() << " ";
+        val = it->positive ? opPositive::eval(val, it->expression->eval()) : opNegative::eval(val, it->expression->eval());
+//        std::cout << val << std::endl;
       }
       return val;
     }
 
     /// Constancy depends on the constancy of both expressions
     bool isConstant() {
-      BOOST_FOREACH(typename Expression<vtype>::pExpression exp, expressions)
+      BOOST_FOREACH(ExpressionInfo<vtype> exp, expressions)
       {
-          if (!exp->isConstant()) return false;
+          if (!exp.expression->isConstant()) return false;
       }
       return true;
     }
@@ -315,9 +336,9 @@ class BinaryOp : public Expression<vtype>
     {
       DependencyList dependencies;
 
-      BOOST_FOREACH(typename Expression<vtype>::pExpression exp, expressions)
+      BOOST_FOREACH(ExpressionInfo<vtype> exp, expressions)
       {
-        DependencyList dep = exp->getDependencies();
+        DependencyList dep = exp.expression->getDependencies();
         dependencies.insert(dep.begin(), dep.end());
       }
       return dependencies;
@@ -413,7 +434,8 @@ struct DependenciesGetter : public boost::static_visitor<DependencyList>
   DependencyList operator()(ExpressionPointer e) { return e->getDependencies(); }
 };
 
-
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 } // namespace schnek
 

@@ -352,7 +352,7 @@ _eof_trans:
 	break;
 	case 1:
 #line 23 "deckscanner.rl"
-	{{cs = 10; goto _again;}}
+	{{cs = 10;goto _again;}}
 	break;
 	case 4:
 #line 1 "NONE"
@@ -452,7 +452,7 @@ _eof_trans:
 	break;
 	case 28:
 #line 86 "deckscanner.rl"
-	{te = p+1;{ {cs = 8; goto _again;} }}
+	{te = p+1;{ {cs = 8;goto _again;} }}
 	break;
 	case 29:
 #line 48 "deckscanner.rl"
