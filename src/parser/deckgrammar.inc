@@ -910,7 +910,7 @@ static void yy_reduce(
         break;
       case 34: /* atomic_expression ::= LBRACKET expression RBRACKET */
 #line 67 "deckgrammar.y"
-{ SCHNEK_TRACE_LOG(5,"Parser: Rule 27"<< toString(yymsp[-1].minor.yy0.getType()) << " " << yymsp[-1].minor.yy0.getString()); yygotominor.yy0 = yymsp[-1].minor.yy0; }
+{ SCHNEK_TRACE_LOG(5,"Parser: Rule 27"<< toString(yymsp[-1].minor.yy0.getType()) << " " << yymsp[-1].minor.yy0.getString()); yygotominor.yy0.assignUnaryOperator<expression::OperatorId>(yymsp[-1].minor.yy0); }
 #line 915 "deckgrammar.c"
         break;
       case 35: /* atomic_expression ::= IDENTIFIER LBRACKET expressionlist RBRACKET */

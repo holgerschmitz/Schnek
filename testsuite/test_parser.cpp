@@ -83,7 +83,7 @@ std::string parser_input_basic =
 "// initialising without using independent variables\n"
 "dz = 1.0;\n";
 
-std::string parser_input_precedence =
+std::string parser_input_precedence_add_1 =
     "int a = xi;\n"
     "int b = yi;\n"
     "int c = 2;\n"
@@ -93,6 +93,39 @@ std::string parser_input_precedence =
     "test_int4 = 2* a-3 *b + c;\n"
     "test_int5 = 2*(a-3)*b + c;\n"
     ;
+
+std::string parser_input_precedence_add_2 =
+    "int a = xi;\n"
+    "int b = yi;\n"
+    "int c = 2;\n"
+    "test_int1 = a - (b+c);\n"
+    "test_int2 = 2*a - (b-c);\n"
+    "test_int3 = -a - (b-c);\n"
+    "test_int4 = -2*a + (b-c);\n"
+    "test_int5 = 2*(a-3)*b - (c-a);\n"
+    ;
+
+std::string parser_input_precedence_mult_1 =
+    "int a = xi;\n"
+    "int b = yi;\n"
+    "int c = 2;\n"
+    "test_int1 = 2*a/b;\n"
+    "test_int2 = 2*a/b/3;\n"
+    "test_int3 = a/b/c;\n"
+    "test_int4 = 2*a/(3*b) * c;\n"
+    "test_int5 = 2*(a/3)*b * c;\n"
+    ;
+
+std::string parser_input_precedence_mult_2 =
+    "int a = xi;\n"
+    "int b = yi;\n"
+    "int c = 2;\n"
+    "test_int1 = a/(b*c);\n"
+    "test_int2 = 2*a/(b/c);\n"
+    "test_int3 = a*(b/c);\n"
+    "test_int4 = 2*(a/3)*b/(a/c);\n"
+    ;
+
 
 std::string parser_input_utility =
     "test1 = min(x,y);\n"
@@ -139,8 +172,8 @@ double dz;
 double x;
 double y;
 
-int xi;
-int yi;
+int xi = 256;
+int yi = 16;
 
 double test1;
 double test2;
@@ -348,10 +381,10 @@ BOOST_FIXTURE_TEST_CASE( parser_independency, ParserTest )
     }
 }
 
-BOOST_FIXTURE_TEST_CASE( parser_precedence, ParserTest )
+BOOST_FIXTURE_TEST_CASE( parser_precedence_add_1, ParserTest )
 {
   registerCMath(freg);
-  init(parser_input_precedence);
+  init(parser_input_precedence_add_1);
 
   pDependencyMap depMap(new DependencyMap(vars.getRootBlock()));
   DependencyUpdater updater(depMap);
@@ -379,6 +412,107 @@ BOOST_FIXTURE_TEST_CASE( parser_precedence, ParserTest )
       BOOST_CHECK_EQUAL(test_int3, -2*a - b - c);
       BOOST_CHECK_EQUAL(test_int4, 2* a-3 *b + c);
       BOOST_CHECK_EQUAL(test_int5, 2*(a-3)*b + c);
+    }
+}
+
+BOOST_FIXTURE_TEST_CASE( parser_precedence_add_2, ParserTest )
+{
+  registerCMath(freg);
+  init(parser_input_precedence_add_2);
+
+  pDependencyMap depMap(new DependencyMap(vars.getRootBlock()));
+  DependencyUpdater updater(depMap);
+
+  updater.addIndependent(xiVar);
+  updater.addIndependent(yiVar);
+  updater.addDependent(test_int1Var);
+  updater.addDependent(test_int2Var);
+  updater.addDependent(test_int3Var);
+  updater.addDependent(test_int4Var);
+  updater.addDependent(test_int5Var);
+
+  double dx_save = dx;
+  double dy_save = dy;
+
+  for (xi=5; xi<=5; ++xi)
+    for (yi=5; yi<=5; ++yi)
+    {
+      int a = xi;
+      int b = yi;
+      int c = 2;
+      updater.update();
+      BOOST_CHECK_EQUAL(test_int1, a - (b+c));
+      BOOST_CHECK_EQUAL(test_int2, 2*a - (b-c));
+      BOOST_CHECK_EQUAL(test_int3, -a - (b-c));
+      BOOST_CHECK_EQUAL(test_int4, -2*a + (b-c));
+      BOOST_CHECK_EQUAL(test_int5, 2*(a-3)*b - (c-a));
+    }
+}
+
+
+BOOST_FIXTURE_TEST_CASE( parser_precedence_mult_1, ParserTest )
+{
+  registerCMath(freg);
+  init(parser_input_precedence_mult_1);
+
+  pDependencyMap depMap(new DependencyMap(vars.getRootBlock()));
+  DependencyUpdater updater(depMap);
+
+  updater.addIndependent(xiVar);
+  updater.addIndependent(yiVar);
+  updater.addDependent(test_int1Var);
+  updater.addDependent(test_int2Var);
+  updater.addDependent(test_int3Var);
+  updater.addDependent(test_int4Var);
+  updater.addDependent(test_int5Var);
+
+  double dx_save = dx;
+  double dy_save = dy;
+
+  for (xi=195; xi<=495; xi+=10)
+    for (yi=45; yi<=95; yi+=5)
+    {
+      int a = xi;
+      int b = yi;
+      int c = 2;
+      updater.update();
+      BOOST_CHECK_EQUAL(test_int1, 2*a/b);
+      BOOST_CHECK_EQUAL(test_int2, 2*a/b/3);
+      BOOST_CHECK_EQUAL(test_int3, a/b/c);
+      BOOST_CHECK_EQUAL(test_int4, 2*a/(3*b) * c);
+      BOOST_CHECK_EQUAL(test_int5, 2*(a/3)*b * c);
+    }
+}
+
+BOOST_FIXTURE_TEST_CASE( parser_precedence_mult_2, ParserTest )
+{
+  registerCMath(freg);
+  init(parser_input_precedence_mult_2);
+
+  pDependencyMap depMap(new DependencyMap(vars.getRootBlock()));
+  DependencyUpdater updater(depMap);
+
+  updater.addIndependent(xiVar);
+  updater.addIndependent(yiVar);
+  updater.addDependent(test_int1Var);
+  updater.addDependent(test_int2Var);
+  updater.addDependent(test_int3Var);
+  updater.addDependent(test_int4Var);
+
+  double dx_save = dx;
+  double dy_save = dy;
+
+  for (xi=195; xi<=395; xi+=10)
+    for (yi=55; yi<=95; yi+=10)
+    {
+      int a = xi;
+      int b = yi;
+      int c = 2;
+      updater.update();
+      BOOST_CHECK_EQUAL(test_int1, a/(b*c));
+      BOOST_CHECK_EQUAL(test_int2, 2*a/(b/c));
+      BOOST_CHECK_EQUAL(test_int3, a*(b/c));
+      BOOST_CHECK_EQUAL(test_int4, 2*(a/3)*b/(a/c));
     }
 }
 

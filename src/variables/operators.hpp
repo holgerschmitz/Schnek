@@ -28,10 +28,14 @@
 #define SCHNEK_OPERATORS_HPP_
 
 #include "expression.hpp"
+#include "../util/logger.hpp"
 
 #include <boost/make_shared.hpp>
 
 #include <cmath>
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 namespace schnek {
 namespace expression {
@@ -61,7 +65,8 @@ namespace expression {
   struct OperatorAdd
   {
       enum { isPositive = true };
-      typedef OperatorAdd<vtype> Normalized;
+      typedef OperatorAdd<vtype> Positive;
+      typedef OperatorSubtract<vtype> Negative;
       typedef OperatorSubtract<vtype> Inverted;
 
       static vtype eval(vtype val1, vtype val2);
@@ -72,7 +77,8 @@ namespace expression {
   struct OperatorSubtract
   {
       enum { isPositive = false };
-      typedef OperatorAdd<vtype> Normalized;
+      typedef OperatorAdd<vtype> Positive;
+      typedef OperatorSubtract<vtype> Negative;
       typedef OperatorAdd<vtype> Inverted;
 
       static vtype eval(vtype val1, vtype val2);
@@ -86,7 +92,8 @@ namespace expression {
   struct OperatorMultiply
   {
       enum { isPositive = true };
-      typedef OperatorMultiply<vtype> Normalized;
+      typedef OperatorMultiply<vtype> Positive;
+      typedef OperatorDivide<vtype> Negative;
       typedef OperatorDivide<vtype> Inverted;
 
       static vtype eval(vtype val1, vtype val2);
@@ -97,7 +104,8 @@ namespace expression {
   struct OperatorDivide
   {
       enum { isPositive = false };
-      typedef OperatorMultiply<vtype> Normalized;
+      typedef OperatorMultiply<vtype> Positive;
+      typedef OperatorDivide<vtype> Negative;
       typedef OperatorMultiply<vtype> Inverted;
 
       static vtype eval(vtype val1, vtype val2);
@@ -108,7 +116,8 @@ namespace expression {
   struct OperatorExponent
   {
       enum { isPositive = true };
-      typedef OperatorExponent<vtype> Normalized;
+      typedef OperatorExponent<vtype> Positive;
+      typedef OperatorExponent<vtype> Negative;
       typedef OperatorExponent<vtype> Inverted;
 
       static vtype eval(vtype val1, vtype val2);
@@ -116,28 +125,60 @@ namespace expression {
   };
 
   template<class vtype>
-  vtype OperatorId<vtype>::eval(vtype val) { return val; }
+  vtype OperatorId<vtype>::eval(vtype val)
+  {
+      SCHNEK_TRACE_LOG(5, "OperatorId<vtype>::eval(" << val << ")")
+      return val;
+  }
 
   template<class vtype>
-  vtype OperatorNeg<vtype>::eval(vtype val) { return -val; }
+  vtype OperatorNeg<vtype>::eval(vtype val)
+  {
+      SCHNEK_TRACE_LOG(5, "OperatorNeg<vtype>::eval(" << val << ")")
+      return -val;
+  }
 
   template<class vtype>
-  vtype OperatorInv<vtype>::eval(vtype val) { return 1/val; }
+  vtype OperatorInv<vtype>::eval(vtype val)
+  {
+      SCHNEK_TRACE_LOG(5, "OperatorInv<vtype>::eval(" << val << ")")
+      return 1/val;
+  }
 
   template<class vtype>
-  vtype OperatorAdd<vtype>::eval(vtype val1, vtype val2) { return val1 + val2; }
+  vtype OperatorAdd<vtype>::eval(vtype val1, vtype val2)
+  {
+      SCHNEK_TRACE_LOG(5, "OperatorAdd<vtype>::eval(" << val1 << ", " << val2 << ")")
+      return val1 + val2;
+  }
 
   template<class vtype>
-  vtype OperatorSubtract<vtype>::eval(vtype val1, vtype val2) { return val1 - val2; }
+  vtype OperatorSubtract<vtype>::eval(vtype val1, vtype val2)
+  {
+      SCHNEK_TRACE_LOG(5, "OperatorSubtract<vtype>::eval(" << val1 << ", " << val2 << ")")
+      return val1 - val2;
+  }
 
   template<class vtype>
-  vtype OperatorMultiply<vtype>::eval(vtype val1, vtype val2) { return val1 * val2; }
+  vtype OperatorMultiply<vtype>::eval(vtype val1, vtype val2)
+  {
+      SCHNEK_TRACE_LOG(5, "OperatorMultiply<vtype>::eval(" << val1 << ", " << val2 << ")")
+      return val1 * val2;
+  }
 
   template<class vtype>
-  vtype OperatorDivide<vtype>::eval(vtype val1, vtype val2) { return val1 / val2; }
+  vtype OperatorDivide<vtype>::eval(vtype val1, vtype val2)
+  {
+      SCHNEK_TRACE_LOG(5, "OperatorDivide<vtype>::eval(" << val1 << ", " << val2 << ")")
+      return val1 / val2;
+  }
 
   template<class vtype>
-  vtype OperatorExponent<vtype>::eval(vtype val1, vtype val2) { return pow(val1,val2); }
+  vtype OperatorExponent<vtype>::eval(vtype val1, vtype val2)
+  {
+      SCHNEK_TRACE_LOG(5, "OperatorExponent<vtype>::eval(" << val1 << ", " << val2 << ")")
+      return pow(val1,val2);
+  }
 
 
   template<class vtype>
@@ -191,5 +232,8 @@ namespace expression {
 
 } // namespace expression
 } // namespace schnek
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 #endif // SCHNEK_OPERATORS_HPP_
