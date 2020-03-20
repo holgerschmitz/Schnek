@@ -89,7 +89,7 @@ std::string parser_input_precedence =
     "int c = 2;\n"
     "test_int1 = 2*a - b;\n"
     "test_int2 = 2*a - b - 3;\n"
-    "test_int3 = 2*a - b - c;\n"
+    "test_int3 = -2*a - b - c;\n"
     "test_int4 = 2* a-3 *b + c;\n"
     "test_int5 = 2*(a-3)*b + c;\n"
     ;
@@ -376,7 +376,7 @@ BOOST_FIXTURE_TEST_CASE( parser_precedence, ParserTest )
       updater.update();
       BOOST_CHECK_EQUAL(test_int1, 2*a - b);
       BOOST_CHECK_EQUAL(test_int2, 2*a - b - 3);
-      BOOST_CHECK_EQUAL(test_int3, 2*a - b - c);
+      BOOST_CHECK_EQUAL(test_int3, -2*a - b - c);
       BOOST_CHECK_EQUAL(test_int4, 2* a-3 *b + c);
       BOOST_CHECK_EQUAL(test_int5, 2*(a-3)*b + c);
     }
