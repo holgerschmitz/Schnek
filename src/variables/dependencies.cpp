@@ -379,7 +379,14 @@ void DependencyMap::updateAll()
 
   BOOST_FOREACH(pVariable v, updateList) {
 //    std::cerr << "Evaluating expression for " << v->getId() << std::endl;
-    v->evaluateExpression();
+    try
+    {
+      v->evaluateExpression();
+    }
+    catch(...)
+    {
+      // no-op, bulkhead
+    }
   }
 }
 
