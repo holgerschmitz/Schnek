@@ -161,5 +161,5 @@ class Logger : public Singleton<Logger>
  *  macros expand to nothing.
  */
 
-} // namespace 
-#endif // LOGGER_HPP_ 
+} // namespace
+#endif // LOGGER_HPP_
