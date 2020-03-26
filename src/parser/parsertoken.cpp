@@ -210,6 +210,20 @@ void ParserToken::assignFunction(ParserToken &parTok1, ParserToken &parTok2)
   type = expression;
 }
 
+
+void ParserToken::assignFunction(ParserToken &parTok1)
+{
+  SCHNEK_TRACE_ENTER_FUNCTION(4);
+  context = parTok1.context;
+  atomTok = parTok1.atomTok;
+
+  ExpressionList args;
+
+  std::string funcName = parTok1.atomTok.getString();
+  data = context.funcReg->getExpression(funcName, args);
+  type = expression;
+}
+
 struct evaluateVisitor : public boost::static_visitor<pVariable>
 {
     Token &atomTok;

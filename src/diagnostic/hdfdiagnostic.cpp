@@ -104,6 +104,11 @@ void HdfStream::setBlockName(std::string blockname_)
   sets_count = -1;
 }
 
+void HdfStream::setAttributes(pHdfAttributes attributes_) {
+  attributes = attributes_;
+}
+
+
 std::string HdfStream::getNextBlockName()
 {
   std::ostringstream bname;
@@ -187,19 +192,50 @@ int HdfIStream::open(const char* fname)
   close();
 
 #if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
+  const int sieve_buf_size = 262144;
+  const int align_threshold = 1; //524288;
+  const int alignment = 1; // 262144;
+
+  MPI_Info mpi_info;
+
   makeMPIGroup();
   if (active)
   {
     /* setup file access template */
     hid_t plist_id = H5Pcreate (H5P_FILE_ACCESS);
 
+    H5Pset_sieve_buf_size(plist_id, sieve_buf_size);
+    H5Pset_alignment(plist_id, align_threshold, alignment);
+
+    MPI_Info_create(&mpi_info);
+
+    // MPI
+    const char access_style[]         = "access_style";
+    const char write_once[]           = "write_once";
+    const char collective_buffering[] = "collective_buffering";
+    const char strue[]                = "true";
+    const char cb_block_size[]        = "cb_block_size";
+    const char n1048576[]             = "1048576";
+    const char cb_buffer_size[]       = "cb_buffer_size";
+    const char n4194304[]             = "4194304";
+
+    MPI_Info_set(mpi_info, access_style, write_once);
+    MPI_Info_set(mpi_info, collective_buffering, strue);
+    MPI_Info_set(mpi_info, cb_block_size, n1048576);
+    MPI_Info_set(mpi_info, cb_buffer_size, n4194304);
+
     /* set Parallel access with communicator */
-    H5Pset_fapl_mpio(plist_id, mpiComm, MPI_INFO_NULL);
-//    H5Pset_fapl_mpiposix(plist_id, mpiComm, 0);
+    H5Pset_fapl_mpio(plist_id, mpiComm, mpi_info);
+
     /* open the file collectively */
     file_id = H5Fopen (fname, H5F_ACC_RDONLY, plist_id);
     /* Release file-access template */
+    MPI_Info_free(&mpi_info);
     H5Pclose(plist_id);
+
+    dxpl_id = H5Pcreate(H5P_DATASET_XFER);
+    SCHNEK_TRACE_LOG(3,"Data Transfer Property List Id (0) " << dxpl_id)
+    H5Pset_dxpl_mpio(dxpl_id, H5FD_MPIO_COLLECTIVE);
   }
 #else
   if (active)
@@ -232,9 +268,9 @@ int HdfOStream::open(const char* fname)
 
 #if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
 
-  int sieve_buf_size = 262144;
-  int align_threshold = 1; //524288;
-  int alignment = 1; // 262144;
+  const int sieve_buf_size = 262144;
+  const int align_threshold = 1; //524288;
+  const int alignment = 1; // 262144;
 
   MPI_Info mpi_info;
 
@@ -250,14 +286,14 @@ int HdfOStream::open(const char* fname)
     MPI_Info_create(&mpi_info);
 
     // MPI
-    char access_style[]         = "access_style";
-    char write_once[]           = "write_once";
-    char collective_buffering[] = "collective_buffering";
-    char strue[]                = "true";
-    char cb_block_size[]        = "cb_block_size";
-    char n1048576[]             = "1048576";
-    char cb_buffer_size[]       = "cb_buffer_size";
-    char n4194304[]             = "4194304";
+    const char access_style[]         = "access_style";
+    const char write_once[]           = "write_once";
+    const char collective_buffering[] = "collective_buffering";
+    const char strue[]                = "true";
+    const char cb_block_size[]        = "cb_block_size";
+    const char n1048576[]             = "1048576";
+    const char cb_buffer_size[]       = "cb_buffer_size";
+    const char n4194304[]             = "4194304";
 
     MPI_Info_set(mpi_info, access_style, write_once);
     MPI_Info_set(mpi_info, collective_buffering, strue);

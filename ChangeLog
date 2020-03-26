@@ -1,0 +1,32 @@
+Version 1.2.0
+* Fixed issues when specifying --with-hdf5 with a folder in configure script
+* Added HDF5 dataset attributes to HDF5GridDiagnostic 
+
+Version 1.1.0
+
+* Implemented compound assignment for ArrayExpressions.
+* Implemented compound assignment operators *= and /= for Array. 
+* Allowing for different output types when using GridTransform. 
+  The transformation must have value_type defined.
+* Added test suite based on Boost Test
+* Added functions registerUtilityFunctions and registerSpecialFunctions to 
+  register some more functions.
+* Added a minReduce function in DomainSubdivision that is equivalent to the 
+  maxReduce but will find the minimum across all processes.
+* Added projectDim for Array. 
+* Added project and projectDim for Range.
+* Parser now supports functions without arguments.
+* Added capability for non-deterministic functions in configuration file parser
+
+Version 1.0.2
+
+* Bug fixes and minor improvements
+* Added some more examples
+
+Version 1.0.1
+
+* Some bug fixes
+
+Version 1.0.0
+
+* First production release

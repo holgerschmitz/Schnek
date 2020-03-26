@@ -237,6 +237,24 @@ Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator-=(const
 }
 
 template<class T, int length, template <int> class CheckingPolicy>
+template<class T2, template <int> class CheckingPolicy2>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator*=(const Array<T2,length,CheckingPolicy2>& val)
+{
+  for (int i=0; i<length; ++i)
+    data[i] *= val[i];
+  return *this;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+template<class T2, template <int> class CheckingPolicy2>
+Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator/=(const Array<T2,length,CheckingPolicy2>& val)
+{
+  for (int i=0; i<length; ++i)
+    data[i] /= val[i];
+  return *this;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
 template<typename T2>
 Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator+=(const T2 val)
 {
@@ -292,13 +310,28 @@ inline Array<T,length,CheckingPolicy>& Array<T,length,CheckingPolicy>::fill(cons
 
 template<class T, int length, template <int> class CheckingPolicy>
 template<int destLength>
-inline Array<T,destLength,CheckingPolicy> Array<T,length,CheckingPolicy>::project()
+inline Array<T,destLength,CheckingPolicy> Array<T,length,CheckingPolicy>::project() const
 {
   BOOST_STATIC_ASSERT(destLength<=length);
 
   Array<T,destLength,CheckingPolicy> result;
   for (int i=0; i<destLength; ++i)
     result[i] = data[i];
+  return result;
+}
+
+template<class T, int length, template <int> class CheckingPolicy>
+inline Array<T,length-1,CheckingPolicy> Array<T,length,CheckingPolicy>::projectDim(int dim) const
+{
+  Array<T,length-1,CheckingPolicy> result;
+  for (int i=0; i<dim; ++i)
+  {
+    result[i] = data[i];
+  }
+  for (int i=dim+1; i<length; ++i)
+  {
+    result[i-1] = data[i];
+  }
   return result;
 }
 

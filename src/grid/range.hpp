@@ -91,8 +91,20 @@ class Range {
 
       return true;
     }
+    /// projects the Array onto an Array of shorter length
+    template<int destLength>
+    Range<T,destLength,CheckingPolicy> project() const
+    {
+      return Range<T,destLength,CheckingPolicy>(lo.template project<destLength>(), hi.template project<destLength>());
+    }
 
-    void grow(const T &s) {
+    Range<T,rank-1,CheckingPolicy> projectDim(int dim) const
+    {
+      return Range<T,rank-1,CheckingPolicy>(lo.projectDim(dim), hi.projectDim(dim));
+    }
+
+    void grow(const T &s)
+    {
       for (int i=0; i<rank; ++i)
       {
         lo[i] -= s;

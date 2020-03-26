@@ -32,6 +32,23 @@
 
 namespace schnek {
 
+template<typename T>
+void HdfAttributes::set(std::string name, const T *value, hsize_t dims) {
+  pInfo info(new Info);
+  info->type = H5DataType<T>::type;
+  info->buffer = value;
+  info->dims = dims;
+  this->attributes[name] = info;
+}
+
+template<typename T>
+void HdfAttributes::set(std::string name, const T &value, hsize_t dims) {
+  pInfo info(new Info);
+  info->type = H5DataType<T>::type;
+  info->buffer = &value;
+  info->dims = dims;
+  this->attributes[name] = info;
+}
 
 template<typename FieldType>
 void HdfIStream::readGrid(GridContainer<FieldType> &g)
@@ -65,13 +82,31 @@ void HdfIStream::readGrid(GridContainer<FieldType> &g)
     locstart[i] = llo[i] - gmin;
     memdims[i] = mhi[i] - mlo[i] + 1;
     memstart[i] = llo[i] - mlo[i];
+
+    if (dims[i]<(locstart[i]+locdims[i]))
+    {
+      std::cerr << "FATAL ERROR!\n"
+        << "  in HdfIStream::readGrid\n"
+        << "Dimension " << i << ":\n  global size: " << dims[i]
+        << "\n  global min: " << gmin
+        << "\n  global max: " << g.global_max[i]
+        << "\n  local start: " << locstart[i]
+        << "\n  mlo: " << mlo[i]
+        << "\n  mhi: " << mhi[i]
+        << "\n  llo: " << llo[i]
+        << "\n  lhi: " << lhi[i]
+        << "\n  local size: " << locdims[i]
+        << "\n  global min: " << gmin << "\n";
+      exit(-1);
+    }
   }
 
   T *data = g.grid->getRawData();
+  hid_t ret;
 
   /* open the dataset collectively */
 #if H5Dopen_vers == 2
-  hid_t dataset = H5Dopen(file_id, dset_name.c_str(),H5P_DEFAULT);
+  hid_t dataset = H5Dopen(file_id, dset_name.c_str(), H5P_DEFAULT);
 #else
   hid_t dataset = H5Dopen(file_id, dset_name.c_str());
 #endif
@@ -83,7 +118,7 @@ void HdfIStream::readGrid(GridContainer<FieldType> &g)
   hid_t file_dataspace = H5Dget_space(dataset);
   assert(file_dataspace != -1);
 
-  hid_t ret=H5Sselect_hyperslab(file_dataspace, H5S_SELECT_SET,
+  ret=H5Sselect_hyperslab(file_dataspace, H5S_SELECT_SET,
                                 locstart, NULL,
                                 locdims, NULL);
   assert(ret != -1);
@@ -147,8 +182,6 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
   hsize_t memdims[FieldType::Rank];
   hsize_t locstart[FieldType::Rank];
   hsize_t memstart[FieldType::Rank];
-
-  //bool empty = false;
 
   for (int i=0; i<FieldType::Rank; ++i)
   {
@@ -216,7 +249,6 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 #if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
   /* create a file dataspace independently */
   hid_t file_dataspace = H5Dget_space(dataset);
-
   assert(file_dataspace > -1);
 
   ret = H5Sselect_hyperslab(file_dataspace,  H5S_SELECT_SET,
@@ -225,10 +257,10 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 
   /* create a memory dataspace independently */
   hid_t mem_dataspace = H5Screate_simple (FieldType::Rank, memdims, NULL);
-
   assert(mem_dataspace > -1);
+
   ret = H5Sselect_hyperslab(mem_dataspace,  H5S_SELECT_SET,
-                              memstart, NULL, locdims, NULL);
+                            memstart, NULL, locdims, NULL);
   assert(ret != -1);
 //  hid_t mem_dataspace = H5Dget_space(dataset);
 
@@ -248,13 +280,41 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 #else
   /* write data on single processor */
   ret = H5Dwrite(dataset,
-                       H5DataType<T>::type,
-                       H5S_ALL,
-                       H5S_ALL,
-                       H5P_DEFAULT,
-                       data);
+                 H5DataType<T>::type,
+                 H5S_ALL,
+                 H5S_ALL,
+                 H5P_DEFAULT,
+                 data);
   assert(ret != -1);
 #endif
+
+  /* now write the attributes */
+
+  int mpi_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+  if (mpi_rank==0)
+  {
+    /* Create the data space for the attribute. */
+    typedef std::pair<std::string, HdfAttributes::pInfo> attPair;
+    BOOST_FOREACH(attPair p, attributes->attributes) {
+      HdfAttributes::Info &info = *(p.second);
+
+      const hid_t dataspace_id = H5Screate_simple(1, &info.dims, NULL);
+      /* Create a dataset attribute. */
+      const hid_t attribute_id = H5Acreate2 (dataset, p.first.c_str(), info.type, dataspace_id,
+                                             H5P_DEFAULT, H5P_DEFAULT);
+
+      /* Write the attribute data. */
+      ret = H5Awrite(attribute_id, info.type, info.buffer);
+      assert(ret != -1);
+
+      /* Close the attribute. */
+      H5Aclose(attribute_id);
+
+      /* Close the dataspace. */
+      H5Sclose(dataspace_id);
+    }
+  }
 
   /* close dataset collectively */
   ret=H5Dclose(dataset);
@@ -262,25 +322,6 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 
   /* release all IDs created */
   H5Sclose(sid);
-}
-
-
-template<typename Type, typename PointerType, class DiagnosticType>
-void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::open(const std::string &fname)
-{
-  output.open(fname.c_str());
-}
-
-template<typename Type, typename PointerType, class DiagnosticType>
-void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::write()
-{
-  output.writeGrid(container);
-}
-
-template<typename Type, typename PointerType, class DiagnosticType>
-void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::close()
-{
-  output.close();
 }
 
 
@@ -328,6 +369,37 @@ inline void CopyToContainer<InnerType>::copy(InnerType *field, GridContainer<Inn
   container.local_max = field->getHi();
 }
 
+//------------------------------------------------------------------------------
+// HDFGridDiagnostic
+//------------------------------------------------------------------------------
+
+template<typename Type, typename PointerType, class DiagnosticType>
+std::string HDFGridDiagnostic<Type, PointerType, DiagnosticType>::getDatasetName() {
+    return "data";
+}
+
+template<typename Type, typename PointerType, class DiagnosticType>
+void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::open(const std::string &fname)
+{
+  output.open(fname.c_str());
+}
+
+template<typename Type, typename PointerType, class DiagnosticType>
+void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::write()
+{
+  output.setBlockName(this->getDatasetName());
+  output.setAttributes(this->getAttributes());
+  output.writeGrid(container);
+}
+
+template<typename Type, typename PointerType, class DiagnosticType>
+void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::close()
+{
+  output.close();
+}
+
+
+
 template<typename Type, typename PointerType, class DiagnosticType>
 void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::init()
 {
@@ -340,7 +412,70 @@ void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::init()
     container.global_max = this->getGlobalMax();
   }
 }
+
+//------------------------------------------------------------------------------
+// HDFGridReader
+//------------------------------------------------------------------------------
+
+template<typename Type, typename PointerType>
+void HDFGridReader<Type, PointerType>::init()
+{
+  Block::init();
+
+  this->retrieveData(fieldName, field);
+
+  CopyToContainer<Type>::copy(&(*field), container);
+  container.global_min = this->getGlobalMin();
+  container.global_max = this->getGlobalMax();
+}
+
+template<typename Type, typename PointerType>
+std::string HDFGridReader<Type, PointerType>::getDatasetName() {
+    return "data";
+}
+
+template<typename Type, typename PointerType>
+void HDFGridReader<Type, PointerType>::open()
+{
+  input.open(fileName.c_str());
+}
+
+template<typename Type, typename PointerType>
+void HDFGridReader<Type, PointerType>::read()
+{
+  input.setBlockName(this->getDatasetName());
+  input.readGrid(container);
+}
+
+template<typename Type, typename PointerType>
+void HDFGridReader<Type, PointerType>::close()
+{
+  input.close();
+}
+
+template<typename Type, typename PointerType>
+void HDFGridReader<Type, PointerType>::execute()
+{
+  open();
+  read();
+  close();
+}
+
+
+
+template<typename Type, typename PointerType>
+void HDFGridReader<Type, PointerType>::initParameters(BlockParameters &blockPars)
+{
+  Block::initParameters(blockPars);
+
+  blockPars.addParameter("file", &fileName);
+  blockPars.addParameter("field", &fieldName);
+}
+
+
 #undef LOGLEVEL
 #define LOGLEVEL 0
+
+
 
 } // namespace 

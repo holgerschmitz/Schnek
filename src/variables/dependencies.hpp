@@ -42,7 +42,8 @@ namespace schnek {
 
 class DependencyUpdater;
 
-/** DependencyMap contains a directed graph whose edges are oriented from the independent to the dependent variables.
+/** DependencyMap contains a directed graph whose edges are oriented from the
+ *  independent to the dependent variables.
  *
  */
 class DependencyMap
@@ -74,6 +75,8 @@ class DependencyMap
     DepMap dependencies;
     pBlockVariables blockVars;
 
+    pVariable dummyVar;
+
     friend class DependencyUpdater;
 
     void constructMapRecursive(const pBlockVariables vars);
@@ -81,7 +84,7 @@ class DependencyMap
     void resetCounters();
 
     void makeUpdateList(const VariableSet &independentVars, const VariableSet &dependentVars, VariableList &updateList);
-    pRefDepMap makeUpdatePredecessors(const VariableSet &dependentVars);
+    pRefDepMap makeUpdatePredecessors(const VariableSet &independentVars, const VariableSet &dependentVars);
     pRefDepMap makeUpdateFollowers(const VariableSet &independentVars, pRefDepMap reverseDeps);
     void makeUpdateOrder(pRefDepMap deps, VariableList &updateList);
 
@@ -91,7 +94,7 @@ class DependencyMap
     pBlockVariables getBlockVariables();
     void updateAll();
 
-    bool hasRoots(pVariable v, pParametersGroup roots);
+//    bool hasRoots(pVariable v, pParametersGroup roots);
 };
 
 typedef boost::shared_ptr<DependencyMap> pDependencyMap;

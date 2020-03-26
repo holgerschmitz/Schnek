@@ -13,6 +13,8 @@ using namespace schnek;
 
 class Square {
   public:
+    typedef double value_type;
+  public:
     double operator()(double x) {return x*x; }
 };
 

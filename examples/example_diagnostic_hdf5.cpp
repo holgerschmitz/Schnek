@@ -6,6 +6,8 @@
  *       Email: holger@notjustphysics.com
  */
 
+#ifdef SCHNEK_HAVE_HDF5
+
 #include "../src/grid.hpp"
 #include "../src/diagnostic/diagnostic.hpp"
 #include "../src/diagnostic/hdfdiagnostic.hpp"
@@ -144,3 +146,11 @@ int main(int argc, char **argv)
 
   MPI_Finalize();
 }
+
+#else // SCHNEK_HAVE_HDF5
+
+int main(int argc, char **argv)
+{
+}
+
+#endif // SCHNEK_HAVE_HDF5

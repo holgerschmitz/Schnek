@@ -131,7 +131,7 @@ template<
 class GridTransform
   : public GridBase
     <
-      typename BaseGrid::value_type,
+      typename Transformation::value_type,
       BaseGrid::Rank,
       CheckingPolicy<BaseGrid::Rank>,
       GridTransformStorage<
@@ -145,7 +145,7 @@ class GridTransform
   private:
     typedef GridBase
         <
-          typename BaseGrid::value_type,
+          typename Transformation::value_type,
           BaseGrid::Rank,
           CheckingPolicy<BaseGrid::Rank>,
           GridTransformStorage<
@@ -158,7 +158,7 @@ class GridTransform
 
   public:
     enum {Rank = BaseGrid::Rank};
-    typedef typename BaseGrid::value_type value_type;
+    typedef typename Transformation::value_type value_type;
     typedef typename BaseGrid::IndexType IndexType;
     typedef BaseGrid BaseGridType;
     /** default constructor creates an empty grid */
@@ -175,9 +175,16 @@ class GridTransform
      *  The ranges then extend from 0 to size[i]-1
      */
     GridTransform(BaseGridType &baseGrid_);
-
 };
 
+template<typename SrcType, typename DestType>
+class TypeCastTransform
+{
+  public:
+    typedef DestType value_type;
+  public:
+    DestType operator()(SrcType x) {return (DestType)x; }
+};
 
 } // namespace schnek
 

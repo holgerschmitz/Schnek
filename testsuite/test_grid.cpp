@@ -1,3 +1,9 @@
+/*
+ * test_grid.cpp
+ *
+ *  Created on: 1 Jan 2014
+ *      Author: Holger Schmitz
+ */
 
 #include <grid/grid.hpp>
 
