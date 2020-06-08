@@ -184,25 +184,25 @@ namespace expression {
   template<class vtype>
   typename Expression<vtype>::pExpression OperatorAdd<vtype>::negate(typename Expression<vtype>::pExpression val)
   {
-      return boost::make_shared<UnaryOp<OperatorNeg<vtype>, vtype>>(val);
+      return boost::make_shared<UnaryOp<OperatorNeg<vtype>, vtype> >(val);
   }
 
   template<class vtype>
   typename Expression<vtype>::pExpression OperatorSubtract<vtype>::negate(typename Expression<vtype>::pExpression val)
   {
-      return boost::make_shared<UnaryOp<OperatorNeg<vtype>, vtype>>(val);
+      return boost::make_shared<UnaryOp<OperatorNeg<vtype>, vtype> >(val);
   }
 
   template<class vtype>
   typename Expression<vtype>::pExpression OperatorMultiply<vtype>::negate(typename Expression<vtype>::pExpression val)
   {
-      return boost::make_shared<UnaryOp<OperatorInv<vtype>, vtype>>(val);
+      return boost::make_shared<UnaryOp<OperatorInv<vtype>, vtype> >(val);
   }
 
   template<class vtype>
   typename Expression<vtype>::pExpression OperatorDivide<vtype>::negate(typename Expression<vtype>::pExpression val)
   {
-      return boost::make_shared<UnaryOp<OperatorInv<vtype>, vtype>>(val);
+      return boost::make_shared<UnaryOp<OperatorInv<vtype>, vtype> >(val);
   }
 
   template<class vtype>
