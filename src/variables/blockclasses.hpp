@@ -46,6 +46,7 @@ class BlockNotFoundException : public SchnekException
 class BlockFactory
 {
   public:
+    virtual ~BlockFactory() {}
     virtual pBlock makeBlock(const std::string &name) = 0;
 };
 typedef boost::shared_ptr<BlockFactory> pBlockFactory;

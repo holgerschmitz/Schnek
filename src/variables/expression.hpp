@@ -254,11 +254,11 @@ class BinaryOp : public Expression<vtype>
     friend class BinaryOp<typename oper::Inverted, vtype>;
 
     /// pointers to the expressions to modify
-    std::list<ExpressionInfo<vtype>> expressions;
+    std::list<ExpressionInfo<vtype> > expressions;
   public:
     BinaryOp(pExpression expr1_, pExpression expr2_)
     {
-      typedef boost::shared_ptr<BinaryOp<oper, vtype>> pBinaryOp;
+      typedef boost::shared_ptr<BinaryOp<oper, vtype> > pBinaryOp;
 
       pBinaryOp binaryExpr1 = boost::dynamic_pointer_cast<SelfType>(expr1_);
       pInvType invExpr1 = boost::dynamic_pointer_cast<InvType>(expr1_);
@@ -281,7 +281,7 @@ class BinaryOp : public Expression<vtype>
 
       if (binaryExpr2)
       {
-        typename std::list<ExpressionInfo<vtype>>::iterator it = binaryExpr2->expressions.begin();
+        typename std::list<ExpressionInfo<vtype> >::iterator it = binaryExpr2->expressions.begin();
         if (!oper::isPositive)
         {
           expressions.push_back(ExpressionInfo<vtype>(!it->positive, it->expression));
@@ -291,7 +291,7 @@ class BinaryOp : public Expression<vtype>
       }
       else if (invExpr2)
       {
-        typename std::list<ExpressionInfo<vtype>>::iterator it = invExpr2->expressions.begin();
+        typename std::list<ExpressionInfo<vtype> >::iterator it = invExpr2->expressions.begin();
         if (!oper::isPositive)
         {
           expressions.push_back(ExpressionInfo<vtype>(!it->positive, it->expression));
@@ -309,7 +309,7 @@ class BinaryOp : public Expression<vtype>
     vtype eval() {
       typedef typename oper::Positive opPositive;
       typedef typename oper::Negative opNegative;
-      typename std::list<ExpressionInfo<vtype>>::iterator it = expressions.begin();
+      typename std::list<ExpressionInfo<vtype> >::iterator it = expressions.begin();
 //      std::cout << std::endl << "EVAL: " << expressions.size() << std::endl;
       vtype val = it->expression->eval();
 
