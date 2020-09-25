@@ -88,8 +88,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-check_PROGRAMS = schnek_test$(EXEEXT) test_parser$(EXEEXT)
-TESTS = schnek_test$(EXEEXT) test_parser$(EXEEXT)
+check_PROGRAMS = schnek_test$(EXEEXT)
+TESTS = schnek_test$(EXEEXT)
 subdir = testsuite
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_boost_base.m4 \
@@ -106,27 +106,16 @@ CONFIG_HEADER = $(top_builddir)/src/config.hpp \
 	$(top_builddir)/src/schnek_config.hpp
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__dirstamp = $(am__leading_dot)dirstamp
-am_schnek_test_OBJECTS = main.$(OBJEXT) utility.$(OBJEXT) \
-	test_grid.$(OBJEXT) test_array.$(OBJEXT) \
-<<<<<<< HEAD
-	util/test_hilbert.$(OBJEXT)
-=======
-	test_arrayexpression.$(OBJEXT) test_parser.$(OBJEXT) \
-	test_range.$(OBJEXT)
->>>>>>> develop
+am_schnek_test_OBJECTS = main.$(OBJEXT) test_array.$(OBJEXT) \
+	test_arrayexpression.$(OBJEXT) test_grid.$(OBJEXT) \
+	test_parser.$(OBJEXT) test_range.$(OBJEXT) utility.$(OBJEXT) \
+	test_hilbert.$(OBJEXT)
 schnek_test_OBJECTS = $(am_schnek_test_OBJECTS)
 schnek_test_DEPENDENCIES =
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-<<<<<<< HEAD
-am_test_parser_OBJECTS = test_parser.$(OBJEXT)
-test_parser_OBJECTS = $(am_test_parser_OBJECTS)
-test_parser_DEPENDENCIES =
-=======
->>>>>>> develop
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -161,13 +150,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-<<<<<<< HEAD
-SOURCES = $(schnek_test_SOURCES) $(test_parser_SOURCES)
-DIST_SOURCES = $(schnek_test_SOURCES) $(test_parser_SOURCES)
-=======
 SOURCES = $(schnek_test_SOURCES)
 DIST_SOURCES = $(schnek_test_SOURCES)
->>>>>>> develop
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -537,19 +521,18 @@ schnek_testdir = $(includedir)/schnek/testsuite
 schnek_test_LDADD = -L../src -lschnek
 schnek_test_SOURCES = \
 	main.cpp \
-	utility.cpp \
-	test_grid.cpp \
 	test_array.cpp \
-<<<<<<< HEAD
-	util/test_hilbert.cpp
-=======
 	test_arrayexpression.cpp \
+	test_grid.cpp \
 	test_parser.cpp \
-	test_range.cpp
+	test_range.cpp \
+	utility.cpp \
+	util/test_hilbert.cpp
 
+test_parser_SOURCES = test_parser.cpp
+test_parser_LDADD = -L../src -lschnek
 schnek_test_HEADERS = \
 	utility.hpp
->>>>>>> develop
 
 all: all-am
 
@@ -593,71 +576,60 @@ clean-checkPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
-util/$(am__dirstamp):
-	@$(MKDIR_P) util
-	@: > util/$(am__dirstamp)
-util/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) util/$(DEPDIR)
-	@: > util/$(DEPDIR)/$(am__dirstamp)
-util/test_hilbert.$(OBJEXT): util/$(am__dirstamp) \
-	util/$(DEPDIR)/$(am__dirstamp)
 
 schnek_test$(EXEEXT): $(schnek_test_OBJECTS) $(schnek_test_DEPENDENCIES) $(EXTRA_schnek_test_DEPENDENCIES) 
 	@rm -f schnek_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(schnek_test_OBJECTS) $(schnek_test_LDADD) $(LIBS)
 
-<<<<<<< HEAD
-test_parser$(EXEEXT): $(test_parser_OBJECTS) $(test_parser_DEPENDENCIES) $(EXTRA_test_parser_DEPENDENCIES) 
-	@rm -f test_parser$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(test_parser_OBJECTS) $(test_parser_LDADD) $(LIBS)
-
-=======
->>>>>>> develop
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f util/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_array.Po@am__quote@
-<<<<<<< HEAD
-=======
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_arrayexpression.Po@am__quote@
->>>>>>> develop
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_grid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_hilbert.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_range.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utility.Po@am__quote@
-<<<<<<< HEAD
-@AMDEP_TRUE@@am__include@ @am__quote@util/$(DEPDIR)/test_hilbert.Po@am__quote@
-=======
->>>>>>> develop
 
 .cpp.o:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
+
+test_hilbert.o: util/test_hilbert.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT test_hilbert.o -MD -MP -MF $(DEPDIR)/test_hilbert.Tpo -c -o test_hilbert.o `test -f 'util/test_hilbert.cpp' || echo '$(srcdir)/'`util/test_hilbert.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_hilbert.Tpo $(DEPDIR)/test_hilbert.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='util/test_hilbert.cpp' object='test_hilbert.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o test_hilbert.o `test -f 'util/test_hilbert.cpp' || echo '$(srcdir)/'`util/test_hilbert.cpp
+
+test_hilbert.obj: util/test_hilbert.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT test_hilbert.obj -MD -MP -MF $(DEPDIR)/test_hilbert.Tpo -c -o test_hilbert.obj `if test -f 'util/test_hilbert.cpp'; then $(CYGPATH_W) 'util/test_hilbert.cpp'; else $(CYGPATH_W) '$(srcdir)/util/test_hilbert.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_hilbert.Tpo $(DEPDIR)/test_hilbert.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='util/test_hilbert.cpp' object='test_hilbert.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o test_hilbert.obj `if test -f 'util/test_hilbert.cpp'; then $(CYGPATH_W) 'util/test_hilbert.cpp'; else $(CYGPATH_W) '$(srcdir)/util/test_hilbert.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -886,16 +858,6 @@ schnek_test.log: schnek_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-<<<<<<< HEAD
-test_parser.log: test_parser$(EXEEXT)
-	@p='test_parser$(EXEEXT)'; \
-	b='test_parser'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-=======
->>>>>>> develop
 .test.log:
 	@p='$<'; \
 	$(am__set_b); \
@@ -979,8 +941,6 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
-	-rm -f util/$(DEPDIR)/$(am__dirstamp)
-	-rm -f util/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -991,7 +951,7 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) util/$(DEPDIR)
+	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1037,7 +997,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) util/$(DEPDIR)
+	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

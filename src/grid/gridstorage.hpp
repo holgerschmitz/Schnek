@@ -34,9 +34,9 @@ namespace schnek {
 template<typename T, int rank>
 class SingleArrayInstantAllocation
 {
-  public:  
+  public:
     typedef Array<int,rank> IndexType;
-    
+
   protected:
     T* data;
     T* data_fast;
@@ -47,7 +47,7 @@ class SingleArrayInstantAllocation
 
   public:
     SingleArrayInstantAllocation()
-      : data(NULL) , data_fast(NULL), size(0) {}
+      : data(NULL) , data_fast(NULL), size(0), low(0), high(0), dims(0) {}
 
     ~SingleArrayInstantAllocation();
     /** resizes to grid with lower indices low[0],...,low[rank-1]
@@ -77,7 +77,7 @@ class SingleArrayInstantFortranAllocation
 
   public:
     SingleArrayInstantFortranAllocation()
-      : data(NULL) , data_fast(NULL), size(0) {}
+      : data(NULL) , data_fast(NULL), size(0), low(0), high(0), dims(0) {}
 
     ~SingleArrayInstantFortranAllocation();
     /** resizes to grid with lower indices low[0],...,low[rank-1]
@@ -125,9 +125,10 @@ class SingleArrayLazyAllocation
     void newData(int size);
 };
 
-/** Stores the grid data in a single array
+/**
+ * Stores the grid data in a single array
  *
- *  Layout of the data is in FORTRAN ordering.
+ * Layout of the data is in FORTRAN ordering.
  */
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
 class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
@@ -145,9 +146,9 @@ class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
         storage_iterator(const storage_iterator &it) : element(it.element) {}
         T& operator*() { return *element;}
         storage_iterator &operator++() {++element; return *this;}
-        bool operator==(const storage_iterator &SI) 
+        bool operator==(const storage_iterator &SI)
           { return element == SI.element; }
-        bool operator!=(const storage_iterator &SI) 
+        bool operator!=(const storage_iterator &SI)
           { return element != SI.element; }
     };
 
@@ -161,17 +162,17 @@ class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
       public:
         const T& operator*() { return *element;}
         const_storage_iterator &operator++() {++element; return *this;}
-        bool operator==(const const_storage_iterator &SI) 
+        bool operator==(const const_storage_iterator &SI)
           { return element == SI.element; }
-        bool operator!=(const const_storage_iterator &SI) 
+        bool operator!=(const const_storage_iterator &SI)
           { return element != SI.element; }
     };
-    
+
     SingleArrayGridStorageBase();
-    
+
     SingleArrayGridStorageBase(const IndexType &low_, const IndexType &high_);
 
-    
+
     T* getRawData() const { return this->data; }
 
     /** */

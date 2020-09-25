@@ -147,7 +147,7 @@ void SingleArrayInstantFortranAllocation<T, rank>::newData(
 
 template<typename T, int rank>
 SingleArrayLazyAllocation<T, rank>::SingleArrayLazyAllocation()
-  : data(NULL) , data_fast(NULL), size(0), bufSize(0), avgSize(0.0), avgVar(0.0), r(0.05)
+  : data(NULL) , data_fast(NULL), size(0), low(0), high(0), dims(0), bufSize(0), avgSize(0.0), avgVar(0.0), r(0.05)
 {}
 
 template<typename T, int rank>

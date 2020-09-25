@@ -9,21 +9,23 @@
 #define SCHNEK_DECOMPOSITION_MPI_CARTESIAN_DECOMPOSITION_HPP_
 
 #include "../schnek_config.hpp"
-
 #include "domaindecomposition.hpp"
 
-#include <mpi.h>
-
 #ifdef SCHNEK_HAVE_MPI
+
+#include <mpi.h>
 
 namespace schnek {
 
 template<int rank, template<int> class CheckingPolicy = ArrayNoArgCheck>
-class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, CheckingPolicy> {
+class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, CheckingPolicy>
+{
   public:
-
     /**
      * Initialisation and load balancing based on global weights
+     *
+     * The processor layout is determined by the global grid size or, if specified, by the
+     * global weights.
      */
     void init();
 
@@ -46,6 +48,10 @@ class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, Checkin
      */
     bool master() const;
 
+    /**
+     * Get the number of processes
+     */
+    int numProcs() const;
   private:
     /// The number of processes
     int ComSize;
@@ -57,15 +63,15 @@ class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, Checkin
     MPI_Comm comm;
 
     /// Dimensions of the Cartesian topology
-    int dims[rank];
+    LimitType dims;
 
     /// The Cartesian coordinates of this process
-    int mycoord[rank];
+    LimitType myCoord;
 
     /**
-     * The grid index ranges of each process
+     * The grid index ranges of each process coordinates in each direction
      */
-    RangeType procRanges[rank];
+    Array<Grid<Range<int, 1>, 1>, rank> procRanges;
 
     /**
      * Determine the new grid layout based on the local or global weights
@@ -73,14 +79,14 @@ class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, Checkin
     void calcGridDistributon(RangeType &ranges[rank]);
 
     /**
-     * Determine the new grid layout based on the local or global weights
+     * Determine the new grid layout based on the global weights
      */
-    void calcGridDistributonGlobalWeights(RangeType &ranges[rank]);
+    void calcGridDistributonGlobalWeights(Array<Grid<Range<int, 1>, 1>, rank> &ranges);
 
     /**
-     * Determine the new grid layout based on the local or global weights
+     * Determine the new grid layout based on the local weights
      */
-    void calcGridDistributonLocalWeights(RangeType &ranges[rank]);
+    void calcGridDistributonLocalWeights(Array<Grid<Range<int, 1>, 1>, rank> &ranges);
 };
 
 } // namespace schnek
