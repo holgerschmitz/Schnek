@@ -62,6 +62,29 @@
 
 # Makefile.am
 #
+# Created on: 09 Nov 2012
+# Author: Holger Schmitz
+# Email: holger@notjustphysics.com
+#
+# Copyright 2012 Holger Schmitz
+#
+# This file is part of Schnek.
+#
+# Schnek is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Schnek is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
+
+# Makefile.am
+#
 # Created on: 31 Aug 2012
 # Author: Holger Schmitz
 # Email: holger@notjustphysics.com
@@ -260,6 +283,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_boost_base.m4 \
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am \
+	$(libschnekdecompositioninclude_HEADERS) \
 	$(libschnekdiagnosticinclude_HEADERS) \
 	$(libschnekgridinclude_HEADERS) $(libschnekinclude_HEADERS) \
 	$(libschnekparserinclude_HEADERS) \
@@ -298,6 +322,7 @@ am__uninstall_files_from_dir = { \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
 am__installdirs = "$(DESTDIR)$(libdir)" \
+	"$(DESTDIR)$(libschnekdecompositionincludedir)" \
 	"$(DESTDIR)$(libschnekdiagnosticincludedir)" \
 	"$(DESTDIR)$(libschnekgridincludedir)" \
 	"$(DESTDIR)$(libschnekincludedir)" \
@@ -308,13 +333,14 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libschnek_la_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
-am_libschnek_la_OBJECTS = functions.lo diagnostic/diagnostic.lo \
-	diagnostic/hdfdiagnostic.lo grid/mpisubdivision.lo \
-	parser/deckscanner.lo parser/parser.lo parser/parsertoken.lo \
-	variables/block.lo variables/blockclasses.lo \
-	variables/blockparameters.lo variables/dependencies.lo \
-	variables/function_expression.lo variables/variables.lo \
-	tools/literature.lo util/exceptions.lo util/factor.lo
+am_libschnek_la_OBJECTS = functions.lo decomposition/mpi_context.lo \
+	diagnostic/diagnostic.lo diagnostic/hdfdiagnostic.lo \
+	grid/mpisubdivision.lo parser/deckscanner.lo parser/parser.lo \
+	parser/parsertoken.lo variables/block.lo \
+	variables/blockclasses.lo variables/blockparameters.lo \
+	variables/dependencies.lo variables/function_expression.lo \
+	variables/variables.lo tools/literature.lo util/exceptions.lo \
+	util/factor.lo
 libschnek_la_OBJECTS = $(am_libschnek_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -364,7 +390,8 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-HEADERS = $(libschnekdiagnosticinclude_HEADERS) \
+HEADERS = $(libschnekdecompositioninclude_HEADERS) \
+	$(libschnekdiagnosticinclude_HEADERS) \
 	$(libschnekgridinclude_HEADERS) $(libschnekinclude_HEADERS) \
 	$(libschnekparserinclude_HEADERS) \
 	$(libschnektoolsinclude_HEADERS) \
@@ -391,6 +418,7 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.hpp.in \
+	$(srcdir)/decomposition/Makefile.am \
 	$(srcdir)/diagnostic/Makefile.am $(srcdir)/grid/Makefile.am \
 	$(srcdir)/parser/Makefile.am $(srcdir)/schnek_config.hpp.in \
 	$(srcdir)/tools/Makefile.am $(srcdir)/util/Makefile.am \
@@ -531,10 +559,10 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
 lib_LTLIBRARIES = libschnek.la
 libschnekincludedir = $(includedir)/schnek
-libschnek_la_SOURCES = functions.cpp diagnostic/diagnostic.cpp \
-	diagnostic/hdfdiagnostic.cpp grid/mpisubdivision.cpp \
-	parser/deckscanner.cpp parser/parser.cpp \
-	parser/parsertoken.cpp variables/block.cpp \
+libschnek_la_SOURCES = functions.cpp decomposition/mpi_context.cpp \
+	diagnostic/diagnostic.cpp diagnostic/hdfdiagnostic.cpp \
+	grid/mpisubdivision.cpp parser/deckscanner.cpp \
+	parser/parser.cpp parser/parsertoken.cpp variables/block.cpp \
 	variables/blockclasses.cpp variables/blockparameters.cpp \
 	variables/dependencies.cpp variables/function_expression.cpp \
 	variables/variables.cpp tools/literature.cpp \
@@ -557,6 +585,13 @@ libschnekinclude_HEADERS = \
 
 libschnek_la_LDFLAGS = -version-info 0:0:0
 EXTRA_DIST = parser/deckgrammar.inc
+libschnekdecompositionincludedir = $(includedir)/schnek/decomposition
+libschnekdecompositioninclude_HEADERS = \
+  decomposition/domaindecomposition.hpp          \
+  decomposition/mpi_cartesian_decomposition.hpp  \
+  decomposition/mpi_cartesian_decomposition.t    \
+  decomposition/mpi_context.hpp
+
 libschnekdiagnosticincludedir = $(includedir)/schnek/diagnostic
 libschnekdiagnosticinclude_HEADERS = \
   diagnostic/diagnostic.hpp          \
@@ -636,7 +671,7 @@ all: config.hpp schnek_config.hpp
 
 .SUFFIXES:
 .SUFFIXES: .cpp .lo .o .obj
-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/diagnostic/Makefile.am $(srcdir)/grid/Makefile.am $(srcdir)/parser/Makefile.am $(srcdir)/variables/Makefile.am $(srcdir)/tools/Makefile.am $(srcdir)/util/Makefile.am $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/decomposition/Makefile.am $(srcdir)/diagnostic/Makefile.am $(srcdir)/grid/Makefile.am $(srcdir)/parser/Makefile.am $(srcdir)/variables/Makefile.am $(srcdir)/tools/Makefile.am $(srcdir)/util/Makefile.am $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -656,7 +691,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe);; \
 	esac;
-$(srcdir)/diagnostic/Makefile.am $(srcdir)/grid/Makefile.am $(srcdir)/parser/Makefile.am $(srcdir)/variables/Makefile.am $(srcdir)/tools/Makefile.am $(srcdir)/util/Makefile.am $(am__empty):
+$(srcdir)/decomposition/Makefile.am $(srcdir)/diagnostic/Makefile.am $(srcdir)/grid/Makefile.am $(srcdir)/parser/Makefile.am $(srcdir)/variables/Makefile.am $(srcdir)/tools/Makefile.am $(srcdir)/util/Makefile.am $(am__empty):
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
@@ -724,6 +759,14 @@ clean-libLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
+decomposition/$(am__dirstamp):
+	@$(MKDIR_P) decomposition
+	@: > decomposition/$(am__dirstamp)
+decomposition/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) decomposition/$(DEPDIR)
+	@: > decomposition/$(DEPDIR)/$(am__dirstamp)
+decomposition/mpi_context.lo: decomposition/$(am__dirstamp) \
+	decomposition/$(DEPDIR)/$(am__dirstamp)
 diagnostic/$(am__dirstamp):
 	@$(MKDIR_P) diagnostic
 	@: > diagnostic/$(am__dirstamp)
@@ -795,6 +838,8 @@ libschnek.la: $(libschnek_la_OBJECTS) $(libschnek_la_DEPENDENCIES) $(EXTRA_libsc
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f decomposition/*.$(OBJEXT)
+	-rm -f decomposition/*.lo
 	-rm -f diagnostic/*.$(OBJEXT)
 	-rm -f diagnostic/*.lo
 	-rm -f grid/*.$(OBJEXT)
@@ -812,6 +857,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/functions.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@decomposition/$(DEPDIR)/mpi_context.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@diagnostic/$(DEPDIR)/diagnostic.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@diagnostic/$(DEPDIR)/hdfdiagnostic.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@grid/$(DEPDIR)/mpisubdivision.Plo@am__quote@
@@ -857,12 +903,34 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf decomposition/.libs decomposition/_libs
 	-rm -rf diagnostic/.libs diagnostic/_libs
 	-rm -rf grid/.libs grid/_libs
 	-rm -rf parser/.libs parser/_libs
 	-rm -rf tools/.libs tools/_libs
 	-rm -rf util/.libs util/_libs
 	-rm -rf variables/.libs variables/_libs
+install-libschnekdecompositionincludeHEADERS: $(libschnekdecompositioninclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(libschnekdecompositioninclude_HEADERS)'; test -n "$(libschnekdecompositionincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(libschnekdecompositionincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(libschnekdecompositionincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(libschnekdecompositionincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(libschnekdecompositionincludedir)" || exit $$?; \
+	done
+
+uninstall-libschnekdecompositionincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(libschnekdecompositioninclude_HEADERS)'; test -n "$(libschnekdecompositionincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(libschnekdecompositionincludedir)'; $(am__uninstall_files_from_dir)
 install-libschnekdiagnosticincludeHEADERS: $(libschnekdiagnosticinclude_HEADERS)
 	@$(NORMAL_INSTALL)
 	@list='$(libschnekdiagnosticinclude_HEADERS)'; test -n "$(libschnekdiagnosticincludedir)" || list=; \
@@ -1098,7 +1166,7 @@ check: check-am
 all-am: Makefile $(LTLIBRARIES) $(HEADERS) config.hpp \
 		schnek_config.hpp
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(libschnekdiagnosticincludedir)" "$(DESTDIR)$(libschnekgridincludedir)" "$(DESTDIR)$(libschnekincludedir)" "$(DESTDIR)$(libschnekparserincludedir)" "$(DESTDIR)$(libschnektoolsincludedir)" "$(DESTDIR)$(libschnekutilincludedir)" "$(DESTDIR)$(libschnekvariablesincludedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(libschnekdecompositionincludedir)" "$(DESTDIR)$(libschnekdiagnosticincludedir)" "$(DESTDIR)$(libschnekgridincludedir)" "$(DESTDIR)$(libschnekincludedir)" "$(DESTDIR)$(libschnekparserincludedir)" "$(DESTDIR)$(libschnektoolsincludedir)" "$(DESTDIR)$(libschnekutilincludedir)" "$(DESTDIR)$(libschnekvariablesincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -1127,6 +1195,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f decomposition/$(DEPDIR)/$(am__dirstamp)
+	-rm -f decomposition/$(am__dirstamp)
 	-rm -f diagnostic/$(DEPDIR)/$(am__dirstamp)
 	-rm -f diagnostic/$(am__dirstamp)
 	-rm -f grid/$(DEPDIR)/$(am__dirstamp)
@@ -1149,7 +1219,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) diagnostic/$(DEPDIR) grid/$(DEPDIR) parser/$(DEPDIR) tools/$(DEPDIR) util/$(DEPDIR) variables/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) decomposition/$(DEPDIR) diagnostic/$(DEPDIR) grid/$(DEPDIR) parser/$(DEPDIR) tools/$(DEPDIR) util/$(DEPDIR) variables/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -1166,7 +1236,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-libschnekdiagnosticincludeHEADERS \
+install-data-am: install-libschnekdecompositionincludeHEADERS \
+	install-libschnekdiagnosticincludeHEADERS \
 	install-libschnekgridincludeHEADERS \
 	install-libschnekincludeHEADERS \
 	install-libschnekparserincludeHEADERS \
@@ -1201,7 +1272,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) diagnostic/$(DEPDIR) grid/$(DEPDIR) parser/$(DEPDIR) tools/$(DEPDIR) util/$(DEPDIR) variables/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) decomposition/$(DEPDIR) diagnostic/$(DEPDIR) grid/$(DEPDIR) parser/$(DEPDIR) tools/$(DEPDIR) util/$(DEPDIR) variables/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -1219,6 +1290,7 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-libLTLIBRARIES \
+	uninstall-libschnekdecompositionincludeHEADERS \
 	uninstall-libschnekdiagnosticincludeHEADERS \
 	uninstall-libschnekgridincludeHEADERS \
 	uninstall-libschnekincludeHEADERS \
@@ -1237,6 +1309,7 @@ uninstall-am: uninstall-libLTLIBRARIES \
 	install-data install-data-am install-dvi install-dvi-am \
 	install-exec install-exec-am install-html install-html-am \
 	install-info install-info-am install-libLTLIBRARIES \
+	install-libschnekdecompositionincludeHEADERS \
 	install-libschnekdiagnosticincludeHEADERS \
 	install-libschnekgridincludeHEADERS \
 	install-libschnekincludeHEADERS \
@@ -1250,6 +1323,7 @@ uninstall-am: uninstall-libLTLIBRARIES \
 	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
 	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
 	uninstall-libLTLIBRARIES \
+	uninstall-libschnekdecompositionincludeHEADERS \
 	uninstall-libschnekdiagnosticincludeHEADERS \
 	uninstall-libschnekgridincludeHEADERS \
 	uninstall-libschnekincludeHEADERS \

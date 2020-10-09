@@ -324,13 +324,13 @@ class Range {
           return it;
         }
         /// Equality test
-        bool operator==(const iterator &it)
+        bool operator==(const iterator &it) const
         {
           return (atEnd==it.atEnd) && (pos==it.pos);
         }
 
         /// Equality test
-        bool operator!=(const iterator &it) { return !(operator==(it)); }
+        bool operator!=(const iterator &it) const { return !(operator==(it)); }
 
         /// Returns the current iterator position
         const LimitType& operator*() { return pos; }
@@ -348,8 +348,28 @@ class Range {
     iterator end() {
       return iterator(*this, this->getLo(), true);
     }
+
+    template<
+      class T2,
+      template<int> class CheckingPolicy2
+    >
+    bool operator==(const schnek::Range<T2, rank, CheckingPolicy2> &other) const
+    {
+        return (this->getLo() == other.getLo()) && (this->getHi() == other.getHi());
+    }
+
+    template<
+      class T2,
+      template<int> class CheckingPolicy2
+    >
+    bool operator!=(const schnek::Range<T2, rank, CheckingPolicy2> &other) const
+    {
+        return (this->getLo() != other.getLo()) || (this->getHi() != other.getHi());
+    }
+
 };
 
-} // namespace 
+} // namespace
 
-#endif // RANGE_HPP_ 
+
+#endif // RANGE_HPP_

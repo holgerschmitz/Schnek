@@ -106,10 +106,13 @@ CONFIG_HEADER = $(top_builddir)/src/config.hpp \
 	$(top_builddir)/src/schnek_config.hpp
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
+am__dirstamp = $(am__leading_dot)dirstamp
 am_schnek_test_OBJECTS = main.$(OBJEXT) test_array.$(OBJEXT) \
 	test_arrayexpression.$(OBJEXT) test_grid.$(OBJEXT) \
 	test_parser.$(OBJEXT) test_range.$(OBJEXT) utility.$(OBJEXT) \
-	test_hilbert.$(OBJEXT)
+	decomposition/mpi_test_context.$(OBJEXT) \
+	decomposition/test_mpi_cartesian_decomposition.$(OBJEXT) \
+	util/test_hilbert.$(OBJEXT)
 schnek_test_OBJECTS = $(am_schnek_test_OBJECTS)
 schnek_test_DEPENDENCIES =
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -516,6 +519,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+AUTOMAKE_OPTIONS = subdir-objects
 AM_CXXFLAGS = -I../src
 schnek_testdir = $(includedir)/schnek/testsuite
 schnek_test_LDADD = -L../src -lschnek
@@ -527,10 +531,10 @@ schnek_test_SOURCES = \
 	test_parser.cpp \
 	test_range.cpp \
 	utility.cpp \
+	decomposition/mpi_test_context.cpp \
+	decomposition/test_mpi_cartesian_decomposition.cpp \
 	util/test_hilbert.cpp
 
-test_parser_SOURCES = test_parser.cpp
-test_parser_LDADD = -L../src -lschnek
 schnek_test_HEADERS = \
 	utility.hpp
 
@@ -576,6 +580,26 @@ clean-checkPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+decomposition/$(am__dirstamp):
+	@$(MKDIR_P) decomposition
+	@: > decomposition/$(am__dirstamp)
+decomposition/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) decomposition/$(DEPDIR)
+	@: > decomposition/$(DEPDIR)/$(am__dirstamp)
+decomposition/mpi_test_context.$(OBJEXT):  \
+	decomposition/$(am__dirstamp) \
+	decomposition/$(DEPDIR)/$(am__dirstamp)
+decomposition/test_mpi_cartesian_decomposition.$(OBJEXT):  \
+	decomposition/$(am__dirstamp) \
+	decomposition/$(DEPDIR)/$(am__dirstamp)
+util/$(am__dirstamp):
+	@$(MKDIR_P) util
+	@: > util/$(am__dirstamp)
+util/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) util/$(DEPDIR)
+	@: > util/$(DEPDIR)/$(am__dirstamp)
+util/test_hilbert.$(OBJEXT): util/$(am__dirstamp) \
+	util/$(DEPDIR)/$(am__dirstamp)
 
 schnek_test$(EXEEXT): $(schnek_test_OBJECTS) $(schnek_test_DEPENDENCIES) $(EXTRA_schnek_test_DEPENDENCIES) 
 	@rm -f schnek_test$(EXEEXT)
@@ -583,6 +607,8 @@ schnek_test$(EXEEXT): $(schnek_test_OBJECTS) $(schnek_test_DEPENDENCIES) $(EXTRA
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f decomposition/*.$(OBJEXT)
+	-rm -f util/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -591,45 +617,36 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_array.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_arrayexpression.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_grid.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_hilbert.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_range.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utility.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@decomposition/$(DEPDIR)/mpi_test_context.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@decomposition/$(DEPDIR)/test_mpi_cartesian_decomposition.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@util/$(DEPDIR)/test_hilbert.Po@am__quote@
 
 .cpp.o:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
-
-test_hilbert.o: util/test_hilbert.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT test_hilbert.o -MD -MP -MF $(DEPDIR)/test_hilbert.Tpo -c -o test_hilbert.o `test -f 'util/test_hilbert.cpp' || echo '$(srcdir)/'`util/test_hilbert.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_hilbert.Tpo $(DEPDIR)/test_hilbert.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='util/test_hilbert.cpp' object='test_hilbert.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o test_hilbert.o `test -f 'util/test_hilbert.cpp' || echo '$(srcdir)/'`util/test_hilbert.cpp
-
-test_hilbert.obj: util/test_hilbert.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT test_hilbert.obj -MD -MP -MF $(DEPDIR)/test_hilbert.Tpo -c -o test_hilbert.obj `if test -f 'util/test_hilbert.cpp'; then $(CYGPATH_W) 'util/test_hilbert.cpp'; else $(CYGPATH_W) '$(srcdir)/util/test_hilbert.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_hilbert.Tpo $(DEPDIR)/test_hilbert.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='util/test_hilbert.cpp' object='test_hilbert.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o test_hilbert.obj `if test -f 'util/test_hilbert.cpp'; then $(CYGPATH_W) 'util/test_hilbert.cpp'; else $(CYGPATH_W) '$(srcdir)/util/test_hilbert.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -941,6 +958,10 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f decomposition/$(DEPDIR)/$(am__dirstamp)
+	-rm -f decomposition/$(am__dirstamp)
+	-rm -f util/$(DEPDIR)/$(am__dirstamp)
+	-rm -f util/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -951,7 +972,7 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) decomposition/$(DEPDIR) util/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -997,7 +1018,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) decomposition/$(DEPDIR) util/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

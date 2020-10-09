@@ -29,6 +29,7 @@
 
 #include <boost/current_function.hpp>
 #include <exception>
+#include <sstream>
 
 namespace schnek {
 
@@ -118,4 +119,4 @@ if (!(condition)) { \
                           BOOST_CURRENT_FUNCTION,_schnek_msg_stream.str()); \
 }
 
-#endif // EXCEPTIONS_HPP_ 
+#endif // EXCEPTIONS_HPP_

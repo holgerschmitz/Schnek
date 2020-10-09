@@ -1,4 +1,6 @@
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 check_PROGRAMS = \
   schnek_test
   
@@ -19,11 +21,9 @@ schnek_test_SOURCES = \
 	test_parser.cpp \
 	test_range.cpp \
 	utility.cpp \
+	decomposition/mpi_test_context.cpp \
+	decomposition/test_mpi_cartesian_decomposition.cpp \
 	util/test_hilbert.cpp
-
-test_parser_SOURCES = test_parser.cpp
-
-test_parser_LDADD = -L../src -lschnek
 	
 schnek_test_HEADERS = \
 	utility.hpp
