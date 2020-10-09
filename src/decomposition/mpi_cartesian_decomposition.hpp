@@ -10,6 +10,7 @@
 
 #include "../schnek_config.hpp"
 #include "domaindecomposition.hpp"
+#include "mpi_context.hpp"
 
 #ifdef SCHNEK_HAVE_MPI
 
@@ -21,6 +22,14 @@ template<int rank, template<int> class CheckingPolicy = ArrayNoArgCheck>
 class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, CheckingPolicy>
 {
   public:
+    typedef Array<Grid<Range<int, 1>, 1>, rank> ProcRanges;
+    /**
+     * Constructor creating the domain decomposition object
+     *
+     * @param mpi  the MPI context to use for MPI calls
+     */
+    MpiCartesianDomainDecomposition(MpiContext &mpi = schnek::detail::mpiContextImpl);
+
     /**
      * Initialisation and load balancing based on global weights
      *
@@ -40,19 +49,39 @@ class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, Checkin
 
     /**
      * Return a unique reproducible ID of the current process
+     *
+     * @return the unique ID
      */
     int getUniqueId() const;
 
     /**
      * Check if the current process is the master
+     *
+     * @return `true` if this is the master process
      */
     bool master() const;
 
     /**
      * Get the number of processes
+     *
+     * @return the number of processes in the MPI communicator
      */
     int numProcs() const;
+
+    /**
+     * Return the grid index ranges of each process coordinates in each direction
+     *
+     * @return An array with an entry for each dimension. For each dimension multiple ranges
+     *         are stored inside a 1d Grid
+     */
+    const ProcRanges& getProcRanges();
   private:
+    typedef typename DomainDecomposition<rank, CheckingPolicy>::LimitType LimitType;
+    typedef typename DomainDecomposition<rank, CheckingPolicy>::RangeType RangeType;
+
+    /// The MPI context
+    MpiContext &mpi;
+
     /// The number of processes
     int ComSize;
 
@@ -71,22 +100,27 @@ class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, Checkin
     /**
      * The grid index ranges of each process coordinates in each direction
      */
-    Array<Grid<Range<int, 1>, 1>, rank> procRanges;
+    ProcRanges procRanges;
 
     /**
      * Determine the new grid layout based on the local or global weights
      */
-    void calcGridDistributon(RangeType &ranges[rank]);
+    void calcGridDistributon(ProcRanges &ranges);
+
+    /**
+     * Determine the new grid layout when no weights are given
+     */
+    void calcGridDistributonUniform(ProcRanges &ranges);
 
     /**
      * Determine the new grid layout based on the global weights
      */
-    void calcGridDistributonGlobalWeights(Array<Grid<Range<int, 1>, 1>, rank> &ranges);
+    void calcGridDistributonGlobalWeights(ProcRanges &ranges);
 
     /**
      * Determine the new grid layout based on the local weights
      */
-    void calcGridDistributonLocalWeights(Array<Grid<Range<int, 1>, 1>, rank> &ranges);
+    void calcGridDistributonLocalWeights(ProcRanges &ranges);
 };
 
 } // namespace schnek

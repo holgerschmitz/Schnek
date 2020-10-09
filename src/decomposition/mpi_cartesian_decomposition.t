@@ -9,10 +9,16 @@
 #include "../util/factor.hpp"
 #include "../util/logger.hpp"
 #include "../util/exceptions.hpp"
+#include "../util/interpolate1d.hpp"
 
 #include "../diagnostic/diagnostic.hpp"
 
+
 namespace schnek {
+
+template<int rank, template<int> class CheckingPolicy>
+MpiCartesianDomainDecomposition<rank, CheckingPolicy>::MpiCartesianDomainDecomposition(MpiContext &mpi) : mpi(mpi)
+{}
 
 template<int rank, template<int> class CheckingPolicy>
 bool MpiCartesianDomainDecomposition<rank, CheckingPolicy>::master() const
@@ -27,20 +33,45 @@ int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::numProcs() const
 }
 
 template<int rank, template<int> class CheckingPolicy>
+const Array<Grid<Range<int, 1>, 1>, rank>& MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getProcRanges()
+{
+  return procRanges;
+}
+
+template<int rank, template<int> class CheckingPolicy>
+void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::balanceLoad()
+{
+  SCHNECK_FAIL("MpiCartesianDomainDecomposition::balanceLoad() not implemented");
+}
+
+
+template<int rank, template<int> class CheckingPolicy>
+int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getUniqueId() const
+{
+  int id = myCoord[0];
+  for (int i=1; i<rank; ++i) id = dims[i]*id + myCoord[i];
+
+  SCHNEK_TRACE_LOG(2, "MpiCartesianDomainDecomposition::getUniqueId() " << id)
+  return id;
+}
+
+template<int rank, template<int> class CheckingPolicy>
 void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::init()
 {
+  int errorCode;
   // Arrange the processes in a Cartesian grid topology
-  LimitType lo = globalRange.getLo();
-  LimitType hi = globalRange.getLo();
+  LimitType lo = this->globalRange.getLo();
+  LimitType hi = this->globalRange.getLo();
 
   // if global weights are specified, use the resolution of those for the processor layout
-  if (globalWeights.getDims().product() != 0)
+  if (this->globalWeights.getDims().product() != 0)
   {
-    lo = globalWeights.getLo();
-    hi = globalWeights.getHi();
+    lo = this->globalWeights.getLo();
+    hi = this->globalWeights.getHi();
   }
 
-  MPI_Comm_size(MPI_COMM_WORLD, &ComSize);
+  errorCode = mpi.MPI_Comm_size(mpi.getCommWorld(), &ComSize);
+  SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "Could not obtain MPI Comm size ("+boost::lexical_cast<std::string>(errorCode)+")");
 
   int periodic[rank];
 
@@ -60,14 +91,13 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::init()
   int myCoordRaw[rank];
   std::copy(eqDims.begin(), eqDims.end(), dimsRaw);
 
-  int errorCode;
-  errorCode = MPI_Cart_create(MPI_COMM_WORLD, rank, dimsRaw, periodic, true, &comm);
+  errorCode = this->mpi.MPI_Cart_create(this->mpi.getCommWorld(), rank, dimsRaw, periodic, true, &comm);
   SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "Could not create MPI Cartesian topology ("+boost::lexical_cast<std::string>(errorCode)+")");
 
-  errorCode = MPI_Comm_rank(comm, &ComRank);
+  errorCode = this->mpi.MPI_Comm_rank(comm, &ComRank);
   SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "Could not determine MPI rank ("+boost::lexical_cast<std::string>(errorCode)+")");
 
-  errorCode = MPI_Cart_coords(comm, ComRank, rank, myCoordRaw);
+  errorCode = this->mpi.MPI_Cart_coords(comm, ComRank, rank, myCoordRaw);
   SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "Could not determine MPI Cartesian coordinates ("+boost::lexical_cast<std::string>(errorCode)+")");
 
   for (int i=0; i<rank; ++i)
@@ -81,21 +111,56 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::init()
 }
 
 template<int rank, template<int> class CheckingPolicy>
-void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributon(RangeType &ranges[rank])
+void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributon(ProcRanges &ranges)
 {
-  if (localWeights.getDims().product() == 0)
+  if (this->localWeights.getDims().product() > 0)
+  {
+    calcGridDistributonLocalWeights(ranges);
+  }
+  else if (this->globalWeights.getDims().product() > 0)
   {
     calcGridDistributonGlobalWeights(ranges);
   }
   else
   {
-    calcGridDistributonLocalWeights(ranges);
+    calcGridDistributonUniform(ranges);
+  }
+}
+
+
+template<int rank, template<int> class CheckingPolicy>
+void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
+    ::calcGridDistributonUniform(ProcRanges &ranges)
+{
+  typedef Grid<double, 1> Weights;
+  typedef Weights::IndexType Index;
+  typedef Range<int, rank-1> Orth;
+
+  const LimitType lo = this->globalRange.getLo();
+  const LimitType hi = this->globalRange.getHi();
+  const LimitType dm = hi - lo + 1;
+
+  for (int d=0; d<rank; ++d)
+  {
+    // finding cut points in the cumulative weights
+    Grid<Range<int, 1>, 1> &dimRanges = ranges[d];
+
+    dimRanges.resize(0, dims[d]-1);
+    dimRanges(0).getLo()[0] = lo[d];
+    dimRanges(dims[d]-1).getHi()[0] = hi[d];
+
+    for (int i=1; i<dims[d]; ++i)
+    {
+      int cut = lo[d] + (i*dm[d])/dims[d];
+      dimRanges(i-1).getHi()[0] = cut - 1;
+      dimRanges(i).getLo()[0] = cut;
+    }
   }
 }
 
 template<int rank, template<int> class CheckingPolicy>
 void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
-    ::calcGridDistributonGlobalWeights(Array<Grid<Range<int, 1>, 1>, rank> &ranges)
+    ::calcGridDistributonGlobalWeights(ProcRanges &ranges)
 {
   typedef Grid<double, 1> Weights;
   typedef Weights::IndexType Index;
@@ -103,8 +168,8 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
 
   if (master())
   {
-    LimitType lo = globalWeights.getLo();
-    LimitType hi = globalWeights.getHi();
+    LimitType lo = this->globalWeights.getLo();
+    LimitType hi = this->globalWeights.getHi();
 
     Orth orth;
     Array<int, rank-1> orthInd;
@@ -128,7 +193,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
       double sumTotal = 0;
       Weights weights(Index(lo[d]-1), hi[d]);
       LimitType pos;
-      pos[d] = i;
+      pos[d] = oi;
       weights(lo[d]-1) = 0.0;
       for (int i=lo[d]; i<=hi[d]; ++i)
       {
@@ -136,13 +201,13 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
         typename Orth::iterator e = orth.end();
         for (typename Orth::iterator pi=orth.begin(); pi!=e; ++pi)
         {
-          Array<int, rank-1> &p = *pi;
+          const Array<int, rank-1> &p = *pi;
           for (int oi=0; oi<rank-1; ++oi)
           {
             pos[orthInd[oi]] = p[oi];
           }
 
-          sum += globalWeights[pos];
+          sum += this->globalWeights[pos];
         }
 
         weights(i) = sum;
@@ -159,8 +224,8 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
       Grid<Range<int, 1>, 1> &dimRanges = ranges[d];
 
       dimRanges.resize(0, dims[d]-1);
-      dimRanges(0).getLo()[0] = globalRange.getLo()[d];
-      dimRanges(dims[d]-1).getHi()[0] = globalRange.getHi()[d];
+      dimRanges(0).getLo()[0] = this->globalRange.getLo()[d];
+      dimRanges(dims[d]-1).getHi()[0] = this->globalRange.getHi()[d];
 
       double delta = 1.0/double(dims[d]);
       for (int i=1; i<dims[d]; ++i)
@@ -181,7 +246,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
         transfer(2*i) = dimRanges(i).getLo()[0];
         transfer(2*i + 1) = dimRanges(i).getHi()[0];
       }
-      MPI_BCast(transfer.getRawData(), 2*dims[d], MPI_INT, 0, comm);
+      mpi.MPI_Bcast(transfer.getRawData(), 2*dims[d], MPI_INT, 0, comm);
     }
   }
   else
@@ -193,7 +258,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
       dimRanges.resize(0, dims[d]-1);
 
       Grid<int, 1> transfer(2*dims[d]);
-      MPI_BCast(transfer.getRawData(), 2*dims[d], MPI_INT, 0, comm);
+      mpi.MPI_Bcast(transfer.getRawData(), 2*dims[d], MPI_INT, 0, comm);
       for (int i=0; i<dims[d]; ++i)
       {
         dimRanges(i).getLo()[0] = transfer(2*i);
@@ -205,7 +270,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
 
 template<int rank, template<int> class CheckingPolicy>
 void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
-    ::calcGridDistributonGlobalWeights(Array<Grid<Range<int, 1>, 1>, rank> &ranges)
+    ::calcGridDistributonLocalWeights(ProcRanges &ranges)
 {
 }
 

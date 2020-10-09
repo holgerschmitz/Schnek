@@ -41,8 +41,12 @@
 #include "../grid/boundary.hpp"
 #include "../grid/range.hpp"
 
+#include "../util/exceptions.hpp"
+
 #include <boost/shared_ptr.hpp>
 
+#include <iostream>
+#include <string>
 #include <iterator>
 #include <vector>
 
@@ -101,7 +105,7 @@ class LocalDomain
  * An application can contain multiple instances of LocalDomainIterator iterating over different
  * grid types and also grids that are logically different.
  */
-template<int rank, template<int> class CheckingPolicy = ArrayNoArgCheck, class GridType>
+template<int rank, class GridType, template<int> class CheckingPolicy = ArrayNoArgCheck>
 class LocalDomainIterator
 {
   public:
@@ -177,7 +181,7 @@ class LocalDomainContext
     };
 
     template<class GridType>
-    LocalDomainIterator<rank, CheckingPolicy, GridType> getGridIterator(GridFactory<GridType> &factory, int ghostCells);
+    LocalDomainIterator<rank, GridType, CheckingPolicy> getGridIterator(GridFactory<GridType> &factory, int ghostCells);
 };
 
 /** @brief Interface for wrapping and exchanging boundaries .
@@ -202,7 +206,7 @@ class DomainDecomposition
     typedef boost::shared_ptr<BoundaryType> pBoundaryType;
     typedef Array<int, rank> LimitType;
 
-    DomainDecomposition() {}
+    DomainDecomposition();
 
     virtual ~DomainDecomposition() {}
 
@@ -315,6 +319,12 @@ class DomainDecomposition
     void checkLocalWeights();
 };
 
+template<int rank, template<int> class CheckingPolicy>
+DomainDecomposition<rank, CheckingPolicy>::DomainDecomposition() :
+  globalRange(LimitType(-1), LimitType(0))
+{
+}
+
 
 template<int rank, template<int> class CheckingPolicy>
 inline void DomainDecomposition<rank, CheckingPolicy>::setGlobalRange(const RangeType& range)
@@ -337,13 +347,34 @@ inline void schnek::DomainDecomposition<rank, CheckingPolicy>::setGlobalWeights(
   checkGlobalWeights();
 }
 
-template<int rank, template<int> class CheckingPolicy = ArrayNoArgCheck>
+template<int rank, template<int> class CheckingPolicy>
 template<class GridType>
 inline void schnek::DomainDecomposition<rank, CheckingPolicy>::setLocalWeights(const GridType& weights)
 {
   localWeights = weights;
-  checkLocalWeights();
+//  checkLocalWeights();
 }
+
+template<int rank, template<int> class CheckingPolicy>
+inline void DomainDecomposition<rank, CheckingPolicy>::checkGlobalWeights()
+{
+  LimitType globalSize = globalRange.getHi() - globalRange.getLo() + 1;
+  LimitType weightsSize = globalWeights.getDims();
+
+  if (globalSize.product() == 0 || weightsSize.product() == 0)
+  {
+    return;
+  }
+
+  for (int d=0; d<rank; ++d)
+  {
+    if (globalSize[d] % weightsSize[d] != 0)
+    {
+      SCHNECK_FAIL("Global weights must evenly divide the global grid size: dim=");
+    }
+  }
+}
+
 
 }
 #endif //SCHNEK_DOMAINDECOMPOSITION_HPP
