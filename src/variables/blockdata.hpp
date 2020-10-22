@@ -23,7 +23,7 @@
  * along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
- 
+
 #ifndef SCHNEK_BLOCKDATA_HPP_
 #define SCHNEK_BLOCKDATA_HPP_
 
@@ -31,9 +31,6 @@
 #include "../util/logger.hpp"
 #include <map>
 #include <string>
-
-#undef LOGLEVEL
-#define LOGLEVEL 0
 
 namespace schnek
 {

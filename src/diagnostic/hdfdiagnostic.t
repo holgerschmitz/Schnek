@@ -27,9 +27,6 @@
 #include "../grid/field.hpp"
 #include "../util/logger.hpp"
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
-
 namespace schnek {
 
 template<typename T>
@@ -473,9 +470,6 @@ void HDFGridReader<Type, PointerType>::initParameters(BlockParameters &blockPars
 }
 
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
 
 
-
-} // namespace 
+} // namespace

@@ -40,13 +40,7 @@ struct ParserInternalError : public SchnekException
     ParserInternalError() : SchnekException() {}
 };
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
-
 #include "deckgrammar.inc"
-
-#undef LOGLEVEL
-#define LOGLEVEL 0
 
 pBlock Parser::parse(std::istream &input, std::string filename)
 {

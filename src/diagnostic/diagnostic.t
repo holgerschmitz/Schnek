@@ -27,9 +27,6 @@
 
 #include "../util/logger.hpp"
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
-
 namespace schnek {
 
 
@@ -72,9 +69,6 @@ void SimpleFileDiagnostic<Type, PointerType, DiagnosticType>::close()
   output.close();
 }
 
-
-#undef LOGLEVEL
-#define LOGLEVEL 0
 
 
 } // namespace schnek

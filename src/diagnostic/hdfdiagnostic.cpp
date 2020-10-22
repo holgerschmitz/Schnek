@@ -31,9 +31,6 @@
 #include "hdfdiagnostic.hpp"
 #include "../util/logger.hpp"
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
-
 using namespace schnek;
 
 #if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)

@@ -50,6 +50,7 @@
 #include <iterator>
 #include <vector>
 
+
 namespace schnek {
 
 /**
@@ -370,11 +371,10 @@ inline void DomainDecomposition<rank, CheckingPolicy>::checkGlobalWeights()
   {
     if (globalSize[d] % weightsSize[d] != 0)
     {
-      SCHNECK_FAIL("Global weights must evenly divide the global grid size: dim=");
+      SCHNECK_FAIL("Global weights must evenly divide the global grid size: dim = " << d);
     }
   }
 }
-
 
 }
 #endif //SCHNEK_DOMAINDECOMPOSITION_HPP

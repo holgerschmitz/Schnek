@@ -52,7 +52,7 @@ namespace schnek {
  *  concatenated with <<. It should end in a newline.
  */
 #define SCHNEK_TRACE_LOG(i,x)                         \
-  BOOST_PP_IIF( BOOST_PP_GREATER_EQUAL( LOGLEVEL, i ), \
+  BOOST_PP_IIF( BOOST_PP_GREATER_EQUAL( SCHNEK_LOGLEVEL, i ), \
     schnek::Logger::instance().out() << __LINE__ << " " << __FILE__ << ": "<< x << "\n";, \
     BOOST_PP_EMPTY()                                   \
   )
@@ -70,19 +70,19 @@ namespace schnek {
  *  concatenated with <<. It should end in a newline.
  */
 #define SCHNEK_TRACE_ERR(i,x)                                  \
-  BOOST_PP_IIF( BOOST_PP_GREATER_EQUAL( LOGLEVEL, i ), \
+  BOOST_PP_IIF( BOOST_PP_GREATER_EQUAL( SCHNEK_LOGLEVEL, i ), \
       schnek::Logger::instance().err() << __LINE__ << " " << __FILE__ << ": " << x << "\n";, \
     BOOST_PP_EMPTY()                                   \
   )
 
 #define SCHNEK_TRACE_ENTER_FUNCTION(i)                                  \
-  BOOST_PP_IIF( BOOST_PP_GREATER_EQUAL( LOGLEVEL, i ), \
+  BOOST_PP_IIF( BOOST_PP_GREATER_EQUAL( SCHNEK_LOGLEVEL, i ), \
     schnek::Logger::instance().out() << "Entering " << BOOST_CURRENT_FUNCTION << std::endl;, \
     BOOST_PP_EMPTY()                                   \
   )
 
 #define SCHNEK_TRACE_EXIT_FUNCTION(i)                                  \
-  BOOST_PP_IIF( BOOST_PP_GREATER_EQUAL( LOGLEVEL, i ), \
+  BOOST_PP_IIF( BOOST_PP_GREATER_EQUAL( SCHNEK_LOGLEVEL, i ), \
     schnek::Logger::instance().out() << "Leaving " << BOOST_CURRENT_FUNCTION << std::endl;, \
     BOOST_PP_EMPTY()                                   \
   )
@@ -91,11 +91,15 @@ namespace schnek {
  *
  * To redefine to eg level 5 use the following commands:
  *
- * #undef LOGLEVEL
- * #define LOGLEVEL 5
+ * #undef SCHNEK_LOGLEVEL
+ * #define SCHNEK_LOGLEVEL 5
  */
-#ifndef LOGLEVEL
-#define LOGLEVEL 0
+#ifndef SCHNEK_LOGLEVEL
+#define SCHNEK_LOGLEVEL 0
+#endif
+
+#ifndef SCHNEK_GLOBAL_LOGLEVEL
+#define SCHNEK_GLOBAL_LOGLEVEL 0
 #endif
 
 #include "singleton.hpp"
@@ -144,8 +148,8 @@ class Logger : public Singleton<Logger>
  *
  *  Example:
  *
- * #undef LOGLEVEL
- * #define LOGLEVEL 2
+ * #undef SCHNEK_LOGLEVEL
+ * #define SCHNEK_LOGLEVEL 2
  *
  * WRITELOG(1,"Level 1")
  *

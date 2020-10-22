@@ -23,6 +23,7 @@ schnek_test_SOURCES = \
 	utility.cpp \
 	decomposition/mpi_test_context.cpp \
 	decomposition/test_mpi_cartesian_decomposition.cpp \
+	util/test_array_io.cpp \
 	util/test_hilbert.cpp
 	
 schnek_test_HEADERS = \

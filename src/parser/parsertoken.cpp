@@ -37,9 +37,6 @@
 
 using namespace schnek;
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
-
 ParserToken::ParserToken() : context(), type(none), chainedToken()
 {
   SCHNEK_TRACE_ENTER_FUNCTION(4);

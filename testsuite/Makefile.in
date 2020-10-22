@@ -112,7 +112,7 @@ am_schnek_test_OBJECTS = main.$(OBJEXT) test_array.$(OBJEXT) \
 	test_parser.$(OBJEXT) test_range.$(OBJEXT) utility.$(OBJEXT) \
 	decomposition/mpi_test_context.$(OBJEXT) \
 	decomposition/test_mpi_cartesian_decomposition.$(OBJEXT) \
-	util/test_hilbert.$(OBJEXT)
+	util/test_array_io.$(OBJEXT) util/test_hilbert.$(OBJEXT)
 schnek_test_OBJECTS = $(am_schnek_test_OBJECTS)
 schnek_test_DEPENDENCIES =
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -533,6 +533,7 @@ schnek_test_SOURCES = \
 	utility.cpp \
 	decomposition/mpi_test_context.cpp \
 	decomposition/test_mpi_cartesian_decomposition.cpp \
+	util/test_array_io.cpp \
 	util/test_hilbert.cpp
 
 schnek_test_HEADERS = \
@@ -598,6 +599,8 @@ util/$(am__dirstamp):
 util/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) util/$(DEPDIR)
 	@: > util/$(DEPDIR)/$(am__dirstamp)
+util/test_array_io.$(OBJEXT): util/$(am__dirstamp) \
+	util/$(DEPDIR)/$(am__dirstamp)
 util/test_hilbert.$(OBJEXT): util/$(am__dirstamp) \
 	util/$(DEPDIR)/$(am__dirstamp)
 
@@ -622,6 +625,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utility.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@decomposition/$(DEPDIR)/mpi_test_context.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@decomposition/$(DEPDIR)/test_mpi_cartesian_decomposition.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@util/$(DEPDIR)/test_array_io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@util/$(DEPDIR)/test_hilbert.Po@am__quote@
 
 .cpp.o:

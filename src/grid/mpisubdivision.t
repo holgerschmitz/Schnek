@@ -32,9 +32,6 @@
 #include "../datastream.hpp"
 #include "../diagnostic/diagnostic.hpp"
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
-
 #include <boost/lexical_cast.hpp>
 
 #include <iostream>
@@ -480,9 +477,6 @@ int MPICartSubdivision<GridType>::getUniqueId() const
 
 
 }
-
-#undef LOGLEVEL
-#define LOGLEVEL 0
 
 #endif // HAVE_MPI
 
