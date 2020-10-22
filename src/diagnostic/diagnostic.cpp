@@ -30,9 +30,6 @@
 
 #include "../util/logger.hpp"
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
-
 using namespace schnek;
 
 DiagnosticInterface::DiagnosticInterface() : fname(""), append(false) {}

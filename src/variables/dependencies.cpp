@@ -39,9 +39,6 @@
 
 #include <cassert>
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
-
 using namespace schnek;
 
 DependencyMap::DependencyMap(const pBlockVariables vars) {

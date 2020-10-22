@@ -27,9 +27,6 @@
 #include "../grid/field.hpp"
 #include "../util/logger.hpp"
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
-
 namespace schnek {
 
   template<typename T>
@@ -394,7 +391,5 @@ namespace schnek {
     blockPars.addParameter("field", &fieldName);
   }
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
 
 }  // namespace schnek

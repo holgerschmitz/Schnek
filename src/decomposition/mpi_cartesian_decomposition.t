@@ -13,6 +13,8 @@
 
 #include "../diagnostic/diagnostic.hpp"
 
+#undef SCHNEK_LOGLEVEL
+#define SCHNEK_LOGLEVEL 0
 
 namespace schnek {
 
@@ -51,7 +53,7 @@ int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getUniqueId() const
   int id = myCoord[0];
   for (int i=1; i<rank; ++i) id = dims[i]*id + myCoord[i];
 
-  SCHNEK_TRACE_LOG(2, "MpiCartesianDomainDecomposition::getUniqueId() " << id)
+  SCHNEK_TRACE_LOG(2,"MpiCartesianDomainDecomposition::getUniqueId() " << id);
   return id;
 }
 
@@ -151,10 +153,90 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
 
     for (int i=1; i<dims[d]; ++i)
     {
-      int cut = lo[d] + (i*dm[d])/dims[d];
+      int cut = lo[d] + (long(i)*long(dm[d]))/dims[d];
       dimRanges(i-1).getHi()[0] = cut - 1;
       dimRanges(i).getLo()[0] = cut;
     }
+  }
+}
+
+/**
+ * Sum up the global weights over the perpendicular directions and store
+ * them in the 1d `weights` grid
+ */
+template<template<int> class CheckingPolicy>
+void sumGlobalWeights(const Grid<double, 1, CheckingPolicy> &globalWeights,
+                      typename DomainDecomposition<1, CheckingPolicy>::LimitType &lo,
+                      typename DomainDecomposition<1, CheckingPolicy>::LimitType &hi,
+                      int d,
+                      Grid<double, 1> &weights,
+                      double &sumTotal)
+{
+  SCHNEK_TRACE_ENTER_FUNCTION(2);
+  double sum = 0;
+  weights(lo[d]-1) = 0.0;
+  for (int i=lo[d]; i<=hi[d]; ++i)
+  {
+    sum += globalWeights(i);
+
+    weights(i) = sum;
+  }
+
+  sumTotal = sum;
+}
+
+/**
+ * Sum up the global weights over the perpendicular directions and store
+ * them in the 1d `weights` grid
+ */
+template<int rank, template<int> class CheckingPolicy>
+void sumGlobalWeights(const Grid<double, rank> &globalWeights,
+                      typename DomainDecomposition<rank, CheckingPolicy>::LimitType &lo,
+                      typename DomainDecomposition<rank, CheckingPolicy>::LimitType &hi,
+                      int d,
+                      Grid<double, 1> &weights,
+                      double &sumTotal)
+{
+  typedef Range<int, rank-1> Orth;
+  Orth orth;
+  Array<int, rank-1> orthInd;
+
+  // calculating orthogonal directions
+  int oi = 0;
+  for (int o=0; o<rank; ++o)
+  {
+    if (o != d)
+    {
+      orth.getLo()[oi] = lo[o];
+      orth.getHi()[oi] = hi[o];
+      orthInd[oi] = o;
+      oi++;
+    }
+  }
+
+  // summing global weights
+  sumTotal = 0;
+
+  typename DomainDecomposition<rank, CheckingPolicy>::LimitType pos;
+  pos[d] = oi;
+  weights(lo[d]-1) = 0.0;
+  for (int i=lo[d]; i<=hi[d]; ++i)
+  {
+    double sum = 0;
+    typename Orth::iterator e = orth.end();
+    for (typename Orth::iterator pi=orth.begin(); pi!=e; ++pi)
+    {
+      const Array<int, rank-1> &p = *pi;
+      for (int oi=0; oi<rank-1; ++oi)
+      {
+        pos[orthInd[oi]] = p[oi];
+      }
+
+      sum += globalWeights[pos];
+    }
+
+    weights(i) = sum;
+    sumTotal += sum;
   }
 }
 
@@ -164,79 +246,53 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
 {
   typedef Grid<double, 1> Weights;
   typedef Weights::IndexType Index;
-  typedef Range<int, rank-1> Orth;
 
   if (master())
   {
     LimitType lo = this->globalWeights.getLo();
     LimitType hi = this->globalWeights.getHi();
-
-    Orth orth;
-    Array<int, rank-1> orthInd;
+    LimitType glo = this->globalRange.getLo();
+    LimitType ghi = this->globalRange.getHi();
 
     for (int d=0; d<rank; ++d)
     {
-      // calculating orthogonal directions
-      int oi = 0;
-      for (int o=0; o<rank; ++o)
-      {
-        if (o != d)
-        {
-          orth.getLo()[oi] = lo[o];
-          orth.getHi()[oi] = hi[o];
-          orthInd[oi] = o;
-          oi++;
-        }
-      }
-
-      // summing global weights
-      double sumTotal = 0;
+      int resolution = (ghi[d] - glo[d] + 1) / (hi[d] - lo[d] + 1);
       Weights weights(Index(lo[d]-1), hi[d]);
-      LimitType pos;
-      pos[d] = oi;
-      weights(lo[d]-1) = 0.0;
-      for (int i=lo[d]; i<=hi[d]; ++i)
-      {
-        double sum = 0;
-        typename Orth::iterator e = orth.end();
-        for (typename Orth::iterator pi=orth.begin(); pi!=e; ++pi)
-        {
-          const Array<int, rank-1> &p = *pi;
-          for (int oi=0; oi<rank-1; ++oi)
-          {
-            pos[orthInd[oi]] = p[oi];
-          }
-
-          sum += this->globalWeights[pos];
-        }
-
-        weights(i) = sum;
-        sumTotal += sum;
-      }
+      double sumTotal;
+      sumGlobalWeights(this->globalWeights, lo, hi, d, weights, sumTotal);
 
       // normalised cumulative sum
       for (int i=lo[d]; i<=hi[d]; ++i)
       {
-        weights(i) = weights(i)/sumTotal + weights(i-1);
+        weights(i) = weights(i)/sumTotal;
       }
 
       // finding cut points in the cumulative weights
       Grid<Range<int, 1>, 1> &dimRanges = ranges[d];
-
       dimRanges.resize(0, dims[d]-1);
-      dimRanges(0).getLo()[0] = this->globalRange.getLo()[d];
-      dimRanges(dims[d]-1).getHi()[0] = this->globalRange.getHi()[d];
+      dimRanges(0).getLo()[0] = glo[d];
+      dimRanges(dims[d]-1).getHi()[0] = ghi[d];
 
       double delta = 1.0/double(dims[d]);
       for (int i=1; i<dims[d]; ++i)
       {
-        int cut = findInsertIndex(weights, i*delta);
-        if ((cut <= dimRanges(i-1).getLo()[0]) || (cut+1 >= dimRanges(i).getHi()[0]))
+        int ins = findInsertIndex(weights, i*delta);
+        if ((ins <= lo[d]) || (ins+1 >= hi[d]))
         {
+          for (int k=lo[d]-1; k<=hi[d]; ++k)
+          {
+            std::cout << "w: " << k << " " << weights(k) << std::endl;
+          }
+          std::cout << "FAIL: " << d << " " << dims[d] << " " << delta << " " << i*delta << std::endl;
+          std::cout << "      " << lo[d]-1 << " " << hi[d] << " " << ins << std::endl;
+
           SCHNECK_FAIL("Invalid range when attempting to balance load: dim=" << i);
         }
-        dimRanges(i-1).getHi()[0] = cut;
-        dimRanges(i).getLo()[0] = cut+1;
+
+        int cut = glo[d] + resolution*long(ins - lo[d] + 1);
+
+        dimRanges(i-1).getHi()[0] = cut - 1;
+        dimRanges(i).getLo()[0] = cut;
       }
 
       // broadcasting the layout in dimRanges to other processes
@@ -273,5 +329,9 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
     ::calcGridDistributonLocalWeights(ProcRanges &ranges)
 {
 }
+
+#undef SCHNEK_LOGLEVEL
+#define SCHNEK_LOGLEVEL 0
+
 
 } // namespace schnek

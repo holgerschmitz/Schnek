@@ -26,9 +26,6 @@
 
 #include "../util/logger.hpp"
 
-#undef LOGLEVEL
-#define LOGLEVEL 0
-
 namespace schnek {
 
   template<class Type, typename PointerType, class DiagnosticType>
