@@ -289,7 +289,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
           SCHNECK_FAIL("Invalid range when attempting to balance load: dim=" << i);
         }
 
-        int cut = glo[d] + resolution*long(ins - lo[d] + 1);
+        int cut = glo[d] + resolution*(ins - lo[d] + 1);
 
         dimRanges(i-1).getHi()[0] = cut - 1;
         dimRanges(i).getLo()[0] = cut;
