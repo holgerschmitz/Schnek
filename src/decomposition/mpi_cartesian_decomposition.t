@@ -63,7 +63,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::init()
   int errorCode;
   // Arrange the processes in a Cartesian grid topology
   LimitType lo = this->globalRange.getLo();
-  LimitType hi = this->globalRange.getLo();
+  LimitType hi = this->globalRange.getHi();
 
   // if global weights are specified, use the resolution of those for the processor layout
   if (this->globalWeights.getDims().product() != 0)
@@ -81,7 +81,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::init()
 
   for (int i=0; i<rank; ++i)
   {
-    box[i] = hi[i] - lo[i];
+    box[i] = hi[i] - lo[i] + 1;
     periodic[i] = true;
   }
 
@@ -190,7 +190,7 @@ void sumGlobalWeights(const Grid<double, 1, CheckingPolicy> &globalWeights,
  * them in the 1d `weights` grid
  */
 template<int rank, template<int> class CheckingPolicy>
-void sumGlobalWeights(const Grid<double, rank> &globalWeights,
+void sumGlobalWeights(const Grid<double, rank, CheckingPolicy> &globalWeights,
                       typename DomainDecomposition<rank, CheckingPolicy>::LimitType &lo,
                       typename DomainDecomposition<rank, CheckingPolicy>::LimitType &hi,
                       int d,
@@ -218,11 +218,10 @@ void sumGlobalWeights(const Grid<double, rank> &globalWeights,
   sumTotal = 0;
 
   typename DomainDecomposition<rank, CheckingPolicy>::LimitType pos;
-  pos[d] = oi;
   weights(lo[d]-1) = 0.0;
   for (int i=lo[d]; i<=hi[d]; ++i)
   {
-    double sum = 0;
+    pos[d] = i;
     typename Orth::iterator e = orth.end();
     for (typename Orth::iterator pi=orth.begin(); pi!=e; ++pi)
     {
@@ -232,11 +231,12 @@ void sumGlobalWeights(const Grid<double, rank> &globalWeights,
         pos[orthInd[oi]] = p[oi];
       }
 
-      sum += globalWeights[pos];
+//      std::cout << "Sum: " << pos[0] << " " << pos[1] << " " << globalWeights[pos] << std::endl;
+
+      sumTotal += globalWeights[pos];
     }
 
-    weights(i) = sum;
-    sumTotal += sum;
+    weights(i) = sumTotal;
   }
 }
 
