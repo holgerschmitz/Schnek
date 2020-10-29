@@ -77,7 +77,7 @@ void SingleArrayInstantAllocation<T, rank>::newData(
     size *= dims[d];
   }
   data = new T[size];
-  int p = -low[0];
+  long p = -low[0];
 
   for (d = 1; d < rank ; ++d) {
     p = p*dims[d] - low[d];
@@ -133,7 +133,7 @@ void SingleArrayInstantFortranAllocation<T, rank>::newData(
     size *= dims[d];
   }
   data = new T[size];
-  int p = -low[rank-1];
+  long p = -low[rank-1];
 
   for (d = rank-2; d >= 0 ; --d) {
     p = p*dims[d] -low[d];
@@ -183,7 +183,7 @@ void SingleArrayLazyAllocation<T, rank>::resize(const IndexType &low_, const Ind
   }
   size = newSize;
 
-  int p = -low[rank-1];
+  long p = -low[rank-1];
 
   for (d = rank-2; d >= 0 ; d--) {
     p = p*dims[d] -low[d];
@@ -240,7 +240,7 @@ SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBas
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
 inline T& SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
 {
-  int pos = index[0];
+  long pos = index[0];
   for (int i=1; i<rank; ++i)
   {
     pos = index[i] + this->dims[i]*pos;
@@ -251,7 +251,7 @@ inline T& SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
 inline const T& SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
 {
-  int pos = index[0];
+  long pos = index[0];
   for (int i=1; i<rank; ++i)
   {
     pos = index[i] + this->dims[i]*pos;
@@ -267,7 +267,7 @@ inline const T& SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
 inline T& SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
 {
-  int pos = index[rank-1];
+  long pos = index[rank-1];
   for (int i=rank-2; i>=0; --i)
   {
     pos = index[i] + this->dims[i]*pos;
@@ -279,7 +279,7 @@ inline T& SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get
 template<typename T, int rank, template<typename, int> class AllocationPolicy>
 inline const T& SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
 {
-  int pos = index[rank-1];
+  long pos = index[rank-1];
   for (int i=rank-2; i>=0; --i)
   {
     pos = index[i] + this->dims[i]*pos;

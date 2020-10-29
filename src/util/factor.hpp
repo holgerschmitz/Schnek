@@ -31,6 +31,16 @@
 
 namespace schnek {
 
+/**
+ * Create a balanced vector of integers that factorises a given number as evenly as possible
+ *
+ * @param number  the number to be factorised
+ * @param nfact   the number of factors to divide into
+ * @param factors the output vector containing the factors
+ * @param weights a vector of weights for each factor. If a weight for a given factor is \f$w\f$, then
+ *                the algorithm attempts to create a factor \f$w\f$ times larger than the factors of
+ *                weight 1
+ */
 void equalFactors
   (
     int number,

@@ -40,7 +40,7 @@ class SingleArrayInstantAllocation
   protected:
     T* data;
     T* data_fast;
-    int size;
+    long size;
     IndexType low;
     IndexType high;
     IndexType dims;
@@ -70,7 +70,7 @@ class SingleArrayInstantFortranAllocation
   protected:
     T* data;
     T* data_fast;
-    int size;
+    long size;
     IndexType low;
     IndexType high;
     IndexType dims;
@@ -99,13 +99,13 @@ class SingleArrayLazyAllocation
   protected:
     T* data;
     T* data_fast;
-    int size;
+    long size;
     IndexType low;
     IndexType high;
     IndexType dims;
 
   private:
-    int bufSize;
+    long bufSize;
     double avgSize;
     double avgVar;
     double r;
