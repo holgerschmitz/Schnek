@@ -25,12 +25,13 @@
  */
 
 
-/** @file domaindecomposition.hpp
- *  @brief Interface for wrapping and exchanging boundaries
+/**
+ * @file domaindecomposition.hpp
+ * @brief Interface for wrapping and exchanging boundaries
  *
- *  This interface is used to exchange the boundaries of distribution
- *  functions and scalar fields. It can be implemented to define
- *  periodic boundaries or exchange data with other processes.
+ * This interface is used to exchange the boundaries of distribution
+ * functions and scalar fields. It can be implemented to define
+ * periodic boundaries or exchange data with other processes.
  */
 
 #ifndef SCHNEK_DOMAINDECOMPOSITION_HPP
@@ -111,10 +112,12 @@ class LocalDomainIterator
 {
   public:
 
+    virtual ~LocalDomainIterator() {}
+
     /**
      * Reset the iterator to the first local domain.
      */
-    void reset();
+    virtual void reset() = 0;
 
     /**
      * Move to the next local domain.
@@ -134,27 +137,27 @@ class LocalDomainIterator
      *
      * @return true if the iterator points to a valid local domain
      */
-    bool next();
+    virtual bool next() = 0;
 
     /**
      * Perform a boundary exchange on the registered grids
      */
-    void exchange();
+    virtual void exchange() = 0;
 
     /**
      * Get the current local domain
      */
-    const LocalDomain<rank, CheckingPolicy> &getDomain();
+    virtual const LocalDomain<rank, CheckingPolicy> &getDomain() const = 0;
 
     /**
      * Register a pointer to a grid to be managed by the domain iterator
      */
-    void registerGrid(GridType*& grid);
+    virtual void registerGrid(GridType*& grid) = 0;
 
     /**
      * Register multiple pointers to a grid to be managed by the domain iterator
      */
-    void registerGrid(std::vector<GridType*>& grids);
+    virtual void registerGrid(std::vector<GridType*>& grids) = 0;
 };
 
 
@@ -181,8 +184,10 @@ class LocalDomainContext
         virtual boost::shared_ptr<GridType> newGrid(RangeType range, DomainType domain, int ghostCells) = 0;
     };
 
+    virtual ~LocalDomainContext();
+
     template<class GridType>
-    LocalDomainIterator<rank, GridType, CheckingPolicy> getGridIterator(GridFactory<GridType> &factory, int ghostCells);
+    virtual LocalDomainIterator<rank, GridType, CheckingPolicy> getGridIterator(GridFactory<GridType> &factory);
 };
 
 /** @brief Interface for wrapping and exchanging boundaries .
@@ -297,7 +302,7 @@ class DomainDecomposition
      *
      * multiple contexts can be created
      */
-    pLocalDomainContext getLocalDomainContext();
+    virtual pLocalDomainContext getLocalDomainContext() = 0;
   protected:
     typedef Grid<double, rank> InternalGridType;
     /// The global grid size
