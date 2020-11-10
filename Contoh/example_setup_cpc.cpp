@@ -1,9 +1,9 @@
 /*
  * example_setup_first.cpp
  *
- *  Created on: 8 Jul 2014
+ *  Created on: 8 Jul 2020
  *      Author: Holger Schmitz
- *       Email: holger@notjustphysics.com
+ *       Email: ariezsulistio@gmail.com
  */
 
 #include "../src/parser.hpp"
@@ -70,7 +70,7 @@ int main()
   }
   catch (EvaluationException &e)
   {
-    std::cerr << "Evaluation Error: " << e.getMessage() << std::endl;
+    std::cerr << "Evaluation : " << e.getMessage() << std::endl;
     exit(-1);
   }
 
