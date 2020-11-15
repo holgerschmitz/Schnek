@@ -24,6 +24,8 @@
  *
  */
 
+#include <boost/make_shared.hpp>
+
 namespace schnek {
 
 template<class GridType>
@@ -37,7 +39,7 @@ SerialSubdivision<GridType>::~SerialSubdivision()
 template<class GridType>
 void SerialSubdivision<GridType>::init(const LimitType &low, const LimitType &high, int delta)
 {
-  this->bounds = pBoundaryType(new BoundaryType(low, high, delta));
+  this->bounds = boost::make_shared<BoundaryType>(low, high, delta);
 }
 
 template<class GridType>
