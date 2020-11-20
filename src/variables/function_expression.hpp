@@ -198,6 +198,7 @@ class FunctionRegistry
     class EntryBase
     {
       public:
+        virtual ~EntryBase() {}
         virtual ExpressionVariant getExpression(ExpressionList &) = 0;
     };
 

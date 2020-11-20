@@ -27,6 +27,8 @@
 #include "../grid/field.hpp"
 #include "../util/logger.hpp"
 
+#include <mpi.h>
+
 namespace schnek {
 
 template<typename T>
@@ -142,12 +144,12 @@ void HdfIStream::readGrid(GridContainer<FieldType> &g)
   H5Sclose(file_dataspace);
 #else
   /* read the data on single processor */
-  hid_t ret = H5Dread(dataset,
-                      H5DataType<T>::type,
-                      H5S_ALL,
-                      H5S_ALL,
-                      H5P_DEFAULT,
-                      data);
+  ret = H5Dread(dataset,
+                H5DataType<T>::type,
+                H5S_ALL,
+                H5S_ALL,
+                H5P_DEFAULT,
+                data);
   assert(ret != -1);
 #endif
 
