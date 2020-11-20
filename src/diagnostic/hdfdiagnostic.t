@@ -27,6 +27,8 @@
 #include "../grid/field.hpp"
 #include "../util/logger.hpp"
 
+#include <mpi.h>
+
 namespace schnek {
 
   template<typename T>
