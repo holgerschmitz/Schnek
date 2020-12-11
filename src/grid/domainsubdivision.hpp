@@ -142,7 +142,7 @@ class DomainSubdivision {
         const T &lo = globalExtent.getLo()[i];
         T dx = (globalExtent.getHi()[i]-lo) / (T)(globalGridSize.getHi()[i] - globalGridSize.getLo()[i] + 1);
         localDomainMin[i] = lo + this->getInnerLo()[i]*dx;
-        localDomainMax[i] = lo + this->getInnerHi()[i]*dx;
+        localDomainMax[i] = lo + (this->getInnerHi()[i] + 1)*dx;
       }
       return Range<T, Rank, CheckingPolicy>(localDomainMin,localDomainMax);
     }
