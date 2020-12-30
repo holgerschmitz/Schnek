@@ -44,6 +44,7 @@ HdfStream::HdfStream()
   : file_id(-1),
     status(0),
     blockname("data"),
+    attributes(boost::make_shared<HdfAttributes>()),
     sets_count(0),
     active(true),
     activeModified(false)
@@ -56,6 +57,7 @@ HdfStream::HdfStream(const HdfStream& hdf)
   : file_id(hdf.file_id),
     status(hdf.status),
     blockname(hdf.blockname),
+    attributes(hdf.attributes),
     sets_count(hdf.sets_count),
     active(true),
     activeModified(false)
@@ -70,6 +72,7 @@ HdfStream &HdfStream::operator=(const HdfStream& hdf)
   status = hdf.status;
   sets_count = hdf.sets_count;
   blockname = hdf.blockname;
+  attributes = hdf.attributes;
   active = hdf.active;
   activeModified = hdf.activeModified;
 #if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)

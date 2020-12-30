@@ -119,6 +119,9 @@ void IntervalDiagnostic::initParameters(BlockParameters &blockPars)
   blockPars.addParameter("interval", &interval, 100);
 }
 
+int IntervalDiagnostic::getInterval() {
+  return interval;
+}
 
 DeltaTimeDiagnostic::DeltaTimeDiagnostic() : deltaTime(1.0), nextOutput(0.0), count(0)
 {
@@ -145,6 +148,10 @@ void DeltaTimeDiagnostic::execute(bool master, int rank, double physicalTime)
 double DeltaTimeDiagnostic::getNextOutput()
 {
   return nextOutput;
+}
+
+double DeltaTimeDiagnostic::getDeltaTime() {
+  return deltaTime;
 }
 
 void DeltaTimeDiagnostic::initParameters(BlockParameters &blockPars)

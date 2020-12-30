@@ -80,6 +80,7 @@ class IntervalDiagnostic : public DiagnosticInterface
   public:
     IntervalDiagnostic();
     void execute(bool master, int rank, int timeCounter);
+    int getInterval();
   protected:
     void initParameters(BlockParameters&);
 };
@@ -95,6 +96,7 @@ class DeltaTimeDiagnostic : public DiagnosticInterface
     DeltaTimeDiagnostic();
     void execute(bool master, int rank, double physicalTime);
     double getNextOutput();
+    double getDeltaTime();
   protected:
     void initParameters(BlockParameters&);
 };
