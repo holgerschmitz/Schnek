@@ -323,7 +323,7 @@ int HdfOStream::open(const char* fname)
   dxpl_id = H5P_DEFAULT;
 #endif
 
-  assert(file_id != -1);
+  if (active) assert(file_id != -1);
 
   SCHNEK_TRACE_LOG(3,"Data Transfer Property List Id " << dxpl_id)
 

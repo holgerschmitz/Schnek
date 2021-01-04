@@ -163,6 +163,10 @@ void HdfIStream::readGrid(GridContainer<FieldType> &g)
 template<typename FieldType>
 void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 {
+  if (!active) {
+    return;
+  }
+
   std::string dset_name = getNextBlockName();
 
   typedef typename FieldType::IndexType IndexType;
@@ -478,4 +482,4 @@ void HDFGridReader<Type, PointerType>::initParameters(BlockParameters &blockPars
 
 
 
-} // namespace 
+} // namespace
