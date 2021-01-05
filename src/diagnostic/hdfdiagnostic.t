@@ -296,8 +296,8 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 
   int mpi_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-  if (mpi_rank==0)
-  {
+  if (mpi_rank==0) {
+    std::cerr << "ATTRIBUTES " << std::endl;
     /* Create the data space for the attribute. */
     typedef std::pair<std::string, HdfAttributes::pInfo> attPair;
     BOOST_FOREACH(attPair p, attributes->attributes) {

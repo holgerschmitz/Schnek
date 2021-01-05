@@ -203,6 +203,9 @@ class HdfIStream : public HdfStream {
 class HdfOStream : public HdfStream {
   private:
     hid_t dxpl_id;
+    MPI_Info mpi_info;
+    hid_t plist_id;
+    bool initialised;
   public:
     /// constructor
     HdfOStream();
