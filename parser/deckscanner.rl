@@ -139,7 +139,7 @@ void DeckScanner::do_scan(TokenList &tlist)
     %% write exec;
 
     if ( cs == deck_error ) {
-      std::cerr << "PARSE ERROR\n";
+      std::cerr << "TOKENISER ERROR " << cur_line << "\n";
       break;
     }
 

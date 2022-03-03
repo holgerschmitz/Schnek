@@ -548,7 +548,7 @@ _again:
 #line 140 "deckscanner.rl"
 
     if ( cs == deck_error ) {
-      std::cerr << "PARSE ERROR\n";
+      std::cerr << "PARSE ERROR line: " << cur_line << "\n";
       break;
     }
 
