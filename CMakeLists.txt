@@ -47,6 +47,7 @@ target_link_libraries(schnek ${HDF5_LIBRARIES})
 
 set(HAVE_BOOST ${Boost_FOUND})
 set(HAVE_HDF5 ${HDF5_FOUND})
+set(SCHNEK_HAVE_HDF5 ${HDF5_FOUND})
 set(SCHNEK_HAVE_MPI ${MPI_FOUND})
 set(SCHNEK_USE_HDF_PARALLEL ${HDF5_IS_PARALLEL})
 configure_file(src/config.hpp.in src/config.hpp)
