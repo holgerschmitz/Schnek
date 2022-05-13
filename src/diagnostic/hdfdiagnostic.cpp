@@ -24,7 +24,7 @@
  *
  */
 
-#include "../schnek_config.hpp"
+#include "../config.hpp"
 
 #ifdef SCHNEK_HAVE_HDF5
 
