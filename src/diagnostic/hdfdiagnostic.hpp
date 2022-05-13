@@ -27,7 +27,7 @@
 #ifndef SCHNEK_HDFDIAGNOSTIC_HPP_
 #define SCHNEK_HDFDIAGNOSTIC_HPP_
 
-#include "../schnek_config.hpp"
+#include "../config.hpp"
 #ifdef SCHNEK_HAVE_HDF5
 
 #include "../grid/grid.hpp"
