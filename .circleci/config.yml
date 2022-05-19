@@ -20,6 +20,9 @@ jobs:
       - run:
           name: "configure"
           command: "cmake ."
+      - run:
+          name: "build"
+          command: "make"
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
