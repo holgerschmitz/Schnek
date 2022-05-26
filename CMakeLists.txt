@@ -7,8 +7,11 @@ enable_language(CXX)
 # set the project name
 project(Schnek VERSION ${SCHNEK_VERSION})
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+
 find_package(MPI)
 find_package(HDF5)
+find_package(Kokkos)
 find_package(Boost REQUIRED)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -45,11 +48,15 @@ target_include_directories(schnek PUBLIC ${HDF5_INCLUDE_DIRS})
 target_link_libraries(schnek ${MPI_C_LIBRARIES})
 target_link_libraries(schnek ${HDF5_LIBRARIES})
 
-set(HAVE_BOOST ${Boost_FOUND})
-set(HAVE_HDF5 ${HDF5_FOUND})
+if (Kokkos_FOUND)
+  target_include_directories(schnek PUBLIC ${Kokkos_INCLUDE_DIRS})
+  target_link_libraries(schnek ${Kokkos_LIBRARIES})
+endif()
+
 set(SCHNEK_HAVE_HDF5 ${HDF5_FOUND})
 set(SCHNEK_HAVE_MPI ${MPI_FOUND})
 set(SCHNEK_USE_HDF_PARALLEL ${HDF5_IS_PARALLEL})
+set(SCHNEK_HAVE_KOKKOS ${Kokkos_FOUND})
 configure_file(src/config.hpp.in src/config.hpp)
 
 install(TARGETS schnek LIBRARY DESTINATION lib)
