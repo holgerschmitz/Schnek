@@ -1,9 +1,3 @@
-/* define if the Boost library is available */
-#cmakedefine HAVE_BOOST
-
-/* define if the HDF5 library is available */
-#cmakedefine HAVE_HDF5
-
 /* Define this macro if Schnek is compiled with MPI support */
 #cmakedefine SCHNEK_HAVE_MPI
 
@@ -12,6 +6,9 @@
 
 /* Defined if we use parallel file access for HDF5 (mpio) if available. */
 #cmakedefine SCHNEK_USE_HDF_PARALLEL
+
+/* define if the Kokkos library is available */
+#cmakedefine SCHNEK_HAVE_KOKKOS
 
 /* Integer Schnek Version Number */
 #cmakedefine SCHNEK_VERSION @SCHNEK_VERSION@
