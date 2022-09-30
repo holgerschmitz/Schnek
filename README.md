@@ -48,9 +48,9 @@ Features of Schnek are
   
 ## Documentation
 
-Documentation and tutorials can be found on the Schnek website at
+Documentation and tutorials can be found on the Read the Docs at
 
-  http://www.notjustphysics.com/schnek/
+  https://schnek.readthedocs.io
 
  
 ## Installation
