@@ -40,3 +40,7 @@ autom4te.cache/
 .libs
 .dirstamp
 Makefile
+
+# Docs
+/docs/doxygen
+/docs/sphinx
