@@ -21,8 +21,8 @@ import os
 
 # -- Project information -----------------------------------------------------
 
-project = 'Huerto'
-copyright = '2021, Holger Schmitz'
+project = 'Schnek'
+copyright = '2022, Holger Schmitz'
 author = 'Holger Schmitz'
 
 # The short X.Y version
@@ -42,8 +42,8 @@ release = '0.1'
 # ones.
 extensions = []
 
-breathe_projects = { "Huerto": "doxygen/xml/" }
-breathe_default_project = "Huerto"
+breathe_projects = { "Schnek": "doxygen/xml/" }
+breathe_default_project = "Schnek"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -107,7 +107,7 @@ html_extra_path = ['doxygen']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Huertodoc'
+htmlhelp_basename = 'Schnekdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -134,7 +134,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Huerto.tex', 'Huerto Documentation',
+    (master_doc, 'Schnek.tex', 'Schnek Documentation',
      'Holger Schmitz', 'manual'),
 ]
 
@@ -144,7 +144,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'huerto', 'Huerto Documentation',
+    (master_doc, 'schnek', 'Schnek Documentation',
      [author], 1)
 ]
 
@@ -155,8 +155,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Huerto', 'Huerto Documentation',
-     author, 'Huerto', 'One line description of project.',
+    (master_doc, 'Schnek', 'Schnek Documentation',
+     author, 'Schnek', 'A C++ library for developing parallel simulations on Cartesian grids',
      'Miscellaneous'),
 ]
 

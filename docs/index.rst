@@ -1,7 +1,7 @@
-.. Huerto documentation master file, created by
+.. Schnek documentation master file, created by
    sphinx-quickstart on Sat Dec 11 12:43:52 2021.
 
-Welcome to Huerto's documentation!
+Welcome to Schnek's documentation!
 ==================================
 
 .. toctree::
