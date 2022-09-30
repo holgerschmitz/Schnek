@@ -8,7 +8,7 @@ Welcome to Schnek's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+:doc:`Manual <./manual/index>`.
 
 Doxygen Docs
 ==================
