@@ -15,12 +15,10 @@ also be compiled with support for `MPI <http://www.open-mpi.org/>`__ and
 
 The tutorial pages will cover the following topics.
 
--  `Installation <./manual/installation/>`__
--  `Multi-Dimensional
-   Grids <./manual/multi-dimensional-grids/>`__
+-  :doc:`Installation <./manual/installation>`__
+-  :doc:`Multi-Dimensional Grids <./manual/multi-dimensional-grids>`__
 
-   -  `Grid
-      Basics <./manual/multi-dimensional-grids/grid-basics/>`__
+   -  :doc:`Grid Basics <./manual/multi-dimensional-grids/grid-basics>`__
    -  `Index Types and the Array
       Class <./manual/multi-dimensional-grids/index-types-and-the-array-class/>`__
    -  `Additional Array
