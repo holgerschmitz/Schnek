@@ -49,3 +49,7 @@ DartConfiguration.tcl
 *.app
 
 /src/config.hpp
+
+# Docs
+/docs/doxygen
+/docs/sphinx
