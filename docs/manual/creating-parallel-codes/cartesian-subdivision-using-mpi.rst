@@ -1,5 +1,5 @@
 In the `previous
-section <manual/creating-parallel-codes/dividing-simulation-domains.html>`__
+section <dividing-simulation-domains.html>`__
 we introduced the abstract ``DomainSubdivision`` class template and
 described its member functions. We already mentioned the
 ``MPICartSubdivision`` class that implements ``DomainSubdivision`` to
@@ -9,7 +9,7 @@ this section we will describe a short simulation code that uses the
 equation. In the following we will make no use of the configuration file
 parser and automatic initialisation of field data as described in
 the\ `section on reading setup
-files <manual/reading-setup-files.html>`__.
+files <../reading-setup-files.html>`__.
 We do this in order to make the code as short as possible and focus on
 the use of the parallelisation routines. Also note that the numerical
 scheme to simulate the diffusion equation is not very accurate and
@@ -40,7 +40,7 @@ physical extent of a single grid cell and ``dt`` is the time step. The
 ``lo`` and ``hi`` arrays will be used to define the index range of our
 grid. We will actually be using the ``Field`` class to define the grid.
 As explained in the `section on
-fields <manual/ranges-ghost-cells-and-fields/fields.html>`__,
+fields <../ranges-ghost-cells-and-fields/fields.html>`__,
 this class also needs a physical extent, a definition of the grid
 staggering and the number of ghost cells. ``domainHi`` and ``domainLo``
 are used to define the physical extent ``domain``, and ``stagger`` is

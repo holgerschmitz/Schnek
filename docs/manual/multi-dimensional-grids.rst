@@ -10,14 +10,14 @@ of your code, when speed is important, you can switch argument checking
 off. This section covers the following topics.
 
 -  `Grid
-   Basics <manual/multi-dimensional-grids/grid-basics.html>`__
+   Basics <multi-dimensional-grids/grid-basics.html>`__
 -  `Index Types and the Array
-   Class <manual/multi-dimensional-grids/index-types-and-the-array-class.html>`__
+   Class <multi-dimensional-grids/index-types-and-the-array-class.html>`__
 -  `Additional Array
-   Functions <manual/multi-dimensional-grids/additional-array-functions.html>`__
+   Functions <multi-dimensional-grids/additional-array-functions.html>`__
 -  `Argument Checking
-   Policies <manual/multi-dimensional-grids/argument-checking-policies.html>`__
+   Policies <multi-dimensional-grids/argument-checking-policies.html>`__
 -  `Sub Grids and Grid
-   Transformations <manual/multi-dimensional-grids/sub-grids-and-grid-transformations.html>`__
+   Transformations <multi-dimensional-grids/sub-grids-and-grid-transformations.html>`__
 -  `Storage
-   policies <manual/multi-dimensional-grids/storage-policies.html>`__
+   policies <multi-dimensional-grids/storage-policies.html>`__

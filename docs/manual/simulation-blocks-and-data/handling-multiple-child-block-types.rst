@@ -1,6 +1,6 @@
 In many situations a ``Block`` might have many different child blocks.
 The ``getChildren()`` function introduced in the `previous
-section <manual/simulation-blocks-and-data/hierarchical-simulation-blocks.html>`__
+section <../hierarchical-simulation-blocks.html>`__
 will always return all child blocks, independent of their type. To get
 only blocks of certain types one would have to iterate through all child
 blocks and use a dynamic cast to test for the different types.
@@ -8,7 +8,7 @@ Fortunately Schnek provides a mechanism to simplify this task. The two
 class templates ``BlockContainer`` and ``ChildBlock`` supply the
 framework for this mechanism. Let's extend the example from the
 `previous
-section <manual/simulation-blocks-and-data/hierarchical-simulation-blocks.html>`__.
+section <../hierarchical-simulation-blocks.html>`__.
 There we introduced a ``Particle`` block that served as a child block to
 the ``NBody`` simulation block. We used the ``getChildren()`` function
 to obtain a list of all child blocks. This list contained members of

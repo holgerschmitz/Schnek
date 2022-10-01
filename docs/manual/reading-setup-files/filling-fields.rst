@@ -1,5 +1,5 @@
 In the `previous
-section <manual/reading-setup-files/evaluating-expressions.html>`__
+section <evaluating-expressions.html>`__
 it was shown how expressions from the configuration file could contain
 independent, read only parameters and which could be evaluated at a
 later point, after the configuration file has been processed. This can
@@ -14,7 +14,7 @@ needs to define a ``Field`` object. The ``Field`` class extends the
 ``Grid`` class with information about the physical dimensions of the
 numerical grid and the grid stagger. More information about the
 ``Field`` class can be found
-`here <manual/ranges-ghost-cells-and-fields/fields.html>`__.
+`here <../ranges-ghost-cells-and-fields/fields.html>`__.
 In the following example a ``Field`` will be initialised from a
 configuration file. This includes defining the number of grid points on
 the grid as well as the physical dimensions of the domain that the grid
@@ -93,13 +93,13 @@ created and filled with values.
 
 The first three lines of code in the ``fillValues`` method simply set up
 a field called ``dataField``. See
-`here <manual/ranges-ghost-cells-and-fields/fields.html>`__
+`here <../ranges-ghost-cells-and-fields/fields.html>`__
 for more information about ``Field``\ s. Note that we are using the
 ``L`` and ``N`` arrays to specify the physical and numerical dimensions
 of the grid. The next block of code sets up the dependency map and the
 updater. This follows exactly the same pattern as explained in the
 section about `evaluating
-expressions <manual/reading-setup-files/evaluating-expressions.html>`__.
+expressions <evaluating-expressions.html>`__.
 Note however that no dependent variables are added to the updater. The
 independent variables are added in the form of an array using
 ``addIndependentArray``. The last line of code calls a utility function
