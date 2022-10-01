@@ -1,6 +1,17 @@
 .. Schnek documentation master file, created by
    sphinx-quickstart on Sat Dec 11 12:43:52 2021.
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+:doc:`Manual <./manual/installation>`.
+:doc:`Multi-Dimensional Grids <./manual/multi-dimensional-grids>`.
+:doc:`Grid Basics <./manual/multi-dimensional-grids/grid-basics>`.
+:doc:`Index Types and the Array Class <./manual/multi-dimensional-grids/index-types-and-the-array-class>`.
+:doc:`Additional Array Functions <./manual/multi-dimensional-grids/additional-array-functions>`.
+
+
 Schnek Documentation
 ==================================
 
@@ -15,14 +26,12 @@ also be compiled with support for `MPI <http://www.open-mpi.org/>`__ and
 
 The tutorial pages will cover the following topics.
 
--  :doc:`Installation <./manual/installation>`__
--  :doc:`Multi-Dimensional Grids <./manual/multi-dimensional-grids>`__
+-  `Installation <./manual/installation>`__
+-  `Multi-Dimensional Grids <./manual/multi-dimensional-grids>`__
 
-   -  :doc:`Grid Basics <./manual/multi-dimensional-grids/grid-basics>`__
-   -  `Index Types and the Array
-      Class <./manual/multi-dimensional-grids/index-types-and-the-array-class/>`__
-   -  `Additional Array
-      Functions <./manual/multi-dimensional-grids/additional-array-functions/>`__
+   -  `Grid Basics <./manual/multi-dimensional-grids/grid-basics>`__
+   -  `Index Types and the Array Class <./manual/multi-dimensional-grids/index-types-and-the-array-class>`__
+   -  `Additional Array Functions <./manual/multi-dimensional-grids/additional-array-functions>`__
    -  `Argument Checking
       Policies <./manual/multi-dimensional-grids/argument-checking-policies/>`__
    -  `Sub Grids and Grid
