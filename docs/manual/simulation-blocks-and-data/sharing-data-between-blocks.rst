@@ -14,7 +14,7 @@ A simulation block can export references to internal data that it allows
 other simulation blocks to access. The other block can obtain the
 reference to the data and read its values or perform operations on it.
 Let's look again at our example from the `previous
-section <manual/simulation-blocks-and-data/handling-multiple-child-block-types.html>`__.
+section <../handling-multiple-child-block-types.html>`__.
 If we wanted to allow other blocks to have access to a ``Particle``'s
 ``pos`` and ``velocity`` field, we can add the ``registerData()`` method
 to the ``Particle`` class.
@@ -206,7 +206,7 @@ Resolving Conflicts
 
 Until now in this section we have implicitely assumed that there is only
 one ``Particle`` block in our simulation. But in the `previous
-section <manual/simulation-blocks-and-data/handling-multiple-child-block-types.html>`__
+section <../handling-multiple-child-block-types.html>`__
 we showed that the user is free to add as many ``Particle`` blocks in
 the setup file as desired. So let's assume we have two particles such as
 this.

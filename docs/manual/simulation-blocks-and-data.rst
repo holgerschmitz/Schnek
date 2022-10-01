@@ -1,5 +1,5 @@
 The `previous
-chapter <manual/reading-setup-files.html>`__
+chapter <reading-setup-files.html>`__
 introduced the basic concepts of reading data from the configuration
 file. This chapter covers how the configuration file can be used to
 create a hierarchical structure of simulation blocks. In this way the
@@ -10,12 +10,12 @@ output in a very flexible way. This section contains the following
 topics.
 
 -  `Hierarchical Simulation
-   Blocks <manual/simulation-blocks-and-data/hierarchical-simulation-blocks.html>`__
+   Blocks <simulation-blocks-and-data/hierarchical-simulation-blocks.html>`__
 -  `Handling Multiple Child Block
-   Types <manual/simulation-blocks-and-data/handling-multiple-child-block-types.html>`__
+   Types <simulation-blocks-and-data/handling-multiple-child-block-types.html>`__
 -  `Sharing Data Between
-   Blocks <manual/simulation-blocks-and-data/sharing-data-between-blocks.html>`__
+   Blocks <simulation-blocks-and-data/sharing-data-between-blocks.html>`__
 -  `The Block Initialisation Life
-   Cycle <manual/simulation-blocks-and-data/the-block-initialisation-life-cycle.html>`__
+   Cycle <simulation-blocks-and-data/the-block-initialisation-life-cycle.html>`__
 -  `Adding Literature
-   References <manual/simulation-blocks-and-data/adding-literature-references.html>`__
+   References <simulation-blocks-and-data/adding-literature-references.html>`__

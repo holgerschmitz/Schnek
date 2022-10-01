@@ -1,5 +1,5 @@
 In the `previous
-tutorial <manual/multi-dimensional-grids/index-types-and-the-array-class.html>`__
+tutorial <index-types-and-the-array-class.html>`__
 we have seen that ``Array``\ s can be used in array expressions. This
 means that we can write the following.
 

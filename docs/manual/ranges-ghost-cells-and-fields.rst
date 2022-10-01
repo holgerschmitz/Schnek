@@ -13,6 +13,6 @@ while allowing for grid staggering. This section covers the following
 topics.
 
 -  `Rectangular
-   Ranges <manual/ranges-ghost-cells-and-fields/rectangular-ranges.html>`__
--  `Boundaries <manual/ranges-ghost-cells-and-fields/boundaries.html>`__
--  `Fields <manual/ranges-ghost-cells-and-fields/fields.html>`__
+   Ranges <ranges-ghost-cells-and-fields/rectangular-ranges.html>`__
+-  `Boundaries <ranges-ghost-cells-and-fields/boundaries.html>`__
+-  `Fields <ranges-ghost-cells-and-fields/fields.html>`__

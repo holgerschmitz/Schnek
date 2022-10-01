@@ -12,13 +12,13 @@ extend the reader to accept additional functions. This section covers
 the following topics.
 
 -  `A first
-   example <manual/reading-setup-files/a-first-example.html>`__
+   example <reading-setup-files/a-first-example.html>`__
 -  `Error
-   Handling <manual/reading-setup-files/error-handling.html>`__
+   Handling <reading-setup-files/error-handling.html>`__
 -  `Default Values, Arrays and
-   Constants <manual/reading-setup-files/default-values-arrays-and-constants.html>`__
+   Constants <reading-setup-files/default-values-arrays-and-constants.html>`__
 -  `Evaluating
-   expressions <manual/reading-setup-files/evaluating-expressions.html>`__
--  `Filling fields <manual/reading-setup-files/filling-fields.html>`__
+   expressions <reading-setup-files/evaluating-expressions.html>`__
+-  `Filling fields <reading-setup-files/filling-fields.html>`__
 -  `Adding user defined
-   functions <manual/reading-setup-files/adding-user-defined-functions.html>`__
+   functions <reading-setup-files/adding-user-defined-functions.html>`__

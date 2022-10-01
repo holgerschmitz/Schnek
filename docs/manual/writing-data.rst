@@ -9,6 +9,6 @@ be extended for other file formats if desired. This section covers the
 following topics.
 
 -  `The Diagnostic
-   Manager <manual/writing-data/the-diagnostic-manager.html>`__
+   Manager <writing-data/the-diagnostic-manager.html>`__
 -  `Writing Grids to
-   HDF5 <manual/writing-data/writing-grids-to-hdf5.html>`__
+   HDF5 <writing-data/writing-grids-to-hdf5.html>`__

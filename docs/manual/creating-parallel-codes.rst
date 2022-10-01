@@ -6,6 +6,6 @@ processes. Implementations of this interface use MPI routines to pass
 data between the processes. This section covers the following topics.
 
 -  `Dividing the simulation
-   domain <manual/creating-parallel-codes/dividing-simulation-domains.html>`__
+   domain <creating-parallel-codes/dividing-simulation-domains.html>`__
 -  `Cartesian subdivision using
-   MPI <manual/creating-parallel-codes/cartesian-subdivision-using-mpi.html>`__
+   MPI <creating-parallel-codes/cartesian-subdivision-using-mpi.html>`__
