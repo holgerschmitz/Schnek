@@ -12,13 +12,13 @@ extend the reader to accept additional functions. This section covers
 the following topics.
 
 -  `A first
-   example <http://www.notjustphysics.com/schnek/schnek-documentation/reading-setup-files/a-first-example/>`__
+   example <manual/reading-setup-files/a-first-example.html>`__
 -  `Error
-   Handling <http://www.notjustphysics.com/schnek/schnek-documentation/reading-setup-files/error-handling/>`__
+   Handling <manual/reading-setup-files/error-handling.html>`__
 -  `Default Values, Arrays and
-   Constants <http://www.notjustphysics.com/schnek/schnek-documentation/reading-setup-files/default-values-arrays-and-constants/>`__
+   Constants <manual/reading-setup-files/default-values-arrays-and-constants.html>`__
 -  `Evaluating
-   expressions <http://www.notjustphysics.com/schnek/schnek-documentation/reading-setup-files/evaluating-expressions/>`__
--  `Filling fields <http://www.notjustphysics.com/schnek/schnek-documentation/reading-setup-files/filling-fields/>`__
+   expressions <manual/reading-setup-files/evaluating-expressions.html>`__
+-  `Filling fields <manual/reading-setup-files/filling-fields.html>`__
 -  `Adding user defined
-   functions <http://www.notjustphysics.com/schnek/schnek-documentation/reading-setup-files/adding-user-defined-functions/>`__
+   functions <manual/reading-setup-files/adding-user-defined-functions.html>`__

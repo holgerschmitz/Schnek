@@ -1,5 +1,5 @@
 The `previous
-chapter <http://www.notjustphysics.com/schnek/schnek-documentation/reading-setup-files/>`__
+chapter <manual/reading-setup-files.html>`__
 introduced the basic concepts of reading data from the configuration
 file. This chapter covers how the configuration file can be used to
 create a hierarchical structure of simulation blocks. In this way the
@@ -10,12 +10,12 @@ output in a very flexible way. This section contains the following
 topics.
 
 -  `Hierarchical Simulation
-   Blocks <http://www.notjustphysics.com/schnek/schnek-documentation/simulation-blocks-and-data/hierarchical-simulation-blocks/>`__
+   Blocks <manual/simulation-blocks-and-data/hierarchical-simulation-blocks.html>`__
 -  `Handling Multiple Child Block
-   Types <http://www.notjustphysics.com/schnek/schnek-documentation/simulation-blocks-and-data/handling-multiple-child-block-types/>`__
+   Types <manual/simulation-blocks-and-data/handling-multiple-child-block-types.html>`__
 -  `Sharing Data Between
-   Blocks <http://www.notjustphysics.com/schnek/schnek-documentation/simulation-blocks-and-data/sharing-data-between-blocks/>`__
+   Blocks <manual/simulation-blocks-and-data/sharing-data-between-blocks.html>`__
 -  `The Block Initialisation Life
-   Cycle <http://www.notjustphysics.com/schnek/schnek-documentation/simulation-blocks-and-data/the-block-initialisation-life-cycle/>`__
+   Cycle <manual/simulation-blocks-and-data/the-block-initialisation-life-cycle.html>`__
 -  `Adding Literature
-   References <http://www.notjustphysics.com/schnek/schnek-documentation/simulation-blocks-and-data/adding-literature-references/>`__
+   References <manual/simulation-blocks-and-data/adding-literature-references.html>`__
