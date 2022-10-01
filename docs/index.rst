@@ -5,8 +5,8 @@
    :maxdepth: 2
    :caption: Contents:
 
-:doc:`Manual <./manual/installation>`.
-:doc:`Multi-Dimensional Grids <./manual/multi-dimensional-grids>`.
+   manual/installation
+   manual/multi-dimensional-grids
 :doc:`Grid Basics <./manual/multi-dimensional-grids/grid-basics>`.
 :doc:`Index Types and the Array Class <./manual/multi-dimensional-grids/index-types-and-the-array-class>`.
 :doc:`Additional Array Functions <./manual/multi-dimensional-grids/additional-array-functions>`.
