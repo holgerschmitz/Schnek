@@ -1,5 +1,5 @@
 In the `previous
-section <http://www.notjustphysics.com/schnek/schnek-documentation/multi-dimensional-grids/index-types-and-the-array-class/>`__
+section <manual/multi-dimensional-grids/index-types-and-the-array-class.html>`__
 we have seen that the ``Range`` class can be used to define rectangular
 regions of arbitrary dimension. The ``Boundary`` class makes use of
 these regions to define regions of ghost cells and boundary cells. Ghost

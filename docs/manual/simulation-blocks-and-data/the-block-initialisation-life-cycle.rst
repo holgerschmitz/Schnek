@@ -5,7 +5,7 @@ initialisation is subdivided into a number of steps. This allows one
 class to initialise data in an earlier step and another class to access
 that data in a subsequent step, knowing that it has already been
 initialised. In the `previous
-sections <http://www.notjustphysics.com/schnek/schnek-documentation/simulation-blocks-and-data/>`__
+sections <manual/simulation-blocks-and-data.html>`__
 we have already come across some of these methods. In this section a
 complete reference is given.
 
@@ -31,13 +31,13 @@ following a brief description of each function is given.
    variables with the parser and allows automatic initialisation of the
    member variables from the setup file. For details on this function
    see the `section on reading setup
-   files <http://www.notjustphysics.com/schnek/schnek-documentation/reading-setup-files/a-first-example/>`__.
+   files <manual/reading-setup-files/a-first-example.html>`__.
 -  ``void registerData()`` In this function data that is intended to be
    shared among multiple block should be registered using the
    ``addData()`` function. Once the fields have been registered other
    blocks are able to access them via the ``retrieveData()`` function.
    See the `previous section on sharing data between
-   blocks <http://www.notjustphysics.com/schnek/schnek-documentation/simulation-blocks-and-data/sharing-data-between-blocks/>`__
+   blocks <manual/simulation-blocks-and-data/sharing-data-between-blocks.html>`__
    for details.
 -  ``void preInit()`` This function is called before the main ``init()``
    function and allows additional initialisation that should be carried

@@ -32,7 +32,7 @@ Note that specifying a ``Field`` type will automatically take care of
 the ghost cells of the field. ``HDFGridDiagnostic`` obtains the grid for
 output through the ``Block``'s ``retrieveData()`` function (see the
 section on `sharing data between
-blocks <http://www.notjustphysics.com/schnek/schnek-documentation/simulation-blocks-and-data/sharing-data-between-blocks/>`__).
+blocks <manual/simulation-blocks-and-data/sharing-data-between-blocks.html>`__).
 The second argument is the pointer type of the field that should be
 retrieved from the ``Block``. The third template argument specifies
 whether the diagnostic should use the physical time or the integer time
@@ -43,7 +43,7 @@ function should return the global extent of the grid across all
 processes. This range should not include any ghost cells. Once the class
 has been defined it can be included in the simulation `block hierarchy
 for the setup file
-parser <http://www.notjustphysics.com/schnek/schnek-documentation/simulation-blocks-and-data/hierarchical-simulation-blocks/>`__.
+parser <manual/simulation-blocks-and-data/hierarchical-simulation-blocks.html>`__.
 
 ::
 
@@ -60,7 +60,7 @@ block initialisation. This means that the grid or field must have been
 added and properly resized before the ``init()`` function is called. It
 is advisable to do this during the ``preInit()`` phase (see the `section
 on block
-initialisation <http://www.notjustphysics.com/schnek/schnek-documentation/simulation-blocks-and-data/the-block-initialisation-life-cycle/>`__).
+initialisation <manual/simulation-blocks-and-data/the-block-initialisation-life-cycle.html>`__).
 
 ::
 
@@ -85,7 +85,7 @@ the fields when needed.
     }
 
 See the `previous section on the
-``DiagnosticManager`` <http://www.notjustphysics.com/schnek/schnek-documentation/writing-data/the-diagnostic-manager/>`__
+``DiagnosticManager`` <manual/writing-data/the-diagnostic-manager.html>`__
 for details. Now the diagnostic output can be controlled through the
 setup file. A typical entry in the setup file for writing a field would
 be the following.

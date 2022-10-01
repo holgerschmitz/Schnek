@@ -29,7 +29,7 @@ The ``lo`` and ``hi`` parameters specify the lower and upper indices of
 the grid's inner domain. This is thought to be the region which
 corresponds to the physical domain. The physical range is specified by
 the second argument, ``physRange``. This is a `Rectangular
-Range <http://www.notjustphysics.com/schnek/schnek-documentation/ranges-ghost-cells-and-fields/rectangular-ranges/>`__
+Range <manual/ranges-ghost-cells-and-fields/rectangular-ranges.html>`__
 of ``double`` type that stores the minimum and maximum of the physical
 coordinates represented by the field. In the example above, the physical
 coordinate of the grid point at index ``lo = (0,0,0)`` is

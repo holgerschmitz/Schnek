@@ -9,6 +9,6 @@ be extended for other file formats if desired. This section covers the
 following topics.
 
 -  `The Diagnostic
-   Manager <http://www.notjustphysics.com/schnek/schnek-documentation/writing-data/the-diagnostic-manager/>`__
+   Manager <manual/writing-data/the-diagnostic-manager.html>`__
 -  `Writing Grids to
-   HDF5 <http://www.notjustphysics.com/schnek/schnek-documentation/writing-data/writing-grids-to-hdf5/>`__
+   HDF5 <manual/writing-data/writing-grids-to-hdf5.html>`__

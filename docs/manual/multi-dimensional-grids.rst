@@ -10,14 +10,14 @@ of your code, when speed is important, you can switch argument checking
 off. This section covers the following topics.
 
 -  `Grid
-   Basics <http://www.notjustphysics.com/schnek/schnek-documentation/multi-dimensional-grids/grid-basics/>`__
+   Basics <manual/multi-dimensional-grids/grid-basics.html>`__
 -  `Index Types and the Array
-   Class <http://www.notjustphysics.com/schnek/schnek-documentation/multi-dimensional-grids/index-types-and-the-array-class/>`__
+   Class <manual/multi-dimensional-grids/index-types-and-the-array-class.html>`__
 -  `Additional Array
-   Functions <http://www.notjustphysics.com/schnek/schnek-documentation/multi-dimensional-grids/additional-array-functions/>`__
+   Functions <manual/multi-dimensional-grids/additional-array-functions.html>`__
 -  `Argument Checking
-   Policies <http://www.notjustphysics.com/schnek/schnek-documentation/multi-dimensional-grids/argument-checking-policies/>`__
+   Policies <manual/multi-dimensional-grids/argument-checking-policies.html>`__
 -  `Sub Grids and Grid
-   Transformations <http://www.notjustphysics.com/schnek/schnek-documentation/multi-dimensional-grids/sub-grids-and-grid-transformations/>`__
+   Transformations <manual/multi-dimensional-grids/sub-grids-and-grid-transformations.html>`__
 -  `Storage
-   policies <http://www.notjustphysics.com/schnek/schnek-documentation/multi-dimensional-grids/storage-policies/>`__
+   policies <manual/multi-dimensional-grids/storage-policies.html>`__

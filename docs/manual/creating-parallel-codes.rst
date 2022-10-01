@@ -6,6 +6,6 @@ processes. Implementations of this interface use MPI routines to pass
 data between the processes. This section covers the following topics.
 
 -  `Dividing the simulation
-   domain <http://www.notjustphysics.com/schnek/schnek-documentation/creating-parallel-codes/dividing-simulation-domains/>`__
+   domain <manual/creating-parallel-codes/dividing-simulation-domains.html>`__
 -  `Cartesian subdivision using
-   MPI <http://www.notjustphysics.com/schnek/schnek-documentation/creating-parallel-codes/cartesian-subdivision-using-mpi/>`__
+   MPI <manual/creating-parallel-codes/cartesian-subdivision-using-mpi.html>`__

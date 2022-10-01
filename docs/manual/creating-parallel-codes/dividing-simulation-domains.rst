@@ -7,7 +7,7 @@ problems. Schnek provides classes for dividing the global domain in this
 way. However, the framework can be extended to include more elaborate
 decomposition techniques, as long as the individual local domains remain
 rectangular. In the \ `previous
-chapter <http://www.notjustphysics.com/schnek/schnek-documentation/ranges-ghost-cells-and-fields/boundaries/>`__ we
+chapter <manual/ranges-ghost-cells-and-fields/boundaries.html>`__ we
 have seen how the \ ``Boundary`` class can be used to specify the inner
 domain and the ghost cells of a local simulation domain.
 The \ ``DomainSubdivision`` class framework performs the task of

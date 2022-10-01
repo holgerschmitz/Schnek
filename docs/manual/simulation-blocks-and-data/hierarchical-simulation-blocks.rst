@@ -11,7 +11,7 @@ file. This allows for highly versatile codes. In Schnek, each type of
 simulation block is represented by a class that descends from the
 ``Block`` class. The ``Block`` class was already introduced in the
 `first example on setup
-files <http://www.notjustphysics.com/schnek/schnek-documentation/reading-setup-files/a-first-example/>`__
+files <manual/reading-setup-files/a-first-example.html>`__
 as the class that represents the complete simulation. However a
 simulation code can have a large number of different block types and
 these can be arranged in a hierarchical manner. To start with a simple
@@ -49,7 +49,7 @@ following code.
 
 The ``Particle`` class is very much like the ``Block`` classes we have
 seen in the `previous
-chapter <http://www.notjustphysics.com/schnek/schnek-documentation/reading-setup-files/>`__.
+chapter <manual/reading-setup-files.html>`__.
 The private members ``pos``, ``velocity``, and ``mass`` are registered
 with the setup file parser in the ``initParameters()`` function. Two
 additional functions, ``advance()`` and ``display()`` have been defined.
