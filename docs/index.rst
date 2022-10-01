@@ -1,16 +1,6 @@
 .. Schnek documentation master file, created by
    sphinx-quickstart on Sat Dec 11 12:43:52 2021.
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   manual/installation
-   manual/multi-dimensional-grids
-:doc:`Grid Basics <./manual/multi-dimensional-grids/grid-basics>`.
-:doc:`Index Types and the Array Class <./manual/multi-dimensional-grids/index-types-and-the-array-class>`.
-:doc:`Additional Array Functions <./manual/multi-dimensional-grids/additional-array-functions>`.
-
 
 Schnek Documentation
 ==================================
@@ -26,70 +16,49 @@ also be compiled with support for `MPI <http://www.open-mpi.org/>`__ and
 
 The tutorial pages will cover the following topics.
 
--  `Installation <./manual/installation>`__
--  `Multi-Dimensional Grids <./manual/multi-dimensional-grids>`__
+-  `Installation <./manual/installation.html>`__
+-  `Multi-Dimensional Grids <./manual/multi-dimensional-grids.html>`__
 
-   -  `Grid Basics <./manual/multi-dimensional-grids/grid-basics>`__
-   -  `Index Types and the Array Class <./manual/multi-dimensional-grids/index-types-and-the-array-class>`__
-   -  `Additional Array Functions <./manual/multi-dimensional-grids/additional-array-functions>`__
-   -  `Argument Checking
-      Policies <./manual/multi-dimensional-grids/argument-checking-policies/>`__
-   -  `Sub Grids and Grid
-      Transformations <./manual/multi-dimensional-grids/sub-grids-and-grid-transformations/>`__
-   -  `Storage
-      policies <./manual/multi-dimensional-grids/storage-policies/>`__
+   -  `Grid Basics <./manual/multi-dimensional-grids/grid-basics.html>`__
+   -  `Index Types and the Array Class <./manual/multi-dimensional-grids/index-types-and-the-array-class.html>`__
+   -  `Additional Array Functions <./manual/multi-dimensional-grids/additional-array-functions.html>`__
+   -  `Argument Checking Policies <./manual/multi-dimensional-grids/argument-checking-policies.html>`__
+   -  `Sub Grids and Grid Transformations <./manual/multi-dimensional-grids/sub-grids-and-grid-transformations.html>`__
+   -  `Storage policies <./manual/multi-dimensional-grids/storage-policies.html>`__
 
 -  `Reading Setup
-   Files <./manual/reading-setup-files/>`__
+   Files <./manual/reading-setup-files.html>`__
 
-   -  `A first
-      example <./manual/reading-setup-files/a-first-example/>`__
-   -  `Error
-      Handling <./manual/reading-setup-files/error-handling/>`__
-   -  `Default Values, Arrays and
-      Constants <./manual/reading-setup-files/default-values-arrays-and-constants/>`__
-   -  `Evaluating
-      expressions <./manual/reading-setup-files/evaluating-expressions/>`__
-   -  `Filling fields <./manual/reading-setup-files/filling-fields/>`__
-   -  `Adding user defined
-      functions <./manual/reading-setup-files/adding-user-defined-functions/>`__
+   -  `A first example <./manual/reading-setup-files/a-first-example.html>`__
+   -  `Error Handling <./manual/reading-setup-files/error-handling.html>`__
+   -  `Default Values, Arrays and Constants <./manual/reading-setup-files/default-values-arrays-and-constants.html>`__
+   -  `Evaluating expressions <./manual/reading-setup-files/evaluating-expressions.html>`__
+   -  `Filling fields <./manual/reading-setup-files/filling-fields.html>`__
+   -  `Adding user defined functions <./manual/reading-setup-files/adding-user-defined-functions.html>`__
 
--  `Simulation Blocks and
-   Data <./manual/simulation-blocks-and-data/>`__
+-  `Simulation Blocks and Data <./manual/simulation-blocks-and-data.html>`__
 
-   -  `Hierarchical Simulation
-      Blocks <./manual/simulation-blocks-and-data/hierarchical-simulation-blocks/>`__
-   -  `Handling Multiple Child Block
-      Types <./manual/simulation-blocks-and-data/handling-multiple-child-block-types/>`__
-   -  `Sharing Data Between
-      Blocks <./manual/simulation-blocks-and-data/sharing-data-between-blocks/>`__
-   -  `The Block Initialisation Life
-      Cycle <./manual/simulation-blocks-and-data/the-block-initialisation-life-cycle/>`__
-   -  `Adding Literature
-      References <./manual/simulation-blocks-and-data/adding-literature-references/>`__
+   -  `Hierarchical Simulation Blocks <./manual/simulation-blocks-and-data/hierarchical-simulation-blocks.html>`__
+   -  `Handling Multiple Child Block Types <./manual/simulation-blocks-and-data/handling-multiple-child-block-types.html>`__
+   -  `Sharing Data Between Blocks <./manual/simulation-blocks-and-data/sharing-data-between-blocks.html>`__
+   -  `The Block Initialisation Life Cycle <./manual/simulation-blocks-and-data/the-block-initialisation-life-cycle.html>`__
+   -  `Adding Literature References <./manual/simulation-blocks-and-data/adding-literature-references.html>`__
 
--  `Ranges, Ghost Cells and
-   Fields <./manual/ranges-ghost-cells-and-fields/>`__
+-  `Ranges, Ghost Cells and Fields <./manual/ranges-ghost-cells-and-fields.html>`__
 
-   -  `Rectangular Ranges <./manual/ranges-ghost-cells-and-fields/rectangular-ranges/>`__
-   -  `Boundaries <./manual/ranges-ghost-cells-and-fields/boundaries/>`__
-   -  `Fields <./manual/ranges-ghost-cells-and-fields/fields/>`__
+   -  `Rectangular Ranges <./manual/ranges-ghost-cells-and-fields/rectangular-ranges.html>`__
+   -  `Boundaries <./manual/ranges-ghost-cells-and-fields/boundaries.html>`__
+   -  `Fields <./manual/ranges-ghost-cells-and-fields/fields.html>`__
 
--  `Creating Parallel
-   Codes <./manual/creating-parallel-codes/>`__
+-  `Creating Parallel Codes <./manual/creating-parallel-codes.html>`__
 
-   -  `Dividing the Simulation
-      Domain <./manual/creating-parallel-codes/dividing-simulation-domains/>`__
-   -  `Cartesian subdivision using
-      MPI <./manual/creating-parallel-codes/cartesian-subdivision-using-mpi/>`__
+   -  `Dividing the Simulation Domain <./manual/creating-parallel-codes/dividing-simulation-domains.html>`__
+   -  `Cartesian subdivision using MPI <./manual/creating-parallel-codes/cartesian-subdivision-using-mpi.html>`__
 
--  `Writing
-   Data <./manual/writing-data/>`__
+-  `Writing Data <./manual/writing-data.html>`__
 
-   -  `The Diagnostic
-      Manager <./manual/writing-data/the-diagnostic-manager/>`__
-   -  `Writing Grids to
-      HDF5 <./manual/writing-data/writing-grids-to-hdf5/>`__
+   -  `The Diagnostic Manager <./manual/writing-data/the-diagnostic-manager.html>`__
+   -  `Writing Grids to HDF5 <./manual/writing-data/writing-grids-to-hdf5.html>`__
 
 .. |SchnekLogo| image:: http://www.notjustphysics.com/wp-content/uploads/2014/06/SchnekLogo.png
    :class: alignleft wp-image-127 size-full
