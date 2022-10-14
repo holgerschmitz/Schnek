@@ -1,23 +1,32 @@
-# Find the Kokkos library
+find_package(PkgConfig)
+pkg_check_modules(PC_Kokkos QUIET kokkos)
 
-set(KOKKOS_PATH "" CACHE STRING "The path to the Kokkos library")
+find_path(Kokkos_INCLUDE_DIR
+  NAMES Kokkos_Core.hpp
+  PATHS ${PC_Kokkos_INCLUDE_DIRS}
+)
 
-if("${KOKKOS_PATH}" STREQUAL "")
-  set(KOKKOS_PATH "$ENV{KOKKOS_PATH}")
+find_library(Kokkos_LIBRARY
+  NAMES kokkoscore
+  PATHS ${PC_Kokkos_LIBRARY_DIRS}
+)
+
+set(Kokkos_VERSION ${PC_Kokkos_VERSION})
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Kokkos
+  FOUND_VAR Kokkos_FOUND
+  REQUIRED_VARS
+    Kokkos_LIBRARY
+    Kokkos_INCLUDE_DIR
+  VERSION_VAR Kokkos_VERSION 
+)
+
+if(Kokkos_FOUND AND NOT TARGET Kokkos::kokkos)
+  add_library(Kokkos::kokkos UNKNOWN IMPORTED)  
+  set_target_properties(Kokkos::kokkos PROPERTIES
+    IMPORTED_LOCATION "${Kokkos_LIBRARY}"
+    INTERFACE_COMPILE_OPTIONS "${PC_Kokkos_CFLAGS_OTHER}"
+    INTERFACE_INCLUDE_DIRECTORIES "${Kokkos_INCLUDE_DIR}"
+  )
 endif()
-
-if (NOT "${KOKKOS_PATH}" STREQUAL "")
-  message(STATUS "Kokkos: Looking for Kokkos in ${KOKKOS_PATH}")
-endif()
-
-find_path(KOKKOS_INCLUDE_DIR Kokkos_Core.hpp PATHS "${KOKKOS_PATH}/include")
-find_library(KOKKOS_CORE_LIBRARY NAMES kokkoscore PATHS "${KOKKOS_PATH}/lib")
-
-if (NOT ("${KOKKOS_INCLUDE_DIR}" STREQUAL "KOKKOS_INCLUDE_DIR-NOTFOUND"
-      OR "${KOKKOS_CORE_LIBRARY}" STREQUAL "KOKKOS_CORE_LIBRARY-NOTFOUND"))
-  set(Kokkos_LIBRARIES "${KOKKOS_CORE_LIBRARY}")
-  set(Kokkos_INCLUDE_DIRS "${KOKKOS_INCLUDE_DIR}")
-  set(Kokkos_FOUND TRUE)
-  message(STATUS "Found Kokkos: ${Kokkos_LIBRARIES}")
-endif()
-
