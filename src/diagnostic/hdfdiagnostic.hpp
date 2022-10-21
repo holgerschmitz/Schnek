@@ -38,6 +38,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
+#include <mpi.h>
+#endif
+
 #include <map>
 
 namespace schnek {
@@ -203,7 +207,9 @@ class HdfIStream : public HdfStream {
 class HdfOStream : public HdfStream {
   private:
     hid_t dxpl_id;
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
     MPI_Info mpi_info;
+#endif
     hid_t plist_id;
     bool initialised;
   public:

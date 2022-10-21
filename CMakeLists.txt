@@ -44,9 +44,12 @@ add_library(schnek SHARED
 
 target_include_directories(schnek PUBLIC ${MPI_INCLUDE_PATH})
 target_include_directories(schnek PUBLIC ${HDF5_INCLUDE_DIRS})
+target_include_directories(schnek PUBLIC ${Boost_INCLUDE_DIRS})
 
 target_link_libraries(schnek ${MPI_C_LIBRARIES})
 target_link_libraries(schnek ${HDF5_LIBRARIES})
+
+target_compile_features(schnek PRIVATE cxx_std_11)
 
 if (Kokkos_FOUND)
   target_include_directories(schnek PUBLIC ${Kokkos_INCLUDE_DIRS})
@@ -60,8 +63,8 @@ set(SCHNEK_HAVE_KOKKOS ${Kokkos_FOUND})
 configure_file(src/config.hpp.in src/config.hpp)
 
 install(TARGETS schnek LIBRARY DESTINATION lib)
-
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+install(DIRECTORY src/ DESTINATION include/schnek FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY src/ DESTINATION include/schnek FILES_MATCHING PATTERN "*.t")
 
 ###########################################################
 # Unit Tests
@@ -80,6 +83,7 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
 )
 target_link_libraries(schnek_tests schnek)
 target_include_directories(schnek_tests PUBLIC "src")
+target_compile_features(schnek_tests PRIVATE cxx_std_11)
 
 add_test(NAME test COMMAND schnek_tests)
 enable_testing()

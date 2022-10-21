@@ -168,7 +168,7 @@ bool FunctionExpression<vtype, func>::isConstant()
   if (updateAlways) return false;
   bool result = true;
   isConstantVisitor visit;
-  BOOST_FOREACH(ExpressionVariant ex, args)
+  for (ExpressionVariant ex: args)
   {
     result = result && boost::apply_visitor(visit, ex);
   }
@@ -182,7 +182,7 @@ DependencyList FunctionExpression<vtype, func>::getDependencies()
   DependencyList result;
 
   DependenciesGetter visit;
-  BOOST_FOREACH(ExpressionVariant ex, args)
+  for (ExpressionVariant ex: args)
   {
     DependencyList dep = boost::apply_visitor(visit, ex);
     result.insert(dep.begin(), dep.end());
@@ -198,6 +198,7 @@ class FunctionRegistry
     class EntryBase
     {
       public:
+        virtual ~EntryBase() {}
         virtual ExpressionVariant getExpression(ExpressionList &) = 0;
     };
 
