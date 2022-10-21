@@ -145,7 +145,7 @@ void HdfIStream::readGrid(GridContainer<FieldType> &g)
   H5Sclose(file_dataspace);
 #else
   /* read the data on single processor */
-  hid_t ret = H5Dread(dataset,
+  ret = H5Dread(dataset,
                       H5DataType<T>::type,
                       H5S_ALL,
                       H5S_ALL,
@@ -294,8 +294,11 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 
   /* now write the attributes */
 
-  int mpi_rank;
+  int mpi_rank = 0;
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+#endif
+
   if (mpi_rank==0) {
     /* Create the data space for the attribute. */
     typedef std::pair<std::string, HdfAttributes::pInfo> attPair;

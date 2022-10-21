@@ -39,15 +39,16 @@ namespace schnek
  *  The type to create is given by the template parameter TYPE
  */
 template<class TYPE>
-struct CreateUsingNew
+class CreateUsingNew
 {
-  /** Create the object of type TYPE by calling the standard "new"
-   *  allocation
-   */
-  static TYPE* create()
-  {
-    return new TYPE();
-  }
+  public:
+    /** Create the object of type TYPE by calling the standard "new"
+    *  allocation
+    */
+    static TYPE* create()
+    {
+      return new TYPE();
+    }
 };
 
 
