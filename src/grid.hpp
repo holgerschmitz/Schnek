@@ -33,8 +33,10 @@
 #include "grid/grid.hpp"
 #include "grid/gridcheck.hpp"
 #include "grid/gridstorage.hpp"
+#include "grid/gridstorage/single-array-allocation.hpp"
 #include "grid/gridtransform.hpp"
 
 #include "grid/mpisubdivision.hpp"
 
 #include "grid/range.hpp"
+
