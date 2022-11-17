@@ -29,6 +29,8 @@
 
 #include "../array.hpp"
 
+#include <cmath>
+
 /**
  * @page Grid Allocation Policies
  * 
