@@ -32,36 +32,44 @@
 namespace schnek
 {
     /**
-     * Stores the grid data in a single array
+     * The storage base extends from an allocation policy and adds some accessor methods
      */
     template <typename T, int rank, template <typename, int> class AllocationPolicy>
     class SingleArrayGridStorageBase : public AllocationPolicy<T, rank>
     {
     public:
+        /// The grid index type
         typedef Array<int, rank> IndexType;
 
     public:
-
+        /// Default constructor
         SingleArrayGridStorageBase();
 
+        /// Construct with a given size
         SingleArrayGridStorageBase(const IndexType &low_, const IndexType &high_);
 
+        /// Access to the underlying raw data
         T *getRawData() const { return this->data; }
 
-        /** */
+        /// Get the lowest coordinate in the grid (inclusive)
         const IndexType &getLo() const { return this->low; }
-        /** */
+
+        /// Get the highest coordinate in the grid (inclusive)
         const IndexType &getHi() const { return this->high; }
-        /** */
+
+        /// Get the dimensions of the grid `dims = high - low + 1`
         const IndexType &getDims() const { return this->dims; }
 
-        /** */
+        /// Get k-th component of the lowest coordinate in the grid (inclusive)
         int getLo(int k) const { return this->low[k]; }
-        /** */
+
+        /// Get k-th component of the highest coordinate in the grid (inclusive)
         int getHi(int k) const { return this->high[k]; }
-        /** */
+
+        /// Get k-th component of the dimensions of the grid `dims = high - low + 1`
         int getDims(int k) const { return this->dims[k]; }
 
+        /// Get the length of the allocated array
         int getSize() const { return this->size; }
     };
 
