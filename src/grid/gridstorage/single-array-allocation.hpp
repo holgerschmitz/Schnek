@@ -29,16 +29,24 @@
 
 #include "../array.hpp"
 
+/**
+ * @page Grid Allocation Policies
+ * 
+ * Allocation policies are responsible for managing the underlying data of a 
+ * grid.
+ * 
+ */
+
 namespace schnek
 {
 
     /**
-     * Allocate a single array for multidimensional grids in C ordering.
+     * @brief Allocate a single array for multidimensional grids in C ordering.
      *
      * Deallocation and allocation is performed on every resize.
      *
-     * @param <T> The type of data stored in the grid
-     * @param <rank> The rank of the grid
+     * @tparam T The type of data stored in the grid
+     * @tparam rank The rank of the grid
      */
     template <typename T, int rank>
     class SingleArrayInstantAllocation
@@ -75,7 +83,7 @@ namespace schnek
         ~SingleArrayInstantAllocation();
 
         /**
-         * resizes to grid with lower indices low[0],...,low[rank-1]
+         * @brief resizes to grid with lower indices low[0],...,low[rank-1]
          * and upper indices high[0],...,high[rank-1]
          */
         void resize(const IndexType &low, const IndexType &high);
@@ -89,12 +97,12 @@ namespace schnek
     };
 
     /**
-     * Allocate a single array for multidimensional grids in Fortran ordering.
+     * @brief Allocate a single array for multidimensional grids in Fortran ordering.
      *
      * Deallocation and allocation is performed on every resize.
      *
-     * @param <T> The type of data stored in the grid
-     * @param <rank> The rank of the grid
+     * @tparam T The type of data stored in the grid
+     * @tparam rank The rank of the grid
      */
     template <typename T, int rank>
     class SingleArrayInstantFortranAllocation
@@ -131,7 +139,7 @@ namespace schnek
         ~SingleArrayInstantFortranAllocation();
 
         /**
-         * resizes to grid with lower indices low[0],...,low[rank-1]
+         * @brief resizes to grid with lower indices low[0],...,low[rank-1]
          * and upper indices high[0],...,high[rank-1]
          */
         void resize(const IndexType &low_, const IndexType &high_);
@@ -145,7 +153,7 @@ namespace schnek
     };
 
     /**
-     * Allocate a single array for multidimensional grids in C ordering.
+     * @brief Allocate a single array for multidimensional grids in C ordering.
      *
      * Deallocation and allocation is performed only when required. When the memory need
      * grows, the storage will allocate slightly more memory that needed. Shrinking of
@@ -153,8 +161,8 @@ namespace schnek
      *
      * Use this, when a resize is expected regularly.
      *
-     * @param <T> The type of data stored in the grid
-     * @param <rank> The rank of the grid
+     * @tparam T The type of data stored in the grid
+     * @tparam rank The rank of the grid
      */
     template <typename T, int rank>
     class SingleArrayLazyAllocation
@@ -206,7 +214,7 @@ namespace schnek
         ~SingleArrayLazyAllocation();
 
         /**
-         * resizes to grid with lower indices low[0],...,low[rank-1]
+         * @brief resizes to grid with lower indices low[0],...,low[rank-1]
          * and upper indices high[0],...,high[rank-1]
          */
         void resize(const IndexType &low_, const IndexType &high_);
