@@ -29,6 +29,14 @@
 
 #include "../array.hpp"
 
+/**
+ * @page Grid Allocation Policies
+ * 
+ * Allocation policies are responsible for managing the underlying data of a 
+ * grid.
+ * 
+ */
+
 namespace schnek
 {
 
@@ -37,8 +45,8 @@ namespace schnek
      *
      * Deallocation and allocation is performed on every resize.
      *
-     * @param <T> The type of data stored in the grid
-     * @param <rank> The rank of the grid
+     * @tparam T The type of data stored in the grid
+     * @tparam rank The rank of the grid
      */
     template <typename T, int rank>
     class SingleArrayInstantAllocation
@@ -93,8 +101,8 @@ namespace schnek
      *
      * Deallocation and allocation is performed on every resize.
      *
-     * @param <T> The type of data stored in the grid
-     * @param <rank> The rank of the grid
+     * @tparam T The type of data stored in the grid
+     * @tparam rank The rank of the grid
      */
     template <typename T, int rank>
     class SingleArrayInstantFortranAllocation
@@ -153,8 +161,8 @@ namespace schnek
      *
      * Use this, when a resize is expected regularly.
      *
-     * @param <T> The type of data stored in the grid
-     * @param <rank> The rank of the grid
+     * @tparam T The type of data stored in the grid
+     * @tparam rank The rank of the grid
      */
     template <typename T, int rank>
     class SingleArrayLazyAllocation

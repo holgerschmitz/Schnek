@@ -33,6 +33,10 @@ namespace schnek
 {
     /**
      * The storage base extends from an allocation policy and adds some accessor methods
+     * 
+     * @tparam T The type of data stored in the grid
+     * @tparam rank The rank of the grid
+     * @tparam AllocationPolicy The allocation policy
      */
     template <typename T, int rank, template <typename, int> class AllocationPolicy>
     class SingleArrayGridStorageBase : public AllocationPolicy<T, rank>
@@ -73,6 +77,14 @@ namespace schnek
         int getSize() const { return this->size; }
     };
 
+    /**
+     * Extends from SingleArrayGridStorageBase to provide C-order indexing over the
+     * 1-dimensional data array for a multidimensional grid.
+     * 
+     * @tparam T The type of data stored in the grid
+     * @tparam rank The rank of the grid
+     * @tparam AllocationPolicy The allocation policy
+     */
     template <typename T, int rank, template <typename, int> class AllocationPolicy>
     class SingleArrayGridCOrderStorageBase : public SingleArrayGridStorageBase<T, rank, AllocationPolicy>
     {
@@ -89,6 +101,14 @@ namespace schnek
         const T &get(const IndexType &index) const;
     };
 
+    /**
+     * Extends from SingleArrayGridStorageBase to provide Fortran-order indexing over the
+     * 1-dimensional data array for a multidimensional grid.
+     * 
+     * @tparam T The type of data stored in the grid
+     * @tparam rank The rank of the grid
+     * @tparam AllocationPolicy The allocation policy
+     */
     template <typename T, int rank, template <typename, int> class AllocationPolicy>
     class SingleArrayGridFortranOrderStorageBase : public SingleArrayGridStorageBase<T, rank, AllocationPolicy>
     {
