@@ -49,7 +49,7 @@ target_include_directories(schnek PUBLIC ${Boost_INCLUDE_DIRS})
 target_link_libraries(schnek ${MPI_C_LIBRARIES})
 target_link_libraries(schnek ${HDF5_LIBRARIES})
 
-target_compile_features(schnek PRIVATE cxx_std_11)
+target_compile_features(schnek PRIVATE cxx_std_14)
 
 if (Kokkos_FOUND)
   target_include_directories(schnek PUBLIC ${Kokkos_INCLUDE_DIRS})
@@ -80,10 +80,24 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/test_parser.cpp
     testsuite/test_range.cpp
     testsuite/utility.cpp
+    testsuite/grid/test_kokkos_storage.cpp
 )
-target_link_libraries(schnek_tests schnek)
+
 target_include_directories(schnek_tests PUBLIC "src")
-target_compile_features(schnek_tests PRIVATE cxx_std_11)
+target_include_directories(schnek_tests PUBLIC ${MPI_INCLUDE_PATH})
+target_include_directories(schnek_tests PUBLIC ${HDF5_INCLUDE_DIRS})
+target_include_directories(schnek_tests PUBLIC ${Boost_INCLUDE_DIRS})
+
+if (Kokkos_FOUND)
+  target_include_directories(schnek_tests PUBLIC ${Kokkos_INCLUDE_DIR})
+  target_link_libraries(schnek_tests ${Kokkos_LIBRARY})
+endif()
+
+target_link_libraries(schnek_tests schnek)
+target_link_libraries(schnek_tests ${MPI_C_LIBRARIES})
+target_link_libraries(schnek_tests ${HDF5_LIBRARIES})
+
+target_compile_features(schnek_tests PRIVATE cxx_std_14)
 
 add_test(NAME test COMMAND schnek_tests)
 enable_testing()

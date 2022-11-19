@@ -17,6 +17,7 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 DartConfiguration.tcl
+build/
 
 # Compiled Object files
 *.slo

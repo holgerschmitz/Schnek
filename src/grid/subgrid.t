@@ -29,7 +29,7 @@ namespace schnek
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class BaseGrid
 >
 SubGridStorage<T, rank, BaseGrid>::SubGridStorage()
@@ -38,7 +38,7 @@ SubGridStorage<T, rank, BaseGrid>::SubGridStorage()
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class BaseGrid
 >
 SubGridStorage<T, rank, BaseGrid>::SubGridStorage(const IndexType &low_, const IndexType &high_)
@@ -50,7 +50,7 @@ SubGridStorage<T, rank, BaseGrid>::SubGridStorage(const IndexType &low_, const I
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class BaseGrid
 >
 void SubGridStorage<T, rank, BaseGrid>::resize(const IndexType &low_, const IndexType &high_)

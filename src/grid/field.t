@@ -29,18 +29,18 @@ namespace schnek
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 Field<T, rank, CheckingPolicy, StoragePolicy>::Field()
 {}
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 template<
   template<int> class ArrayCheckingPolicy,
@@ -67,9 +67,9 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 template<
   template<int> class ArrayCheckingPolicy,
@@ -102,9 +102,9 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 Field<T, rank, CheckingPolicy, StoragePolicy>::Field(const Field<T, rank, CheckingPolicy, StoragePolicy> &field)
   : Grid<T, rank, CheckingPolicy, StoragePolicy>(field),
@@ -116,9 +116,9 @@ Field<T, rank, CheckingPolicy, StoragePolicy>::Field(const Field<T, rank, Checki
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 inline void Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int dim, double pos, int &index, double &offset)
 {
@@ -133,9 +133,9 @@ inline void Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int d
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 template<
   template<int> class ArrayCheckingPolicy,
@@ -162,9 +162,9 @@ void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 template<
   template<int> class ArrayCheckingPolicy,
@@ -193,9 +193,9 @@ void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 inline int Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int dim, double pos)
 {
@@ -208,9 +208,9 @@ inline int Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int di
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 inline double Field<T, rank, CheckingPolicy, StoragePolicy>::indexToPosition(int dim, int index)
 {

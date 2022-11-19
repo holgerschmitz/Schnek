@@ -29,6 +29,8 @@
 
 #include "../array.hpp"
 
+#include <cmath>
+
 /**
  * @page Grid Allocation Policies
  * 
@@ -41,14 +43,14 @@ namespace schnek
 {
 
     /**
-     * Allocate a single array for multidimensional grids in C ordering.
+     * @brief Allocate a single array for multidimensional grids in C ordering.
      *
      * Deallocation and allocation is performed on every resize.
      *
      * @tparam T The type of data stored in the grid
      * @tparam rank The rank of the grid
      */
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     class SingleArrayInstantAllocation
     {
     public:
@@ -83,7 +85,7 @@ namespace schnek
         ~SingleArrayInstantAllocation();
 
         /**
-         * resizes to grid with lower indices low[0],...,low[rank-1]
+         * @brief resizes to grid with lower indices low[0],...,low[rank-1]
          * and upper indices high[0],...,high[rank-1]
          */
         void resize(const IndexType &low, const IndexType &high);
@@ -97,14 +99,14 @@ namespace schnek
     };
 
     /**
-     * Allocate a single array for multidimensional grids in Fortran ordering.
+     * @brief Allocate a single array for multidimensional grids in Fortran ordering.
      *
      * Deallocation and allocation is performed on every resize.
      *
      * @tparam T The type of data stored in the grid
      * @tparam rank The rank of the grid
      */
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     class SingleArrayInstantFortranAllocation
     {
     public:
@@ -139,7 +141,7 @@ namespace schnek
         ~SingleArrayInstantFortranAllocation();
 
         /**
-         * resizes to grid with lower indices low[0],...,low[rank-1]
+         * @brief resizes to grid with lower indices low[0],...,low[rank-1]
          * and upper indices high[0],...,high[rank-1]
          */
         void resize(const IndexType &low_, const IndexType &high_);
@@ -153,7 +155,7 @@ namespace schnek
     };
 
     /**
-     * Allocate a single array for multidimensional grids in C ordering.
+     * @brief Allocate a single array for multidimensional grids in C ordering.
      *
      * Deallocation and allocation is performed only when required. When the memory need
      * grows, the storage will allocate slightly more memory that needed. Shrinking of
@@ -164,7 +166,7 @@ namespace schnek
      * @tparam T The type of data stored in the grid
      * @tparam rank The rank of the grid
      */
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     class SingleArrayLazyAllocation
     {
     public:
@@ -214,7 +216,7 @@ namespace schnek
         ~SingleArrayLazyAllocation();
 
         /**
-         * resizes to grid with lower indices low[0],...,low[rank-1]
+         * @brief resizes to grid with lower indices low[0],...,low[rank-1]
          * and upper indices high[0],...,high[rank-1]
          */
         void resize(const IndexType &low_, const IndexType &high_);
@@ -231,20 +233,20 @@ namespace schnek
     //=============== SingleArrayInstantAllocation ====================
     //=================================================================
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     void SingleArrayInstantAllocation<T, rank>::resize(const IndexType &low_, const IndexType &high_)
     {
         this->deleteData();
         this->newData(low_, high_);
     }
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     SingleArrayInstantAllocation<T, rank>::~SingleArrayInstantAllocation()
     {
         this->deleteData();
     }
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     void SingleArrayInstantAllocation<T, rank>::deleteData()
     {
         if (data)
@@ -253,7 +255,7 @@ namespace schnek
         size = 0;
     }
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     void SingleArrayInstantAllocation<T, rank>::newData(
         const IndexType &low_,
         const IndexType &high_)
@@ -283,20 +285,20 @@ namespace schnek
     //=========== SingleArrayInstantFortranAllocation =================
     //=================================================================
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     void SingleArrayInstantFortranAllocation<T, rank>::resize(const IndexType &low_, const IndexType &high_)
     {
         this->deleteData();
         this->newData(low_, high_);
     }
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     SingleArrayInstantFortranAllocation<T, rank>::~SingleArrayInstantFortranAllocation()
     {
         this->deleteData();
     }
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     void SingleArrayInstantFortranAllocation<T, rank>::deleteData()
     {
         if (data)
@@ -305,7 +307,7 @@ namespace schnek
         size = 0;
     }
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     void SingleArrayInstantFortranAllocation<T, rank>::newData(
         const IndexType &low_,
         const IndexType &high_)
@@ -335,19 +337,19 @@ namespace schnek
     //================== SingleArrayLazyAllocation ====================
     //=================================================================
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     SingleArrayLazyAllocation<T, rank>::SingleArrayLazyAllocation()
         : data(NULL), data_fast(NULL), size(0), bufSize(0), avgSize(0.0), avgVar(0.0), r(0.05)
     {
     }
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     SingleArrayLazyAllocation<T, rank>::~SingleArrayLazyAllocation()
     {
         this->deleteData();
     }
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     void SingleArrayLazyAllocation<T, rank>::resize(const IndexType &low_, const IndexType &high_)
     {
         int oldSize = size;
@@ -384,7 +386,7 @@ namespace schnek
         data_fast = data + p;
     }
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     void SingleArrayLazyAllocation<T, rank>::deleteData()
     {
         SCHNEK_TRACE_LOG(5, "Deleting pointer (" << (void *)data << "): size=" << size << " avgSize=" << avgSize << " avgVar=" << avgVar << " bufSize=" << bufSize);
@@ -395,7 +397,7 @@ namespace schnek
         bufSize = 0;
     }
 
-    template <typename T, int rank>
+    template <typename T, size_t rank>
     void SingleArrayLazyAllocation<T, rank>::newData(
         int newSize)
     {

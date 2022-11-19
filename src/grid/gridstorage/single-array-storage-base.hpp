@@ -32,13 +32,13 @@
 namespace schnek
 {
     /**
-     * The storage base extends from an allocation policy and adds some accessor methods
+     * @brief The storage base extends from an allocation policy and adds some accessor methods
      * 
      * @tparam T The type of data stored in the grid
      * @tparam rank The rank of the grid
      * @tparam AllocationPolicy The allocation policy
      */
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     class SingleArrayGridStorageBase : public AllocationPolicy<T, rank>
     {
     public:
@@ -49,8 +49,13 @@ namespace schnek
         /// Default constructor
         SingleArrayGridStorageBase();
 
-        /// Construct with a given size
-        SingleArrayGridStorageBase(const IndexType &low_, const IndexType &high_);
+        /**
+         * @brief Construct with a given size
+         * 
+         * @param lo the lowest coordinate in the grid (inclusive)
+         * @param hi the highest coordinate in the grid (inclusive)
+         */
+        SingleArrayGridStorageBase(const IndexType &lo, const IndexType &hi);
 
         /// Access to the underlying raw data
         T *getRawData() const { return this->data; }
@@ -78,50 +83,93 @@ namespace schnek
     };
 
     /**
-     * Extends from SingleArrayGridStorageBase to provide C-order indexing over the
+     * @brief Extends from SingleArrayGridStorageBase to provide C-order indexing over the
      * 1-dimensional data array for a multidimensional grid.
      * 
      * @tparam T The type of data stored in the grid
      * @tparam rank The rank of the grid
      * @tparam AllocationPolicy The allocation policy
      */
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     class SingleArrayGridCOrderStorageBase : public SingleArrayGridStorageBase<T, rank, AllocationPolicy>
     {
     public:
+        /// Base class type
         typedef SingleArrayGridStorageBase<T, rank, AllocationPolicy> BaseType;
+
+        /// The grid index type
         typedef typename BaseType::IndexType IndexType;
 
+        /// Default constructor
         SingleArrayGridCOrderStorageBase() : BaseType() {}
 
+        /**
+         * @brief Construct with a given size
+         * 
+         * @param lo the lowest coordinate in the grid (inclusive)
+         * @param lo the highest coordinate in the grid (inclusive)
+         */
         SingleArrayGridCOrderStorageBase(const IndexType &low_, const IndexType &high_)
             : BaseType(low_, high_) {}
 
+        /**
+         * @brief Get the lvalue at a given grid index
+         * 
+         * @param index The grid index
+         * @return the lvalue at the grid index
+         */
         T &get(const IndexType &index);
+
+        /**
+         * @brief Get the rvalue at a given grid index
+         * 
+         * @param index The grid index
+         * @return the rvalue at the grid index
+         */
         const T &get(const IndexType &index) const;
     };
 
     /**
-     * Extends from SingleArrayGridStorageBase to provide Fortran-order indexing over the
+     * @brief Extends from SingleArrayGridStorageBase to provide Fortran-order indexing over the
      * 1-dimensional data array for a multidimensional grid.
      * 
      * @tparam T The type of data stored in the grid
      * @tparam rank The rank of the grid
      * @tparam AllocationPolicy The allocation policy
      */
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     class SingleArrayGridFortranOrderStorageBase : public SingleArrayGridStorageBase<T, rank, AllocationPolicy>
     {
     public:
         typedef SingleArrayGridStorageBase<T, rank, AllocationPolicy> BaseType;
         typedef typename BaseType::IndexType IndexType;
 
+        /// Default constructor
         SingleArrayGridFortranOrderStorageBase() : BaseType() {}
 
+        /**
+         * @brief Construct with a given size
+         * 
+         * @param lo the lowest coordinate in the grid (inclusive)
+         * @param lo the highest coordinate in the grid (inclusive)
+         */
         SingleArrayGridFortranOrderStorageBase(const IndexType &low_, const IndexType &high_)
             : BaseType(low_, high_) {}
 
+        /**
+         * @brief Get the lvalue at a given grid index
+         * 
+         * @param index The grid index
+         * @return the lvalue at the grid index
+         */
         T &get(const IndexType &index);
+
+        /**
+         * @brief Get the rvalue at a given grid index
+         * 
+         * @param index The grid index
+         * @return the rvalue at the grid index
+         */
         const T &get(const IndexType &index) const;
     };
 
@@ -129,13 +177,13 @@ namespace schnek
     //================== SingleArrayGridStorageBase ===================
     //=================================================================
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBase()
         : AllocationPolicy<T, rank>()
     {
     }
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBase(
         const IndexType &low_,
         const IndexType &high_)
@@ -148,7 +196,7 @@ namespace schnek
     //=============== SingleArrayGridCOrderStorageBase ================
     //=================================================================
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     inline T &SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
     {
         int pos = index[0];
@@ -159,7 +207,7 @@ namespace schnek
         return this->data_fast[pos];
     }
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     inline const T &SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
     {
         int pos = index[0];
@@ -174,7 +222,7 @@ namespace schnek
     //============ SingleArrayGridFortranOrderStorageBase =============
     //=================================================================
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     inline T &SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
     {
         int pos = index[rank - 1];
@@ -185,7 +233,7 @@ namespace schnek
         return this->data_fast[pos];
     }
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     inline const T &SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
     {
         int pos = index[rank - 1];
