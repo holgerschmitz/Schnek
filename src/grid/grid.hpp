@@ -47,7 +47,7 @@ class ArrayExpression;
 /** An elementary grid class */
 template<
   typename T, 
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -228,9 +228,9 @@ class GridBase : public StoragePolicy, public CheckingPolicy
  */
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy = GridNoArgCheck,
-  template<typename, int> class StoragePolicy = SingleArrayGridStorage
+  template<typename, size_t> class StoragePolicy = SingleArrayGridStorage
 >
 class Grid : public GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,rank> >
 {

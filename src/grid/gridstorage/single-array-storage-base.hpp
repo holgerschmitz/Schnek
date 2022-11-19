@@ -38,7 +38,7 @@ namespace schnek
      * @tparam rank The rank of the grid
      * @tparam AllocationPolicy The allocation policy
      */
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     class SingleArrayGridStorageBase : public AllocationPolicy<T, rank>
     {
     public:
@@ -90,7 +90,7 @@ namespace schnek
      * @tparam rank The rank of the grid
      * @tparam AllocationPolicy The allocation policy
      */
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     class SingleArrayGridCOrderStorageBase : public SingleArrayGridStorageBase<T, rank, AllocationPolicy>
     {
     public:
@@ -137,7 +137,7 @@ namespace schnek
      * @tparam rank The rank of the grid
      * @tparam AllocationPolicy The allocation policy
      */
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     class SingleArrayGridFortranOrderStorageBase : public SingleArrayGridStorageBase<T, rank, AllocationPolicy>
     {
     public:
@@ -177,13 +177,13 @@ namespace schnek
     //================== SingleArrayGridStorageBase ===================
     //=================================================================
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBase()
         : AllocationPolicy<T, rank>()
     {
     }
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBase(
         const IndexType &low_,
         const IndexType &high_)
@@ -196,7 +196,7 @@ namespace schnek
     //=============== SingleArrayGridCOrderStorageBase ================
     //=================================================================
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     inline T &SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
     {
         int pos = index[0];
@@ -207,7 +207,7 @@ namespace schnek
         return this->data_fast[pos];
     }
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     inline const T &SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
     {
         int pos = index[0];
@@ -222,7 +222,7 @@ namespace schnek
     //============ SingleArrayGridFortranOrderStorageBase =============
     //=================================================================
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     inline T &SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
     {
         int pos = index[rank - 1];
@@ -233,7 +233,7 @@ namespace schnek
         return this->data_fast[pos];
     }
 
-    template <typename T, int rank, template <typename, int> class AllocationPolicy>
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
     inline const T &SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
     {
         int pos = index[rank - 1];

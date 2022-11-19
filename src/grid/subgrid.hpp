@@ -34,7 +34,7 @@ namespace schnek {
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class BaseGrid
 >
 class SubGridStorage {

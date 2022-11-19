@@ -24,14 +24,14 @@
  *
  */
 
-#ifndef SCHNEK_GRIDSTORAGE_H_
-#define SCHNEK_GRIDSTORAGE_H_
+#ifndef SCHNEK_GRID_GRIDSTORAGE_HPP_
+#define SCHNEK_GRID_GRIDSTORAGE_HPP_
 
 #include "gridstorage/single-array-allocation.hpp"
 #include "gridstorage/single-array-storage-base.hpp"
 
 namespace schnek {
-  template<typename T, int rank>
+  template<typename T, size_t rank>
   class SingleArrayGridStorage
       : public SingleArrayGridCOrderStorageBase<T, rank, SingleArrayInstantAllocation>
   {
@@ -46,7 +46,7 @@ namespace schnek {
   };
 
 
-  template<typename T, int rank>
+  template<typename T, size_t rank>
   class SingleArrayGridStorageFortran
       : public SingleArrayGridFortranOrderStorageBase<T, rank, SingleArrayInstantFortranAllocation>
   {
@@ -60,7 +60,7 @@ namespace schnek {
           : BaseType(low_, high_) {}
   };
 
-  template<typename T, int rank>
+  template<typename T, size_t rank>
   class LazyArrayGridStorage
       : public SingleArrayGridCOrderStorageBase<T, rank, SingleArrayLazyAllocation>
   {
@@ -77,5 +77,5 @@ namespace schnek {
 } // namespace schnek
 
 
-#endif // SCHNEK_GSTORAGE_H_
+#endif // SCHNEK_GRID_GRIDSTORAGE_HPP_
 

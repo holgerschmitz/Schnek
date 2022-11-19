@@ -8,7 +8,7 @@
 #ifndef TESTSUITE_UTILITY_HPP_
 #define TESTSUITE_UTILITY_HPP_
 
-#include <schnek/grid/array.hpp>
+#include <grid/array.hpp>
 #include <boost/test/unit_test.hpp>
 
 

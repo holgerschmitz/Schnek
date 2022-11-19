@@ -38,7 +38,7 @@ namespace schnek
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -47,7 +47,7 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase() : StoragePolicy()
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -58,7 +58,7 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const Array<int,rank,
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -72,7 +72,7 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const Array<int,rank,
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -85,7 +85,7 @@ inline T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -98,7 +98,7 @@ inline T GridBase<T, rank, CheckingPolicy, StoragePolicy>
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -111,7 +111,7 @@ inline T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -124,7 +124,7 @@ inline T GridBase<T, rank, CheckingPolicy, StoragePolicy>
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -135,7 +135,7 @@ inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i)
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -146,7 +146,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i) c
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -157,7 +157,7 @@ inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i)
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -169,7 +169,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i) c
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -180,7 +180,7 @@ inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, 
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -191,7 +191,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, i
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -202,7 +202,7 @@ inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, 
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -213,7 +213,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, i
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -224,7 +224,7 @@ inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, 
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -235,7 +235,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, i
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -246,7 +246,7 @@ inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, 
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -257,7 +257,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, i
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -268,7 +268,7 @@ inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, 
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -279,7 +279,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, i
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -290,7 +290,7 @@ inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, 
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -301,7 +301,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, i
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -312,7 +312,7 @@ inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, 
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -323,7 +323,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, i
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -334,7 +334,7 @@ inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, 
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -345,7 +345,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, i
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -356,7 +356,7 @@ inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, 
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -367,7 +367,7 @@ inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, i
 
 template<
   typename T, 
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -382,7 +382,7 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>&
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -402,7 +402,7 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>&
 
 template<
   typename T, 
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -425,7 +425,7 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>&
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -453,7 +453,7 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>&
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -482,7 +482,7 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>&
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -510,7 +510,7 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -539,7 +539,7 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>&
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -552,7 +552,7 @@ void GridBase<T, rank, CheckingPolicy, StoragePolicy>::resize(const IndexType &d
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -563,7 +563,7 @@ void GridBase<T, rank, CheckingPolicy, StoragePolicy>::resize(const IndexType &l
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -580,7 +580,7 @@ void GridBase<T, rank, CheckingPolicy, StoragePolicy>::resize(const GridBase<T2,
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class CheckingPolicy,
   class StoragePolicy
 >
@@ -610,9 +610,9 @@ void GridBase<T, rank, CheckingPolicy, StoragePolicy>
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid()
   : GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >()
@@ -620,9 +620,9 @@ Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid()
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &size)
   : GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >(size)
@@ -630,9 +630,9 @@ Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &size)
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &low, const IndexType &high)
   : GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >(low, high)
@@ -640,9 +640,9 @@ Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &low, const I
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>
   ::Grid(const Grid<T, rank, CheckingPolicy, StoragePolicy>& matr)
@@ -655,9 +655,9 @@ Grid<T, rank, CheckingPolicy, StoragePolicy>
 
 //template<
 //  typename T,
-//  int rank,
+//  size_t rank,
 //  template<int> class CheckingPolicy,
-//  template<typename, int> class StoragePolicy
+//  template<typename, size_t> class StoragePolicy
 //>
 //template<typename Arg0>
 //IndexedGrid<
@@ -673,9 +673,9 @@ Grid<T, rank, CheckingPolicy, StoragePolicy>
 //
 //template<
 //  typename T,
-//  int rank,
+//  size_t rank,
 //  template<int> class CheckingPolicy,
-//  template<typename, int> class StoragePolicy
+//  template<typename, size_t> class StoragePolicy
 //>
 //template<typename Arg0, typename Arg1>
 //IndexedGrid<
