@@ -27,7 +27,16 @@ struct KokkosStorageTest
     boost::random::mt19937 rGen;
     boost::random::uniform_real_distribution<> dist;
 
-    KokkosStorageTest() : dist(-1.0,1.0) {}
+    KokkosStorageTest() : dist(-1.0,1.0) {
+        Kokkos::InitArguments args;
+        args.num_threads = 0;
+        args.num_numa = 0;
+        Kokkos::initialize(args);
+    }
+
+    ~KokkosStorageTest() {
+        Kokkos::finalize();
+    }
 
     template<class GridType>
     void test_access_1d(GridType &grid)
@@ -392,7 +401,7 @@ struct KokkosStorageTest
     template<int rank>
     void random_extent(schnek::Array<int,rank> &lo, schnek::Array<int,rank> &hi)
     {
-      const int maxExtent = (int)pow(1000000,(1.0/(double)rank));
+      const int maxExtent = (int)pow(10000,(1.0/(double)rank));
       boost::random::uniform_int_distribution<> orig(-maxExtent/2, maxExtent/2);
       boost::random::uniform_int_distribution<> extent(1, maxExtent);
       for (int i=0; i<rank; ++i)
@@ -427,144 +436,144 @@ BOOST_FIXTURE_TEST_CASE( grid_1d_Kokkos_model, KokkosStorageTest )
   }
 }
 
-// BOOST_FIXTURE_TEST_CASE( grid_2d_Kokkos_model, KokkosStorageTest )
-// {
-//   typedef schnek::Grid<double, 2, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-//   GridType::IndexType lo, hi;
-//   boost::progress_display show_progress(100);
-//   for (int n=0; n<10; ++n)
-//   {
-//     random_extent<2>(lo, hi);
-//     GridType g(lo,hi);
-//     test_access_2d(g);
-//     for (int m=0; m<10; ++m)
-//     {
-//       random_extent<2>(lo, hi);
-//       g.resize(lo,hi);
-//       test_access_2d(g);
-//       ++show_progress;
-//     }
-//   }
-// }
+BOOST_FIXTURE_TEST_CASE( grid_2d_Kokkos_model, KokkosStorageTest )
+{
+  typedef schnek::Grid<double, 2, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  GridType::IndexType lo, hi;
+  boost::progress_display show_progress(100);
+  for (int n=0; n<10; ++n)
+  {
+    random_extent<2>(lo, hi);
+    GridType g(lo,hi);
+    test_access_2d(g);
+    for (int m=0; m<10; ++m)
+    {
+      random_extent<2>(lo, hi);
+      g.resize(lo,hi);
+      test_access_2d(g);
+      ++show_progress;
+    }
+  }
+}
 
-// BOOST_FIXTURE_TEST_CASE( grid_3d_Kokkos_model, KokkosStorageTest )
-// {
-//   typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-//   GridType::IndexType lo, hi;
-//   boost::progress_display show_progress(100);
-//   for (int n=0; n<10; ++n)
-//   {
-//     random_extent<3>(lo, hi);
-//     GridType g(lo,hi);
-//     test_access_3d(g);
-//     for (int m=0; m<10; ++m)
-//     {
-//       random_extent<3>(lo, hi);
-//       g.resize(lo,hi);
-//       test_access_3d(g);
-//       ++show_progress;
-//     }
-//   }
-// }
+BOOST_FIXTURE_TEST_CASE( grid_3d_Kokkos_model, KokkosStorageTest )
+{
+  typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  GridType::IndexType lo, hi;
+  boost::progress_display show_progress(100);
+  for (int n=0; n<10; ++n)
+  {
+    random_extent<3>(lo, hi);
+    GridType g(lo,hi);
+    test_access_3d(g);
+    for (int m=0; m<10; ++m)
+    {
+      random_extent<3>(lo, hi);
+      g.resize(lo,hi);
+      test_access_3d(g);
+      ++show_progress;
+    }
+  }
+}
 
-// BOOST_FIXTURE_TEST_CASE( grid_4d_Kokkos_model, KokkosStorageTest )
-// {
-//   typedef schnek::Grid<double, 4, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-//   GridType::IndexType lo, hi;
-//   boost::progress_display show_progress(100);
-//   for (int n=0; n<10; ++n)
-//   {
-//     random_extent<4>(lo, hi);
-//     GridType g(lo,hi);
-//     test_access_4d(g);
-//     for (int m=0; m<10; ++m)
-//     {
-//       random_extent<4>(lo, hi);
-//       g.resize(lo,hi);
-//       test_access_4d(g);
-//       ++show_progress;
-//     }
-//   }
-// }
+BOOST_FIXTURE_TEST_CASE( grid_4d_Kokkos_model, KokkosStorageTest )
+{
+  typedef schnek::Grid<double, 4, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  GridType::IndexType lo, hi;
+  boost::progress_display show_progress(100);
+  for (int n=0; n<10; ++n)
+  {
+    random_extent<4>(lo, hi);
+    GridType g(lo,hi);
+    test_access_4d(g);
+    for (int m=0; m<10; ++m)
+    {
+      random_extent<4>(lo, hi);
+      g.resize(lo,hi);
+      test_access_4d(g);
+      ++show_progress;
+    }
+  }
+}
 
-// BOOST_FIXTURE_TEST_CASE( grid_5d_Kokkos_model, KokkosStorageTest )
-// {
-//   typedef schnek::Grid<double, 5, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-//   GridType::IndexType lo, hi;
-//   boost::progress_display show_progress(100);
-//   for (int n=0; n<10; ++n)
-//   {
-//     random_extent<5>(lo, hi);
-//     GridType g(lo,hi);
-//     test_access_5d(g);
-//     for (int m=0; m<10; ++m)
-//     {
-//       random_extent<5>(lo, hi);
-//       g.resize(lo,hi);
-//       test_access_5d(g);
-//       ++show_progress;
-//     }
-//   }
-// }
+BOOST_FIXTURE_TEST_CASE( grid_5d_Kokkos_model, KokkosStorageTest )
+{
+  typedef schnek::Grid<double, 5, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  GridType::IndexType lo, hi;
+  boost::progress_display show_progress(100);
+  for (int n=0; n<10; ++n)
+  {
+    random_extent<5>(lo, hi);
+    GridType g(lo,hi);
+    test_access_5d(g);
+    for (int m=0; m<10; ++m)
+    {
+      random_extent<5>(lo, hi);
+      g.resize(lo,hi);
+      test_access_5d(g);
+      ++show_progress;
+    }
+  }
+}
 
-// BOOST_FIXTURE_TEST_CASE( grid_6d_Kokkos_model, KokkosStorageTest )
-// {
-//   typedef schnek::Grid<double, 6, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-//   GridType::IndexType lo, hi;
-//   boost::progress_display show_progress(100);
-//   for (int n=0; n<10; ++n)
-//   {
-//     random_extent<6>(lo, hi);
-//     GridType g(lo,hi);
-//     test_access_6d(g);
-//     for (int m=0; m<10; ++m)
-//     {
-//       random_extent<6>(lo, hi);
-//       g.resize(lo,hi);
-//       test_access_6d(g);
-//       ++show_progress;
-//     }
-//   }
-// }
+BOOST_FIXTURE_TEST_CASE( grid_6d_Kokkos_model, KokkosStorageTest )
+{
+  typedef schnek::Grid<double, 6, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  GridType::IndexType lo, hi;
+  boost::progress_display show_progress(100);
+  for (int n=0; n<10; ++n)
+  {
+    random_extent<6>(lo, hi);
+    GridType g(lo,hi);
+    test_access_6d(g);
+    for (int m=0; m<10; ++m)
+    {
+      random_extent<6>(lo, hi);
+      g.resize(lo,hi);
+      test_access_6d(g);
+      ++show_progress;
+    }
+  }
+}
 
-// BOOST_FIXTURE_TEST_CASE( grid_7d_Kokkos_model, KokkosStorageTest )
-// {
-//   typedef schnek::Grid<double, 7, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-//   GridType::IndexType lo, hi;
-//   boost::progress_display show_progress(100);
-//   for (int n=0; n<10; ++n)
-//   {
-//     random_extent<7>(lo, hi);
-//     GridType g(lo,hi);
-//     test_access_7d(g);
-//     for (int m=0; m<10; ++m)
-//     {
-//       random_extent<7>(lo, hi);
-//       g.resize(lo,hi);
-//       test_access_7d(g);
-//       ++show_progress;
-//     }
-//   }
-// }
+BOOST_FIXTURE_TEST_CASE( grid_7d_Kokkos_model, KokkosStorageTest )
+{
+  typedef schnek::Grid<double, 7, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  GridType::IndexType lo, hi;
+  boost::progress_display show_progress(100);
+  for (int n=0; n<10; ++n)
+  {
+    random_extent<7>(lo, hi);
+    GridType g(lo,hi);
+    test_access_7d(g);
+    for (int m=0; m<10; ++m)
+    {
+      random_extent<7>(lo, hi);
+      g.resize(lo,hi);
+      test_access_7d(g);
+      ++show_progress;
+    }
+  }
+}
 
-// BOOST_FIXTURE_TEST_CASE( grid_8d_Kokkos_model, KokkosStorageTest )
-// {
-//   typedef schnek::Grid<double, 8, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-//   GridType::IndexType lo, hi;
-//   boost::progress_display show_progress(100);
-//   for (int n=0; n<10; ++n)
-//   {
-//     random_extent<8>(lo, hi);
-//     GridType g(lo,hi);
-//     test_access_8d(g);
-//     for (int m=0; m<10; ++m)
-//     {
-//       random_extent<8>(lo, hi);
-//       g.resize(lo,hi);
-//       test_access_8d(g);
-//       ++show_progress;
-//     }
-//   }
-// }
+BOOST_FIXTURE_TEST_CASE( grid_8d_Kokkos_model, KokkosStorageTest )
+{
+  typedef schnek::Grid<double, 8, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  GridType::IndexType lo, hi;
+  boost::progress_display show_progress(100);
+  for (int n=0; n<10; ++n)
+  {
+    random_extent<8>(lo, hi);
+    GridType g(lo,hi);
+    test_access_8d(g);
+    for (int m=0; m<10; ++m)
+    {
+      random_extent<8>(lo, hi);
+      g.resize(lo,hi);
+      test_access_8d(g);
+      ++show_progress;
+    }
+  }
+}
 
 BOOST_AUTO_TEST_SUITE_END()

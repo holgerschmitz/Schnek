@@ -24,6 +24,7 @@ build/
 *.lo
 *.o
 *.obj
+/schnek_tests
 
 # Precompiled Headers
 *.gch

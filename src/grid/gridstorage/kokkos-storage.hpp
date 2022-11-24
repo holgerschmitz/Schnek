@@ -90,7 +90,7 @@ namespace schnek {
         /// The dimensions of the grid `dims = high - low + 1`
         Index dims;
 
-        Kokkos::View<typename internal::KokkosViewType<T, 1>::type, ViewProperties...> view;
+        Kokkos::View<typename internal::KokkosViewType<T, rank>::type, ViewProperties...> view;
     public:
         /// Default constructor
         KokkosGridStorage();
@@ -161,6 +161,28 @@ namespace schnek {
         {
             return createKokkosViewImpl(dims, std::make_index_sequence<rank>{});
         }
+
+        template<std::size_t... I>
+        T& getFromViewImpl(const Index& pos, std::index_sequence<I...>)
+        {
+            return view(pos[I]...);
+        }
+
+        template<std::size_t... I>
+        const T& getFromViewImpl(const Index& pos, std::index_sequence<I...>) const
+        {
+            return view(pos[I]...);
+        }
+
+        T& getFromView(const Index& pos)
+        {
+            return getFromViewImpl(pos, std::make_index_sequence<rank>{});
+        }
+
+        const T& getFromView(const Index& pos) const
+        {
+            return getFromViewImpl(pos, std::make_index_sequence<rank>{});
+        }
     };
 
     template<typename T, size_t rank>
@@ -217,19 +239,22 @@ namespace schnek {
     template <typename T, size_t rank, class ...ViewProperties>
     const T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index) const
     {
-
+        return getFromView(index - lo);
     }
 
     template <typename T, size_t rank, class ...ViewProperties>
     T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index)
     {
-
+        return getFromView(index - lo);
     }
     
     template <typename T, size_t rank, class ...ViewProperties>
     void KokkosGridStorage<T, rank, ViewProperties...>::resize(const Index &lo, const Index &hi)
     {
-
+        this->lo = lo;
+        this->hi = hi;
+        this->dims = hi - lo + 1;
+        this->view = createKokkosView(dims);
     }
 
 }
