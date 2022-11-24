@@ -34,9 +34,9 @@ namespace schnek {
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy = GridNoArgCheck,
-  template<typename, int> class StoragePolicy = SingleArrayGridStorage
+  template<typename, size_t> class StoragePolicy = SingleArrayGridStorage
 >
 class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
 {
@@ -127,7 +127,7 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     template<
       typename T2,
       template<int> class CheckingPolicy2,
-      template<typename, int> class StoragePolicy2
+      template<typename, size_t> class StoragePolicy2
     >
     FieldType& operator=(const Field<T2, rank, CheckingPolicy2, StoragePolicy2> &grid)
     {

@@ -27,14 +27,14 @@
 namespace schnek {
         
 template<
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy
 >
 Boundary<rank,CheckingPolicy>::Boundary() : size(), delta(0)
 {}
 
 template<
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy
 >
 Boundary<rank,CheckingPolicy>::Boundary(const LimitType &low, const LimitType &high, int delta_)
@@ -42,7 +42,7 @@ Boundary<rank,CheckingPolicy>::Boundary(const LimitType &low, const LimitType &h
 {}
 
 template<
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy
 >
 Boundary<rank,CheckingPolicy>::Boundary(DomainType &size_, int delta_)
@@ -50,7 +50,7 @@ Boundary<rank,CheckingPolicy>::Boundary(DomainType &size_, int delta_)
 {}
 
 template<
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy
 >
 typename Boundary<rank,CheckingPolicy>::DomainType
@@ -73,7 +73,7 @@ typename Boundary<rank,CheckingPolicy>::DomainType
 }
 
 template<
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy
 >
 typename Boundary<rank,CheckingPolicy>::DomainType
@@ -99,7 +99,7 @@ typename Boundary<rank,CheckingPolicy>::DomainType
 
 
 template<
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy
 >
 typename Boundary<rank,CheckingPolicy>::DomainType
@@ -120,7 +120,7 @@ typename Boundary<rank,CheckingPolicy>::DomainType
 }
 
 template<
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy
 >
 typename Boundary<rank,CheckingPolicy>::DomainType
@@ -137,7 +137,7 @@ typename Boundary<rank,CheckingPolicy>::DomainType
 }
         
 template<
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy
 >
 template<class GridType>
@@ -148,13 +148,13 @@ SubGrid<GridType, CheckingPolicy> Boundary<rank,CheckingPolicy>::getGhostBoundar
 }
 
 template<
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy
 >
 template<
   typename T,
   template<int> class CheckingPolicy2,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 SubGrid<Field<T,rank,CheckingPolicy2, StoragePolicy>, CheckingPolicy>
   Boundary<rank,CheckingPolicy>::getGhostBoundary(int dim, bound b, Field<T,rank,CheckingPolicy2,StoragePolicy> &field)

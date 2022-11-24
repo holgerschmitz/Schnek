@@ -17,12 +17,14 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 DartConfiguration.tcl
+build/
 
 # Compiled Object files
 *.slo
 *.lo
 *.o
 *.obj
+/schnek_tests
 
 # Precompiled Headers
 *.gch

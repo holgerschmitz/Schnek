@@ -38,7 +38,7 @@ namespace schnek {
  * on each side of the main domain.
  */
 template<
-  int rank,
+  size_t rank,
   template<int> class CheckingPolicy = ArrayNoArgCheck
 >
 class Boundary
@@ -148,7 +148,7 @@ class Boundary
     template<
       typename T,
       template<int> class CheckingPolicy2,
-      template<typename, int> class StoragePolicy
+      template<typename, size_t> class StoragePolicy
     >
     SubGrid<Field<T,rank,CheckingPolicy2,StoragePolicy>, CheckingPolicy>
       getGhostBoundary(int dim, bound b, Field<T,rank,CheckingPolicy2,StoragePolicy> &field);
