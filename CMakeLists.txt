@@ -60,11 +60,23 @@ set(SCHNEK_HAVE_HDF5 ${HDF5_FOUND})
 set(SCHNEK_HAVE_MPI ${MPI_FOUND})
 set(SCHNEK_USE_HDF_PARALLEL ${HDF5_IS_PARALLEL})
 set(SCHNEK_HAVE_KOKKOS ${Kokkos_FOUND})
+
+set(include_dest_root "include")
+set(include_dest "${include_dest_root}/schnek")
+set(lib_dest_root "lib")
+set(lib_dest "${lib_dest_root}/schnek")
+
 configure_file(src/config.hpp.in src/config.hpp)
 
-install(TARGETS schnek LIBRARY DESTINATION lib)
-install(DIRECTORY src/ DESTINATION include/schnek FILES_MATCHING PATTERN "*.hpp")
-install(DIRECTORY src/ DESTINATION include/schnek FILES_MATCHING PATTERN "*.t")
+
+install(TARGETS schnek 
+  EXPORT schnek 
+  LIBRARY DESTINATION "${lib_dest_root}"
+  INCLUDES DESTINATION "${include_dest_root}")
+install(FILES schnek-config.cmake DESTINATION "${lib_dest_root}/schnek")
+install(DIRECTORY src/ DESTINATION "${include_dest}" FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY src/ DESTINATION "${include_dest}" FILES_MATCHING PATTERN "*.t")
+install(EXPORT schnek DESTINATION "${lib_dest}")
 
 ###########################################################
 # Unit Tests
