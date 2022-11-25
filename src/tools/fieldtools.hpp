@@ -34,10 +34,10 @@ namespace schnek {
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class GridCheckingPolicy,
   template<int> class ArrayCheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 void fill_field(
     Field<T, rank, GridCheckingPolicy, StoragePolicy> &field,
@@ -47,10 +47,10 @@ void fill_field(
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   template<int> class GridCheckingPolicy,
   template<int> class ArrayCheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<typename, size_t> class StoragePolicy
 >
 void fill_field(
     Field<T, rank, GridCheckingPolicy, StoragePolicy> &field,
@@ -72,10 +72,10 @@ class FieldFiller
 
     template<
       typename T,
-      int rank,
+      size_t rank,
       template<int> class GridCheckingPolicy,
       template<int> class ArrayCheckingPolicy,
-      template<typename, int> class StoragePolicy
+      template<typename, size_t> class StoragePolicy
     >
     class impl : public implBase
     {
@@ -103,7 +103,7 @@ class FieldFiller
   public:
 
     template<
-      int rank,
+      size_t rank,
       template<int> class ArrayCheckingPolicy
     >
     class fieldAdder
@@ -124,7 +124,7 @@ class FieldFiller
         template<
           typename T,
           template<int> class GridCheckingPolicy,
-          template<typename, int> class StoragePolicy
+          template<typename, size_t> class StoragePolicy
         >
         fieldAdder &operator()(Field<T, rank, GridCheckingPolicy, StoragePolicy> &field, T& value)
         {
@@ -139,7 +139,7 @@ class FieldFiller
     FieldFiller() {}
 
     template<
-      int rank,
+      size_t rank,
       template<int> class ArrayCheckingPolicy
     >
     fieldAdder<rank,ArrayCheckingPolicy> &set(Array<double, rank, ArrayCheckingPolicy> &coords, DependencyUpdater &updater)
