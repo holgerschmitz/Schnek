@@ -17,7 +17,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
-#include <boost/progress.hpp>
+#include <boost/timer/progress_display.hpp>
 
 #include <boost/test/unit_test.hpp>
 
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_SUITE( range )
 BOOST_FIXTURE_TEST_CASE( constructor_1d, RangeTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1 = idist(rGen);
@@ -67,7 +67,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_1d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( constructor_2d, RangeTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1  = idist(rGen);
@@ -93,7 +93,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_2d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( constructor_3d, RangeTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1  = idist(rGen);
@@ -123,7 +123,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_3d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( constructor_4d, RangeTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1  = idist(rGen);
@@ -157,7 +157,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_4d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( constructor_5d, RangeTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1  = idist(rGen);
@@ -195,7 +195,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_5d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( constructor_6d, RangeTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1  = idist(rGen);
@@ -237,7 +237,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_6d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( constructor_7d, RangeTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1  = idist(rGen);
@@ -283,7 +283,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_7d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( constructor_8d, RangeTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1  = idist(rGen);
@@ -333,7 +333,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_8d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( constructor_9d, RangeTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1  = idist(rGen);
@@ -387,7 +387,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_9d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( constructor_10d, RangeTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1  = idist(rGen);
@@ -445,7 +445,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_10d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( project_2d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1 = idist(rGen);
@@ -470,7 +470,7 @@ BOOST_FIXTURE_TEST_CASE( project_2d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( project_3d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1 = idist(rGen);
@@ -501,7 +501,7 @@ BOOST_FIXTURE_TEST_CASE( project_3d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( project_4d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1 = idist(rGen);
@@ -537,7 +537,7 @@ BOOST_FIXTURE_TEST_CASE( project_4d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( project_5d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1 = idist(rGen);
@@ -577,7 +577,7 @@ BOOST_FIXTURE_TEST_CASE( project_5d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( project_6d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1 = idist(rGen);
@@ -623,7 +623,7 @@ BOOST_FIXTURE_TEST_CASE( project_6d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( project_7d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1 = idist(rGen);
@@ -674,7 +674,7 @@ BOOST_FIXTURE_TEST_CASE( project_7d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( project_8d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1 = idist(rGen);
@@ -730,7 +730,7 @@ BOOST_FIXTURE_TEST_CASE( project_8d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( project_9d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1 = idist(rGen);
@@ -791,7 +791,7 @@ BOOST_FIXTURE_TEST_CASE( project_9d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( project_10d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int lo1 = idist(rGen);
@@ -857,7 +857,7 @@ BOOST_FIXTURE_TEST_CASE( project_10d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_2d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 1);
 
   for (int i=0; i<N; i++) {
@@ -889,7 +889,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_2d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_3d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 2);
 
   for (int i=0; i<N; i++) {
@@ -926,7 +926,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_3d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_4d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 3);
 
   for (int i=0; i<N; i++) {
@@ -965,7 +965,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_4d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_5d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 4);
 
   for (int i=0; i<N; i++) {
@@ -1006,7 +1006,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_5d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_6d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 5);
 
   for (int i=0; i<N; i++) {
@@ -1049,7 +1049,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_6d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_7d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 6);
 
   for (int i=0; i<N; i++) {
@@ -1094,7 +1094,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_7d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_8d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 7);
 
   for (int i=0; i<N; i++) {
@@ -1141,7 +1141,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_8d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_9d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 8);
 
   for (int i=0; i<N; i++) {
@@ -1190,7 +1190,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_9d, RangeTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_10d, RangeTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 9);
 
   for (int i=0; i<N; i++) {

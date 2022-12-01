@@ -15,7 +15,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
-#include <boost/progress.hpp>
+#include <boost/timer/progress_display.hpp>
 
 #include <limits>
 
@@ -420,7 +420,7 @@ BOOST_FIXTURE_TEST_CASE( grid_1d_Kokkos_model, KokkosStorageTest )
 {
   typedef schnek::Grid<double, 1, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
   {
     random_extent<1>(lo, hi);
@@ -440,7 +440,7 @@ BOOST_FIXTURE_TEST_CASE( grid_2d_Kokkos_model, KokkosStorageTest )
 {
   typedef schnek::Grid<double, 2, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
   {
     random_extent<2>(lo, hi);
@@ -460,7 +460,7 @@ BOOST_FIXTURE_TEST_CASE( grid_3d_Kokkos_model, KokkosStorageTest )
 {
   typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
   {
     random_extent<3>(lo, hi);
@@ -480,7 +480,7 @@ BOOST_FIXTURE_TEST_CASE( grid_4d_Kokkos_model, KokkosStorageTest )
 {
   typedef schnek::Grid<double, 4, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
   {
     random_extent<4>(lo, hi);
@@ -500,7 +500,7 @@ BOOST_FIXTURE_TEST_CASE( grid_5d_Kokkos_model, KokkosStorageTest )
 {
   typedef schnek::Grid<double, 5, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
   {
     random_extent<5>(lo, hi);
@@ -520,7 +520,7 @@ BOOST_FIXTURE_TEST_CASE( grid_6d_Kokkos_model, KokkosStorageTest )
 {
   typedef schnek::Grid<double, 6, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
   {
     random_extent<6>(lo, hi);
@@ -540,7 +540,7 @@ BOOST_FIXTURE_TEST_CASE( grid_7d_Kokkos_model, KokkosStorageTest )
 {
   typedef schnek::Grid<double, 7, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
   {
     random_extent<7>(lo, hi);
@@ -560,7 +560,7 @@ BOOST_FIXTURE_TEST_CASE( grid_8d_Kokkos_model, KokkosStorageTest )
 {
   typedef schnek::Grid<double, 8, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
   {
     random_extent<8>(lo, hi);

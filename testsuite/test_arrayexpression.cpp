@@ -19,7 +19,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
-#include <boost/progress.hpp>
+#include <boost/timer/progress_display.hpp>
 
 #include <boost/test/unit_test.hpp>
 
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_SUITE( arrayexpression )
 BOOST_FIXTURE_TEST_CASE( array_expression, ArrayExpressionTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     Array<int,3> s1(idist(rGen), idist(rGen), idist(rGen));
@@ -133,7 +133,7 @@ BOOST_FIXTURE_TEST_CASE( array_expression, ArrayExpressionTest )
 BOOST_FIXTURE_TEST_CASE( compound_assignment, ArrayExpressionTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     Array<int,3> s1(idist(rGen), idist(rGen), idist(rGen));
@@ -220,7 +220,7 @@ BOOST_FIXTURE_TEST_CASE( compound_assignment, ArrayExpressionTest )
 BOOST_FIXTURE_TEST_CASE( grid_constructor, ArrayExpressionTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(4*N);
+  boost::timer::progress_display show_progress(4*N);
 
   for (int i=0; i<N; i++) {
     Array<int,2> s1(idist_small(rGen), idist_small(rGen));

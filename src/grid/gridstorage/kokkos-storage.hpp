@@ -142,6 +142,11 @@ namespace schnek {
         void resize(const Index &low, const Index &high);
 
         /**
+         * @brief returns the stride of the specified dimension 
+         */
+        ptrdiff_t stride(size_t dim) const;
+
+        /**
          * @brief Get the lvalue at a given grid index
          * 
          * @param index The grid index
