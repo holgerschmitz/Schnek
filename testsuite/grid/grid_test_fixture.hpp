@@ -1,25 +1,31 @@
 /*
- * test_grid.cpp
+ * grid_test_fixture.hpp
  *
- *  Created on: 1 Jan 2014
+ *  Created on: 1 Dec 2022
  *      Author: Holger Schmitz
+ * 
+ * This file is part of Schnek.
+ *
+ * Schnek is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Schnek is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <grid/grid.hpp>
-
-#include "utility.hpp"
-
-#include <iostream>
+#ifndef SCHNEK_TEST_GRID_GRIDTESTFIXTURE
+#define SCHNEK_TEST_GRID_GRIDTESTFIXTURE
 
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
-#include <boost/timer/progress_display.hpp>
-
-#include <limits>
-
-#include <boost/test/unit_test.hpp>
-
 
 struct GridTest
 {
@@ -388,6 +394,19 @@ struct GridTest
       BOOST_CHECK(is_equal(sum_direct, sum_grid));
     }
 
+    template<class GridType>
+    void test_stride(GridType &grid, const typename GridType::IndexType &index)
+    {
+      for (size_t i=0; i<GridType::Rank; ++i)
+      {
+        typename GridType::IndexType indexP = index;
+        indexP[i] = index[i] + 1;
+        ptrdiff_t diff = &(grid.get(indexP)) - &(grid.get(index));
+        ptrdiff_t stride = grid.stride(i);
+        BOOST_CHECK(is_equal(diff, stride));
+      }
+    }
+
     template<int rank>
     void random_extent(schnek::Array<int,rank> &lo, schnek::Array<int,rank> &hi)
     {
@@ -402,429 +421,18 @@ struct GridTest
         hi[i] = o+l;
       }
     }
+
+    template<int rank>
+    schnek::Array<int,rank> random_index(const schnek::Array<int,rank> &lo, const schnek::Array<int,rank> &hi)
+    {
+      schnek::Array<int,rank> index;
+      for (int i=0; i<rank; ++i)
+      {
+        boost::random::uniform_int_distribution<> indexDist(lo[i], hi[i]);
+        index[i] = indexDist(rGen);
+      }
+      return index;
+    }
 };
 
-BOOST_AUTO_TEST_SUITE( grid )
-
-BOOST_FIXTURE_TEST_CASE( grid_1d_C_model, GridTest )
-{
-  typedef schnek::Grid<double, 1, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<1>(lo, hi);
-    GridType g(lo,hi);
-    test_access_1d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<1>(lo, hi);
-      g.resize(lo,hi);
-      test_access_1d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_2d_C_model, GridTest )
-{
-  typedef schnek::Grid<double, 2, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<2>(lo, hi);
-    GridType g(lo,hi);
-    test_access_2d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<2>(lo, hi);
-      g.resize(lo,hi);
-      test_access_2d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_3d_C_model, GridTest )
-{
-  typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<3>(lo, hi);
-    GridType g(lo,hi);
-    test_access_3d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<3>(lo, hi);
-      g.resize(lo,hi);
-      test_access_3d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_4d_C_model, GridTest )
-{
-  typedef schnek::Grid<double, 4, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<4>(lo, hi);
-    GridType g(lo,hi);
-    test_access_4d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<4>(lo, hi);
-      g.resize(lo,hi);
-      test_access_4d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_5d_C_model, GridTest )
-{
-  typedef schnek::Grid<double, 5, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<5>(lo, hi);
-    GridType g(lo,hi);
-    test_access_5d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<5>(lo, hi);
-      g.resize(lo,hi);
-      test_access_5d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_6d_C_model, GridTest )
-{
-  typedef schnek::Grid<double, 6, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<6>(lo, hi);
-    GridType g(lo,hi);
-    test_access_6d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<6>(lo, hi);
-      g.resize(lo,hi);
-      test_access_6d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_7d_C_model, GridTest )
-{
-  typedef schnek::Grid<double, 7, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<7>(lo, hi);
-    GridType g(lo,hi);
-    test_access_7d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<7>(lo, hi);
-      g.resize(lo,hi);
-      test_access_7d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_8d_C_model, GridTest )
-{
-  typedef schnek::Grid<double, 8, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<8>(lo, hi);
-    GridType g(lo,hi);
-    test_access_8d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<8>(lo, hi);
-      g.resize(lo,hi);
-      test_access_8d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_9d_C_model, GridTest )
-{
-  typedef schnek::Grid<double, 9, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<9>(lo, hi);
-    GridType g(lo,hi);
-    test_access_9d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<9>(lo, hi);
-      g.resize(lo,hi);
-      test_access_9d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_10d_C_model, GridTest )
-{
-  typedef schnek::Grid<double, 10, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<10>(lo, hi);
-    GridType g(lo,hi);
-    test_access_10d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<10>(lo, hi);
-      g.resize(lo,hi);
-      test_access_10d(g);
-      ++show_progress;
-    }
-  }
-}
-
-
-BOOST_FIXTURE_TEST_CASE( grid_1d_Fortran_model, GridTest )
-{
-  typedef schnek::Grid<double, 1, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<1>(lo, hi);
-    GridType g(lo,hi);
-    test_access_1d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<1>(lo, hi);
-      g.resize(lo,hi);
-      test_access_1d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_2d_Fortran_model, GridTest )
-{
-  typedef schnek::Grid<double, 2, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<2>(lo, hi);
-    GridType g(lo,hi);
-    test_access_2d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<2>(lo, hi);
-      g.resize(lo,hi);
-      test_access_2d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_3d_Fortran_model, GridTest )
-{
-  typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<3>(lo, hi);
-    GridType g(lo,hi);
-    test_access_3d(g);
-    ++show_progress;  
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<3>(lo, hi);
-      g.resize(lo,hi);
-      test_access_3d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_4d_Fortran_model, GridTest )
-{
-  typedef schnek::Grid<double, 4, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<4>(lo, hi);
-    GridType g(lo,hi);
-    test_access_4d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<4>(lo, hi);
-      g.resize(lo,hi);
-      test_access_4d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_5d_Fortran_model, GridTest )
-{
-  typedef schnek::Grid<double, 5, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<5>(lo, hi);
-    GridType g(lo,hi);
-    test_access_5d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<5>(lo, hi);
-      g.resize(lo,hi);
-      test_access_5d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_6d_Fortran_model, GridTest )
-{
-  typedef schnek::Grid<double, 6, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<6>(lo, hi);
-    GridType g(lo,hi);
-    test_access_6d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<6>(lo, hi);
-      g.resize(lo,hi);
-      test_access_6d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_7d_Fortran_model, GridTest )
-{
-  typedef schnek::Grid<double, 7, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<7>(lo, hi);
-    GridType g(lo,hi);
-    test_access_7d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<7>(lo, hi);
-      g.resize(lo,hi);
-      test_access_7d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_8d_Fortran_model, GridTest )
-{
-  typedef schnek::Grid<double, 8, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<8>(lo, hi);
-    GridType g(lo,hi);
-    test_access_8d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<8>(lo, hi);
-      g.resize(lo,hi);
-      test_access_8d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_9d_Fortran_model, GridTest )
-{
-  typedef schnek::Grid<double, 9, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<9>(lo, hi);
-    GridType g(lo,hi);
-    test_access_9d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<9>(lo, hi);
-      g.resize(lo,hi);
-      test_access_9d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_FIXTURE_TEST_CASE( grid_10d_Fortran_model, GridTest )
-{
-  typedef schnek::Grid<double, 10, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
-  GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(30);
-  for (int n=0; n<5; ++n)
-  {
-    random_extent<10>(lo, hi);
-    GridType g(lo,hi);
-    test_access_10d(g);
-    ++show_progress;
-    for (int m=0; m<5; ++m)
-    {
-      random_extent<10>(lo, hi);
-      g.resize(lo,hi);
-      test_access_10d(g);
-      ++show_progress;
-    }
-  }
-}
-
-BOOST_AUTO_TEST_SUITE_END()
+#endif

@@ -230,15 +230,12 @@ namespace schnek
     template <typename T, size_t rank>
     void SingleArrayLazyAllocation<T, rank>::resizeImpl(const IndexType &low_, const IndexType &high_)
     {
-        int oldSize = size;
-        int newSize;
-        newSize = 1;
-        int d;
+        int newSize = 1;
 
         low = low_;
         high = high_;
 
-        for (d = 0; d < rank; d++)
+        for (size_t d = 0; d < rank; d++)
         {
             dims[d] = high[d] - low[d] + 1;
             newSize *= dims[d];

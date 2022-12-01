@@ -142,7 +142,7 @@ struct ArrayConstantExp {
   public:
     typedef T value_type;
     ArrayConstantExp(const T& val_) : val(val_) {}
-    value_type operator[](int i) const { return val; }
+    value_type operator[](int) const { return val; }
 };
 
 /**An operator type implementing addition

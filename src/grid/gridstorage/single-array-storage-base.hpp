@@ -184,6 +184,11 @@ namespace schnek
          * and upper indices high[0],...,high[rank-1]
          */
         void resize(const IndexType &low, const IndexType &high);
+
+        /**
+         * @brief returns the stride of the specified dimension 
+         */
+        ptrdiff_t stride(size_t dim) const;    
     };
 
     //=================================================================
@@ -242,6 +247,17 @@ namespace schnek
         data_fast = this->data + p;
     }
 
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
+    inline ptrdiff_t SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::stride(size_t dim) const
+    {
+        ptrdiff_t stride = 1;
+        for (int i = rank - 1; i > dim; --i)
+        {
+            stride *= this->dims[i];
+        }
+        return stride;
+    }
+
     //=================================================================
     //============ SingleArrayGridFortranOrderStorageBase =============
     //=================================================================
@@ -286,6 +302,17 @@ namespace schnek
             p = p * this->dims[d] - this->low[d];
         }
         data_fast = this->data + p;
+    }
+
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
+    inline ptrdiff_t SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::stride(size_t dim) const
+    {
+        ptrdiff_t stride = 1;
+        for (size_t i = 0; i < dim; ++i)
+        {
+            stride *= this->dims[i];
+        }
+        return stride;
     }
 
 }

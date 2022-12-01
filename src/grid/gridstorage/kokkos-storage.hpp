@@ -242,13 +242,13 @@ namespace schnek {
     {}
 
     template <typename T, size_t rank, class ...ViewProperties>
-    const T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index) const
+    inline const T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index) const
     {
         return getFromView(index - lo);
     }
 
     template <typename T, size_t rank, class ...ViewProperties>
-    T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index)
+    inline T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index)
     {
         return getFromView(index - lo);
     }
@@ -260,6 +260,12 @@ namespace schnek {
         this->hi = hi;
         this->dims = hi - lo + 1;
         this->view = createKokkosView(dims);
+    }
+
+    template <typename T, size_t rank, class ...ViewProperties>
+    inline ptrdiff_t KokkosGridStorage<T, rank, ViewProperties...>::stride(size_t dim) const
+    {
+        return this->view.stride(dim);
     }
 
 }
