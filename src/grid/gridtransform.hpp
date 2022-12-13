@@ -48,31 +48,31 @@ class GridTransformStorage {
     Transformation transformation;
   public:
 
-    class const_storage_iterator {
-      protected:
-        typedef typename BaseGridType::const_storage_iterator BaseIter;
-        BaseIter baseIter;
-        const_storage_iterator(BaseIter baseIter_)
-          : baseIter(baseIter) {}
+    // class const_storage_iterator {
+    //   protected:
+    //     typedef typename BaseGridType::const_storage_iterator BaseIter;
+    //     BaseIter baseIter;
+    //     const_storage_iterator(BaseIter baseIter_)
+    //       : baseIter(baseIter) {}
 
-        friend class GridTransformStorage;
+    //     friend class GridTransformStorage;
 
-      public:
-        T operator*()
-        { return transformation(*baseIter);}
+    //   public:
+    //     T operator*()
+    //     { return transformation(*baseIter);}
 
-        const_storage_iterator &operator++()
-        {
-          ++baseIter;
-          return *this;
-        }
+    //     const_storage_iterator &operator++()
+    //     {
+    //       ++baseIter;
+    //       return *this;
+    //     }
 
-        bool operator==(const const_storage_iterator &SI)
-        { return baseIter==SI.baseIter; }
+    //     bool operator==(const const_storage_iterator &SI)
+    //     { return baseIter==SI.baseIter; }
 
-        bool operator!=(const const_storage_iterator &SI)
-        { return baseIter!=SI.baseIter; }
-    };
+    //     bool operator!=(const const_storage_iterator &SI)
+    //     { return baseIter!=SI.baseIter; }
+    // };
 
     GridTransformStorage();
 
@@ -101,11 +101,11 @@ class GridTransformStorage {
     /** */
     int getDims(int k) const { return baseGrid->getDims(k); }
 
-    const_storage_iterator begin() { return const_storage_iterator(baseGrid->begin()); }
-    const_storage_iterator end() { return const_storage_iterator(baseGrid->end()); }
+    // const_storage_iterator begin() { return const_storage_iterator(baseGrid->begin()); }
+    // const_storage_iterator end() { return const_storage_iterator(baseGrid->end()); }
 
-    const_storage_iterator cbegin() const { return const_storage_iterator(baseGrid->cbegin()); }
-    const_storage_iterator cend() const { return const_storage_iterator(baseGrid->cend()); }
+    // const_storage_iterator cbegin() const { return const_storage_iterator(baseGrid->cbegin()); }
+    // const_storage_iterator cend() const { return const_storage_iterator(baseGrid->cend()); }
 
     void setBaseGrid(BaseGridType &baseGrid_)
     {

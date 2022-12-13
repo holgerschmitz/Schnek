@@ -30,25 +30,25 @@
 namespace schnek
 {
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array()
 {}
 
-template<class T, int length, template <int> class CheckingPolicy>
-template<template<int> class CheckingPolicy2>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<template<size_t> class CheckingPolicy2>
 inline Array<T,length,CheckingPolicy>::Array(const Array<T, length, CheckingPolicy2> &arr)
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] = arr[i];
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(const T& v0)
 {
-  for (int i=0; i<length; ++i) data[i] = v0;
+  for (size_t i=0; i<length; ++i) data[i] = v0;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1
 )
@@ -58,7 +58,7 @@ inline Array<T,length,CheckingPolicy>::Array(
   data[1] = v1;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2
 )
@@ -69,7 +69,7 @@ inline Array<T,length,CheckingPolicy>::Array(
   data[2] = v2;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3
 )
@@ -81,7 +81,7 @@ inline Array<T,length,CheckingPolicy>::Array(
   data[3] = v3;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4
 )
@@ -94,7 +94,7 @@ inline Array<T,length,CheckingPolicy>::Array(
   data[4] = v4;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5
@@ -109,7 +109,7 @@ inline Array<T,length,CheckingPolicy>::Array(
   data[5] = v5;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6
@@ -125,7 +125,7 @@ inline Array<T,length,CheckingPolicy>::Array(
   data[6] = v6;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6, const T& v7
@@ -142,7 +142,7 @@ inline Array<T,length,CheckingPolicy>::Array(
   data[7] = v7;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6, const T& v7, const T& v8
@@ -160,7 +160,7 @@ inline Array<T,length,CheckingPolicy>::Array(
   data[8] = v8;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6, const T& v7, const T& v8, const T& v9
@@ -180,168 +180,168 @@ inline Array<T,length,CheckingPolicy>::Array(
 }
 
 /// Accessor operator
-template<class T, int length, template <int> class CheckingPolicy>
-inline T& Array<T,length,CheckingPolicy>::at(int pos)
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+inline T& Array<T,length,CheckingPolicy>::at(size_t pos)
 {
  this->check(pos);
  return data[pos];
 }
 
 /// Constant accessor operator
-template<class T, int length, template <int> class CheckingPolicy>
-inline T Array<T,length,CheckingPolicy>::at(int pos) const
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+inline T Array<T,length,CheckingPolicy>::at(size_t pos) const
 {
  this->check(pos);
  return data[pos];
 }
 
 /// Accessor operator
-template<class T, int length, template <int> class CheckingPolicy>
-inline T& Array<T,length,CheckingPolicy>::operator[](int pos)
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+inline T& Array<T,length,CheckingPolicy>::operator[](size_t pos)
 {
   return at(pos);
 }
 
 /// Constant accessor operator
-template<class T, int length, template <int> class CheckingPolicy>
-inline T Array<T,length,CheckingPolicy>::operator[](int pos) const
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+inline T Array<T,length,CheckingPolicy>::operator[](size_t pos) const
 {
   return at(pos);
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
-template<class T2, template <int> class CheckingPolicy2>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<class T2, template <size_t> class CheckingPolicy2>
 Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator=(const Array<T2,length,CheckingPolicy2>& val)
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] = val[i];
   return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
-template<class T2, template <int> class CheckingPolicy2>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<class T2, template <size_t> class CheckingPolicy2>
 Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator+=(const Array<T2,length,CheckingPolicy2>& val)
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] += val[i];
   return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
-template<class T2, template <int> class CheckingPolicy2>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<class T2, template <size_t> class CheckingPolicy2>
 Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator-=(const Array<T2,length,CheckingPolicy2>& val)
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] -= val[i];
   return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
-template<class T2, template <int> class CheckingPolicy2>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<class T2, template <size_t> class CheckingPolicy2>
 Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator*=(const Array<T2,length,CheckingPolicy2>& val)
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] *= val[i];
   return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
-template<class T2, template <int> class CheckingPolicy2>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<class T2, template <size_t> class CheckingPolicy2>
 Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator/=(const Array<T2,length,CheckingPolicy2>& val)
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] /= val[i];
   return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 template<typename T2>
 Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator+=(const T2 val)
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] += val;
   return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 template<typename T2>
 Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator-=(const T2 val)
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] -= val;
   return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 template<typename T2>
 Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator*=(const T2 val)
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] *= val;
   return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 template<typename T2>
 Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator/=(const T2 val)
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] /= val;
   return *this;
 }
 
 
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>& Array<T,length,CheckingPolicy>::clear()
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] = 0;
   return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>& Array<T,length,CheckingPolicy>::fill(const T &value)
 {
-  for (int i=0; i<length; ++i)
+  for (size_t i=0; i<length; ++i)
     data[i] = value;
   return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
-template<int destLength>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<size_t destLength>
 inline Array<T,destLength,CheckingPolicy> Array<T,length,CheckingPolicy>::project() const
 {
   BOOST_STATIC_ASSERT(destLength<=length);
 
   Array<T,destLength,CheckingPolicy> result;
-  for (int i=0; i<destLength; ++i)
+  for (size_t i=0; i<destLength; ++i)
     result[i] = data[i];
   return result;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
-inline Array<T,length-1,CheckingPolicy> Array<T,length,CheckingPolicy>::projectDim(int dim) const
+template<class T, size_t length, template <size_t> class CheckingPolicy>
+inline Array<T,length-1,CheckingPolicy> Array<T,length,CheckingPolicy>::projectDim(size_t dim) const
 {
   Array<T,length-1,CheckingPolicy> result;
-  for (int i=0; i<dim; ++i)
+  for (size_t i=0; i<dim; ++i)
   {
     result[i] = data[i];
   }
-  for (int i=dim+1; i<length; ++i)
+  for (size_t i=dim+1; i<length; ++i)
   {
     result[i-1] = data[i];
   }
   return result;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::Zero()
 {
   return Array().fill(0);
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::Ones()
 {
   return Array().fill(1);
@@ -349,27 +349,27 @@ inline Array<T,length,CheckingPolicy> Array<T,length,CheckingPolicy>::Ones()
 
 
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline T Array<T,length,CheckingPolicy>::product() const
 {
     T p(1);
-    for (int i=0; i<Length; ++i) p *= at(i);
+    for (size_t i=0; i<Length; ++i) p *= at(i);
     return p;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline T Array<T,length,CheckingPolicy>::sum() const
 {
     T s(0);
-    for (int i=0; i<Length; ++i) s += at(i);
+    for (size_t i=0; i<Length; ++i) s += at(i);
     return s;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline T Array<T,length,CheckingPolicy>::sqr() const
 {
     T s(0);
-    for (int i=0; i<Length; ++i) {T v = at(i); s += v*v;}
+    for (size_t i=0; i<Length; ++i) {T v = at(i); s += v*v;}
     return s;
 }
 
@@ -379,56 +379,56 @@ inline T Array<T,length,CheckingPolicy>::sqr() const
 
 template<
   class T1, class T2,
-  int length, 
-  template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
+  size_t length, 
+  template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
 bool operator==(
   const schnek::Array<T1,length,CheckingPolicy1>& arr1,
   const schnek::Array<T2,length,CheckingPolicy2>& arr2
 )
 {
-  for (int i=0; i<length; ++i) if (arr1[i]!=arr2[i]) return false;
+  for (size_t i=0; i<length; ++i) if (arr1[i]!=arr2[i]) return false;
   return true;
 }
 
 template<
   class T1, class T2,
-  int length, 
-  template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
+  size_t length, 
+  template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
 bool operator!=(
   const schnek::Array<T1,length,CheckingPolicy1>& arr1,
   const schnek::Array<T2,length,CheckingPolicy2>& arr2
 )
 {
-  for (int i=0; i<length; ++i) if (arr1[i]!=arr2[i]) return true;
+  for (size_t i=0; i<length; ++i) if (arr1[i]!=arr2[i]) return true;
   return false;
 }
 
 template<
   class T1, class T2,
-  int length, 
-  template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
+  size_t length, 
+  template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
 bool operator<(
   const schnek::Array<T1,length,CheckingPolicy1>& arr1,
   const schnek::Array<T2,length,CheckingPolicy2>& arr2
 )
 {
-  for (int i=0; i<length; ++i) if (arr1[i]>=arr2[i]) return false;
+  for (size_t i=0; i<length; ++i) if (arr1[i]>=arr2[i]) return false;
   return true;
 }
 
 template<
   class T1, class T2,
-  int length, 
-  template<int> class CheckingPolicy1, template<int> class CheckingPolicy2
+  size_t length, 
+  template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
 bool operator<=(
   const schnek::Array<T1,length,CheckingPolicy1>& arr1,
   const schnek::Array<T2,length,CheckingPolicy2>& arr2
 )
 {
-  for (int i=0; i<length; ++i) if (arr1[i]>arr2[i]) return false;
+  for (size_t i=0; i<length; ++i) if (arr1[i]>arr2[i]) return false;
   return true;
 }

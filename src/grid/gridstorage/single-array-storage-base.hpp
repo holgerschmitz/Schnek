@@ -72,6 +72,9 @@ namespace schnek
 
         /// Get the length of the allocated array
         int getSize() const { return this->size; }
+
+        template<typename Func>
+        void forAll(Func func);
     };
 
     /**

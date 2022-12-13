@@ -21,7 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 #ifndef SCHNEK_GRID_GRIDSTORAGE_KOKKOSSTORAGE_HPP_
@@ -46,25 +45,6 @@ namespace schnek {
         struct KokkosViewType<T, 1> {
             typedef T* type;
         };
-
-    //     template <typename T, size_t rank, class ...ViewProperties>
-    //     class KokkosViewContainer {
-
-    //     public:
-    //         KokkosViewContainer() = delete;
-    //         KokkosViewContainer(const KokkosViewContainer&) = delete;
-    //     };
-
-    //     template <typename T, class ...ViewProperties>
-    //     class KokkosViewContainer<T, 1, ViewProperties...> {
-    //     protected:
-    //         /// The kokkos view 
-    //         Kokkos::View<typename internal::KokkosViewType<T, 1>::type, ViewProperties...> view;
-    //     public:
-    //         KokkosViewContainer(): view() {}
-    //         KokkosViewContainer(const Array<int, 1> &dims) : view(dims[0]) {}
-    //     };
-
     }
 
     /**
@@ -196,30 +176,6 @@ namespace schnek {
     //=================================================================
     //==================== KokkosGridStorage ==========================
     //=================================================================
-
-// #include <iostream>
-// #include <tuple>
-// #include <utility>
-
-// int foo(int a) {return a;};
-// double foo(int a, double b) {return a+b;};
-// double foo(int a, double b, int c) {return a+b+c;};
-
-// template <typename... T, std::size_t... Indices>
-// auto call_foo_helper(const std::tuple<T...>& v, std::index_sequence<Indices...>) {
-//   return foo(std::get<Indices>(v)...);
-// }
-
-// template <typename... T>
-// auto call_foo(const std::tuple<T...>& v) {
-//   return call_foo_helper(v, std::make_index_sequence<sizeof...(T)>());
-// }
-
-// int main(int argc, char** argv) {
-//     auto v = std::make_tuple(1, 2.0);
-//     auto x = call_foo(v);
-//     return 0;
-// }
 
     namespace internal {
 
