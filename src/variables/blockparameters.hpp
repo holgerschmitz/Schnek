@@ -56,10 +56,10 @@ class ParametersGroup
     bool isElement(pParameter p);
     bool isElement(pVariable v);
 
-    template<int rank, template<int> class CheckingPolicy>
+    template<size_t rank, template<size_t> class CheckingPolicy>
     void addArray(Array<pParameter, rank, CheckingPolicy> &pa)
     {
-        for (int i=0; i<rank; ++i) add(pa[i]);
+        for (size_t i=0; i<rank; ++i) add(pa[i]);
     }
 
 
@@ -219,8 +219,8 @@ class BlockParameters
 
     template<
       class T,
-      int rank,
-      template<int> class CheckingPolicy
+      size_t rank,
+      template<size_t> class CheckingPolicy
     >
     Array<pParameter, rank, CheckingPolicy> addArrayParameter(
         std::string varName,
@@ -239,8 +239,8 @@ class BlockParameters
 
     template<
       class T,
-      int rank,
-      template<int> class CheckingPolicy
+      size_t rank,
+      template<size_t> class CheckingPolicy
     >
     Array<pParameter, rank, CheckingPolicy> addArrayParameter(
         std::string varName,
@@ -260,8 +260,8 @@ class BlockParameters
 
     template<
       class T,
-      int rank,
-      template<int> class CheckingPolicy
+      size_t rank,
+      template<size_t> class CheckingPolicy
     >
     Array<pParameter, rank, CheckingPolicy> addArrayParameter(
         std::string varName,

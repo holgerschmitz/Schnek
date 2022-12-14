@@ -119,13 +119,13 @@ class DependencyUpdater
     void addDependent(pParameter v);
     void clearDependent();
 
-    template<int rank, template<int> class CheckingPolicy>
+    template<size_t rank, template<size_t> class CheckingPolicy>
     void addIndependentArray(Array<pParameter, rank, CheckingPolicy> v)
-    { for (int i=0; i<rank; ++i) addIndependent(v[i]); }
+    { for (size_t i=0; i<rank; ++i) addIndependent(v[i]); }
 
-    template<int rank, template<int> class CheckingPolicy>
+    template<size_t rank, template<size_t> class CheckingPolicy>
     void addDependentArray(Array<pParameter, rank, CheckingPolicy> v)
-    { for (int i=0; i<rank; ++i) addDependent(v[i]); }
+    { for (size_t i=0; i<rank; ++i) addDependent(v[i]); }
 
     /** Updates the dependent variables and all the variables needed to evaluate them.
      *

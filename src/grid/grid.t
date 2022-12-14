@@ -51,7 +51,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-template<template<int> class ArrayCheckingPolicy>
+template<template<size_t> class ArrayCheckingPolicy>
 GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const Array<int,rank,ArrayCheckingPolicy> &size)
   : StoragePolicy(IndexType::Zero(), size-IndexType::Ones())
 {}
@@ -62,7 +62,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-template<template<int> class ArrayCheckingPolicy>
+template<template<size_t> class ArrayCheckingPolicy>
 GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const Array<int,rank,ArrayCheckingPolicy> &low, const Array<int,rank,ArrayCheckingPolicy> &high)
   : StoragePolicy(low,high)
 {}
@@ -76,7 +76,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-template<template<int> class ArrayCheckingPolicy>
+template<template<size_t> class ArrayCheckingPolicy>
 inline T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
   ::operator[](const Array<int,rank,ArrayCheckingPolicy>& pos)
 {
@@ -89,7 +89,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-template<template<int> class ArrayCheckingPolicy>
+template<template<size_t> class ArrayCheckingPolicy>
 inline T GridBase<T, rank, CheckingPolicy, StoragePolicy>
   ::operator[](const Array<int,rank,ArrayCheckingPolicy>& pos) const
 {
@@ -611,7 +611,7 @@ void GridBase<T, rank, CheckingPolicy, StoragePolicy>
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid()
@@ -621,7 +621,7 @@ Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid()
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &size)
@@ -631,7 +631,7 @@ Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &size)
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &low, const IndexType &high)
@@ -641,7 +641,7 @@ Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &low, const I
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>
@@ -656,7 +656,7 @@ Grid<T, rank, CheckingPolicy, StoragePolicy>
 //template<
 //  typename T,
 //  size_t rank,
-//  template<int> class CheckingPolicy,
+//  template<size_t> class CheckingPolicy,
 //  template<typename, size_t> class StoragePolicy
 //>
 //template<typename Arg0>
@@ -674,7 +674,7 @@ Grid<T, rank, CheckingPolicy, StoragePolicy>
 //template<
 //  typename T,
 //  size_t rank,
-//  template<int> class CheckingPolicy,
+//  template<size_t> class CheckingPolicy,
 //  template<typename, size_t> class StoragePolicy
 //>
 //template<typename Arg0, typename Arg1>

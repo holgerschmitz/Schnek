@@ -109,7 +109,7 @@ class DomainSubdivision {
     void init(const LimitType &size, int delta)
     {
       LimitType sizem(size);
-      for (int i=0; i<Rank; ++i) --sizem[i];
+      for (size_t i=0; i<Rank; ++i) --sizem[i];
       init(LimitType(0), sizem, delta);
     }
 
@@ -132,12 +132,12 @@ class DomainSubdivision {
 
 
     /// Return the local inner physical extent
-    template<typename T, template<int> class CheckingPolicy>
+    template<typename T, template<size_t> class CheckingPolicy>
     Range<T, Rank, CheckingPolicy> getInnerExtent(const Range<T, Rank, CheckingPolicy> &globalExtent) const
     {
       const DomainType &globalGridSize = this->getGlobalDomain();
       typename Range<T, Rank, CheckingPolicy>::LimitType localDomainMin, localDomainMax;
-      for (int i=0; i<Rank; ++i)
+      for (size_t i=0; i<Rank; ++i)
       {
         const T &lo = globalExtent.getLo()[i];
         T dx = (globalExtent.getHi()[i]-lo) / (T)(globalGridSize.getHi()[i] - globalGridSize.getLo()[i] + 1);
@@ -151,7 +151,7 @@ class DomainSubdivision {
      *
      * Convenience method. This assumes the lower bound of the global extent is 0.0
      */
-    template<typename T, template<int> class CheckingPolicy>
+    template<typename T, template<size_t> class CheckingPolicy>
     Range<T, Rank, CheckingPolicy> getInnerExtent(const Array<T, Rank, CheckingPolicy> &globalExtent) const
     {
       return this->getInnerExtent(
@@ -161,14 +161,14 @@ class DomainSubdivision {
     /** @brief Exchange the boundaries of a field function
      *  in the direction given by dim.
      */
-    virtual void exchange(GridType &grid, int dim) = 0;
+    virtual void exchange(GridType &grid, size_t dim) = 0;
 
     /** @brief Exchange the boundaries of a field function
      *  summing the data from ghost cells and inner cells
      */
-    virtual void accumulate(GridType &grid, int dim) = 0;
+    virtual void accumulate(GridType &grid, size_t dim) = 0;
 
-    virtual void exchangeData(int dim, int orientation, BufferType &in, BufferType &out) = 0;
+    virtual void exchangeData(size_t dim, int orientation, BufferType &in, BufferType &out) = 0;
 
     /// Return the average of a single value over all the processes
     virtual double avgReduce(double) const = 0;
@@ -214,7 +214,7 @@ class DomainSubdivision {
      * @return A boolean indicating if this process is on the lower boud of the
      * global domain
      */
-    virtual bool isBoundLo(int dim) = 0;
+    virtual bool isBoundLo(size_t dim) = 0;
 
     /** Returns true if this process is on the upper bound of the
      * global domain
@@ -223,14 +223,14 @@ class DomainSubdivision {
      * @return A boolean indicating if this process is on the upper boud of the
      * global domain
      */
-    virtual bool isBoundHi(int dim) = 0;
+    virtual bool isBoundHi(size_t dim) = 0;
 
     void exchange(GridType &grid) {
-      for (int i=0; i<Rank; ++i) exchange(grid,i);
+      for (size_t i=0; i<Rank; ++i) exchange(grid,i);
     }
 
     void accumulate(GridType &grid) {
-      for (int i=0; i<Rank; ++i) accumulate(grid,i);
+      for (size_t i=0; i<Rank; ++i) accumulate(grid,i);
     }
 };
 
@@ -274,14 +274,14 @@ class SerialSubdivision : public DomainSubdivision<GridType>
      *  The outermost simulated cells are sent and the surrounding
      *  ghost cells are filled with values
      */
-    void exchange(GridType &grid, int dim);
+    void exchange(GridType &grid, size_t dim);
 
     /** @brief Exchange the boundaries of a field function
      *  summing the data from ghost cells and inner cells
      */
-    void accumulate(GridType &grid, int dim);
+    void accumulate(GridType &grid, size_t dim);
 
-    void exchangeData(int dim, int orientation, BufferType &in, BufferType &out);
+    void exchangeData(size_t dim, int orientation, BufferType &in, BufferType &out);
 
     /// The average of a single value is the value
     double avgReduce(double val) const { return val; }
@@ -329,7 +329,7 @@ class SerialSubdivision : public DomainSubdivision<GridType>
      * @return A boolean indicating if this process is on the lower boud of the
      * global domain
      */
-    bool isBoundLo(int) { return true; }
+    bool isBoundLo(size_t) { return true; }
 
     /** Returns true if this process is on the upper bound of the
      * global domain.
@@ -341,7 +341,7 @@ class SerialSubdivision : public DomainSubdivision<GridType>
      * @return A boolean indicating if this process is on the upper boud of the
      * global domain
      */
-    bool isBoundHi(int) { return true; }
+    bool isBoundHi(size_t) { return true; }
 
 };
 

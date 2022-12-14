@@ -30,7 +30,7 @@
 #include "arraycheck.hpp"
 namespace schnek {
 
-template<class Operator, int Length>
+template<class Operator, size_t Length>
 class ArrayExpression;
 
 

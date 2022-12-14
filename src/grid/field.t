@@ -30,7 +30,7 @@ namespace schnek
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 Field<T, rank, CheckingPolicy, StoragePolicy>::Field()
@@ -39,13 +39,13 @@ Field<T, rank, CheckingPolicy, StoragePolicy>::Field()
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 template<
-  template<int> class ArrayCheckingPolicy,
-  template<int> class RangeCheckingPolicy,
-  template<int> class StaggerCheckingPolicy>
+  template<size_t> class ArrayCheckingPolicy,
+  template<size_t> class RangeCheckingPolicy,
+  template<size_t> class StaggerCheckingPolicy>
 Field<T, rank, CheckingPolicy, StoragePolicy>
   ::Field(const Array<int,rank,ArrayCheckingPolicy> &size_,
       const Range<double, rank,RangeCheckingPolicy> &range_,
@@ -68,13 +68,13 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 template<
-  template<int> class ArrayCheckingPolicy,
-  template<int> class RangeCheckingPolicy,
-  template<int> class StaggerCheckingPolicy>
+  template<size_t> class ArrayCheckingPolicy,
+  template<size_t> class RangeCheckingPolicy,
+  template<size_t> class StaggerCheckingPolicy>
 Field<T, rank, CheckingPolicy, StoragePolicy>
   ::Field(const Array<int,rank,ArrayCheckingPolicy> &low_,
       const Array<int,rank,ArrayCheckingPolicy> &high_,
@@ -103,7 +103,7 @@ Field<T, rank, CheckingPolicy, StoragePolicy>
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 Field<T, rank, CheckingPolicy, StoragePolicy>::Field(const Field<T, rank, CheckingPolicy, StoragePolicy> &field)
@@ -117,7 +117,7 @@ Field<T, rank, CheckingPolicy, StoragePolicy>::Field(const Field<T, rank, Checki
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 inline void Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int dim, double pos, int &index, double &offset)
@@ -134,13 +134,13 @@ inline void Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int d
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 template<
-  template<int> class ArrayCheckingPolicy,
-  template<int> class RangeCheckingPolicy,
-  template<int> class StaggerCheckingPolicy
+  template<size_t> class ArrayCheckingPolicy,
+  template<size_t> class RangeCheckingPolicy,
+  template<size_t> class StaggerCheckingPolicy
 >
 void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
             const Array<int,rank,ArrayCheckingPolicy> &size_,
@@ -163,13 +163,13 @@ void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 template<
-  template<int> class ArrayCheckingPolicy,
-  template<int> class RangeCheckingPolicy,
-  template<int> class StaggerCheckingPolicy>
+  template<size_t> class ArrayCheckingPolicy,
+  template<size_t> class RangeCheckingPolicy,
+  template<size_t> class StaggerCheckingPolicy>
 void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
             const Array<int,rank,ArrayCheckingPolicy> &low_,
             const Array<int,rank,ArrayCheckingPolicy> &high_,
@@ -194,7 +194,7 @@ void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 inline int Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int dim, double pos)
@@ -209,7 +209,7 @@ inline int Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int di
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 inline double Field<T, rank, CheckingPolicy, StoragePolicy>::indexToPosition(int dim, int index)

@@ -37,8 +37,8 @@ namespace schnek {
  */
 template<
   class T,
-  int rank,
-  template<int> class CheckingPolicy = ArrayNoArgCheck
+  size_t rank,
+  template<size_t> class CheckingPolicy = ArrayNoArgCheck
 >
 class Range {
   public:
@@ -51,12 +51,12 @@ class Range {
     Range() : lo(0), hi(0) {};
 
     /// Construct with rectangle minimum and maximum
-    template<template<int> class ArrayCheckingPolicy>
+    template<template<size_t> class ArrayCheckingPolicy>
     Range(const Array<T,rank,ArrayCheckingPolicy> &lo_, const Array<T,rank,ArrayCheckingPolicy> &hi_)
     : lo(lo_), hi(hi_) {}
 
     /// Copy constructor
-    template<template<int> class ArrayCheckingPolicy>
+    template<template<size_t> class ArrayCheckingPolicy>
     Range(const Range<T,rank,ArrayCheckingPolicy> &domain)
     : lo(domain.getLo()), hi(domain.getHi()) {}
 

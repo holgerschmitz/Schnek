@@ -75,6 +75,15 @@ namespace schnek
 
         template<typename Func>
         void forAll(Func func);
+
+        typedef T* storage_iterator;
+        typedef const T* const_storage_iterator;
+
+        storage_iterator begin() { return this->data; }
+        storage_iterator end() { return this->data + this->size; }
+
+        const_storage_iterator cbegin() const { return this->data; }
+        const_storage_iterator cend() const { return this->data + this->size; }
     };
 
     /**
