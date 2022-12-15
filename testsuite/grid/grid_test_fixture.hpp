@@ -407,13 +407,13 @@ struct GridTest
       }
     }
 
-    template<int rank>
+    template<size_t rank>
     void random_extent(schnek::Array<int,rank> &lo, schnek::Array<int,rank> &hi)
     {
       const int maxExtent = (int)pow(20000,(1.0/(double)rank));
       boost::random::uniform_int_distribution<> orig(-maxExtent/2, maxExtent/2);
       boost::random::uniform_int_distribution<> extent(1, maxExtent);
-      for (int i=0; i<rank; ++i)
+      for (size_t i=0; i<rank; ++i)
       {
         int o = orig(rGen);
         int l = extent(rGen);
@@ -422,11 +422,11 @@ struct GridTest
       }
     }
 
-    template<int rank>
+    template<size_t rank>
     schnek::Array<int,rank> random_index(const schnek::Array<int,rank> &lo, const schnek::Array<int,rank> &hi)
     {
       schnek::Array<int,rank> index;
-      for (int i=0; i<rank; ++i)
+      for (size_t i=0; i<rank; ++i)
       {
         boost::random::uniform_int_distribution<> indexDist(lo[i], hi[i]);
         index[i] = indexDist(rGen);

@@ -43,6 +43,7 @@ template<
 class Range {
   public:
     typedef Array<T,rank,CheckingPolicy> LimitType;
+    typedef T value_type;
   private:
     /// Minimum and maximum corners of the rectangle
     LimitType lo, hi;

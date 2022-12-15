@@ -28,8 +28,11 @@
 #define SCHNEK_ARRAYCHECK_HPP_
 
 #include <cassert>
+#include <cstddef>
 
 namespace schnek {
+
+typedef std::size_t size_t;
 
 /** Class to plug into the Array as CheckingPolicy.
  *  Performs no argument checking at all.
@@ -51,7 +54,7 @@ class ArrayAssertArgCheck
   public:
     /** The check method does not do anything */
     void check(size_t i) const {
-      assert(size_t(i)<limit);
+      assert(i < limit);
     }
 };
 

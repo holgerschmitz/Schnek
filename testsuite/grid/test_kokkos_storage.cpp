@@ -1,7 +1,7 @@
 /*
- * test_grid.cpp
+ * test_kokkos_storage.cpp
  *
- *  Created on: 1 Jan 2014
+ *  Created on: 10 Nov 2022
  *      Author: Holger Schmitz
  */
 

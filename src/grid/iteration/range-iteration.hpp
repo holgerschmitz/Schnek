@@ -31,34 +31,176 @@
 
 namespace schnek {
 
-    template<
-        class RangeType,
-        size_t rank
-    >
-    struct RangeCIterationPolicy {  
-    public:
-        template<typename Func>
-        void forEach(const RangeType& range, Func func)
-        {
-          typename RangeType::LimitType pos = range.getLo();
-          
-          do {
-            func(pos);
-            size_t d = rank;
-
-            while (d>0)
-            {
-                --d;
-                if (++pos[d] > domain.getHi()[d])
-                {
-                    pos[d] = domain.getLo()[d];
-                } else {
-                    break;
-                }
-            }            
-        }
+    namespace detail {
+    }
+    
+    /**
+     * @brief Iteration policy that iterates over a domain in C-order
+     * 
+     * @tparam rank the rank of the domain to iterate over
+     */
+    template<size_t rank>
+    struct RangeCIterationPolicy {
+        /**
+         * @brief Call a function for each index in the range
+         * 
+         * The range will be iterated over in C-ordering
+         * 
+         * @tparam RangeType The range type. Requires accessor methods `getLo()` and `getHi()`
+         *     that return the array-like bounds of the range with length `rank`
+         * @tparam Func The function that will be called with an array-like index of length `rank`
+         * @param range The range over which to iterate
+         * @param func The function that will be called for each position in the range
+         */
+        template<
+            class RangeType,
+            typename Func
+        >
+        static void forEach(const RangeType& range, Func func);
     };
 
+    /**
+     * @brief Iteration policy that iterates over a domain in Fortran-order
+     * 
+     * @tparam rank the rank of the domain to iterate over
+     */
+    template<size_t rank>
+    struct RangeFortranIterationPolicy {
+        /**
+         * @brief Call a function for each index in the range
+         * 
+         * The range will be iterated over in Fortran-ordering
+         * 
+         * @tparam RangeType The range type. Requires accessor methods `getLo()` and `getHi()`
+         *     that return the array-like bounds of the range with length `rank`
+         * @tparam Func The function that will be called with an array-like index of length `rank`
+         * @param range The range over which to iterate
+         * @param func The function that will be called for each position in the range
+         */
+        template<
+            class RangeType,
+            typename Func
+        >
+        static void forEach(const RangeType& range, Func func);
+    };
+   
+    //=================================================================
+    //==================== RangeCIterationPolicy ======================
+    //=================================================================
+
+    namespace detail {
+        template<size_t rank, size_t dim>
+        struct RangeCIterationPolicyDetail;
+
+        template<size_t rank>
+        struct RangeCIterationPolicyDetail<rank, 0> {
+            template<
+                class RangeType,
+                class IndexType,
+                typename Func
+            >
+            static void forEach(
+                const RangeType&, 
+                IndexType& pos,
+                Func func
+            )
+            {
+                func(pos);
+            }
+        };
+
+        template<size_t rank, size_t dim>
+        struct RangeCIterationPolicyDetail {
+            template<
+                class RangeType,
+                class IndexType,
+                typename Func
+            >
+            static void forEach(
+                const RangeType& range, 
+                IndexType& pos,
+                Func func
+            )
+            {
+                constexpr size_t idim = rank - dim;
+                auto lo = range.getLo()[idim];
+                auto hi = range.getHi()[idim];
+                for (pos[idim]=lo; pos[idim]<=hi; ++pos[idim])
+                {
+                    RangeCIterationPolicyDetail<rank, dim-1>::forEach(range, pos, func);
+                }            
+            }
+        };
+
+        template<size_t rank>
+        struct RangeFortranIterationPolicyDetail;
+
+        template<>
+        struct RangeFortranIterationPolicyDetail<0> {
+            template<
+                class RangeType,
+                class IndexType,
+                typename Func
+            >
+            static void forEach(
+                const RangeType&, 
+                IndexType& pos,
+                Func func
+            )
+            {
+                func(pos);
+            }
+        };
+
+        template<size_t rank>
+        struct RangeFortranIterationPolicyDetail {
+            template<
+                class RangeType,
+                class IndexType,
+                typename Func
+            >
+            static void forEach(
+                const RangeType& range, 
+                IndexType& pos,
+                Func func
+            )
+            {
+                constexpr size_t dim = rank - 1;
+                auto lo = range.getLo()[dim];
+                auto hi = range.getHi()[dim];
+                for (pos[dim]=lo; pos[dim]<=hi; ++pos[dim])
+                {
+                    RangeFortranIterationPolicyDetail<rank-1>::forEach(range, pos, func);
+                }            
+            }
+        };
+
+    }
+
+    template<size_t rank>
+    template<
+        class RangeType,
+        typename Func
+    >
+    inline void RangeCIterationPolicy<rank>::forEach(const RangeType& range, Func func)
+    {
+        auto pos = range.getLo();
+        detail::RangeCIterationPolicyDetail<rank, rank>::forEach(range, pos, func);
+    }
+
+    template<size_t rank>
+    template<
+        class RangeType,
+        typename Func
+    >
+    inline void RangeFortranIterationPolicy<rank>::forEach(const RangeType& range, Func func)
+    {
+        auto pos = range.getLo();
+        detail::RangeFortranIterationPolicyDetail<rank>::forEach(range, pos, func);
+    }
+
 } // namespace schnek
+
+
 
 #endif // SCHNEK_GRID_ITERATION_RANGEITERATION_HPP_

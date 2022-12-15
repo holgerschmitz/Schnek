@@ -263,7 +263,7 @@ namespace schnek
     inline ptrdiff_t SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::stride(size_t dim) const
     {
         ptrdiff_t stride = 1;
-        for (int i = rank - 1; i > dim; --i)
+        for (size_t i = rank - 1; i > dim; --i)
         {
             stride *= this->dims[i];
         }
@@ -285,7 +285,7 @@ namespace schnek
     inline T &SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
     {
         int pos = index[rank - 1];
-        for (int i = rank - 2; i >= 0; --i)
+        for (int i = int(rank) - 2; i >= 0; --i)
         {
             pos = index[i] + this->dims[i] * pos;
         }
@@ -296,7 +296,7 @@ namespace schnek
     inline const T &SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
     {
         int pos = index[rank - 1];
-        for (int i = rank - 2; i >= 0; --i)
+        for (int i = int(rank) - 2; i >= 0; --i)
         {
             pos = index[i] + this->dims[i] * pos;
         }
@@ -309,7 +309,7 @@ namespace schnek
         this->resizeImpl(low, high);
         int p = -this->low[rank - 1];
 
-        for (int d = rank - 2; d >= 0; --d)
+        for (int d = int(rank) - 2; d >= 0; --d)
         {
             p = p * this->dims[d] - this->low[d];
         }

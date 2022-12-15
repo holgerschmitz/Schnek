@@ -18,19 +18,19 @@ bool is_equal(double a, double b);
 /** Class to plug into the Array as CheckingPolicy.
  *  Performs Boost Test argument checking for unit tests.
  */
-template<int limit>
+template<size_t limit>
 class ArrayBoostTestArgCheck
 {
   public:
     /** The check method does not do anything */
-    void check(int i) const
+    void check(size_t i) const
     {
-      BOOST_CHECK_GE(i,0);
+      BOOST_CHECK_GE(i,size_t(0));
       BOOST_CHECK_LT(i,limit);
     }
 };
 
-template<int rank>
+template<size_t rank>
 class GridBoostTestCheck {
   public:
     typedef schnek::Array<int,rank,ArrayBoostTestArgCheck> IndexType;
@@ -40,7 +40,7 @@ class GridBoostTestCheck {
         const IndexType &high
     )
     {
-      for (int i=0; i<rank; ++i)
+      for (size_t i=0; i<rank; ++i)
       {
         BOOST_CHECK_GE(pos[i],low[i]);
         BOOST_CHECK_LE(pos[i],high[i]);
