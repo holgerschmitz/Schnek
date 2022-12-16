@@ -29,9 +29,9 @@
 #include "../../config.hpp"
 #include "../array.hpp"
 
-#include <Kokkos_Core.hpp>
-
 #ifdef SCHNEK_HAVE_KOKKOS
+
+#include <Kokkos_Core.hpp>
 
 namespace schnek {
 

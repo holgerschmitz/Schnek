@@ -31,9 +31,6 @@
 
 namespace schnek {
 
-    namespace detail {
-    }
-    
     /**
      * @brief Iteration policy that iterates over a domain in C-order
      * 
@@ -88,12 +85,12 @@ namespace schnek {
     //==================== RangeCIterationPolicy ======================
     //=================================================================
 
-    namespace detail {
+    namespace internal {
         template<size_t rank, size_t dim>
-        struct RangeCIterationPolicyDetail;
+        struct RangeCIterationPolicyImpl;
 
         template<size_t rank>
-        struct RangeCIterationPolicyDetail<rank, 0> {
+        struct RangeCIterationPolicyImpl<rank, 0> {
             template<
                 class RangeType,
                 class IndexType,
@@ -110,7 +107,7 @@ namespace schnek {
         };
 
         template<size_t rank, size_t dim>
-        struct RangeCIterationPolicyDetail {
+        struct RangeCIterationPolicyImpl {
             template<
                 class RangeType,
                 class IndexType,
@@ -127,16 +124,34 @@ namespace schnek {
                 auto hi = range.getHi()[idim];
                 for (pos[idim]=lo; pos[idim]<=hi; ++pos[idim])
                 {
-                    RangeCIterationPolicyDetail<rank, dim-1>::forEach(range, pos, func);
+                    RangeCIterationPolicyImpl<rank, dim-1>::forEach(range, pos, func);
                 }            
             }
         };
+    }    
 
+    template<size_t rank>
+    template<
+        class RangeType,
+        typename Func
+    >
+    inline void RangeCIterationPolicy<rank>::forEach(const RangeType& range, Func func)
+    {
+        auto pos = range.getLo();
+        internal::RangeCIterationPolicyImpl<rank, rank>::forEach(range, pos, func);
+    }
+
+    //=================================================================
+    //==================== RangeFortranIterationPolicy ================
+    //=================================================================
+
+    namespace internal
+    {
         template<size_t rank>
-        struct RangeFortranIterationPolicyDetail;
+        struct RangeFortranIterationPolicyImpl;
 
         template<>
-        struct RangeFortranIterationPolicyDetail<0> {
+        struct RangeFortranIterationPolicyImpl<0> {
             template<
                 class RangeType,
                 class IndexType,
@@ -153,7 +168,7 @@ namespace schnek {
         };
 
         template<size_t rank>
-        struct RangeFortranIterationPolicyDetail {
+        struct RangeFortranIterationPolicyImpl {
             template<
                 class RangeType,
                 class IndexType,
@@ -170,7 +185,7 @@ namespace schnek {
                 auto hi = range.getHi()[dim];
                 for (pos[dim]=lo; pos[dim]<=hi; ++pos[dim])
                 {
-                    RangeFortranIterationPolicyDetail<rank-1>::forEach(range, pos, func);
+                    RangeFortranIterationPolicyImpl<rank-1>::forEach(range, pos, func);
                 }            
             }
         };
@@ -182,25 +197,12 @@ namespace schnek {
         class RangeType,
         typename Func
     >
-    inline void RangeCIterationPolicy<rank>::forEach(const RangeType& range, Func func)
-    {
-        auto pos = range.getLo();
-        detail::RangeCIterationPolicyDetail<rank, rank>::forEach(range, pos, func);
-    }
-
-    template<size_t rank>
-    template<
-        class RangeType,
-        typename Func
-    >
     inline void RangeFortranIterationPolicy<rank>::forEach(const RangeType& range, Func func)
     {
         auto pos = range.getLo();
-        detail::RangeFortranIterationPolicyDetail<rank>::forEach(range, pos, func);
+        internal::RangeFortranIterationPolicyImpl<rank>::forEach(range, pos, func);
     }
 
 } // namespace schnek
-
-
 
 #endif // SCHNEK_GRID_ITERATION_RANGEITERATION_HPP_
