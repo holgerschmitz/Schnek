@@ -1,7 +1,7 @@
 /*
- * test_range_c_iteration.cpp
+ * test_range_fortran_iteration.cpp
  *
- *  Created on: 15 Dec 2022
+ *  Created on: 16 Dec 2022
  *      Author: Holger Schmitz
  */
 
@@ -20,7 +20,7 @@ using namespace schnek;
 
 BOOST_AUTO_TEST_SUITE( range_iteration )
 
-BOOST_AUTO_TEST_SUITE( c_order )
+BOOST_AUTO_TEST_SUITE( fortran_order )
 
 BOOST_FIXTURE_TEST_CASE( iterate_1d, RangeIterationTest )
 {
@@ -36,7 +36,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d, RangeIterationTest )
         GridType grid(lo, hi);
 
         int count = 0;
-        RangeCIterationPolicy<1>::forEach(range, [&](const GridType::IndexType& pos){
+        RangeFortranIterationPolicy<1>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
 
@@ -64,7 +64,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
         auto dims = grid.getDims();
 
         int count = 0;
-        RangeCIterationPolicy<2>::forEach(range, [&](const GridType::IndexType& pos){
+        RangeFortranIterationPolicy<2>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
 
@@ -72,7 +72,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
         {
             for (int j=lo[1]; j<=hi[1]; ++j)
             {
-                BOOST_CHECK_EQUAL(grid(i, j), j - lo[1] + (i-lo[0])*dims[1]);
+                BOOST_CHECK_EQUAL(grid(i, j), i - lo[0] + (j-lo[1])*dims[0]);
             }
         }
         ++show_progress;
@@ -95,7 +95,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
         auto dims = grid.getDims();
 
         int count = 0;
-        RangeCIterationPolicy<3>::forEach(range, [&](const GridType::IndexType& pos){
+        RangeFortranIterationPolicy<3>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
 
@@ -105,7 +105,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
             {
                 for (int k=lo[2]; k<=hi[2]; ++k)
                 {
-                    BOOST_CHECK_EQUAL(grid(i, j, k), k - lo[2] + (j - lo[1] + (i-lo[0])*dims[1])*dims[2]);
+                    BOOST_CHECK_EQUAL(grid(i, j, k), i - lo[0] + (j-lo[1] + (k - lo[2])*dims[1])*dims[0]);
                 }
             }
         }
@@ -129,7 +129,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
         auto dims = grid.getDims();
 
         int count = 0;
-        RangeCIterationPolicy<4>::forEach(range, [&](const GridType::IndexType& pos){
+        RangeFortranIterationPolicy<4>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
 
@@ -142,7 +142,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
                     for (int l=lo[3]; l<=hi[3]; ++l)
                     {
                         BOOST_CHECK_EQUAL(grid(i, j, k, l), 
-                          l - lo[3] + (k - lo[2] + (j - lo[1] + (i-lo[0])*dims[1])*dims[2])*dims[3]
+                            i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3])*dims[2])*dims[1])*dims[0]
                         );
                     }
                 }
@@ -169,7 +169,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
         auto dims = grid.getDims();
 
         int count = 0;
-        RangeCIterationPolicy<5>::forEach(range, [&](const GridType::IndexType& pos){
+        RangeFortranIterationPolicy<5>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
 
@@ -184,9 +184,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
                         for (int m=lo[4]; m<=hi[4]; ++m)
                         {
                             BOOST_CHECK_EQUAL(grid(i, j, k, l, m), 
-                              m - lo[4] + (
-                                l - lo[3] + (k - lo[2] + (j - lo[1] + (i-lo[0])*dims[1])*dims[2])*dims[3]
-                              )*dims[4]
+                                i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3]
+                                    + (m - lo[4])*dims[3]
+                                )*dims[2])*dims[1])*dims[0]
                             );
                         }
                     }
@@ -214,7 +214,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
         auto dims = grid.getDims();
 
         int count = 0;
-        RangeCIterationPolicy<6>::forEach(range, [&](const GridType::IndexType& pos){
+        RangeFortranIterationPolicy<6>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
 
@@ -231,9 +231,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
                             for (int n=lo[5]; n<=hi[5]; ++n)
                             {
                                 BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n), 
-                                  n - lo[5] + (m - lo[4] + (
-                                    l - lo[3] + (k - lo[2] + (j - lo[1] + (i-lo[0])*dims[1])*dims[2])*dims[3]
-                                  )*dims[4])*dims[5]
+                                    i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3]
+                                        + (m - lo[4] + (n - lo[5])*dims[4])*dims[3]
+                                    )*dims[2])*dims[1])*dims[0]
                                 );
                             }
                         }
@@ -261,7 +261,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_7d, RangeIterationTest )
         auto dims = grid.getDims();
 
         int count = 0;
-        RangeCIterationPolicy<7>::forEach(range, [&](const GridType::IndexType& pos){
+        RangeFortranIterationPolicy<7>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
 
@@ -280,9 +280,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_7d, RangeIterationTest )
                                 for (int o=lo[6]; o<=hi[6]; ++o)
                                 {
                                     BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n, o), 
-                                      o - lo[6] + (n - lo[5] + (m - lo[4] + (
-                                        l - lo[3] + (k - lo[2] + (j - lo[1] + (i-lo[0])*dims[1])*dims[2])*dims[3]
-                                      )*dims[4])*dims[5])*dims[6]
+                                        i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3]
+                                            + (m - lo[4] + (n - lo[5] + (o - lo[6])*dims[5])*dims[4])*dims[3]
+                                        )*dims[2])*dims[1])*dims[0]
                                     );
                                 }
                             }
@@ -312,7 +312,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_8d, RangeIterationTest )
         auto dims = grid.getDims();
 
         int count = 0;
-        RangeCIterationPolicy<8>::forEach(range, [&](const GridType::IndexType& pos){
+        RangeFortranIterationPolicy<8>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
 
@@ -333,9 +333,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_8d, RangeIterationTest )
                                     for (int p=lo[7]; p<=hi[7]; ++p)
                                     {
                                         BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n, o, p), 
-                                          p - lo[7] + (o - lo[6] + (n - lo[5] + (m - lo[4] + (
-                                            l - lo[3] + (k - lo[2] + (j - lo[1] + (i-lo[0])*dims[1])*dims[2])*dims[3]
-                                          )*dims[4])*dims[5])*dims[6])*dims[7]
+                                            i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3]
+                                                + (m - lo[4] + (n - lo[5] + (o - lo[6] + (p - lo[7])*dims[6])*dims[5])*dims[4])*dims[3]
+                                            )*dims[2])*dims[1])*dims[0]
                                         );
                                     }
                                 }
@@ -366,7 +366,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_9d, RangeIterationTest )
         auto dims = grid.getDims();
 
         int count = 0;
-        RangeCIterationPolicy<9>::forEach(range, [&](const GridType::IndexType& pos){
+        RangeFortranIterationPolicy<9>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
 
@@ -389,9 +389,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_9d, RangeIterationTest )
                                         for (int q=lo[8]; q<=hi[8]; ++q)
                                         {
                                             BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n, o, p, q), 
-                                              q - lo[8] + (p - lo[7] + (o - lo[6] + (n - lo[5] + (m - lo[4] + (
-                                                l - lo[3] + (k - lo[2] + (j - lo[1] + (i-lo[0])*dims[1])*dims[2])*dims[3]
-                                              )*dims[4])*dims[5])*dims[6])*dims[7])*dims[8]
+                                                i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3] + (m - lo[4] 
+                                                    + (n - lo[5] + (o - lo[6] + (p - lo[7] + (q - lo[8])*dims[7])*dims[6])*dims[5])*dims[4]
+                                                )*dims[3])*dims[2])*dims[1])*dims[0]
                                             );
                                         }
                                     }
@@ -422,7 +422,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_10d, RangeIterationTest )
         auto dims = grid.getDims();
 
         int count = 0;
-        RangeCIterationPolicy<10>::forEach(range, [&](const GridType::IndexType& pos){
+        RangeFortranIterationPolicy<10>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
 
@@ -447,9 +447,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_10d, RangeIterationTest )
                                             for (int r=lo[9]; r<=hi[9]; ++r)
                                             {
                                                 BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n, o, p, q, r), 
-                                                  r - lo[9] + (q - lo[8] + (p - lo[7] + (o - lo[6] + (n - lo[5] + (m - lo[4] + (
-                                                    l - lo[3] + (k - lo[2] + (j - lo[1] + (i-lo[0])*dims[1])*dims[2])*dims[3]
-                                                  )*dims[4])*dims[5])*dims[6])*dims[7])*dims[8])*dims[9]
+                                                    i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3] + (m - lo[4] 
+                                                        + (n - lo[5] + (o - lo[6] + (p - lo[7] + (q - lo[8] + (r - lo[9])*dims[8])*dims[7])*dims[6])*dims[5])*dims[4]
+                                                    )*dims[3])*dims[2])*dims[1])*dims[0]
                                                 );
                                             }
                                         }
