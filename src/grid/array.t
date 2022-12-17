@@ -43,6 +43,13 @@ inline Array<T,length,CheckingPolicy>::Array(const Array<T, length, CheckingPoli
 }
 
 template<class T, size_t length, template <size_t> class CheckingPolicy>
+inline Array<T,length,CheckingPolicy>::Array(std::initializer_list<T> l)
+{
+  static_assert(l.size() == length, "Length of initializer_list does not match Array length.");
+  data = l;
+}
+
+template<class T, size_t length, template <size_t> class CheckingPolicy>
 inline Array<T,length,CheckingPolicy>::Array(const T& v0)
 {
   for (size_t i=0; i<length; ++i) data[i] = v0;

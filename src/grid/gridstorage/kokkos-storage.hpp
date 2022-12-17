@@ -54,7 +54,11 @@ namespace schnek {
      * @tparam rank The rank of the grid
      * @tparam AllocationPolicy The allocation policy
      */
-    template <typename T, size_t rank, class ...ViewProperties>
+    template <
+        typename T, 
+        size_t rank, 
+        class ...ViewProperties
+    >
     class KokkosGridStorage
     {
     public:

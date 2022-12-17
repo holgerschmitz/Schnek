@@ -28,6 +28,7 @@
 #define SCHNEK_ARRAY_HPP_
 
 #include "arraycheck.hpp"
+#include <initializer_list>
 namespace schnek {
 
 template<class Operator, size_t Length>
@@ -68,6 +69,9 @@ class Array :
     /// Construct using an array expression
     template<class Operator>
     Array(const ArrayExpression<Operator, length> &);
+
+    /// Construct using an initializer list
+    Array(std::initializer_list<T> l);
 
     /// Constructor for length=1 arrays setting the data explicitely
     Array(const T&);
