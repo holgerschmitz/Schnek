@@ -25,7 +25,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
-#include <boost/progress.hpp>
+#include <boost/timer/progress_display.hpp>
 
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/math/special_functions/digamma.hpp>
@@ -523,7 +523,7 @@ BOOST_FIXTURE_TEST_CASE( parser_utility, ParserTest )
   init(parser_input_utility);
 
   const int N = 100000;
-  boost::progress_display show_progress(2*N);
+  boost::timer::progress_display show_progress(2*N);
 
   {
     boost::random::mt19937 rGen;
@@ -582,7 +582,7 @@ BOOST_FIXTURE_TEST_CASE( parser_cmath, ParserTest )
   init(parser_input_cmath);
 
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   boost::random::mt19937 rGen;
   boost::random::uniform_real_distribution<> dist(-10, 10);
@@ -622,7 +622,7 @@ BOOST_FIXTURE_TEST_CASE( parser_special_functions_gamma, ParserTest )
   init(parser_input_special_functions_gamma);
 
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   boost::random::mt19937 rGen;
   boost::random::uniform_real_distribution<> dist(1.0, 10.0);
@@ -658,7 +658,7 @@ BOOST_FIXTURE_TEST_CASE( parser_special_functions_bessel, ParserTest )
   init(parser_input_special_functions_bessel);
 
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   boost::random::mt19937 rGen;
   boost::random::uniform_real_distribution<> dist(1.0, 10.0);
@@ -702,7 +702,7 @@ BOOST_FIXTURE_TEST_CASE( parser_special_functions_normal, ParserTest )
   init(parser_input_special_functions_normal);
 
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   boost::random::mt19937 rGen;
   boost::random::uniform_real_distribution<> dist(1.0, 10.0);
@@ -770,7 +770,7 @@ BOOST_FIXTURE_TEST_CASE( parser_count_evaluations, ParserTest )
 
   init(parser_input_count_evaluation);
 
-  boost::progress_display show_progress(N*N);
+  boost::timer::progress_display show_progress(N*N);
 
   boost::random::mt19937 rGen;
   boost::random::uniform_real_distribution<> dist(1.0, 10.0);

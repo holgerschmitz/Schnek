@@ -88,11 +88,15 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/main.cpp
     testsuite/test_array.cpp
     testsuite/test_arrayexpression.cpp
-    testsuite/test_grid.cpp
     testsuite/test_parser.cpp
     testsuite/test_range.cpp
     testsuite/utility.cpp
+    testsuite/grid/test_c_storage.cpp
+    testsuite/grid/test_fortran_storage.cpp
     testsuite/grid/test_kokkos_storage.cpp
+    testsuite/grid/test_range_c_iteration.cpp
+    testsuite/grid/test_range_fortran_iteration.cpp
+    testsuite/grid/test_range_kokkos_iteration.cpp
 )
 
 target_include_directories(schnek_tests PUBLIC "src")

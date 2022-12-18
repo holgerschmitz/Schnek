@@ -39,7 +39,7 @@ namespace schnek {
  */
 template<
   size_t rank,
-  template<int> class CheckingPolicy = ArrayNoArgCheck
+  template<size_t> class CheckingPolicy = ArrayNoArgCheck
 >
 class Boundary
 {
@@ -57,7 +57,7 @@ class Boundary
     DomainType size;
 
     /// The number of ghost cells on each side
-    int delta;
+    size_t delta;
 
   public:
     /** Construct a zero boundary
@@ -98,7 +98,7 @@ class Boundary
      *        domain and Max will return the upper ghost domain
      * @return A rectangular domain of ghost cells
      */
-    DomainType getGhostDomain(int dim, bound b);
+    DomainType getGhostDomain(size_t dim, bound b);
 
     /** Returns the inner domain corresponding to the ghost domain of the neighbouring
      * process. The domain has a thickness given by the number of ghost cells, delta.
@@ -108,7 +108,7 @@ class Boundary
      *        and Max will return the domain on the upper side
      * @return A rectangular domain of source cells
      */
-    DomainType getGhostSourceDomain(int dim, bound b);
+    DomainType getGhostSourceDomain(size_t dim, bound b);
 
     /** Returns the boundary domain, a rectangular region outside the inner domain.
      * The bounadry domain has a thickness determined by the number of ghost cells.
@@ -119,7 +119,7 @@ class Boundary
      *        domain and Max will return the upper ghost domain
      * @return A rectangular domain of boundary cells
      */
-    DomainType getBoundaryDomain(int dim, bound b, bool stagger);
+    DomainType getBoundaryDomain(size_t dim, bound b, bool stagger);
 
     /** Returns the inner domain, excluding the ghost cells */
     DomainType getInnerDomain();
@@ -134,7 +134,7 @@ class Boundary
      * @return A sub-grid containing ghost cells
      */
     template<class GridType>
-    SubGrid<GridType, CheckingPolicy> getGhostBoundary(int dim, bound b, GridType &grid);
+    SubGrid<GridType, CheckingPolicy> getGhostBoundary(size_t dim, bound b, GridType &grid);
 
     /** Returns sub-grid containing only the boundary domain.
      * The bounadry domain has a thickness determined by the number of ghost cells.
@@ -147,11 +147,11 @@ class Boundary
      */
     template<
       typename T,
-      template<int> class CheckingPolicy2,
+      template<size_t> class CheckingPolicy2,
       template<typename, size_t> class StoragePolicy
     >
     SubGrid<Field<T,rank,CheckingPolicy2,StoragePolicy>, CheckingPolicy>
-      getGhostBoundary(int dim, bound b, Field<T,rank,CheckingPolicy2,StoragePolicy> &field);
+      getGhostBoundary(size_t dim, bound b, Field<T,rank,CheckingPolicy2,StoragePolicy> &field);
 };
 
 } // namespace schnek

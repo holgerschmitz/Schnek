@@ -342,7 +342,7 @@ struct CopyToContainer
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 struct CopyToContainer<Field<T, rank, CheckingPolicy, StoragePolicy> >
@@ -354,7 +354,7 @@ struct CopyToContainer<Field<T, rank, CheckingPolicy, StoragePolicy> >
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 inline void CopyToContainer<Field<T, rank, CheckingPolicy, StoragePolicy> >::copy(Field<T, rank, CheckingPolicy, StoragePolicy> *field,

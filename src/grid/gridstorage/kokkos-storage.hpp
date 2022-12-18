@@ -21,7 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 #ifndef SCHNEK_GRID_GRIDSTORAGE_KOKKOSSTORAGE_HPP_
@@ -30,9 +29,9 @@
 #include "../../config.hpp"
 #include "../array.hpp"
 
-#include <Kokkos_Core.hpp>
-
 #ifdef SCHNEK_HAVE_KOKKOS
+
+#include <Kokkos_Core.hpp>
 
 namespace schnek {
 
@@ -46,25 +45,6 @@ namespace schnek {
         struct KokkosViewType<T, 1> {
             typedef T* type;
         };
-
-    //     template <typename T, size_t rank, class ...ViewProperties>
-    //     class KokkosViewContainer {
-
-    //     public:
-    //         KokkosViewContainer() = delete;
-    //         KokkosViewContainer(const KokkosViewContainer&) = delete;
-    //     };
-
-    //     template <typename T, class ...ViewProperties>
-    //     class KokkosViewContainer<T, 1, ViewProperties...> {
-    //     protected:
-    //         /// The kokkos view 
-    //         Kokkos::View<typename internal::KokkosViewType<T, 1>::type, ViewProperties...> view;
-    //     public:
-    //         KokkosViewContainer(): view() {}
-    //         KokkosViewContainer(const Array<int, 1> &dims) : view(dims[0]) {}
-    //     };
-
     }
 
     /**
@@ -74,7 +54,11 @@ namespace schnek {
      * @tparam rank The rank of the grid
      * @tparam AllocationPolicy The allocation policy
      */
-    template <typename T, size_t rank, class ...ViewProperties>
+    template <
+        typename T, 
+        size_t rank, 
+        class ...ViewProperties
+    >
     class KokkosGridStorage
     {
     public:
@@ -142,6 +126,11 @@ namespace schnek {
         void resize(const Index &low, const Index &high);
 
         /**
+         * @brief returns the stride of the specified dimension 
+         */
+        ptrdiff_t stride(size_t dim) const;
+
+        /**
          * @brief Get the lvalue at a given grid index
          * 
          * @param index The grid index
@@ -192,30 +181,6 @@ namespace schnek {
     //==================== KokkosGridStorage ==========================
     //=================================================================
 
-// #include <iostream>
-// #include <tuple>
-// #include <utility>
-
-// int foo(int a) {return a;};
-// double foo(int a, double b) {return a+b;};
-// double foo(int a, double b, int c) {return a+b+c;};
-
-// template <typename... T, std::size_t... Indices>
-// auto call_foo_helper(const std::tuple<T...>& v, std::index_sequence<Indices...>) {
-//   return foo(std::get<Indices>(v)...);
-// }
-
-// template <typename... T>
-// auto call_foo(const std::tuple<T...>& v) {
-//   return call_foo_helper(v, std::make_index_sequence<sizeof...(T)>());
-// }
-
-// int main(int argc, char** argv) {
-//     auto v = std::make_tuple(1, 2.0);
-//     auto x = call_foo(v);
-//     return 0;
-// }
-
     namespace internal {
 
     }
@@ -237,13 +202,13 @@ namespace schnek {
     {}
 
     template <typename T, size_t rank, class ...ViewProperties>
-    const T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index) const
+    inline const T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index) const
     {
         return getFromView(index - lo);
     }
 
     template <typename T, size_t rank, class ...ViewProperties>
-    T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index)
+    inline T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index)
     {
         return getFromView(index - lo);
     }
@@ -255,6 +220,12 @@ namespace schnek {
         this->hi = hi;
         this->dims = hi - lo + 1;
         this->view = createKokkosView(dims);
+    }
+
+    template <typename T, size_t rank, class ...ViewProperties>
+    inline ptrdiff_t KokkosGridStorage<T, rank, ViewProperties...>::stride(size_t dim) const
+    {
+        return this->view.stride(dim);
     }
 
 }

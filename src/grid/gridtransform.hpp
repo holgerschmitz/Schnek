@@ -52,14 +52,16 @@ class GridTransformStorage {
       protected:
         typedef typename BaseGridType::const_storage_iterator BaseIter;
         BaseIter baseIter;
-        const_storage_iterator(BaseIter baseIter_)
-          : baseIter(baseIter) {}
+        GridTransformStorage &storage;
+
+        const_storage_iterator(BaseIter baseIter, GridTransformStorage &storage)
+          : baseIter(baseIter), storage(storage) {}
 
         friend class GridTransformStorage;
 
       public:
         T operator*()
-        { return transformation(*baseIter);}
+        { return storage.transformation(*baseIter);}
 
         const_storage_iterator &operator++()
         {
@@ -101,11 +103,11 @@ class GridTransformStorage {
     /** */
     int getDims(int k) const { return baseGrid->getDims(k); }
 
-    const_storage_iterator begin() { return const_storage_iterator(baseGrid->begin()); }
-    const_storage_iterator end() { return const_storage_iterator(baseGrid->end()); }
+    const_storage_iterator begin() { return const_storage_iterator(baseGrid->begin(), *this); }
+    const_storage_iterator end() { return const_storage_iterator(baseGrid->end(), *this); }
 
-    const_storage_iterator cbegin() const { return const_storage_iterator(baseGrid->cbegin()); }
-    const_storage_iterator cend() const { return const_storage_iterator(baseGrid->cend()); }
+    const_storage_iterator cbegin() const { return const_storage_iterator(baseGrid->cbegin(), *this); }
+    const_storage_iterator cend() const { return const_storage_iterator(baseGrid->cend(), *this); }
 
     void setBaseGrid(BaseGridType &baseGrid_)
     {

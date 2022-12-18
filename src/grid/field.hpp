@@ -35,7 +35,7 @@ namespace schnek {
 template<
   typename T,
   size_t rank,
-  template<int> class CheckingPolicy = GridNoArgCheck,
+  template<size_t> class CheckingPolicy = GridNoArgCheck,
   template<typename, size_t> class StoragePolicy = SingleArrayGridStorage
 >
 class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
@@ -60,17 +60,17 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
      *
      */
     template<
-      template<int> class ArrayCheckingPolicy,
-      template<int> class RangeCheckingPolicy,
-      template<int> class StaggerCheckingPolicy>
+      template<size_t> class ArrayCheckingPolicy,
+      template<size_t> class RangeCheckingPolicy,
+      template<size_t> class StaggerCheckingPolicy>
     Field(const Array<int,rank,ArrayCheckingPolicy> &size,
         const Range<double, rank,RangeCheckingPolicy> &range_,
         const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
 
     template<
-      template<int> class ArrayCheckingPolicy,
-      template<int> class RangeCheckingPolicy,
-      template<int> class StaggerCheckingPolicy>
+      template<size_t> class ArrayCheckingPolicy,
+      template<size_t> class RangeCheckingPolicy,
+      template<size_t> class StaggerCheckingPolicy>
     Field(const Array<int,rank,ArrayCheckingPolicy> &low_,
         const Array<int,rank,ArrayCheckingPolicy> &high_,
         const Range<double, rank,RangeCheckingPolicy> &range_,
@@ -126,7 +126,7 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     /** assign another grid */
     template<
       typename T2,
-      template<int> class CheckingPolicy2,
+      template<size_t> class CheckingPolicy2,
       template<typename, size_t> class StoragePolicy2
     >
     FieldType& operator=(const Field<T2, rank, CheckingPolicy2, StoragePolicy2> &grid)
@@ -154,17 +154,17 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
      *
      */
     template<
-      template<int> class ArrayCheckingPolicy,
-      template<int> class RangeCheckingPolicy,
-      template<int> class StaggerCheckingPolicy>
+      template<size_t> class ArrayCheckingPolicy,
+      template<size_t> class RangeCheckingPolicy,
+      template<size_t> class StaggerCheckingPolicy>
     void resize(const Array<int,rank,ArrayCheckingPolicy> &size,
                 const Range<double, rank,RangeCheckingPolicy> &range_,
                 const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
 
     template<
-      template<int> class ArrayCheckingPolicy,
-      template<int> class RangeCheckingPolicy,
-      template<int> class StaggerCheckingPolicy>
+      template<size_t> class ArrayCheckingPolicy,
+      template<size_t> class RangeCheckingPolicy,
+      template<size_t> class StaggerCheckingPolicy>
     void resize(const Array<int,rank,ArrayCheckingPolicy> &low_,
                 const Array<int,rank,ArrayCheckingPolicy> &high_,
                 const Range<double, rank,RangeCheckingPolicy> &range_,

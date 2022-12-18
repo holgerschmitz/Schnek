@@ -142,7 +142,7 @@ class SubGridStorage {
 
 template<
   class BaseGrid,
-  template<int> class CheckingPolicy = GridNoArgCheck
+  template<size_t> class CheckingPolicy = GridNoArgCheck
 >
 class SubGrid
   : public GridBase

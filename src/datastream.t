@@ -26,20 +26,20 @@
 
 template<
   class T, 
-  int length, 
-  template<int> class CheckingPolicy
+  size_t length, 
+  template<size_t> class CheckingPolicy
 >
 std::ostream &operator<<(std::ostream &out, const schnek::Array<T,length,CheckingPolicy> &arr)
 {
   if (length==0) return out;
   out << arr[0];
-  for (int i=1; i<length; ++i) out << " " << arr[i];
+  for (size_t i=1; i<length; ++i) out << " " << arr[i];
   return out;
 }
 
 template<
   typename T,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 std::ostream &operator<<(
@@ -60,7 +60,7 @@ std::ostream &operator<<(
 
 template<
   typename T,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 std::ostream &operator<<(
@@ -86,7 +86,7 @@ std::ostream &operator<<(
 
 template<
   typename T,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 std::ostream &operator<<(
@@ -116,7 +116,7 @@ std::ostream &operator<<(
 
 template<
   typename T,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 std::ostream &operator<<(
@@ -149,7 +149,7 @@ std::ostream &operator<<(
 
 template<
   typename T,
-  template<int> class CheckingPolicy,
+  template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
 std::ostream &operator<<(

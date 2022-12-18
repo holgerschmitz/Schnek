@@ -43,7 +43,7 @@ void SerialSubdivision<GridType>::init(const LimitType &low, const LimitType &hi
 }
 
 template<class GridType>
-void SerialSubdivision<GridType>::exchange(GridType &grid, int dim)
+void SerialSubdivision<GridType>::exchange(GridType &grid, size_t dim)
 {
   DomainType loGhost = this->bounds->getGhostDomain(dim, BoundaryType::Min);
   DomainType hiGhost = this->bounds->getGhostDomain(dim, BoundaryType::Max);
@@ -76,7 +76,7 @@ void SerialSubdivision<GridType>::exchange(GridType &grid, int dim)
 }
 
 template<class GridType>
-void SerialSubdivision<GridType>::accumulate(GridType &grid, int dim)
+void SerialSubdivision<GridType>::accumulate(GridType &grid, size_t dim)
 {
   DomainType loGhost = this->bounds->getGhostDomain(dim, BoundaryType::Min);
   DomainType hiGhost = this->bounds->getGhostDomain(dim, BoundaryType::Max);
@@ -111,7 +111,7 @@ void SerialSubdivision<GridType>::accumulate(GridType &grid, int dim)
 }
 
 template<class GridType>
-void SerialSubdivision<GridType>::exchangeData(int dim, int orientation, BufferType &in, BufferType &out)
+void SerialSubdivision<GridType>::exchangeData(size_t dim, int orientation, BufferType &in, BufferType &out)
 {
   out = in;
 }

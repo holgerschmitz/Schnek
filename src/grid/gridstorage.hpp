@@ -32,47 +32,13 @@
 
 namespace schnek {
   template<typename T, size_t rank>
-  class SingleArrayGridStorage
-      : public SingleArrayGridCOrderStorageBase<T, rank, SingleArrayInstantAllocation>
-  {
-    public:
-      typedef SingleArrayGridCOrderStorageBase<T, rank, SingleArrayInstantAllocation> BaseType;
-      typedef typename BaseType::IndexType IndexType;
-
-      SingleArrayGridStorage() : BaseType() {}
-
-      SingleArrayGridStorage(const IndexType &low_, const IndexType &high_)
-          : BaseType(low_, high_) {}
-  };
-
+  using SingleArrayGridStorage = SingleArrayGridCOrderStorageBase<T, rank, SingleArrayInstantAllocation>;
 
   template<typename T, size_t rank>
-  class SingleArrayGridStorageFortran
-      : public SingleArrayGridFortranOrderStorageBase<T, rank, SingleArrayInstantFortranAllocation>
-  {
-    public:
-      typedef SingleArrayGridFortranOrderStorageBase<T, rank, SingleArrayInstantFortranAllocation> BaseType;
-      typedef typename BaseType::IndexType IndexType;
-
-      SingleArrayGridStorageFortran() : BaseType() {}
-
-      SingleArrayGridStorageFortran(const IndexType &low_, const IndexType &high_)
-          : BaseType(low_, high_) {}
-  };
+  using SingleArrayGridStorageFortran = SingleArrayGridFortranOrderStorageBase<T, rank, SingleArrayInstantAllocation>;
 
   template<typename T, size_t rank>
-  class LazyArrayGridStorage
-      : public SingleArrayGridCOrderStorageBase<T, rank, SingleArrayLazyAllocation>
-  {
-    public:
-      typedef SingleArrayGridCOrderStorageBase<T, rank, SingleArrayLazyAllocation> BaseType;
-      typedef typename BaseType::IndexType IndexType;
-
-      LazyArrayGridStorage() : BaseType() {}
-
-      LazyArrayGridStorage(const IndexType &low_, const IndexType &high_)
-          : BaseType(low_, high_) {}
-  };
+  using LazyArrayGridStorage = SingleArrayGridCOrderStorageBase<T, rank, SingleArrayLazyAllocation>;
 
 } // namespace schnek
 

@@ -1,11 +1,11 @@
 /*
- * arraycheck.hpp
+ * traits.hpp
  *
- * Created on: 23 Jan 2007
+ * Created on: 1 Dec 2022
  * Author: Holger Schmitz
  * Email: holger@notjustphysics.com
  *
- * Copyright 2012 Holger Schmitz
+ * Copyright 2012-2022 Holger Schmitz
  *
  * This file is part of Schnek.
  *
@@ -24,40 +24,26 @@
  *
  */
 
-#ifndef SCHNEK_ARRAYCHECK_HPP_
-#define SCHNEK_ARRAYCHECK_HPP_
 
-#include <cassert>
-#include <cstddef>
+#ifndef SCHNEK_UTIL_TRAITS_HPP
+#define SCHNEK_UTIL_TRAITS_HPP
 
 namespace schnek {
 
-typedef std::size_t size_t;
+    /**
+     * @brief Determines whether Fn can be invoked with the arguments Args....
+     */
+    template <class Fn, class... Args>
+    struct is_invocable
+    {
+        template <class U>
+        static auto test(U* p) -> decltype((*p)(std::declval<Args>()...), void(), std::true_type());
+        template <class U>
+        static auto test(...) -> decltype(std::false_type());
 
-/** Class to plug into the Array as CheckingPolicy.
- *  Performs no argument checking at all.
- */
-template<size_t limit>
-class ArrayNoArgCheck
-{
-  public:
-    /** The check method does not do anything */
-    void check(size_t) const {} 
-};
+        static constexpr bool value = decltype(test<Fn>(0))::value;
+    };
 
-/** Class to plug into the Array as CheckingPolicy.
- *  Performs no argument checking at all.
- */
-template<size_t limit>
-class ArrayAssertArgCheck
-{
-  public:
-    /** The check method does not do anything */
-    void check(size_t i) const {
-      assert(i < limit);
-    }
-};
+} // namespace schnek
 
-}
-
-#endif // SCHNEK_ARGCHECK_HPP_
+#endif SCHNEK_UTIL_TRAITS_HPP

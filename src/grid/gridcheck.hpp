@@ -34,7 +34,7 @@
 
 namespace schnek {
 
-template<int rank>
+template<size_t rank>
 class GridNoArgCheck {
   public:
     typedef Array<int,rank,ArrayNoArgCheck> IndexType;
@@ -46,7 +46,7 @@ class GridNoArgCheck {
 };
 
 
-template<int rank>
+template<size_t rank>
 class GridAssertCheck {
   public:
     typedef Array<int,rank,ArrayAssertArgCheck> IndexType;
@@ -59,7 +59,7 @@ class GridAssertCheck {
 
 
 
-template<int rank>
+template<size_t rank>
 class GridDebugCheck {
   public:
     typedef Array<int,rank,ArrayAssertArgCheck> IndexType;
@@ -90,14 +90,14 @@ class GridDebugCheck {
     }
   };
 
-template<int rank>
+template<size_t rank>
 inline const typename GridNoArgCheck<rank>::IndexType &GridNoArgCheck<rank>::check(
         const IndexType &pos, 
         const IndexType &, const IndexType &
     )
 { return pos; }
 
-template<int rank>
+template<size_t rank>
 inline const typename GridAssertCheck<rank>::IndexType &GridAssertCheck<rank>::check(
         const IndexType &pos, 
         const IndexType &low, 
@@ -113,16 +113,16 @@ inline const typename GridAssertCheck<rank>::IndexType &GridAssertCheck<rank>::c
 }
 
 
-template<int rank>
+template<size_t rank>
 bool GridDebugCheck<rank>::errorFlag = false;
 
-template<int rank>
+template<size_t rank>
 int GridDebugCheck<rank>::errorInfo = 0;
 
-template<int rank>
+template<size_t rank>
 typename GridDebugCheck<rank>::IndexType GridDebugCheck<rank>::offending;
 
-template<int rank>
+template<size_t rank>
 inline const typename GridDebugCheck<rank>::IndexType GridDebugCheck<rank>::check(
         const IndexType &pos,
         const IndexType &low,
@@ -130,7 +130,7 @@ inline const typename GridDebugCheck<rank>::IndexType GridDebugCheck<rank>::chec
     )
 {
   IndexType pos_copy(pos);
-  for (int i=0; i<rank; ++i)
+  for (size_t i=0; i<rank; ++i)
   {
     if (pos_copy[i]<low[i])  {
       SCHNEK_TRACE_ERR(1,"schnek::GridDebugCheck index out of range (dim="<<i<<"): index=" <<pos_copy[i]<<"  lo="<<low[i])

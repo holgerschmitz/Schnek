@@ -35,7 +35,7 @@
 
 
 namespace schnek {
-  namespace detail {
+  namespace internal {
     double min(double a, double b) { return std::min(a,b); }
     double max(double a, double b) { return std::max(a,b); }
     double minI(int a, int b) { return std::min(a,b); }
@@ -85,10 +85,10 @@ void schnek::registerCMath(FunctionRegistry &freg)
 
 void schnek::registerUtilityFunctions(FunctionRegistry &freg)
 {
-  freg.registerFunction("min", schnek::detail::min);
-  freg.registerFunction("max", schnek::detail::max);
-  freg.registerFunction("minI", schnek::detail::minI);
-  freg.registerFunction("maxI", schnek::detail::maxI);
+  freg.registerFunction("min", schnek::internal::min);
+  freg.registerFunction("max", schnek::internal::max);
+  freg.registerFunction("minI", schnek::internal::minI);
+  freg.registerFunction("maxI", schnek::internal::maxI);
 }
 
 
@@ -101,7 +101,7 @@ void schnek::registerSpecialFunctions(FunctionRegistry &freg)
   freg.registerFunction("besselj", static_cast<double (*)(int, double)>(boost::math::cyl_bessel_j));
   freg.registerFunction("bessely", static_cast<double (*)(int, double)>(boost::math::cyl_neumann));
 
-  freg.registerFunction("normal", schnek::detail::normal);
+  freg.registerFunction("normal", schnek::internal::normal);
 }
 
 

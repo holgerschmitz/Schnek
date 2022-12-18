@@ -38,7 +38,7 @@ namespace schnek {
  * will allow performing expressions without temporary variables.
  * @todo Handle type promotion
  */
-template<class Operator, int Length>
+template<class Operator, size_t Length>
 class ArrayExpression {
   private:
     /**The operator type. The operator will hold the information about
@@ -48,7 +48,7 @@ class ArrayExpression {
   public:
     typedef typename Operator::value_type value_type;
 
-    static const int length = Length;
+    static constexpr size_t length = Length;
 
     /**Construct the expression by passing a reference*/
     ArrayExpression(const Operator Op_) : Op(Op_) {}
@@ -60,20 +60,20 @@ class ArrayExpression {
       return Array<value_type, Length, ArrayNoArgCheck>(*this);
     }
 
-    template<template<int> class CheckingPolicy>
+    template<template<size_t> class CheckingPolicy>
     operator Array<value_type, Length, CheckingPolicy> () {
       return Array<value_type, Length, CheckingPolicy>(*this);
     }
 
-//    template<template<int> class CheckingPolicy>
+//    template<template<size_t> class CheckingPolicy>
 //    operator Array<value_type, Length, CheckingPolicy>() {
 //        Array<value_type, Length, CheckingPolicy> value;
-//        for (int i=0; i<Length; ++i) value[i] = Op[i];
+//        for (size_t i=0; i<Length; ++i) value[i] = Op[i];
 //        return value;
 //    }
 
     /**Return the i-th element of the expression*/
-    value_type operator[](int i) const 
+    value_type operator[](size_t i) const 
     { 
 //      value_type result = Op[i];
 //      std::cerr << "ArrayExpression -- " << result << std::endl;
@@ -104,7 +104,7 @@ class ArrayUnaryOp {
      * Gets the i-th elements of A and B and asks the static OperatorType::apply
      * method to perform the calculation
      */
-    value_type operator[](int i) const { return OperatorType::apply(A[i]); }
+    value_type operator[](size_t i) const { return OperatorType::apply(A[i]); }
 };
 
 
@@ -132,7 +132,7 @@ class ArrayBinaryOp {
      * Gets the i-th elements of A and B and asks the static OperatorType::apply 
      * method to perform the calculation
      */
-    value_type operator[](int i) const { return OperatorType::apply(A[i], B[i]); }
+    value_type operator[](size_t i) const { return OperatorType::apply(A[i], B[i]); }
 };
 
 template<typename T>
@@ -142,7 +142,7 @@ struct ArrayConstantExp {
   public:
     typedef T value_type;
     ArrayConstantExp(const T& val_) : val(val_) {}
-    value_type operator[](int i) const { return val; }
+    value_type operator[](size_t) const { return val; }
 };
 
 /**An operator type implementing addition
@@ -215,7 +215,7 @@ struct ArrayOpUnaryMinus {
 
 /* Operator for two ArrayExpression objects */
 #define EXPR_EXPR(op, symbol)                                                   \
-  template<class exp1, class exp2, int length>                                  \
+  template<class exp1, class exp2, size_t length>                                  \
   ArrayExpression<                                                              \
     ArrayBinaryOp<                                                              \
       ArrayExpression<exp1, length>,                                            \
@@ -243,9 +243,9 @@ struct ArrayOpUnaryMinus {
 #define ARR_ARR(op, symbol)                                                     \
 template <                                                                      \
   class T,                                                                      \
-  int length,                                                                   \
-  template<int> class CheckingPolicy1,                                          \
-  template<int> class CheckingPolicy2                                           \
+  size_t length,                                                                   \
+  template<size_t> class CheckingPolicy1,                                          \
+  template<size_t> class CheckingPolicy2                                           \
 >                                                                               \
 ArrayExpression<                                                                \
   ArrayBinaryOp<                                                                \
@@ -274,8 +274,8 @@ operator symbol (                                                               
 template<                                                                       \
   class exp,                                                                    \
   class T,                                                                      \
-  int length,                                                                   \
-  template<int> class CheckingPolicy                                            \
+  size_t length,                                                                   \
+  template<size_t> class CheckingPolicy                                            \
 >                                                                               \
 ArrayExpression<                                                                \
   ArrayBinaryOp<                                                                \
@@ -305,8 +305,8 @@ operator symbol (                                                               
 template<                                                                       \
   class exp,                                                                    \
   class T,                                                                      \
-  int length,                                                                   \
-  template<int> class CheckingPolicy                                            \
+  size_t length,                                                                   \
+  template<size_t> class CheckingPolicy                                            \
 >                                                                               \
 ArrayExpression<                                                                \
   ArrayBinaryOp<                                                                \
@@ -332,7 +332,7 @@ operator symbol (                                                               
 
 /* Operator for a Scalar and a ArrayExpression object */
 #define SCAL_EXPR(op, symbol)                                                   \
-template<class T, class exp, int length>                                        \
+template<class T, class exp, size_t length>                                        \
 ArrayExpression<                                                                \
   ArrayBinaryOp<                                                                \
     ArrayConstantExp<T>,                                                        \
@@ -354,7 +354,7 @@ operator symbol (const T &A, const ArrayExpression<exp, length> &B)             
                                                                                   
 /* Operator for a ArrayExpression and a Scalar object */
 #define EXPR_SCAL(op, symbol)                                                   \
-template<class T, class exp, int length>                                        \
+template<class T, class exp, size_t length>                                        \
 ArrayExpression<                                                                \
   ArrayBinaryOp<                                                                \
     ArrayExpression<exp, length>,                                               \
@@ -375,7 +375,7 @@ operator symbol (const ArrayExpression<exp, length> &A, const T &B)             
 }
 /* Operator for a Scalar and a Array object */
 #define SCAL_ARR(op, symbol)                                                    \
-template<class T, int length, template<int> class CheckingPolicy>               \
+template<class T, size_t length, template<size_t> class CheckingPolicy>               \
 ArrayExpression<                                                                \
   ArrayBinaryOp<                                                                \
     ArrayConstantExp<T>,                                                        \
@@ -397,7 +397,7 @@ operator symbol (const T &A, const Array<T,length,CheckingPolicy> &B)           
 
 /* Operator for a Array and a Scalar object */
 #define ARR_SCAL(op, symbol)                                                    \
-template<class T, int length, template<int> class CheckingPolicy>               \
+template<class T, size_t length, template<size_t> class CheckingPolicy>               \
 ArrayExpression<                                                                \
   ArrayBinaryOp<                                                                \
     Array<T,length,CheckingPolicy>,                                             \
@@ -421,8 +421,8 @@ operator symbol (const Array<T,length,CheckingPolicy> &A, const T &B)           
 #define UNARY_ARR(op, symbol)                                                   \
 template <                                                                      \
   class T,                                                                      \
-  int length,                                                                   \
-  template<int> class CheckingPolicy1                                           \
+  size_t length,                                                                   \
+  template<size_t> class CheckingPolicy1                                           \
 >                                                                               \
 ArrayExpression<                                                                \
   ArrayUnaryOp<                                                                 \
@@ -449,8 +449,8 @@ operator symbol (                                                               
 template<                                                                       \
   class exp,                                                                    \
   class T,                                                                      \
-  int length,                                                                   \
-  template<int> class CheckingPolicy                                            \
+  size_t length,                                                                   \
+  template<size_t> class CheckingPolicy                                            \
 >                                                                               \
 ArrayExpression<                                                                \
   ArrayUnaryOp<                                                                 \
@@ -541,58 +541,58 @@ UNARY_EXPR(ArrayOpUnaryMinus,-)
 #undef UNARY_EXPR
 
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator=(const ArrayExpression<Operator, length> &expr)
+Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator=(const ArrayExpression<Operator, Length> &expr)
 {
-    for (int i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] = expr[i];
     return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator+=(const ArrayExpression<Operator, length> &expr)
+Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator+=(const ArrayExpression<Operator, Length> &expr)
 {
-    for (int i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] += expr[i];
     return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator-=(const ArrayExpression<Operator, length> &expr)
+Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator-=(const ArrayExpression<Operator, Length> &expr)
 {
-    for (int i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] -= expr[i];
     return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator*=(const ArrayExpression<Operator, length> &expr)
+Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator*=(const ArrayExpression<Operator, Length> &expr)
 {
-    for (int i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] *= expr[i];
     return *this;
 }
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator/=(const ArrayExpression<Operator, length> &expr)
+Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator/=(const ArrayExpression<Operator, Length> &expr)
 {
-    for (int i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] /= expr[i];
     return *this;
 }
 
 
 
-template<class T, int length, template <int> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-inline Array<T,length,CheckingPolicy>::Array(const ArrayExpression<Operator, length> &expr)
+inline Array<T,Length,CheckingPolicy>::Array(const ArrayExpression<Operator, Length> &expr)
 {
-    for (int i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] = expr[i];
 }
 } // namespace schnek
