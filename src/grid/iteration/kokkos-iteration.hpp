@@ -63,50 +63,7 @@ namespace schnek {
     //==================== RangeKokkosIterationPolicy =================
     //=================================================================
 
-    namespace implementation {
-
-        template<class ArrayType, size_t... indices>
-        inline std::initializer_list<typename ArrayType::value_type> arrayToInitializerListHelper(
-            const ArrayType &a, 
-            std::index_sequence<indices...>
-        ) 
-        {
-            return std::initializer_list<typename ArrayType::value_type>{a[indices]...};
-        }
-
-        template<class ArrayType>
-        inline std::initializer_list<typename ArrayType::value_type> arrayToInitializerList(const ArrayType &a)
-        {
-            return arrayToInitializerListHelper(a, std::make_index_sequence<ArrayType::Length>{});
-        }
-
-        // template <typename R, typename... T>
-        // std::initializer_list<R> make_initializer_list(T... t) {
-        //     return {t...};
-        // }
-
-
-// Here is an example how an initializer list can be created generically
-
-// template<size_t rank>
-// void assign(Array<int, rank> a) {
-//     std::initializer_list<int> list;
-//     assign_helper(a, list, std::make_index_sequence<rank>{});
-// }
-
-// template<size_t rank, size_t... indices>
-// void assign_helper(Array<int, rank> a, std::initializer_list<int>& list, std::index_sequence<indices...>) {
-//     list = {a[indices]...};
-// }
-
-// int main() {
-//     Array<int, 3> a = {1, 2, 3};
-//     assign(a);
-//     return 0;
-// }
-
-    }
-
+    // specialization for 1d because Kokkos::MDRangePolicy can only be used for rank>1
     template<typename executionSpace>
     struct RangeKokkosIterationPolicy<1, executionSpace>
     {
@@ -140,16 +97,24 @@ namespace schnek {
     inline void RangeKokkosIterationPolicy<rank, executionSpace>::forEach(const RangeType& range, const Func &func)
     {
         typedef typename RangeType::value_type T;
+        T lo[rank];
+        T hi[rank];
+        const typename RangeType::LimitType& loR = range.getLo();
+        const typename RangeType::LimitType& hiR = range.getHi();
+        
+        for (size_t i=0; i<rank; ++i)
+        {
+            lo[i] = loR[i];
+            hi[i] = hiR[i] + 1;
+        }
+
         Kokkos::MDRangePolicy< 
             Kokkos::IndexType<T>,
             Kokkos::Rank<rank>, 
             executionSpace 
-        > rangePolicy(
-            implementation::arrayToInitializerList(range.getLo()), 
-            implementation::arrayToInitializerList(range.getHi() + 1) 
-        );
+        > rangePolicy(lo, hi);
 
-        Kokkos::parallel_for(rangePolicy, [=]<typename ...T>(T ... ind)
+        Kokkos::parallel_for(rangePolicy, [=](auto ... ind)
         {
             func(typename RangeType::LimitType{ind...});
         });

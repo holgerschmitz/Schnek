@@ -44,34 +44,34 @@ class ArrayExpression;
  */
 template<
   class T, 
-  size_t length, 
+  size_t Length, 
   template<size_t> class CheckingPolicy = ArrayNoArgCheck
 >
 class Array :
-    public CheckingPolicy<length>
+    public CheckingPolicy<Length>
 {
   private:
     /// The data stored in a C array
-    T data[length];
+    T data[Length];
 
     /// ThisType defined for convenience
-    typedef Array<T,length,CheckingPolicy> ThisType;
+    typedef Array<T,Length,CheckingPolicy> ThisType;
   public:
     typedef T value_type;
-    enum {Length = length};
+    static constexpr size_t length = Length;
     
     /// The default constructor
     Array();
     /// Copy constructor copies the values
     template<template<size_t> class CheckingPolicy2>
-    Array(const Array<T, length, CheckingPolicy2> &);
+    Array(const Array<T, Length, CheckingPolicy2> &);
 
     /// Construct using an array expression
     template<class Operator>
-    Array(const ArrayExpression<Operator, length> &);
+    Array(const ArrayExpression<Operator, Length> &);
 
     /// Construct using an initializer list
-    Array(std::initializer_list<T> l);
+    // Array(std::initializer_list<T> l);
 
     /// Constructor for length=1 arrays setting the data explicitely
     Array(const T&);
@@ -119,11 +119,11 @@ class Array :
      * of the LHS.
      */
     template<class T2, template <size_t> class CheckingPolicy2>
-    Array<T,length,CheckingPolicy> &operator=(const Array<T2,length,CheckingPolicy2>&);
+    Array<T,Length,CheckingPolicy> &operator=(const Array<T2,Length,CheckingPolicy2>&);
 
     /// Assignment operator using an array expression
     template<class Operator>
-    Array<T,length,CheckingPolicy> &operator=(const ArrayExpression<Operator, length> &);
+    Array<T,Length,CheckingPolicy> &operator=(const ArrayExpression<Operator, Length> &);
 
     /** Addition Assignment operator
      *
@@ -132,7 +132,7 @@ class Array :
      * of the LHS.
      */
     template<class T2, template <size_t> class CheckingPolicy2>
-    Array<T,length,CheckingPolicy> &operator+=(const Array<T2,length,CheckingPolicy2>&);
+    Array<T,Length,CheckingPolicy> &operator+=(const Array<T2,Length,CheckingPolicy2>&);
 
     /** Element-wise multiplication assignment operator
      *
@@ -141,7 +141,7 @@ class Array :
      * of the LHS.
      */
     template<class T2, template <size_t> class CheckingPolicy2>
-    Array<T,length,CheckingPolicy> &operator*=(const Array<T2,length,CheckingPolicy2>&);
+    Array<T,Length,CheckingPolicy> &operator*=(const Array<T2,Length,CheckingPolicy2>&);
 
     /** Element-wise division assignment operator
      *
@@ -150,7 +150,7 @@ class Array :
      * of the LHS.
      */
     template<class T2, template <size_t> class CheckingPolicy2>
-    Array<T,length,CheckingPolicy> &operator/=(const Array<T2,length,CheckingPolicy2>&);
+    Array<T,Length,CheckingPolicy> &operator/=(const Array<T2,Length,CheckingPolicy2>&);
 
     /** Subtraction Assignment operator
      *
@@ -159,7 +159,7 @@ class Array :
      * of the LHS.
      */
     template<class T2, template <size_t> class CheckingPolicy2>
-    Array<T,length,CheckingPolicy> &operator-=(const Array<T2,length,CheckingPolicy2>&);
+    Array<T,Length,CheckingPolicy> &operator-=(const Array<T2,Length,CheckingPolicy2>&);
 
     /** Addition Assignment operator with scalar RHS.
      *
@@ -168,7 +168,7 @@ class Array :
      * of the LHS.
      */
     template<typename T2>
-    Array<T,length,CheckingPolicy> &operator+=(const T2);
+    Array<T,Length,CheckingPolicy> &operator+=(const T2);
 
     /** Subtraction Assignment operator with scalar RHS.
      *
@@ -177,7 +177,7 @@ class Array :
      * of the LHS.
      */
     template<typename T2>
-    Array<T,length,CheckingPolicy> &operator-=(const T2);
+    Array<T,Length,CheckingPolicy> &operator-=(const T2);
 
     /** Multiplication Assignment operator with scalar RHS.
      *
@@ -186,7 +186,7 @@ class Array :
      * of the LHS.
      */
     template<typename T2>
-    Array<T,length,CheckingPolicy> &operator*=(const T2);
+    Array<T,Length,CheckingPolicy> &operator*=(const T2);
 
     /** Division Assignment operator with scalar RHS.
      *
@@ -195,47 +195,47 @@ class Array :
      * of the LHS.
      */
     template<typename T2>
-    Array<T,length,CheckingPolicy> &operator/=(const T2);
+    Array<T,Length,CheckingPolicy> &operator/=(const T2);
 
 
     /// Addition Assignment operator using an array expression
     template<class Operator>
-    Array<T,length,CheckingPolicy> &operator+=(const ArrayExpression<Operator, length> &);
+    Array<T,Length,CheckingPolicy> &operator+=(const ArrayExpression<Operator, Length> &);
 
     /// Subtraction Assignment operator using an array expression
     template<class Operator>
-    Array<T,length,CheckingPolicy> &operator-=(const ArrayExpression<Operator, length> &);
+    Array<T,Length,CheckingPolicy> &operator-=(const ArrayExpression<Operator, Length> &);
 
     /// Element-wise multiplication assignment operator using an array expression
     template<class Operator>
-    Array<T,length,CheckingPolicy> &operator*=(const ArrayExpression<Operator, length> &);
+    Array<T,Length,CheckingPolicy> &operator*=(const ArrayExpression<Operator, Length> &);
 
     /// Element-wise multiplication assignment operator using an array expression
     template<class Operator>
-    Array<T,length,CheckingPolicy> &operator/=(const ArrayExpression<Operator, length> &);
+    Array<T,Length,CheckingPolicy> &operator/=(const ArrayExpression<Operator, Length> &);
 
   public:
     /// Sets all fields to zero
-    Array<T,length,CheckingPolicy>& clear();
+    Array<T,Length,CheckingPolicy>& clear();
     /// Fills all fields with a given value
-    Array<T,length,CheckingPolicy>& fill(const T&);
+    Array<T,Length,CheckingPolicy>& fill(const T&);
     
     /// projects the Array onto an Array of shorter length
     template<size_t destLength>
     Array<T,destLength,CheckingPolicy> project() const;
 
-    Array<T,length-1,CheckingPolicy> projectDim(size_t dim) const;
+    Array<T,Length-1,CheckingPolicy> projectDim(size_t dim) const;
 
 
     /** Returns an array filled with zeros.
      *  Only available if int can be cast to the type T
      */
-    static Array<T,length,CheckingPolicy> Zero();
+    static Array<T,Length,CheckingPolicy> Zero();
     
     /** Returns an array filled with ones.
      *  Only available if int can be cast to the type T
      */
-    static Array<T,length,CheckingPolicy> Ones();
+    static Array<T,Length,CheckingPolicy> Ones();
 
     /// Returns the product of all elements
     T product() const;
@@ -253,42 +253,42 @@ class Array :
 
 template<
   class T1, class T2,
-  size_t length, 
+  size_t Length, 
   template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
 bool operator==(
-  const schnek::Array<T1,length,CheckingPolicy1>&,
-  const schnek::Array<T2,length,CheckingPolicy2>&
+  const schnek::Array<T1,Length,CheckingPolicy1>&,
+  const schnek::Array<T2,Length,CheckingPolicy2>&
 );
 
 template<
   class T1, class T2,
-  size_t length, 
+  size_t Length, 
   template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
 bool operator!=(
-  const schnek::Array<T1,length,CheckingPolicy1>&,
-  const schnek::Array<T2,length,CheckingPolicy2>&
+  const schnek::Array<T1,Length,CheckingPolicy1>&,
+  const schnek::Array<T2,Length,CheckingPolicy2>&
 );
 
 template<
   class T1, class T2,
-  size_t length, 
+  size_t Length, 
   template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
 bool operator<(
-  const schnek::Array<T1,length,CheckingPolicy1>&,
-  const schnek::Array<T2,length,CheckingPolicy2>&
+  const schnek::Array<T1,Length,CheckingPolicy1>&,
+  const schnek::Array<T2,Length,CheckingPolicy2>&
 );
 
 template<
   class T1, class T2,
-  size_t length, 
+  size_t Length, 
   template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
 bool operator<=(
-  const schnek::Array<T1,length,CheckingPolicy1>&,
-  const schnek::Array<T2,length,CheckingPolicy2>&
+  const schnek::Array<T1,Length,CheckingPolicy1>&,
+  const schnek::Array<T2,Length,CheckingPolicy2>&
 );
 
 

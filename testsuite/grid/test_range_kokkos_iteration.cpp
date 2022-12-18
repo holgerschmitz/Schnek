@@ -52,7 +52,6 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d,  KokkosIterationTest)
         Range<int, 1, ArrayBoostTestArgCheck> range(lo, hi);
         GridType grid(lo, hi);
 
-        int count = 0;
         RangeKokkosIterationPolicy<1>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = pos[0];
         });
@@ -82,409 +81,188 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, KokkosIterationTest )
         GridType grid(lo, hi);
         auto dims = grid.getDims();
 
-        int count = 0;
         RangeKokkosIterationPolicy<2>::forEach(range, [&](const GridType::IndexType& pos){
-            grid[pos] = count++;
+            grid[pos] = pos[0] + 3*pos[1];
         });
+
+        Kokkos::fence();
 
         for (int i=lo[0]; i<=hi[0]; ++i)
         {
             for (int j=lo[1]; j<=hi[1]; ++j)
             {
-                BOOST_CHECK_EQUAL(grid(i, j), i - lo[0] + (j-lo[1])*dims[0]);
+                BOOST_CHECK_EQUAL(grid(i, j), i + 3*j);
             }
         }
         ++show_progress;
     }
 }
 
-// BOOST_FIXTURE_TEST_CASE( iterate_3d, KokkosIterationTest )
-// {
-//     typedef Grid<int, 3, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+BOOST_FIXTURE_TEST_CASE( iterate_3d, KokkosIterationTest )
+{
+    typedef Grid<int, 3, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
 
-//     GridType::IndexType lo, hi;
+    GridType::IndexType lo, hi;
 
-//     boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(30);
 
-//     for (int n=0; n<30; ++n)
-//     {
-//         random_extent<3>(lo, hi);
-//         Range<int, 3, ArrayBoostTestArgCheck> range(lo, hi);
-//         GridType grid(lo, hi);
-//         auto dims = grid.getDims();
+    for (int n=0; n<30; ++n)
+    {
+        random_extent<3>(lo, hi);
+        Range<int, 3, ArrayBoostTestArgCheck> range(lo, hi);
+        GridType grid(lo, hi);
+        auto dims = grid.getDims();
 
-//         int count = 0;
-//         RangeKokkosIterationPolicy<3>::forEach(range, [&](const GridType::IndexType& pos){
-//             grid[pos] = count++;
-//         });
+        RangeKokkosIterationPolicy<3>::forEach(range, [&](const GridType::IndexType& pos){
+            grid[pos] = pos[0] + 3*pos[1] + 7*pos[2];
+        });
 
-//         for (int i=lo[0]; i<=hi[0]; ++i)
-//         {
-//             for (int j=lo[1]; j<=hi[1]; ++j)
-//             {
-//                 for (int k=lo[2]; k<=hi[2]; ++k)
-//                 {
-//                     BOOST_CHECK_EQUAL(grid(i, j, k), i - lo[0] + (j-lo[1] + (k - lo[2])*dims[1])*dims[0]);
-//                 }
-//             }
-//         }
-//         ++show_progress;
-//     }
-// }
+        Kokkos::fence();
 
-// BOOST_FIXTURE_TEST_CASE( iterate_4d, KokkosIterationTest )
-// {
-//     typedef Grid<int, 4, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+        for (int i=lo[0]; i<=hi[0]; ++i)
+        {
+            for (int j=lo[1]; j<=hi[1]; ++j)
+            {
+                for (int k=lo[2]; k<=hi[2]; ++k)
+                {
+                    BOOST_CHECK_EQUAL(grid(i, j, k), i + 3*j + 7*k);
+                }
+            }
+        }
+        ++show_progress;
+    }
+}
 
-//     GridType::IndexType lo, hi;
+BOOST_FIXTURE_TEST_CASE( iterate_4d, KokkosIterationTest )
+{
+    typedef Grid<int, 4, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
 
-//     boost::timer::progress_display show_progress(30);
+    GridType::IndexType lo, hi;
 
-//     for (int n=0; n<30; ++n)
-//     {
-//         random_extent<4>(lo, hi);
-//         Range<int, 4, ArrayBoostTestArgCheck> range(lo, hi);
-//         GridType grid(lo, hi);
-//         auto dims = grid.getDims();
+    boost::timer::progress_display show_progress(30);
 
-//         int count = 0;
-//         RangeKokkosIterationPolicy<4>::forEach(range, [&](const GridType::IndexType& pos){
-//             grid[pos] = count++;
-//         });
+    for (int n=0; n<30; ++n)
+    {
+        random_extent<4>(lo, hi);
+        Range<int, 4, ArrayBoostTestArgCheck> range(lo, hi);
+        GridType grid(lo, hi);
+        auto dims = grid.getDims();
 
-//         for (int i=lo[0]; i<=hi[0]; ++i)
-//         {
-//             for (int j=lo[1]; j<=hi[1]; ++j)
-//             {
-//                 for (int k=lo[2]; k<=hi[2]; ++k)
-//                 {
-//                     for (int l=lo[3]; l<=hi[3]; ++l)
-//                     {
-//                         BOOST_CHECK_EQUAL(grid(i, j, k, l), 
-//                             i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3])*dims[2])*dims[1])*dims[0]
-//                         );
-//                     }
-//                 }
-//             }
-//         }
-//         ++show_progress;
-//     }
-// }
+        RangeKokkosIterationPolicy<4>::forEach(range, [&](const GridType::IndexType& pos){
+            grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3];
+        });
 
+        Kokkos::fence();
 
-// BOOST_FIXTURE_TEST_CASE( iterate_5d, KokkosIterationTest )
-// {
-//     typedef Grid<int, 5, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-
-//     GridType::IndexType lo, hi;
-
-//     boost::timer::progress_display show_progress(30);
-
-//     for (int n=0; n<30; ++n)
-//     {
-//         random_extent<5>(lo, hi);
-//         Range<int, 5, ArrayBoostTestArgCheck> range(lo, hi);
-//         GridType grid(lo, hi);
-//         auto dims = grid.getDims();
-
-//         int count = 0;
-//         RangeKokkosIterationPolicy<5>::forEach(range, [&](const GridType::IndexType& pos){
-//             grid[pos] = count++;
-//         });
-
-//         for (int i=lo[0]; i<=hi[0]; ++i)
-//         {
-//             for (int j=lo[1]; j<=hi[1]; ++j)
-//             {
-//                 for (int k=lo[2]; k<=hi[2]; ++k)
-//                 {
-//                     for (int l=lo[3]; l<=hi[3]; ++l)
-//                     {
-//                         for (int m=lo[4]; m<=hi[4]; ++m)
-//                         {
-//                             BOOST_CHECK_EQUAL(grid(i, j, k, l, m), 
-//                                 i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3]
-//                                     + (m - lo[4])*dims[3]
-//                                 )*dims[2])*dims[1])*dims[0]
-//                             );
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//         ++show_progress;
-//     }
-// }
+        for (int i=lo[0]; i<=hi[0]; ++i)
+        {
+            for (int j=lo[1]; j<=hi[1]; ++j)
+            {
+                for (int k=lo[2]; k<=hi[2]; ++k)
+                {
+                    for (int l=lo[3]; l<=hi[3]; ++l)
+                    {
+                        BOOST_CHECK_EQUAL(grid(i, j, k, l), 
+                            i + 3*j + 7*k + 13*l
+                        );
+                    }
+                }
+            }
+        }
+        ++show_progress;
+    }
+}
 
 
-// BOOST_FIXTURE_TEST_CASE( iterate_6d, KokkosIterationTest )
-// {
-//     typedef Grid<int, 6, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+BOOST_FIXTURE_TEST_CASE( iterate_5d, KokkosIterationTest )
+{
+    typedef Grid<int, 5, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
 
-//     GridType::IndexType lo, hi;
+    GridType::IndexType lo, hi;
 
-//     boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(30);
 
-//     for (int n=0; n<30; ++n)
-//     {
-//         random_extent<6>(lo, hi);
-//         Range<int, 6, ArrayBoostTestArgCheck> range(lo, hi);
-//         GridType grid(lo, hi);
-//         auto dims = grid.getDims();
+    for (int n=0; n<30; ++n)
+    {
+        random_extent<5>(lo, hi);
+        Range<int, 5, ArrayBoostTestArgCheck> range(lo, hi);
+        GridType grid(lo, hi);
+        auto dims = grid.getDims();
 
-//         int count = 0;
-//         RangeKokkosIterationPolicy<6>::forEach(range, [&](const GridType::IndexType& pos){
-//             grid[pos] = count++;
-//         });
+        RangeKokkosIterationPolicy<5>::forEach(range, [&](const GridType::IndexType& pos){
+            grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3] + 23*pos[4];
+        });
 
-//         for (int i=lo[0]; i<=hi[0]; ++i)
-//         {
-//             for (int j=lo[1]; j<=hi[1]; ++j)
-//             {
-//                 for (int k=lo[2]; k<=hi[2]; ++k)
-//                 {
-//                     for (int l=lo[3]; l<=hi[3]; ++l)
-//                     {
-//                         for (int m=lo[4]; m<=hi[4]; ++m)
-//                         {
-//                             for (int n=lo[5]; n<=hi[5]; ++n)
-//                             {
-//                                 BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n), 
-//                                     i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3]
-//                                         + (m - lo[4] + (n - lo[5])*dims[4])*dims[3]
-//                                     )*dims[2])*dims[1])*dims[0]
-//                                 );
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//         ++show_progress;
-//     }
-// }
+        Kokkos::fence();
 
-// BOOST_FIXTURE_TEST_CASE( iterate_7d, KokkosIterationTest )
-// {
-//     typedef Grid<int, 7, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-
-//     GridType::IndexType lo, hi;
-
-//     boost::timer::progress_display show_progress(30);
-
-//     for (int n=0; n<30; ++n)
-//     {
-//         random_extent<7>(lo, hi);
-//         Range<int, 7, ArrayBoostTestArgCheck> range(lo, hi);
-//         GridType grid(lo, hi);
-//         auto dims = grid.getDims();
-
-//         int count = 0;
-//         RangeKokkosIterationPolicy<7>::forEach(range, [&](const GridType::IndexType& pos){
-//             grid[pos] = count++;
-//         });
-
-//         for (int i=lo[0]; i<=hi[0]; ++i)
-//         {
-//             for (int j=lo[1]; j<=hi[1]; ++j)
-//             {
-//                 for (int k=lo[2]; k<=hi[2]; ++k)
-//                 {
-//                     for (int l=lo[3]; l<=hi[3]; ++l)
-//                     {
-//                         for (int m=lo[4]; m<=hi[4]; ++m)
-//                         {
-//                             for (int n=lo[5]; n<=hi[5]; ++n)
-//                             {
-//                                 for (int o=lo[6]; o<=hi[6]; ++o)
-//                                 {
-//                                     BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n, o), 
-//                                         i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3]
-//                                             + (m - lo[4] + (n - lo[5] + (o - lo[6])*dims[5])*dims[4])*dims[3]
-//                                         )*dims[2])*dims[1])*dims[0]
-//                                     );
-//                                 }
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//         ++show_progress;
-//     }
-// }
+        for (int i=lo[0]; i<=hi[0]; ++i)
+        {
+            for (int j=lo[1]; j<=hi[1]; ++j)
+            {
+                for (int k=lo[2]; k<=hi[2]; ++k)
+                {
+                    for (int l=lo[3]; l<=hi[3]; ++l)
+                    {
+                        for (int m=lo[4]; m<=hi[4]; ++m)
+                        {
+                            BOOST_CHECK_EQUAL(grid(i, j, k, l, m), 
+                                i + 3*j + 7*k + 13*l + 23*m
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        ++show_progress;
+    }
+}
 
 
-// BOOST_FIXTURE_TEST_CASE( iterate_8d, KokkosIterationTest )
-// {
-//     typedef Grid<int, 8, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+BOOST_FIXTURE_TEST_CASE( iterate_6d, KokkosIterationTest )
+{
+    typedef Grid<int, 6, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
 
-//     GridType::IndexType lo, hi;
+    GridType::IndexType lo, hi;
 
-//     boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(30);
 
-//     for (int n=0; n<30; ++n)
-//     {
-//         random_extent<8>(lo, hi);
-//         Range<int, 8, ArrayBoostTestArgCheck> range(lo, hi);
-//         GridType grid(lo, hi);
-//         auto dims = grid.getDims();
+    for (int n=0; n<30; ++n)
+    {
+        random_extent<6>(lo, hi);
+        Range<int, 6, ArrayBoostTestArgCheck> range(lo, hi);
+        GridType grid(lo, hi);
+        auto dims = grid.getDims();
 
-//         int count = 0;
-//         RangeKokkosIterationPolicy<8>::forEach(range, [&](const GridType::IndexType& pos){
-//             grid[pos] = count++;
-//         });
+        RangeKokkosIterationPolicy<6>::forEach(range, [&](const GridType::IndexType& pos){
+            grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3] + 23*pos[4] + 47*pos[5];
+        });
 
-//         for (int i=lo[0]; i<=hi[0]; ++i)
-//         {
-//             for (int j=lo[1]; j<=hi[1]; ++j)
-//             {
-//                 for (int k=lo[2]; k<=hi[2]; ++k)
-//                 {
-//                     for (int l=lo[3]; l<=hi[3]; ++l)
-//                     {
-//                         for (int m=lo[4]; m<=hi[4]; ++m)
-//                         {
-//                             for (int n=lo[5]; n<=hi[5]; ++n)
-//                             {
-//                                 for (int o=lo[6]; o<=hi[6]; ++o)
-//                                 {
-//                                     for (int p=lo[7]; p<=hi[7]; ++p)
-//                                     {
-//                                         BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n, o, p), 
-//                                             i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3]
-//                                                 + (m - lo[4] + (n - lo[5] + (o - lo[6] + (p - lo[7])*dims[6])*dims[5])*dims[4])*dims[3]
-//                                             )*dims[2])*dims[1])*dims[0]
-//                                         );
-//                                     }
-//                                 }
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//         ++show_progress;
-//     }
-// }
+        Kokkos::fence();
 
-
-// BOOST_FIXTURE_TEST_CASE( iterate_9d, KokkosIterationTest )
-// {
-//     typedef Grid<int, 9, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-
-//     GridType::IndexType lo, hi;
-
-//     boost::timer::progress_display show_progress(30);
-
-//     for (int n=0; n<30; ++n)
-//     {
-//         random_extent<9>(lo, hi);
-//         Range<int, 9, ArrayBoostTestArgCheck> range(lo, hi);
-//         GridType grid(lo, hi);
-//         auto dims = grid.getDims();
-
-//         int count = 0;
-//         RangeKokkosIterationPolicy<9>::forEach(range, [&](const GridType::IndexType& pos){
-//             grid[pos] = count++;
-//         });
-
-//         for (int i=lo[0]; i<=hi[0]; ++i)
-//         {
-//             for (int j=lo[1]; j<=hi[1]; ++j)
-//             {
-//                 for (int k=lo[2]; k<=hi[2]; ++k)
-//                 {
-//                     for (int l=lo[3]; l<=hi[3]; ++l)
-//                     {
-//                         for (int m=lo[4]; m<=hi[4]; ++m)
-//                         {
-//                             for (int n=lo[5]; n<=hi[5]; ++n)
-//                             {
-//                                 for (int o=lo[6]; o<=hi[6]; ++o)
-//                                 {
-//                                     for (int p=lo[7]; p<=hi[7]; ++p)
-//                                     {
-//                                         for (int q=lo[8]; q<=hi[8]; ++q)
-//                                         {
-//                                             BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n, o, p, q), 
-//                                                 i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3] + (m - lo[4] 
-//                                                     + (n - lo[5] + (o - lo[6] + (p - lo[7] + (q - lo[8])*dims[7])*dims[6])*dims[5])*dims[4]
-//                                                 )*dims[3])*dims[2])*dims[1])*dims[0]
-//                                             );
-//                                         }
-//                                     }
-//                                 }
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//         ++show_progress;
-//     }
-// }
-
-// BOOST_FIXTURE_TEST_CASE( iterate_10d, KokkosIterationTest )
-// {
-//     typedef Grid<int, 10, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-
-//     GridType::IndexType lo, hi;
-
-//     boost::timer::progress_display show_progress(30);
-
-//     for (int n=0; n<30; ++n)
-//     {
-//         random_extent<10>(lo, hi);
-//         Range<int, 10, ArrayBoostTestArgCheck> range(lo, hi);
-//         GridType grid(lo, hi);
-//         auto dims = grid.getDims();
-
-//         int count = 0;
-//         RangeKokkosIterationPolicy<10>::forEach(range, [&](const GridType::IndexType& pos){
-//             grid[pos] = count++;
-//         });
-
-//         for (int i=lo[0]; i<=hi[0]; ++i)
-//         {
-//             for (int j=lo[1]; j<=hi[1]; ++j)
-//             {
-//                 for (int k=lo[2]; k<=hi[2]; ++k)
-//                 {
-//                     for (int l=lo[3]; l<=hi[3]; ++l)
-//                     {
-//                         for (int m=lo[4]; m<=hi[4]; ++m)
-//                         {
-//                             for (int n=lo[5]; n<=hi[5]; ++n)
-//                             {
-//                                 for (int o=lo[6]; o<=hi[6]; ++o)
-//                                 {
-//                                     for (int p=lo[7]; p<=hi[7]; ++p)
-//                                     {
-//                                         for (int q=lo[8]; q<=hi[8]; ++q)
-//                                         {
-//                                             for (int r=lo[9]; r<=hi[9]; ++r)
-//                                             {
-//                                                 BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n, o, p, q, r), 
-//                                                     i - lo[0] + (j-lo[1] + (k - lo[2] + (l - lo[3] + (m - lo[4] 
-//                                                         + (n - lo[5] + (o - lo[6] + (p - lo[7] + (q - lo[8] + (r - lo[9])*dims[8])*dims[7])*dims[6])*dims[5])*dims[4]
-//                                                     )*dims[3])*dims[2])*dims[1])*dims[0]
-//                                                 );
-//                                             }
-//                                         }
-//                                     }
-//                                 }
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//         ++show_progress;
-//     }
-// }
-
-
+        for (int i=lo[0]; i<=hi[0]; ++i)
+        {
+            for (int j=lo[1]; j<=hi[1]; ++j)
+            {
+                for (int k=lo[2]; k<=hi[2]; ++k)
+                {
+                    for (int l=lo[3]; l<=hi[3]; ++l)
+                    {
+                        for (int m=lo[4]; m<=hi[4]; ++m)
+                        {
+                            for (int n=lo[5]; n<=hi[5]; ++n)
+                            {
+                                BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n), 
+                                    i + 3*j + 7*k + 13*l + 23*m + 47*n
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        ++show_progress;
+    }
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 

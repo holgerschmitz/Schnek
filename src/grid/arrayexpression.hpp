@@ -48,7 +48,7 @@ class ArrayExpression {
   public:
     typedef typename Operator::value_type value_type;
 
-    static const size_t length = Length;
+    static constexpr size_t length = Length;
 
     /**Construct the expression by passing a reference*/
     ArrayExpression(const Operator Op_) : Op(Op_) {}
@@ -541,58 +541,58 @@ UNARY_EXPR(ArrayOpUnaryMinus,-)
 #undef UNARY_EXPR
 
 
-template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator=(const ArrayExpression<Operator, length> &expr)
+Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator=(const ArrayExpression<Operator, Length> &expr)
 {
-    for (size_t i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] = expr[i];
     return *this;
 }
 
-template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator+=(const ArrayExpression<Operator, length> &expr)
+Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator+=(const ArrayExpression<Operator, Length> &expr)
 {
-    for (size_t i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] += expr[i];
     return *this;
 }
 
-template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator-=(const ArrayExpression<Operator, length> &expr)
+Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator-=(const ArrayExpression<Operator, Length> &expr)
 {
-    for (size_t i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] -= expr[i];
     return *this;
 }
 
-template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator*=(const ArrayExpression<Operator, length> &expr)
+Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator*=(const ArrayExpression<Operator, Length> &expr)
 {
-    for (size_t i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] *= expr[i];
     return *this;
 }
 
-template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,length,CheckingPolicy> &Array<T,length,CheckingPolicy>::operator/=(const ArrayExpression<Operator, length> &expr)
+Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator/=(const ArrayExpression<Operator, Length> &expr)
 {
-    for (size_t i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] /= expr[i];
     return *this;
 }
 
 
 
-template<class T, size_t length, template <size_t> class CheckingPolicy>
+template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-inline Array<T,length,CheckingPolicy>::Array(const ArrayExpression<Operator, length> &expr)
+inline Array<T,Length,CheckingPolicy>::Array(const ArrayExpression<Operator, Length> &expr)
 {
-    for (size_t i=0; i<length; ++i)
+    for (size_t i=0; i<Length; ++i)
       data[i] = expr[i];
 }
 } // namespace schnek
