@@ -31,9 +31,9 @@
 #include "blockparameters.hpp"
 
 #include <boost/variant.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 
+#include <memory>
 #include <map>
 #include <set>
 #include <list>
@@ -67,7 +67,7 @@ class DependencyMap
 
     /// This is used internally. The pointers are to VarInfo objects stored in the dependencies map.
     typedef std::map<long, VarInfo*> RefDepMap;
-    typedef boost::shared_ptr<RefDepMap> pRefDepMap;
+    typedef std::shared_ptr<RefDepMap> pRefDepMap;
 
     typedef std::set<pVariable> VariableSet;
     typedef std::list<pVariable> VariableList;
@@ -97,7 +97,7 @@ class DependencyMap
 //    bool hasRoots(pVariable v, pParametersGroup roots);
 };
 
-typedef boost::shared_ptr<DependencyMap> pDependencyMap;
+typedef std::shared_ptr<DependencyMap> pDependencyMap;
 
 class DependencyUpdater
 {
@@ -142,7 +142,7 @@ class DependencyUpdater
     }
 };
 
-typedef boost::shared_ptr<DependencyUpdater> pDependencyUpdater;
+typedef std::shared_ptr<DependencyUpdater> pDependencyUpdater;
 
 } // namespace
 

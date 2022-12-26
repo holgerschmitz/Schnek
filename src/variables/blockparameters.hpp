@@ -35,15 +35,16 @@
 #include "../util/exceptions.hpp"
 
 #include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
+
+#include <memory>
 #include <map>
 
 namespace schnek {
 
 class DependencyMap;
-typedef boost::shared_ptr<DependencyMap> pDependencyMap;
+typedef std::shared_ptr<DependencyMap> pDependencyMap;
 class Parameter;
-typedef boost::shared_ptr<Parameter> pParameter;
+typedef std::shared_ptr<Parameter> pParameter;
 
 class ParametersGroup
 {
@@ -68,7 +69,7 @@ class ParametersGroup
     bool hasElements(std::set<long> &ids);
 };
 
-typedef boost::shared_ptr<ParametersGroup> pParametersGroup;
+typedef std::shared_ptr<ParametersGroup> pParametersGroup;
 
 
 class Parameter
@@ -178,7 +179,7 @@ class BlockParameters
         variable = pVariable(new Variable(defaultValue, hasDefault, false));
       else
       {
-        typedef boost::shared_ptr<Expression<T> > ParExpression;
+        typedef std::shared_ptr<Expression<T> > ParExpression;
         ParExpression pexp(new ExternalValue<T>(var));
         if (hasDefault) *var = defaultValue;
         variable = pVariable(new Variable(pexp, true, true));

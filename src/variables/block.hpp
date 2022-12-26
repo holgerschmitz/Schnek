@@ -31,7 +31,7 @@
 #include "blockdata.hpp"
 #include "../util/unique.hpp"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <boost/algorithm/string.hpp>
 
 #include <stack>
@@ -39,9 +39,9 @@
 namespace schnek {
 
 class Block;
-typedef boost::shared_ptr<Block> pBlock;
+typedef std::shared_ptr<Block> pBlock;
 typedef std::list<pBlock> BlockList;
-typedef boost::shared_ptr<BlockList> pBlockList;
+typedef std::shared_ptr<BlockList> pBlockList;
 
 class BlockTree
 {
@@ -57,7 +57,7 @@ class BlockTree
     pBlock getRoot() {return root; }
 };
 
-typedef boost::shared_ptr<BlockTree> pBlockTree;
+typedef std::shared_ptr<BlockTree> pBlockTree;
 
 /** Block defines the basic structure of a unit of simulation code
  *

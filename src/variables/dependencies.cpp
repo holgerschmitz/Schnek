@@ -42,7 +42,7 @@ DependencyMap::DependencyMap(const pBlockVariables vars)
 {
 
   static int dummyInt = 0;
-  typedef boost::shared_ptr<Expression<int> > ParExpression;
+  typedef std::shared_ptr<Expression<int> > ParExpression;
   ParExpression pexp(new ExternalValue<int>(&dummyInt));
   pVariable tmp(new Variable(pexp, true, true));
   dummyVar = tmp;

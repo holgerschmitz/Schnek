@@ -98,7 +98,7 @@ class FieldFiller
         }
     };
 
-    typedef boost::shared_ptr<implBase> pImplBase;
+    typedef std::shared_ptr<implBase> pImplBase;
     std::list<pImplBase> implementations;
   public:
 

@@ -46,7 +46,7 @@ typedef std::list<ExpressionVariant> ExpressionList;
 template<typename vtype>
 struct ExpressionConverterVisitor : public boost::static_visitor<ExpressionVariant>
 {
-    typedef typename boost::shared_ptr<Expression<vtype> > VarExpressionPointer;
+    typedef typename std::shared_ptr<Expression<vtype> > VarExpressionPointer;
     ExpressionVariant operator()(VarExpressionPointer e)
     {
       return e;
@@ -141,7 +141,7 @@ struct FunctionExpressionConverter
     template<typename ArgType>
     static rtype evaluate(func f, ExpressionList::iterator var, ArgType const &sArgs)
     {
-      typedef boost::shared_ptr< Expression<arg_type> > pExprType;
+      typedef std::shared_ptr< Expression<arg_type> > pExprType;
       pExprType expr = boost::get<pExprType>(*var);
       ++var;
       return FunctionExpressionConverter<vtype, func, next_type_iter, to>::evaluate(f, var, fusion::push_back(sArgs, expr->eval()));
@@ -202,7 +202,7 @@ class FunctionRegistry
         virtual ExpressionVariant getExpression(ExpressionList &) = 0;
     };
 
-    typedef boost::shared_ptr<EntryBase> pEntryBase;
+    typedef std::shared_ptr<EntryBase> pEntryBase;
 
     template<typename func>
     class Entry : public EntryBase
@@ -218,14 +218,14 @@ class FunctionRegistry
 
         ExpressionVariant getExpression(ExpressionList &args)
         {
-          boost::shared_ptr<Expression<rtype> > eP(new FunctionExpression<rtype, func>(f, args, updateAlways));
+          std::shared_ptr<Expression<rtype> > eP(new FunctionExpression<rtype, func>(f, args, updateAlways));
           return eP;
         }
     };
 
 
     typedef std::map<std::string, pEntryBase> FExprMap;
-    boost::shared_ptr<FExprMap> funcs;
+    std::shared_ptr<FExprMap> funcs;
 
   public:
     FunctionRegistry() : funcs(new FExprMap) {}

@@ -34,8 +34,8 @@
 
 #include "../exception.hpp"
 
-#include <boost/shared_ptr.hpp>
 #include <boost/variant/apply_visitor.hpp>
+#include <memory>
 #include <string>
 
 namespace schnek {
@@ -43,7 +43,7 @@ namespace schnek {
 class ParserOperator;
 class ParserToken;
 
-typedef boost::shared_ptr<ParserToken> pParserToken;
+typedef std::shared_ptr<ParserToken> pParserToken;
 
 
 struct ParserError : public SchnekException

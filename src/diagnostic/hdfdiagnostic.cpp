@@ -44,7 +44,7 @@ HdfStream::HdfStream()
   : file_id(-1),
     status(0),
     blockname("data"),
-    attributes(boost::make_shared<HdfAttributes>()),
+    attributes(std::make_shared<HdfAttributes>()),
     sets_count(0),
     active(true),
     activeModified(false)

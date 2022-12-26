@@ -35,8 +35,7 @@
 
 #include <hdf5.h>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+#include <memory>
 
 #if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
 #include <mpi.h>
@@ -87,7 +86,7 @@ struct HdfAttributes {
       hsize_t dims;
       const void *buffer;
     };
-    typedef boost::shared_ptr<Info> pInfo;
+    typedef std::shared_ptr<Info> pInfo;
 
     std::map<std::string, pInfo> attributes;
   public:
@@ -111,7 +110,7 @@ struct HdfAttributes {
     void set(std::string name, const T &value, hsize_t dims = 1);
 };
 
-typedef boost::shared_ptr<HdfAttributes> pHdfAttributes;
+typedef std::shared_ptr<HdfAttributes> pHdfAttributes;
 
 /** @brief IO class for handling HDF files
   *
@@ -232,7 +231,7 @@ class HdfOStream : public HdfStream {
 /**
  * Abstract diagnostic class for writing Grids into HDF5 data files
  */
-template<typename Type, typename PointerType = boost::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic >
+template<typename Type, typename PointerType = std::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic >
 class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType, DiagnosticType> {
   public:
     typedef typename Type::IndexType IndexType;
@@ -269,7 +268,7 @@ class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType, DiagnosticT
      * @return  an empty attributes set
      */
     virtual pHdfAttributes getAttributes() {
-      return boost::make_shared<HdfAttributes>();
+      return std::make_shared<HdfAttributes>();
     };
   public:
     virtual ~HDFGridDiagnostic() {}
@@ -280,7 +279,7 @@ class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType, DiagnosticT
  *
  * An interface that
  */
-template<typename Type, typename PointerType = boost::shared_ptr<Type> >
+template<typename Type, typename PointerType = std::shared_ptr<Type> >
 class HDFGridReader : public Block
 {
   public:
