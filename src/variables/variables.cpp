@@ -30,7 +30,6 @@
 #include "../exception.hpp"
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
-#include <boost/foreach.hpp>
 
 using namespace schnek;
 

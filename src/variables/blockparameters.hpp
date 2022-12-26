@@ -34,8 +34,6 @@
 #include "../grid/array.hpp"
 #include "../util/exceptions.hpp"
 
-#include <boost/foreach.hpp>
-
 #include <memory>
 #include <map>
 
@@ -283,7 +281,7 @@ class BlockParameters
     void evaluate()
     {
       typedef std::pair<std::string, pParameter> ParameterPair;
-      BOOST_FOREACH(ParameterPair par, parameterMap)
+      for(ParameterPair par: parameterMap)
       {
         par.second->evaluate();
       }

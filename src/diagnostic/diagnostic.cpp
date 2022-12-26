@@ -208,12 +208,12 @@ void DiagnosticManager::execute()
   if ((!usePhysicalTime && !timecounter) || (usePhysicalTime && !physicalTime))
     throw schnek::VariableNotInitialisedException("In DiagnosticManager: A time counter or physical time must be specified!");
 
-  BOOST_FOREACH(IntervalDiagnostic *diag, intervalDiags)
+  for(IntervalDiagnostic *diag: intervalDiags)
   {
     diag->execute(master, rank, *timecounter);
   }
 
-  BOOST_FOREACH(DeltaTimeDiagnostic *diag, deltaTimeDiags)
+  for(DeltaTimeDiagnostic *diag: deltaTimeDiags)
   {
     diag->execute(master, rank, *physicalTime);
   }
@@ -225,7 +225,7 @@ double DiagnosticManager::adjustDeltaT(double deltaT)
   double adjustedDt = deltaT;
 
 
-  BOOST_FOREACH(DeltaTimeDiagnostic *diag, deltaTimeDiags)
+  for(DeltaTimeDiagnostic *diag: deltaTimeDiags)
   {
     double dt = diag->getNextOutput() - *physicalTime;
     if (dt>0) adjustedDt = std::min(adjustedDt, dt);

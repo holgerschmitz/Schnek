@@ -29,7 +29,6 @@
 #include "tokenlist.hpp"
 #include "../variables/block.hpp"
 #include "../variables/dependencies.hpp"
-#include <boost/foreach.hpp>
 
 #include "deckgrammar.hpp"
 
@@ -76,7 +75,7 @@ pBlock Parser::parse(std::istream &input, std::string filename)
     context.blockTree->moveDown();
   }
 
-  BOOST_FOREACH(Token tok, tokens)
+  for(Token tok: tokens)
   {
     try{
       Parse(pParser, tok.getToken(), ParserToken(tok, context));

@@ -152,7 +152,7 @@ class FieldFiller
 
     void fillFields()
     {
-      BOOST_FOREACH(pImplBase i, implementations) i->fill();
+      for(pImplBase i: implementations) i->fill();
     }
 
 };

@@ -31,7 +31,6 @@
 #include "blockparameters.hpp"
 
 #include <boost/variant.hpp>
-#include <boost/foreach.hpp>
 
 #include <memory>
 #include <map>
@@ -137,8 +136,8 @@ class DependencyUpdater
         dependencies->makeUpdateList(independentVars, dependentVars, updateList);
         isValid = true;
       }
-      BOOST_FOREACH(pVariable v, updateList) v->evaluateExpression();
-      BOOST_FOREACH(pParameter p, dependentParameters) p->update();
+      for(pVariable v: updateList) v->evaluateExpression();
+      for(pParameter p: dependentParameters) p->update();
     }
 };
 

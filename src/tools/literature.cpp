@@ -25,8 +25,6 @@
 
 #include "literature.hpp"
 
-#include <boost/foreach.hpp>
-
 #include <iostream>
 
 using namespace schnek;
@@ -155,10 +153,10 @@ void LiteratureManager::writeInformation(std::ostream &out, std::string bibfile)
   out << "\\documentclass{article}\n" << "\\begin{document}\n"
       << "\\section*{"<< title <<"}\n"
       << subtitle << "\n\\begin{itemize}";
-  BOOST_FOREACH(Records::value_type rec, records)
+  for(Records::value_type rec: records)
   {
     out << "\\item ";
-    BOOST_FOREACH(std::string desc, rec.second.first)
+    for(std::string desc: rec.second.first)
       out << desc << "\n";
     out << "\\cite{" << rec.first << "}\n";
   }
@@ -168,7 +166,7 @@ void LiteratureManager::writeInformation(std::ostream &out, std::string bibfile)
 
 void LiteratureManager::writeBibTex(std::ostream &out)
 {
-  BOOST_FOREACH(Records::value_type rec, records)
+  for(Records::value_type rec: records)
   {
     out << rec.second.second << std::endl;
   }

@@ -43,8 +43,6 @@
 #include <boost/mpl/next.hpp>
 #include <boost/mpl/deref.hpp>
 
-#include <boost/foreach.hpp>
-
 #include <memory>
 #include <string>
 #include <iostream>
@@ -324,7 +322,7 @@ class BinaryOp : public Expression<vtype>
 
     /// Constancy depends on the constancy of both expressions
     bool isConstant() {
-      BOOST_FOREACH(ExpressionInfo<vtype> exp, expressions)
+      for(ExpressionInfo<vtype> exp: expressions)
       {
           if (!exp.expression->isConstant()) return false;
       }
@@ -336,7 +334,7 @@ class BinaryOp : public Expression<vtype>
     {
       DependencyList dependencies;
 
-      BOOST_FOREACH(ExpressionInfo<vtype> exp, expressions)
+      for(ExpressionInfo<vtype> exp: expressions)
       {
         DependencyList dep = exp.expression->getDependencies();
         dependencies.insert(dep.begin(), dep.end());

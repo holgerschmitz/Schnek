@@ -147,7 +147,7 @@ bool Block::getData(std::string key, T* &data, bool upward)
     std::string head = std::string(key.begin(), dot.begin());
     std::string tail = std::string(dot.end(), key.end());
     int count = 0;
-    BOOST_FOREACH(pBlock child, children)
+    for(pBlock child: children)
     {
       if ((child->getName()==head) && child->getData(tail, data, false)) ++count;
     }
@@ -160,7 +160,7 @@ bool Block::getData(std::string key, T* &data, bool upward)
     return parent->getData(key, data, true);
 
   int count = 0;
-  BOOST_FOREACH(pBlock child, children)
+  for(pBlock child: children)
   {
     if (child->getData(key,data, false)) ++count;
   }

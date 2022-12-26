@@ -28,7 +28,6 @@
 #define FUNCTION_EXPRESSION_HPP_
 
 #include "expression.hpp"
-#include <boost/foreach.hpp>
 
 #include <boost/mpl/begin.hpp>
 #include <boost/mpl/end.hpp>
