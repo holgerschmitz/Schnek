@@ -31,7 +31,12 @@
 #include "../variables/operators.hpp"
 #include "../util/logger.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/lexical_cast.hpp>
+
+#pragma GCC diagnostic pop
 
 #include <iostream>
 
@@ -270,7 +275,7 @@ class ValueToExpressionVisitor : public boost::static_visitor<ExpressionVariant>
     ExpressionVariant operator()(T var)
     {
       SCHNEK_TRACE_ENTER_FUNCTION(4);
-      boost::shared_ptr< Expression<T> > e(new Value<T>(var));
+      std::shared_ptr< Expression<T> > e(new Value<T>(var));
       return e;
     }
 };

@@ -30,8 +30,7 @@
 #include "expression.hpp"
 #include "../util/logger.hpp"
 
-#include <boost/make_shared.hpp>
-
+#include <memory>
 #include <cmath>
 
 #undef LOGLEVEL
@@ -184,25 +183,25 @@ namespace expression {
   template<class vtype>
   typename Expression<vtype>::pExpression OperatorAdd<vtype>::negate(typename Expression<vtype>::pExpression val)
   {
-      return boost::make_shared<UnaryOp<OperatorNeg<vtype>, vtype> >(val);
+      return std::make_shared<UnaryOp<OperatorNeg<vtype>, vtype> >(val);
   }
 
   template<class vtype>
   typename Expression<vtype>::pExpression OperatorSubtract<vtype>::negate(typename Expression<vtype>::pExpression val)
   {
-      return boost::make_shared<UnaryOp<OperatorNeg<vtype>, vtype> >(val);
+      return std::make_shared<UnaryOp<OperatorNeg<vtype>, vtype> >(val);
   }
 
   template<class vtype>
   typename Expression<vtype>::pExpression OperatorMultiply<vtype>::negate(typename Expression<vtype>::pExpression val)
   {
-      return boost::make_shared<UnaryOp<OperatorInv<vtype>, vtype> >(val);
+      return std::make_shared<UnaryOp<OperatorInv<vtype>, vtype> >(val);
   }
 
   template<class vtype>
   typename Expression<vtype>::pExpression OperatorDivide<vtype>::negate(typename Expression<vtype>::pExpression val)
   {
-      return boost::make_shared<UnaryOp<OperatorInv<vtype>, vtype> >(val);
+      return std::make_shared<UnaryOp<OperatorInv<vtype>, vtype> >(val);
   }
 
   template<class vtype>
@@ -213,22 +212,22 @@ namespace expression {
 
 
   template<>
-  inline std::string OperatorNeg<std::string>::eval(std::string val) { return ""; }
+  inline std::string OperatorNeg<std::string>::eval(std::string) { return ""; }
 
   template<>
-  inline std::string OperatorInv<std::string>::eval(std::string val) { return ""; }
+  inline std::string OperatorInv<std::string>::eval(std::string) { return ""; }
 
   template<>
-  inline std::string OperatorSubtract<std::string>::eval(std::string val1, std::string val2) { return ""; }
+  inline std::string OperatorSubtract<std::string>::eval(std::string, std::string) { return ""; }
 
   template<>
-  inline std::string OperatorMultiply<std::string>::eval(std::string val1, std::string val2) { return ""; }
+  inline std::string OperatorMultiply<std::string>::eval(std::string, std::string) { return ""; }
 
   template<>
-  inline std::string OperatorDivide<std::string>::eval(std::string val1, std::string val2) { return ""; }
+  inline std::string OperatorDivide<std::string>::eval(std::string, std::string) { return ""; }
 
   template<>
-  inline std::string OperatorExponent<std::string>::eval(std::string val1, std::string val2) { return ""; }
+  inline std::string OperatorExponent<std::string>::eval(std::string, std::string) { return ""; }
 
 } // namespace expression
 } // namespace schnek

@@ -19,6 +19,8 @@ _deps
 DartConfiguration.tcl
 build/
 
+!/parser/Makefile
+
 # Compiled Object files
 *.slo
 *.lo

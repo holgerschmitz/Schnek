@@ -35,7 +35,12 @@
 #undef LOGLEVEL
 #define LOGLEVEL 0
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/lexical_cast.hpp>
+
+#pragma GCC diagnostic pop
 
 #include <iostream>
 #include <vector>

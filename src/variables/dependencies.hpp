@@ -30,10 +30,14 @@
 #include "variables.hpp"
 #include "blockparameters.hpp"
 
-#include <boost/variant.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/foreach.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
+#include <boost/variant.hpp>
+
+#pragma GCC diagnostic pop
+
+#include <memory>
 #include <map>
 #include <set>
 #include <list>
@@ -67,7 +71,7 @@ class DependencyMap
 
     /// This is used internally. The pointers are to VarInfo objects stored in the dependencies map.
     typedef std::map<long, VarInfo*> RefDepMap;
-    typedef boost::shared_ptr<RefDepMap> pRefDepMap;
+    typedef std::shared_ptr<RefDepMap> pRefDepMap;
 
     typedef std::set<pVariable> VariableSet;
     typedef std::list<pVariable> VariableList;
@@ -97,7 +101,7 @@ class DependencyMap
 //    bool hasRoots(pVariable v, pParametersGroup roots);
 };
 
-typedef boost::shared_ptr<DependencyMap> pDependencyMap;
+typedef std::shared_ptr<DependencyMap> pDependencyMap;
 
 class DependencyUpdater
 {
@@ -137,12 +141,12 @@ class DependencyUpdater
         dependencies->makeUpdateList(independentVars, dependentVars, updateList);
         isValid = true;
       }
-      BOOST_FOREACH(pVariable v, updateList) v->evaluateExpression();
-      BOOST_FOREACH(pParameter p, dependentParameters) p->update();
+      for(pVariable v: updateList) v->evaluateExpression();
+      for(pParameter p: dependentParameters) p->update();
     }
 };
 
-typedef boost::shared_ptr<DependencyUpdater> pDependencyUpdater;
+typedef std::shared_ptr<DependencyUpdater> pDependencyUpdater;
 
 } // namespace
 

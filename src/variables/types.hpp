@@ -29,8 +29,14 @@
 
 #include "../exception.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/variant.hpp>
-#include <boost/shared_ptr.hpp>
+
+#pragma GCC diagnostic pop
+
+#include <memory>
 
 namespace schnek {
 
@@ -41,9 +47,9 @@ typedef boost::variant<int, double, std::string> ValueVariant;
 typedef boost::variant<int*, double*, std::string*> ValuePointerVariant;
 
 template<typename vtype> class Expression;
-typedef boost::shared_ptr<Expression<int> > pIntExpression;
-typedef boost::shared_ptr<Expression<double> > pFloatExpression;
-typedef boost::shared_ptr<Expression<std::string> > pStringExpression;
+typedef std::shared_ptr<Expression<int> > pIntExpression;
+typedef std::shared_ptr<Expression<double> > pFloatExpression;
+typedef std::shared_ptr<Expression<std::string> > pStringExpression;
 
 /// A boost::variant that can hold expressions with different return type
 typedef boost::variant<pIntExpression, pFloatExpression, pStringExpression> ExpressionVariant;

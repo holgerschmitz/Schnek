@@ -98,7 +98,7 @@ class FieldFiller
         }
     };
 
-    typedef boost::shared_ptr<implBase> pImplBase;
+    typedef std::shared_ptr<implBase> pImplBase;
     std::list<pImplBase> implementations;
   public:
 
@@ -152,7 +152,7 @@ class FieldFiller
 
     void fillFields()
     {
-      BOOST_FOREACH(pImplBase i, implementations) i->fill();
+      for(pImplBase i: implementations) i->fill();
     }
 
 };

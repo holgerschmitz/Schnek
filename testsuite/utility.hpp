@@ -9,7 +9,13 @@
 #define TESTSUITE_UTILITY_HPP_
 
 #include <grid/array.hpp>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/test/unit_test.hpp>
+
+#pragma GCC diagnostic pop
 
 
 // safe comparison of two floating point numbers

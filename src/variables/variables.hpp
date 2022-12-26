@@ -34,14 +34,19 @@
 #include <list>
 #include <map>
 #include <string>
-#include <boost/shared_ptr.hpp>
+#include <memory>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/variant.hpp>
 
+#pragma GCC diagnostic pop
 
 namespace schnek {
 
 class BlockVariables;
-typedef boost::shared_ptr<BlockVariables> pBlockVariables;
+typedef std::shared_ptr<BlockVariables> pBlockVariables;
 typedef std::list<pBlockVariables> BlockVariablesList;
 
 /** This stores a variable to be used in the simulation.
@@ -72,7 +77,7 @@ class Variable
     /// readonly is true if the variable represents a read only variable which cannot be modified by the input deck
     bool readonly;
     /// a unique identifier that is copied with the copy operator and copy constructor
-    boost::shared_ptr< Unique<Variable> > uniqueId;
+    std::shared_ptr< Unique<Variable> > uniqueId;
   public:
     /// construct with an integer
     Variable(int value, bool initialised_ = true, bool readonly_ = false);
@@ -127,7 +132,7 @@ class Variable
     const ValueVariant &evaluate() { if (!isConstant()) evaluateExpression(); return var; }
 };
 
-typedef boost::shared_ptr<Variable> pVariable;
+typedef std::shared_ptr<Variable> pVariable;
 typedef std::list<pVariable> VariableList;
 typedef std::map<std::string, pVariable> VariableMap;
 

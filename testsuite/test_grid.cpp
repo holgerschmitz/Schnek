@@ -11,8 +11,13 @@
 
 #include <grid/grid.hpp>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/timer/progress_display.hpp>
 #include <boost/test/unit_test.hpp>
+
+#pragma GCC diagnostic pop
 
 #include <iostream>
 #include <limits>

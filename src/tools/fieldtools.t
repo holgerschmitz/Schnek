@@ -25,7 +25,6 @@
  */
 
 #include "../grid/range.hpp"
-#include <boost/foreach.hpp>
 
 namespace schnek
 {

@@ -302,7 +302,7 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
   if (mpi_rank==0) {
     /* Create the data space for the attribute. */
     typedef std::pair<std::string, HdfAttributes::pInfo> attPair;
-    BOOST_FOREACH(attPair p, attributes->attributes) {
+    for(attPair p: attributes->attributes) {
       HdfAttributes::Info &info = *(p.second);
 
       const hid_t dataspace_id = H5Screate_simple(1, &info.dims, NULL);

@@ -30,7 +30,7 @@
 #include "../variables/block.hpp"
 #include "../util/singleton.hpp"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <fstream>
 
 namespace schnek {
@@ -101,7 +101,7 @@ class DeltaTimeDiagnostic : public DiagnosticInterface
     void initParameters(BlockParameters&);
 };
 
-typedef boost::shared_ptr<DiagnosticInterface> pDiagnosticInterface;
+typedef std::shared_ptr<DiagnosticInterface> pDiagnosticInterface;
 typedef std::list<pDiagnosticInterface> DiagList;
 
 class DiagnosticManager : public Singleton<DiagnosticManager>
@@ -134,7 +134,7 @@ class DiagnosticManager : public Singleton<DiagnosticManager>
     DiagnosticManager();
 };
 
-template<class Type, typename PointerType = boost::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic>
+template<class Type, typename PointerType = std::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic>
 class SimpleDiagnostic : public DiagnosticType
 {
   private:
@@ -164,7 +164,7 @@ class SimpleDiagnostic : public DiagnosticType
     void setSingleOut(bool single_out_) { single_out = single_out_; }
 };
 
-template<class Type, typename PointerType = boost::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic >
+template<class Type, typename PointerType = std::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic >
 class SimpleFileDiagnostic : public SimpleDiagnostic<Type, PointerType, DiagnosticType>
 {
   private:

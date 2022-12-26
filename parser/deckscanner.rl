@@ -7,9 +7,9 @@
 #include <string>
 #include <cstring>
 #include <cstdio>
-#include "deckscanner.hpp"
-#include "deckgrammar.hpp"
-#include "tokenlist.hpp"
+#include "../deckscanner.hpp"
+#include "../deckgrammar.hpp"
+#include "../tokenlist.hpp"
 
 using namespace schnek;
 

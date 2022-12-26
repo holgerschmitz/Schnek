@@ -30,9 +30,12 @@
 #include "variables.hpp"
 #include "../util/logger.hpp"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-copy"
 
+#include <boost/lexical_cast.hpp>
 #include <boost/function.hpp>
 
 #include <boost/fusion/include/push_back.hpp>
@@ -44,8 +47,10 @@
 #include <boost/mpl/next.hpp>
 #include <boost/mpl/deref.hpp>
 
-#include <boost/foreach.hpp>
+#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 
+#include <memory>
 #include <string>
 #include <iostream>
 #include <set>
@@ -105,7 +110,7 @@ class Expression
     virtual DependencyList getDependencies() { return DependencyList(); }
 
     /// A pointer to an Expression
-    typedef boost::shared_ptr<Expression> pExpression;
+    typedef std::shared_ptr<Expression> pExpression;
     typedef vtype ValueType;
 };
 
@@ -250,7 +255,7 @@ class BinaryOp : public Expression<vtype>
     typedef typename Expression<vtype>::pExpression pExpression;
 
     typedef BinaryOp<typename oper::Inverted, vtype> InvType;
-    typedef boost::shared_ptr<InvType> pInvType;
+    typedef std::shared_ptr<InvType> pInvType;
     friend class BinaryOp<typename oper::Inverted, vtype>;
 
     /// pointers to the expressions to modify
@@ -258,13 +263,13 @@ class BinaryOp : public Expression<vtype>
   public:
     BinaryOp(pExpression expr1_, pExpression expr2_)
     {
-      typedef boost::shared_ptr<BinaryOp<oper, vtype> > pBinaryOp;
+      typedef std::shared_ptr<BinaryOp<oper, vtype> > pBinaryOp;
 
-      pBinaryOp binaryExpr1 = boost::dynamic_pointer_cast<SelfType>(expr1_);
-      pInvType invExpr1 = boost::dynamic_pointer_cast<InvType>(expr1_);
+      pBinaryOp binaryExpr1 = std::dynamic_pointer_cast<SelfType>(expr1_);
+      pInvType invExpr1 = std::dynamic_pointer_cast<InvType>(expr1_);
 
-      pBinaryOp binaryExpr2 = boost::dynamic_pointer_cast<SelfType>(expr2_);
-      pInvType invExpr2 = boost::dynamic_pointer_cast<InvType>(expr2_);
+      pBinaryOp binaryExpr2 = std::dynamic_pointer_cast<SelfType>(expr2_);
+      pInvType invExpr2 = std::dynamic_pointer_cast<InvType>(expr2_);
 
       if (binaryExpr1)
       {
@@ -324,7 +329,7 @@ class BinaryOp : public Expression<vtype>
 
     /// Constancy depends on the constancy of both expressions
     bool isConstant() {
-      BOOST_FOREACH(ExpressionInfo<vtype> exp, expressions)
+      for(ExpressionInfo<vtype> exp: expressions)
       {
           if (!exp.expression->isConstant()) return false;
       }
@@ -336,7 +341,7 @@ class BinaryOp : public Expression<vtype>
     {
       DependencyList dependencies;
 
-      BOOST_FOREACH(ExpressionInfo<vtype> exp, expressions)
+      for(ExpressionInfo<vtype> exp: expressions)
       {
         DependencyList dep = exp.expression->getDependencies();
         dependencies.insert(dep.begin(), dep.end());

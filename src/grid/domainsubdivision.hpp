@@ -37,7 +37,7 @@
 
 #include "boundary.hpp"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace schnek {
 
@@ -62,7 +62,7 @@ class DomainSubdivision {
 
     typedef Range<int, Rank> DomainType;
     typedef Boundary<Rank> BoundaryType;
-    typedef boost::shared_ptr<BoundaryType> pBoundaryType;
+    typedef std::shared_ptr<BoundaryType> pBoundaryType;
 
   protected:
     pBoundaryType bounds;

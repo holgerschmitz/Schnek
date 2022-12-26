@@ -49,7 +49,8 @@ class Range {
     LimitType lo, hi;
   public:
     /// Default constructor
-    Range() : lo(0), hi(0) {};
+    Range() : lo(0), hi(0) {}
+    Range(const Range &domain): lo(domain.lo), hi(domain.hi) {}
 
     /// Construct with rectangle minimum and maximum
     template<template<size_t> class ArrayCheckingPolicy>

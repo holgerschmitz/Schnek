@@ -27,7 +27,7 @@
 #ifndef SCHNEK_TOKENLIST_HPP_
 #define SCHNEK_TOKENLIST_HPP_
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <list>
 #include <string>
 #include <iostream>
@@ -101,7 +101,7 @@ private:
     std::string str;
 };
 
-typedef boost::shared_ptr<Token> pToken;
+typedef std::shared_ptr<Token> pToken;
 
 /* Contains a list of parser tokens.
  *
