@@ -34,7 +34,13 @@
 
 #include "../exception.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/variant/apply_visitor.hpp>
+
+#pragma GCC diagnostic pop
+
 #include <memory>
 #include <string>
 

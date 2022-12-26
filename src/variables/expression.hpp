@@ -30,8 +30,10 @@
 #include "variables.hpp"
 #include "../util/logger.hpp"
 
-#include <boost/lexical_cast.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
+#include <boost/lexical_cast.hpp>
 #include <boost/function.hpp>
 
 #include <boost/fusion/include/push_back.hpp>
@@ -42,6 +44,8 @@
 #include <boost/mpl/end.hpp>
 #include <boost/mpl/next.hpp>
 #include <boost/mpl/deref.hpp>
+
+#pragma GCC diagnostic pop
 
 #include <memory>
 #include <string>

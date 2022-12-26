@@ -106,13 +106,13 @@ template<class vtype, typename func, typename to>
 struct FunctionExpressionConverter<vtype, func, to, to>
 {
   typedef typename bft::result_type<func>::type rtype;
-  static void makeList(ExpressionList::iterator var, ExpressionList::iterator end, ExpressionList &args)
+  static void makeList(ExpressionList::iterator var, ExpressionList::iterator end, ExpressionList &)
   {
     if (var != end) throw WrongNumberOfArgsException();
   }
 
   template<typename ArgType>
-  static rtype evaluate(func f, ExpressionList::iterator var, ArgType const &sArgs)
+  static rtype evaluate(func f, ExpressionList::iterator, ArgType const &sArgs)
   {
     return fusion::invoke(f, sArgs);
   }

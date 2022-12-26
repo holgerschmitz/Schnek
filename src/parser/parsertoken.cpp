@@ -31,7 +31,12 @@
 #include "../variables/operators.hpp"
 #include "../util/logger.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/lexical_cast.hpp>
+
+#pragma GCC diagnostic pop
 
 #include <iostream>
 

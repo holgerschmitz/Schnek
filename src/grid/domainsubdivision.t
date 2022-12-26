@@ -111,7 +111,7 @@ void SerialSubdivision<GridType>::accumulate(GridType &grid, size_t dim)
 }
 
 template<class GridType>
-void SerialSubdivision<GridType>::exchangeData(size_t dim, int orientation, BufferType &in, BufferType &out)
+void SerialSubdivision<GridType>::exchangeData(size_t, int, BufferType &in, BufferType &out)
 {
   out = in;
 }

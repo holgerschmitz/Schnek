@@ -29,7 +29,12 @@
 
 #include "../exception.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/variant.hpp>
+
+#pragma GCC diagnostic pop
 
 #include <memory>
 

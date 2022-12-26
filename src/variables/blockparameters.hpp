@@ -132,7 +132,7 @@ class ConstantParameter : public Parameter
 {
   protected:
   public:
-    ConstantParameter(std::string varName_, pVariable variable_, const T &value_)
+    ConstantParameter(std::string varName_, pVariable variable_, const T &)
       : Parameter(varName_, variable_, pParametersGroup(new ParametersGroup())) {}
 
     void evaluate()

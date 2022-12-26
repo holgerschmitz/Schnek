@@ -212,22 +212,22 @@ namespace expression {
 
 
   template<>
-  inline std::string OperatorNeg<std::string>::eval(std::string val) { return ""; }
+  inline std::string OperatorNeg<std::string>::eval(std::string) { return ""; }
 
   template<>
-  inline std::string OperatorInv<std::string>::eval(std::string val) { return ""; }
+  inline std::string OperatorInv<std::string>::eval(std::string) { return ""; }
 
   template<>
-  inline std::string OperatorSubtract<std::string>::eval(std::string val1, std::string val2) { return ""; }
+  inline std::string OperatorSubtract<std::string>::eval(std::string, std::string) { return ""; }
 
   template<>
-  inline std::string OperatorMultiply<std::string>::eval(std::string val1, std::string val2) { return ""; }
+  inline std::string OperatorMultiply<std::string>::eval(std::string, std::string) { return ""; }
 
   template<>
-  inline std::string OperatorDivide<std::string>::eval(std::string val1, std::string val2) { return ""; }
+  inline std::string OperatorDivide<std::string>::eval(std::string, std::string) { return ""; }
 
   template<>
-  inline std::string OperatorExponent<std::string>::eval(std::string val1, std::string val2) { return ""; }
+  inline std::string OperatorExponent<std::string>::eval(std::string, std::string) { return ""; }
 
 } // namespace expression
 } // namespace schnek

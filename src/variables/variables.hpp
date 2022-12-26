@@ -36,8 +36,12 @@
 #include <string>
 #include <memory>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/variant.hpp>
 
+#pragma GCC diagnostic pop
 
 namespace schnek {
 
