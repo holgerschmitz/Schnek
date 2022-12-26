@@ -10,9 +10,14 @@
 #include <cmath>
 #include <limits>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-copy-with-user-provided-copy"
+
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
+
+#pragma GCC diagnostic pop
 
 struct RangeIterationTest
 {

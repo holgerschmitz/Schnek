@@ -32,6 +32,8 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-copy"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/function.hpp>
@@ -45,6 +47,7 @@
 #include <boost/mpl/next.hpp>
 #include <boost/mpl/deref.hpp>
 
+#pragma GCC diagnostic pop
 #pragma GCC diagnostic pop
 
 #include <memory>

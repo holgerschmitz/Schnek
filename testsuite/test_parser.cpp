@@ -19,6 +19,11 @@
 #include <string>
 #include <cmath>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-copy-with-user-provided-copy"
+
 #include <boost/foreach.hpp>
 #include <boost/test/unit_test.hpp>
 
@@ -30,6 +35,9 @@
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/math/special_functions/digamma.hpp>
 #include <boost/math/special_functions/bessel.hpp>
+
+#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 
 using namespace schnek;
 
@@ -397,9 +405,6 @@ BOOST_FIXTURE_TEST_CASE( parser_precedence_add_1, ParserTest )
   updater.addDependent(test_int4Var);
   updater.addDependent(test_int5Var);
 
-  double dx_save = dx;
-  double dy_save = dy;
-
   for (xi=-5; xi<=5; ++xi)
     for (yi=-5; yi<=5; ++yi)
     {
@@ -430,9 +435,6 @@ BOOST_FIXTURE_TEST_CASE( parser_precedence_add_2, ParserTest )
   updater.addDependent(test_int3Var);
   updater.addDependent(test_int4Var);
   updater.addDependent(test_int5Var);
-
-  double dx_save = dx;
-  double dy_save = dy;
 
   for (xi=5; xi<=5; ++xi)
     for (yi=5; yi<=5; ++yi)
@@ -466,9 +468,6 @@ BOOST_FIXTURE_TEST_CASE( parser_precedence_mult_1, ParserTest )
   updater.addDependent(test_int4Var);
   updater.addDependent(test_int5Var);
 
-  double dx_save = dx;
-  double dy_save = dy;
-
   for (xi=195; xi<=495; xi+=10)
     for (yi=45; yi<=95; yi+=5)
     {
@@ -498,9 +497,6 @@ BOOST_FIXTURE_TEST_CASE( parser_precedence_mult_2, ParserTest )
   updater.addDependent(test_int2Var);
   updater.addDependent(test_int3Var);
   updater.addDependent(test_int4Var);
-
-  double dx_save = dx;
-  double dy_save = dy;
 
   for (xi=195; xi<=395; xi+=10)
     for (yi=55; yi<=95; yi+=10)
