@@ -79,7 +79,7 @@ namespace schnek {
                 executionSpace
             > rangePolicy(range.getLo()[0], range.getHi()[0] + 1);
 
-            Kokkos::parallel_for(rangePolicy, [=](T ind)
+            Kokkos::parallel_for("schnek:forEach", rangePolicy, [=](T ind)
             {
                 func(typename RangeType::LimitType(ind));
             }); 
@@ -114,7 +114,7 @@ namespace schnek {
             executionSpace 
         > rangePolicy(lo, hi);
 
-        Kokkos::parallel_for(rangePolicy, [=](auto ... ind)
+        Kokkos::parallel_for("schnek:forEach", rangePolicy, [=](auto ... ind)
         {
             func(typename RangeType::LimitType{ind...});
         });

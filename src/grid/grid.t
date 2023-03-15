@@ -27,6 +27,7 @@
 // --------------------------------------------------------------
 // implementation
 
+#include "../macros.hpp"
 #include "range.hpp"
 #include "arrayexpression.hpp"
 
@@ -77,7 +78,7 @@ template<
   class StoragePolicy
 >
 template<template<size_t> class ArrayCheckingPolicy>
-inline T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
   ::operator[](const Array<int,rank,ArrayCheckingPolicy>& pos)
 {
   return this->get(this->check(pos,this->getLo(),this->getHi()));
@@ -90,7 +91,7 @@ template<
   class StoragePolicy
 >
 template<template<size_t> class ArrayCheckingPolicy>
-inline T GridBase<T, rank, CheckingPolicy, StoragePolicy>
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>
   ::operator[](const Array<int,rank,ArrayCheckingPolicy>& pos) const
 {
   return this->get(this->check(pos,this->getLo(),this->getHi()));
@@ -103,7 +104,7 @@ template<
   class StoragePolicy
 >
 template<class Operator, int Length>
-inline T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
   ::operator[](const ArrayExpression<Operator, Length>& pos)
 {
   return this->operator[](IndexType(pos));
@@ -116,7 +117,7 @@ template<
   class StoragePolicy
 >
 template<class Operator, int Length>
-inline T GridBase<T, rank, CheckingPolicy, StoragePolicy>
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>
   ::operator[](const ArrayExpression<Operator, Length>& pos) const
 {
   return this->operator[](IndexType(pos));
@@ -128,7 +129,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i)
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i)
 {
   return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
 }
@@ -139,7 +140,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i) const
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i) const
 {
   return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
 }
@@ -150,7 +151,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i)
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i)
 {
   return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
 }
@@ -161,7 +162,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i) const
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i) const
 {
   return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
 }
@@ -173,7 +174,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j)
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j)
 {
   return this->get(this->check(IndexType(i,j),this->getLo(),this->getHi()));
 }
@@ -184,7 +185,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j) const
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j) const
 {
   return this->get(this->check(IndexType(i,j),this->getLo(),this->getHi()));
 }
@@ -195,7 +196,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k)
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k)
 {
   return this->get(this->check(IndexType(i,j,k),this->getLo(),this->getHi()));
 }
@@ -206,7 +207,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k) const
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k) const
 {
   return this->get(this->check(IndexType(i,j,k),this->getLo(),this->getHi()));
 }
@@ -217,7 +218,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l)
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l)
 {
   return this->get(this->check(IndexType(i,j,k,l),this->getLo(),this->getHi()));
 }
@@ -228,7 +229,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l) const
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l) const
 {
   return this->get(this->check(IndexType(i,j,k,l),this->getLo(),this->getHi()));
 }
@@ -239,7 +240,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m)
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m)
 {
   return this->get(this->check(IndexType(i,j,k,l,m),this->getLo(),this->getHi()));
 }
@@ -250,7 +251,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m) const
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m) const
 {
   return this->get(this->check(IndexType(i,j,k,l,m),this->getLo(),this->getHi()));
 }
@@ -261,7 +262,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o)
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o)
 {
   return this->get(this->check(IndexType(i,j,k,l,m,o),this->getLo(),this->getHi()));
 }
@@ -272,7 +273,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o) const
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o) const
 {
   return this->get(this->check(IndexType(i,j,k,l,m,o),this->getLo(),this->getHi()));
 }
@@ -283,7 +284,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p)
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p)
 {
   return this->get(this->check(IndexType(i,j,k,l,m,o,p),this->getLo(),this->getHi()));
 }
@@ -294,7 +295,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p) const
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p) const
 {
   return this->get(this->check(IndexType(i,j,k,l,m,o,p),this->getLo(),this->getHi()));
 }
@@ -305,7 +306,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q)
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q)
 {
   return this->get(this->check(IndexType(i,j,k,l,m,o,p,q),this->getLo(),this->getHi()));
 }
@@ -316,7 +317,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q) const
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q) const
 {
   return this->get(this->check(IndexType(i,j,k,l,m,o,p,q),this->getLo(),this->getHi()));
 }
@@ -327,7 +328,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r)
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r)
 {
   return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r),this->getLo(),this->getHi()));
 }
@@ -338,7 +339,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r) const
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r) const
 {
   return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r),this->getLo(),this->getHi()));
 }
@@ -349,7 +350,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s)
+SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s)
 {
   return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r,s),this->getLo(),this->getHi()));
 }
@@ -360,7 +361,7 @@ template<
   class CheckingPolicy,
   class StoragePolicy
 >
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s) const
+SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s) const
 {
   return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r,s),this->getLo(),this->getHi()));
 }
@@ -433,6 +434,7 @@ template<
   typename T2,
   class CheckingPolicy2
 >
+SCHNEK_INLINE
 GridBase<T, rank, CheckingPolicy, StoragePolicy>&
   GridBase<T, rank, CheckingPolicy, StoragePolicy>
     ::operator-=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy>& grid)
@@ -462,6 +464,7 @@ template<
   class CheckingPolicy2,
   class StoragePolicy2
 >
+SCHNEK_INLINE
 GridBase<T, rank, CheckingPolicy, StoragePolicy>&
   GridBase<T, rank, CheckingPolicy, StoragePolicy>
     ::operator-=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid)
@@ -490,6 +493,7 @@ template<
   typename T2,
   class CheckingPolicy2
 >
+SCHNEK_INLINE
 GridBase<T, rank, CheckingPolicy, StoragePolicy>&
 GridBase<T, rank, CheckingPolicy, StoragePolicy>
     ::operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy>& grid)
@@ -519,6 +523,7 @@ template<
   class CheckingPolicy2,
   class StoragePolicy2
 >
+SCHNEK_INLINE
 GridBase<T, rank, CheckingPolicy, StoragePolicy>&
   GridBase<T, rank, CheckingPolicy, StoragePolicy>
     ::operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid)
