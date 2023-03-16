@@ -29,6 +29,7 @@
 
 #include "../array.hpp"
 
+#include <memory>
 #include <cmath>
 
 /**
@@ -41,6 +42,18 @@
 
 namespace schnek
 {
+
+    namespace internal {
+        template <typename T>
+        struct SingleArrayAllocationData
+        {
+            T *ptr;
+            SingleArrayAllocationData(): ptr(NULL) {}
+            ~SingleArrayAllocationData() {
+                delete[] ptr;
+            }
+        };
+    }
 
     /**
      * @brief Allocate a single array for multidimensional grids in C ordering.
@@ -59,10 +72,10 @@ namespace schnek
 
     protected:
         /// The pointer to the data
-        T *data;
+        std::shared_ptr<internal::SingleArrayAllocationData<T> > data;
 
         /// The length of the allocated array
-        int size;
+        size_t size;
 
         /// The lowest coordinate in the grid (inclusive)
         IndexType low;
@@ -74,12 +87,21 @@ namespace schnek
         IndexType dims;
 
     public:
-        /// Default constructor
+        /**
+         * @brief Default constructor
+         */
         SingleArrayInstantAllocation()
-            : data(NULL), size(0) {}
+            : data(new internal::SingleArrayAllocationData<T>()), size(0) {}
 
-        /// Destructor frees any allocated memory
-        ~SingleArrayInstantAllocation();
+        /**
+         * @brief Copy constructor
+         */
+        SingleArrayInstantAllocation(const SingleArrayInstantAllocation<T, rank> &) = default;
+
+        /**
+         * @brief Assignment operator
+         */
+        SingleArrayInstantAllocation<T, rank> &operator=(const SingleArrayInstantAllocation<T, rank> &) = default;
     protected:
         /**
          * @brief resizes to grid with lower indices low[0],...,low[rank-1]
@@ -115,7 +137,7 @@ namespace schnek
 
     protected:
         /// The pointer to the data
-        T *data;
+        std::shared_ptr<internal::SingleArrayAllocationData<T> > data;
 
         /// The length of the array
         int size;
@@ -146,12 +168,13 @@ namespace schnek
         /// Default constructor
         SingleArrayLazyAllocation();
 
-        /// Prevent implicit copy constructor
-        SingleArrayLazyAllocation(const SingleArrayLazyAllocation &) = delete;
+        /// Copy constructor
+        SingleArrayLazyAllocation(const SingleArrayLazyAllocation &) = default;
 
-        /// Destructor frees any allocated memory
-        ~SingleArrayLazyAllocation();
-
+        /**
+         * @brief Assignment operator
+         */
+        SingleArrayLazyAllocation<T, rank> &operator=(const SingleArrayLazyAllocation<T, rank> &) = default;
     protected:
         /**
          * @brief resizes to grid with lower indices low[0],...,low[rank-1]
@@ -179,17 +202,13 @@ namespace schnek
     }
 
     template <typename T, size_t rank>
-    SingleArrayInstantAllocation<T, rank>::~SingleArrayInstantAllocation()
-    {
-        this->deleteData();
-    }
-
-    template <typename T, size_t rank>
     void SingleArrayInstantAllocation<T, rank>::deleteData()
     {
-        if (data)
-            delete[] data;
-        data = NULL;
+        if (data->ptr)
+        {
+            delete[] data->ptr;
+        }
+        data->ptr = NULL;
         size = 0;
     }
 
@@ -208,7 +227,7 @@ namespace schnek
             dims[d] = high[d] - low[d] + 1;
             size *= dims[d];
         }
-        data = new T[size];
+        data->ptr = new T[size];
     }
 
     //=================================================================
@@ -217,14 +236,8 @@ namespace schnek
 
     template <typename T, size_t rank>
     SingleArrayLazyAllocation<T, rank>::SingleArrayLazyAllocation()
-        : data(NULL), size(0), bufSize(0), avgSize(0.0), avgVar(0.0), r(0.05)
+        : data(new internal::SingleArrayAllocationData<T>()), size(0), bufSize(0), avgSize(0.0), avgVar(0.0), r(0.05)
     {
-    }
-
-    template <typename T, size_t rank>
-    SingleArrayLazyAllocation<T, rank>::~SingleArrayLazyAllocation()
-    {
-        this->deleteData();
     }
 
     template <typename T, size_t rank>
@@ -257,9 +270,11 @@ namespace schnek
     void SingleArrayLazyAllocation<T, rank>::deleteData()
     {
         SCHNEK_TRACE_LOG(5, "Deleting pointer (" << (void *)data << "): size=" << size << " avgSize=" << avgSize << " avgVar=" << avgVar << " bufSize=" << bufSize);
-        if (data)
-            delete[] data;
-        data = NULL;
+        if (data->ptr)
+        {
+            delete[] data->ptr;
+        }
+        data->ptr = NULL;
         size = 0;
         bufSize = 0;
     }
@@ -272,7 +287,7 @@ namespace schnek
         if (bufSize <= 0)
             bufSize = 10;
         // std::cerr << "Allocating pointer: size = " << newSize  << " " << bufSize << std::endl;
-        data = new T[bufSize];
+        data->ptr = new T[bufSize];
     }
 }
 

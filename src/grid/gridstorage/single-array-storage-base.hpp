@@ -49,6 +49,14 @@ namespace schnek
         /// Default constructor
         SingleArrayGridStorageBase();
 
+        /// Copy constructor
+        SingleArrayGridStorageBase(const SingleArrayGridStorageBase&) = default;
+
+        /**
+         * @brief Assignment operator
+         */
+        SingleArrayGridStorageBase<T, rank, AllocationPolicy> &operator=(const SingleArrayGridStorageBase<T, rank, AllocationPolicy> &) = default;
+
         /// Access to the underlying raw data
         T *getRawData() const { return this->data; }
 
@@ -110,6 +118,14 @@ namespace schnek
         /// Default constructor
         SingleArrayGridCOrderStorageBase() : BaseType(), data_fast(NULL) {}
 
+        /// Copy constructor
+        SingleArrayGridCOrderStorageBase(const SingleArrayGridCOrderStorageBase&) = default;
+
+        /**
+         * @brief Assignment operator
+         */
+        SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy> &operator=(const SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy> &) = default;
+
         /**
          * @brief Construct with a given size
          * 
@@ -166,6 +182,15 @@ namespace schnek
 
         /// Default constructor
         SingleArrayGridFortranOrderStorageBase() : BaseType(), data_fast(NULL) {}
+
+        /// Copy constructor
+        SingleArrayGridFortranOrderStorageBase(const SingleArrayGridFortranOrderStorageBase&) = default;
+        
+
+        /**
+         * @brief Assignment operator
+         */
+        SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy> &operator=(const SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy> &) = default;
 
         /**
          * @brief Construct with a given size
@@ -256,7 +281,7 @@ namespace schnek
         {
             p = p * this->dims[d] - this->low[d];
         }
-        data_fast = this->data + p;
+        data_fast = this->data->ptr + p;
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
@@ -313,7 +338,7 @@ namespace schnek
         {
             p = p * this->dims[d] - this->low[d];
         }
-        data_fast = this->data + p;
+        data_fast = this->data->ptr + p;
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>

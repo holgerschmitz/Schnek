@@ -52,7 +52,7 @@ target_link_libraries(schnek ${HDF5_LIBRARIES})
 target_compile_features(schnek PRIVATE cxx_std_14)
 
 if (Kokkos_FOUND)
-  target_include_directories(schnek PUBLIC ${Kokkos_INCLUDE_DIRS})
+  target_include_directories(schnek PUBLIC ${Kokkos_INCLUDE_DIR})
   target_link_libraries(schnek ${Kokkos_LIBRARIES})
 endif()
 
@@ -107,7 +107,8 @@ target_include_directories(schnek_tests PUBLIC ${Boost_INCLUDE_DIRS})
 if (Kokkos_FOUND)
   target_include_directories(schnek_tests PUBLIC ${Kokkos_INCLUDE_DIR})
   target_link_libraries(schnek_tests ${Kokkos_LIBRARY})
-endif()
+  message("KOKKOS ${Kokkos_VERSION} ${Kokkos_INCLUDE_DIR} | ${Kokkos_LIBRARY}")
+  endif()
 
 target_link_libraries(schnek_tests schnek)
 target_link_libraries(schnek_tests ${MPI_C_LIBRARIES})

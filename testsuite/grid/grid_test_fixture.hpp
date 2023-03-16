@@ -23,14 +23,20 @@
 #ifndef SCHNEK_TEST_GRID_GRIDTESTFIXTURE
 #define SCHNEK_TEST_GRID_GRIDTESTFIXTURE
 
+#ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-copy-with-user-provided-copy"
+#endif
 
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
 
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
+#endif
+
+#include <map>
 
 struct GridTest
 {
@@ -42,7 +48,7 @@ struct GridTest
     template<class GridType>
     void test_access_1d(GridType &grid)
     {
-      double sum_direct = 0.0;
+      double sumDirect = 0.0;
 
       typename GridType::IndexType lo = grid.getLo();
       typename GridType::IndexType hi = grid.getHi();
@@ -52,7 +58,7 @@ struct GridTest
       {
         double val = dist(rGen);
         grid(i) = val;
-        sum_direct += val;
+        sumDirect += val;
       }
 
       double sum_grid = 0.0;
@@ -63,13 +69,13 @@ struct GridTest
         sum_grid += grid(i);
       }
 
-      BOOST_CHECK(is_equal(sum_direct, sum_grid));
+      BOOST_CHECK(is_equal(sumDirect, sum_grid));
     }
 
     template<class GridType>
     void test_access_2d(GridType &grid)
     {
-      double sum_direct = 0.0;
+      double sumDirect = 0.0;
 
       typename GridType::IndexType lo = grid.getLo();
       typename GridType::IndexType hi = grid.getHi();
@@ -80,7 +86,7 @@ struct GridTest
         {
           double val = dist(rGen);
           grid(i,j) = val;
-          sum_direct += val;
+          sumDirect += val;
         }
 
       double sum_grid = 0.0;
@@ -92,13 +98,13 @@ struct GridTest
           sum_grid += grid(i,j);
         }
 
-      BOOST_CHECK(is_equal(sum_direct, sum_grid));
+      BOOST_CHECK(is_equal(sumDirect, sum_grid));
     }
 
     template<class GridType>
     void test_access_3d(GridType &grid)
     {
-      double sum_direct = 0.0;
+      double sumDirect = 0.0;
 
       typename GridType::IndexType lo = grid.getLo();
       typename GridType::IndexType hi = grid.getHi();
@@ -110,7 +116,7 @@ struct GridTest
           {
             double val = dist(rGen);
             grid(i,j,k) = val;
-            sum_direct += val;
+            sumDirect += val;
           }
 
       double sum_grid = 0.0;
@@ -123,13 +129,13 @@ struct GridTest
             sum_grid += grid(i,j,k);
           }
 
-      BOOST_CHECK(is_equal(sum_direct, sum_grid));
+      BOOST_CHECK(is_equal(sumDirect, sum_grid));
     }
 
     template<class GridType>
     void test_access_4d(GridType &grid)
     {
-      double sum_direct = 0.0;
+      double sumDirect = 0.0;
 
       typename GridType::IndexType lo = grid.getLo();
       typename GridType::IndexType hi = grid.getHi();
@@ -142,7 +148,7 @@ struct GridTest
             {
               double val = dist(rGen);
               grid(i,j,k,l) = val;
-              sum_direct += val;
+              sumDirect += val;
             }
 
       double sum_grid = 0.0;
@@ -156,13 +162,13 @@ struct GridTest
               sum_grid += grid(i,j,k,l);
             }
 
-      BOOST_CHECK(is_equal(sum_direct, sum_grid));
+      BOOST_CHECK(is_equal(sumDirect, sum_grid));
     }
 
     template<class GridType>
     void test_access_5d(GridType &grid)
     {
-      double sum_direct = 0.0;
+      double sumDirect = 0.0;
 
       typename GridType::IndexType lo = grid.getLo();
       typename GridType::IndexType hi = grid.getHi();
@@ -176,7 +182,7 @@ struct GridTest
               {
                 double val = dist(rGen);
                 grid(i,j,k,l,m) = val;
-                sum_direct += val;
+                sumDirect += val;
               }
 
       double sum_grid = 0.0;
@@ -191,13 +197,13 @@ struct GridTest
                 sum_grid += grid(i,j,k,l,m);
               }
 
-      BOOST_CHECK(is_equal(sum_direct, sum_grid));
+      BOOST_CHECK(is_equal(sumDirect, sum_grid));
     }
 
     template<class GridType>
     void test_access_6d(GridType &grid)
     {
-      double sum_direct = 0.0;
+      double sumDirect = 0.0;
 
       typename GridType::IndexType lo = grid.getLo();
       typename GridType::IndexType hi = grid.getHi();
@@ -212,7 +218,7 @@ struct GridTest
                 {
                   double val = dist(rGen);
                   grid(i,j,k,l,m,n) = val;
-                  sum_direct += val;
+                  sumDirect += val;
                 }
 
       double sum_grid = 0.0;
@@ -228,13 +234,13 @@ struct GridTest
                   sum_grid += grid(i,j,k,l,m,n);
                 }
 
-      BOOST_CHECK(is_equal(sum_direct, sum_grid));
+      BOOST_CHECK(is_equal(sumDirect, sum_grid));
     }
 
     template<class GridType>
     void test_access_7d(GridType &grid)
     {
-      double sum_direct = 0.0;
+      double sumDirect = 0.0;
 
       typename GridType::IndexType lo = grid.getLo();
       typename GridType::IndexType hi = grid.getHi();
@@ -250,7 +256,7 @@ struct GridTest
                   {
                     double val = dist(rGen);
                     grid(i,j,k,l,m,n,o) = val;
-                    sum_direct += val;
+                    sumDirect += val;
                   }
 
       double sum_grid = 0.0;
@@ -267,13 +273,13 @@ struct GridTest
                     sum_grid += grid(i,j,k,l,m,n,o);
                   }
 
-      BOOST_CHECK(is_equal(sum_direct, sum_grid));
+      BOOST_CHECK(is_equal(sumDirect, sum_grid));
     }
 
     template<class GridType>
     void test_access_8d(GridType &grid)
     {
-      double sum_direct = 0.0;
+      double sumDirect = 0.0;
 
       typename GridType::IndexType lo = grid.getLo();
       typename GridType::IndexType hi = grid.getHi();
@@ -290,7 +296,7 @@ struct GridTest
                     {
                       double val = dist(rGen);
                       grid(i,j,k,l,m,n,o,p) = val;
-                      sum_direct += val;
+                      sumDirect += val;
                     }
 
       double sum_grid = 0.0;
@@ -308,13 +314,13 @@ struct GridTest
                       sum_grid += grid(i,j,k,l,m,n,o,p);
                     }
 
-      BOOST_CHECK(is_equal(sum_direct, sum_grid));
+      BOOST_CHECK(is_equal(sumDirect, sum_grid));
     }
 
     template<class GridType>
     void test_access_9d(GridType &grid)
     {
-      double sum_direct = 0.0;
+      double sumDirect = 0.0;
 
       typename GridType::IndexType lo = grid.getLo();
       typename GridType::IndexType hi = grid.getHi();
@@ -332,7 +338,7 @@ struct GridTest
                       {
                         double val = dist(rGen);
                         grid(i,j,k,l,m,n,o,p,q) = val;
-                        sum_direct += val;
+                        sumDirect += val;
                       }
 
       double sum_grid = 0.0;
@@ -351,13 +357,13 @@ struct GridTest
                         sum_grid += grid(i,j,k,l,m,n,o,p,q);
                       }
 
-      BOOST_CHECK(is_equal(sum_direct, sum_grid));
+      BOOST_CHECK(is_equal(sumDirect, sum_grid));
     }
 
     template<class GridType>
     void test_access_10d(GridType &grid)
     {
-      double sum_direct = 0.0;
+      double sumDirect = 0.0;
 
       typename GridType::IndexType lo = grid.getLo();
       typename GridType::IndexType hi = grid.getHi();
@@ -376,7 +382,7 @@ struct GridTest
                         {
                           double val = dist(rGen);
                           grid(i,j,k,l,m,n,o,p,q,r) = val;
-                          sum_direct += val;
+                          sumDirect += val;
                         }
 
       double sum_grid = 0.0;
@@ -396,7 +402,7 @@ struct GridTest
                           sum_grid += grid(i,j,k,l,m,n,o,p,q,r);
                         }
 
-      BOOST_CHECK(is_equal(sum_direct, sum_grid));
+      BOOST_CHECK(is_equal(sumDirect, sum_grid));
     }
 
     template<class GridType>
@@ -411,6 +417,102 @@ struct GridTest
         BOOST_CHECK(is_equal(diff, stride));
       }
     }
+
+    template<class GridType>
+    void test_copy_constructor(GridType &grid)
+    {
+      GridType copiedBefore{grid};
+
+      double sumDirect = 0.0;
+
+      typename GridType::IndexType lo = grid.getLo();
+      typename GridType::IndexType hi = grid.getHi();
+
+      // write random numbers
+      for (int i=lo[0]; i<=hi[0]; ++i)
+        for (int j=lo[1]; j<=hi[1]; ++j)
+          for (int k=lo[2]; k<=hi[2]; ++k)
+          {
+            double val = dist(rGen);
+            grid(i,j,k) = val;
+            sumDirect += val;
+          }
+
+      GridType copiedAfter{grid};
+      double sumGridBefore = 0.0;
+      double sumGridAfter = 0.0;
+
+      // read back random numbers
+      for (int i=lo[0]; i<=hi[0]; ++i)
+        for (int j=lo[1]; j<=hi[1]; ++j)
+          for (int k=lo[2]; k<=hi[2]; ++k)
+          {
+            sumGridBefore += copiedBefore(i,j,k);
+            sumGridAfter += copiedAfter(i,j,k);
+          }
+
+      BOOST_CHECK(is_equal(sumDirect, sumGridBefore));
+      BOOST_CHECK(is_equal(sumDirect, sumGridAfter));
+    }
+
+    template<class GridType>
+    void test_assignment_operator(GridType &grid)
+    {
+      double sumDirect = 0.0;
+
+      typename GridType::IndexType lo = grid.getLo();
+      typename GridType::IndexType hi = grid.getHi();
+
+      GridType copiedBefore{lo, hi};
+      GridType copiedAfter{lo, hi};
+
+      copiedBefore = grid;
+      // write random numbers
+      for (int i=lo[0]; i<=hi[0]; ++i)
+        for (int j=lo[1]; j<=hi[1]; ++j)
+          for (int k=lo[2]; k<=hi[2]; ++k)
+          {
+            double val = dist(rGen);
+            grid(i,j,k) = val;
+            sumDirect += val;
+          }
+
+      copiedAfter = grid;
+      double sumGridBefore = 0.0;
+      double sumGridAfter = 0.0;
+
+      // read back random numbers
+      for (int i=lo[0]; i<=hi[0]; ++i)
+        for (int j=lo[1]; j<=hi[1]; ++j)
+          for (int k=lo[2]; k<=hi[2]; ++k)
+          {
+            sumGridBefore += copiedBefore(i,j,k);
+            sumGridAfter += copiedAfter(i,j,k);
+          }
+
+      BOOST_CHECK(is_equal(sumDirect, sumGridBefore));
+      BOOST_CHECK(is_equal(sumDirect, sumGridAfter));
+    }
+
+    struct DeleteCounter
+    {
+      int value;
+      std::map<int, int> &counters;
+
+      DeleteCounter(int value, std::map<int, int> &counters): value(value), counters(counters
+      )
+      {}
+
+      ~DeleteCounter() 
+      {
+        if (counters.count(value) > 0)
+        {
+          ++counters[value];
+        } else {
+          counters[value] = 1;
+        }
+      }
+    };
 
     template<size_t rank>
     void random_extent(schnek::Array<int,rank> &lo, schnek::Array<int,rank> &hi)
