@@ -81,12 +81,17 @@ namespace schnek {
         KokkosGridStorage();
 
         /**
+         * @brief Copy constructor
+         */
+        KokkosGridStorage(const KokkosGridStorage &) = default;
+
+        /**
          * @brief Construct with a given size
          * 
          * @param lo the lowest coordinate in the grid (inclusive)
          * @param lo the highest coordinate in the grid (inclusive)
          */
-        KokkosGridStorage(const Index &low_, const Index &high_);
+        KokkosGridStorage(const Index &lo, const Index &hi);
 
         /// Destructor frees any allocated memory
         ~KokkosGridStorage();

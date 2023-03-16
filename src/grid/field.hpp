@@ -47,7 +47,7 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     typedef Array<bool, rank> Stagger;
     typedef typename Grid<T, rank, CheckingPolicy, StoragePolicy>::IndexType IndexType;
     typedef Field<T, rank, CheckingPolicy, StoragePolicy> FieldType;
-    typedef GridBase<T, rank, CheckingPolicy<rank>, StoragePolicy<T,rank> > BaseType;
+    typedef Grid<T, rank, CheckingPolicy, StoragePolicy> BaseType;
   private:
     RangeType range;
     Stagger stagger;
@@ -106,47 +106,15 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     /// Get a single component of the grid stagger
     bool getStagger(int i) { return stagger[i]; }
 
+    /**
+     * @brief Assignment operator
+     */
+    FieldType &operator=(const FieldType&) = default;
+    
     /** assign a value to the field*/
     FieldType& operator=(const T &val)
     {
       BaseType::operator=(val);
-      return *this;
-    }
-
-    /** assign another grid */
-    FieldType& operator=(const FieldType &grid)
-    {
-      BaseType::operator=(grid);
-      range = grid.range;
-      stagger = grid.stagger;
-      ghostCells = grid.ghostCells;
-      return *this;
-    }
-
-    /** assign another grid */
-    template<
-      typename T2,
-      template<size_t> class CheckingPolicy2,
-      template<typename, size_t> class StoragePolicy2
-    >
-    FieldType& operator=(const Field<T2, rank, CheckingPolicy2, StoragePolicy2> &grid)
-    {
-      BaseType::operator=(grid);
-      range = grid.range;
-      stagger = grid.stagger;
-      ghostCells = grid.ghostCells;
-      return *this;
-    }
-
-    /** assign another grid */
-    template<
-      typename T2,
-      class CheckingPolicy2,
-      class StoragePolicy2
-    >
-    FieldType& operator=(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy2> &grid)
-    {
-      BaseType::operator=(grid);
       return *this;
     }
 
