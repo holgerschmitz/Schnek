@@ -27,7 +27,6 @@
 // --------------------------------------------------------------
 // implementation
 
-#include "../macros.hpp"
 #include "range.hpp"
 #include "arrayexpression.hpp"
 
@@ -368,40 +367,6 @@ SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(in
   return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r,s),this->getLo(),this->getHi()));
 }
 
-template<
-  typename T, 
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-  GridBase<T, rank, CheckingPolicy, StoragePolicy>
-    ::operator=(const GridBase<T, rank, CheckingPolicy, StoragePolicy> &grid)
-{
-  this->resize(grid);
-  this->copyFromGrid(grid);
-  return *this;
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<
-  typename T2,
-  class CheckingPolicy2,
-  class StoragePolicy2
->
-GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-  GridBase<T, rank, CheckingPolicy, StoragePolicy>
-    ::operator=(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy2> &grid)
-{
-  this->resize(grid);
-  this->copyFromGrid(grid);
-  return *this;
-}
 
   template<
     typename T, 
@@ -409,6 +374,7 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>&
     class CheckingPolicy,
     class StoragePolicy
   >
+  SCHNEK_INLINE
   GridBase<T, rank, CheckingPolicy, StoragePolicy>&
     GridBase<T, rank, CheckingPolicy, StoragePolicy>
       ::operator=(const T &val)

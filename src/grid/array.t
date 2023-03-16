@@ -31,12 +31,12 @@ namespace schnek
 {
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline Array<T,Length,CheckingPolicy>::Array()
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array()
 {}
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<template<size_t> class CheckingPolicy2>
-inline Array<T,Length,CheckingPolicy>::Array(const Array<T, Length, CheckingPolicy2> &arr)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(const Array<T, Length, CheckingPolicy2> &arr)
 {
   for (size_t i=0; i<Length; ++i)
     data[i] = arr[i];
@@ -49,13 +49,13 @@ inline Array<T,Length,CheckingPolicy>::Array(const Array<T, Length, CheckingPoli
 // }
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline Array<T,Length,CheckingPolicy>::Array(const T& v0)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(const T& v0)
 {
   for (size_t i=0; i<Length; ++i) data[i] = v0;
 }
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline Array<T,Length,CheckingPolicy>::Array(
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
                   const T& v0, const T& v1
 )
 {
@@ -65,7 +65,7 @@ inline Array<T,Length,CheckingPolicy>::Array(
 }
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline Array<T,Length,CheckingPolicy>::Array(
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2
 )
 {
@@ -76,7 +76,7 @@ inline Array<T,Length,CheckingPolicy>::Array(
 }
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline Array<T,Length,CheckingPolicy>::Array(
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3
 )
 {
@@ -88,7 +88,7 @@ inline Array<T,Length,CheckingPolicy>::Array(
 }
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline Array<T,Length,CheckingPolicy>::Array(
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4
 )
 {
@@ -101,7 +101,7 @@ inline Array<T,Length,CheckingPolicy>::Array(
 }
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline Array<T,Length,CheckingPolicy>::Array(
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5
 )
@@ -116,7 +116,7 @@ inline Array<T,Length,CheckingPolicy>::Array(
 }
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline Array<T,Length,CheckingPolicy>::Array(
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6
 )
@@ -132,7 +132,7 @@ inline Array<T,Length,CheckingPolicy>::Array(
 }
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline Array<T,Length,CheckingPolicy>::Array(
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6, const T& v7
 )
@@ -149,7 +149,7 @@ inline Array<T,Length,CheckingPolicy>::Array(
 }
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline Array<T,Length,CheckingPolicy>::Array(
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6, const T& v7, const T& v8
 )
@@ -167,7 +167,7 @@ inline Array<T,Length,CheckingPolicy>::Array(
 }
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline Array<T,Length,CheckingPolicy>::Array(
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
                   const T& v5, const T& v6, const T& v7, const T& v8, const T& v9
 )
@@ -187,7 +187,7 @@ inline Array<T,Length,CheckingPolicy>::Array(
 
 /// Accessor operator
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline T& Array<T,Length,CheckingPolicy>::at(size_t pos)
+SCHNEK_INLINE T& Array<T,Length,CheckingPolicy>::at(size_t pos)
 {
  this->check(pos);
  return data[pos];
@@ -195,7 +195,7 @@ inline T& Array<T,Length,CheckingPolicy>::at(size_t pos)
 
 /// Constant accessor operator
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline T Array<T,Length,CheckingPolicy>::at(size_t pos) const
+SCHNEK_INLINE T Array<T,Length,CheckingPolicy>::at(size_t pos) const
 {
  this->check(pos);
  return data[pos];
@@ -203,14 +203,14 @@ inline T Array<T,Length,CheckingPolicy>::at(size_t pos) const
 
 /// Accessor operator
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline T& Array<T,Length,CheckingPolicy>::operator[](size_t pos)
+SCHNEK_INLINE T& Array<T,Length,CheckingPolicy>::operator[](size_t pos)
 {
   return at(pos);
 }
 
 /// Constant accessor operator
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-inline T Array<T,Length,CheckingPolicy>::operator[](size_t pos) const
+SCHNEK_INLINE T Array<T,Length,CheckingPolicy>::operator[](size_t pos) const
 {
   return at(pos);
 }

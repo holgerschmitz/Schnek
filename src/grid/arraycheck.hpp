@@ -27,6 +27,8 @@
 #ifndef SCHNEK_ARRAYCHECK_HPP_
 #define SCHNEK_ARRAYCHECK_HPP_
 
+#include "../macros.hpp"
+
 #include <cassert>
 #include <cstddef>
 
@@ -42,7 +44,7 @@ class ArrayNoArgCheck
 {
   public:
     /** The check method does not do anything */
-    void check(size_t) const {} 
+    SCHNEK_INLINE void check(size_t) const {} 
 };
 
 /** Class to plug into the Array as CheckingPolicy.
@@ -53,7 +55,7 @@ class ArrayAssertArgCheck
 {
   public:
     /** The check method does not do anything */
-    void check(size_t i) const {
+    SCHNEK_INLINE void check(size_t i) const {
       assert(i < limit);
     }
 };

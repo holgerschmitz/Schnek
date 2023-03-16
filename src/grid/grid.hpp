@@ -32,6 +32,7 @@
 #include "gridcheck.hpp"
 #include "gridstorage.hpp"
 #include "../typetools.hpp"
+#include "../macros.hpp"
 
 namespace schnek {
 
@@ -85,73 +86,73 @@ namespace schnek {
 
         /** index operator, writing */
         template<template<size_t> class ArrayCheckingPolicy>
-        T& operator[](const Array<int,rank,ArrayCheckingPolicy>& pos); // write
+        SCHNEK_INLINE T& operator[](const Array<int,rank,ArrayCheckingPolicy>& pos); // write
         /** index operator, reading */
         template<template<size_t> class ArrayCheckingPolicy>
-        T  operator[](const Array<int,rank,ArrayCheckingPolicy>& pos) const; // read
+        SCHNEK_INLINE T  operator[](const Array<int,rank,ArrayCheckingPolicy>& pos) const; // read
 
         /** index operator, writing */
         template<class Operator, int Length>
-        T& operator[](const ArrayExpression<Operator, Length>& pos); // write
+        SCHNEK_INLINE T& operator[](const ArrayExpression<Operator, Length>& pos); // write
         /** index operator, reading */
         template<class Operator, int Length>
-        T  operator[](const ArrayExpression<Operator, Length>& pos) const; // read
+        SCHNEK_INLINE T  operator[](const ArrayExpression<Operator, Length>& pos) const; // read
 
         /** index operator, for 1D grids, writing */
-        T& operator[](int i);
+        SCHNEK_INLINE T& operator[](int i);
         /** index operator, for 1D grids, reading */
-        T  operator[](int i) const;
+        SCHNEK_INLINE T  operator[](int i) const;
 
         /** index operator, writing */
-        T& operator()(int i);
+        SCHNEK_INLINE T& operator()(int i);
         /** index operator, reading */
-        T  operator()(int i) const;
+        SCHNEK_INLINE T  operator()(int i) const;
         /** index operator, writing */
-        T& operator()(int i, int j);
+        SCHNEK_INLINE T& operator()(int i, int j);
         /** index operator, reading */
-        T  operator()(int i, int j) const;
+        SCHNEK_INLINE T  operator()(int i, int j) const;
         /** index operator, writing */
-        T& operator()(int i, int j, int k);
+        SCHNEK_INLINE T& operator()(int i, int j, int k);
         /** index operator, reading */
-        T  operator()(int i, int j, int k) const;
+        SCHNEK_INLINE T  operator()(int i, int j, int k) const;
         /** index operator, writing */
-        T& operator()(int i, int j, int k, int l);
+        SCHNEK_INLINE T& operator()(int i, int j, int k, int l);
         /** index operator, reading */
-        T  operator()(int i, int j, int k, int l) const;
+        SCHNEK_INLINE T  operator()(int i, int j, int k, int l) const;
         /** index operator, writing */
-        T& operator()(int i, int j, int k, int l, int m);
+        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m);
         /** index operator, reading */
-        T  operator()(int i, int j, int k, int l, int m) const;
+        SCHNEK_INLINE T  operator()(int i, int j, int k, int l, int m) const;
         /** index operator, writing */
-        T& operator()(int i, int j, int k, int l, int m, int o);
+        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m, int o);
         /** index operator, reading */
-        T  operator()(int i, int j, int k, int l, int m, int o) const;
+        SCHNEK_INLINE T  operator()(int i, int j, int k, int l, int m, int o) const;
         /** index operator, writing */
-        T& operator()(int i, int j, int k, int l, int m, int o, int p);
+        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m, int o, int p);
         /** index operator, reading */
-        T  operator()(int i, int j, int k, int l, int m, int o, int p) const;
+        SCHNEK_INLINE T  operator()(int i, int j, int k, int l, int m, int o, int p) const;
         /** index operator, writing */
-        T& operator()(int i, int j, int k, int l, int m, int o, int p, int q);
+        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m, int o, int p, int q);
         /** index operator, reading */
-        T  operator()(int i, int j, int k, int l, int m, int o, int p, int q) const;
+        SCHNEK_INLINE T  operator()(int i, int j, int k, int l, int m, int o, int p, int q) const;
         /** index operator, writing */
-        T& operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r);
+        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r);
         /** index operator, reading */
-        T  operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r) const;
+        SCHNEK_INLINE T  operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r) const;
         /** index operator, writing */
-        T& operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s);
+        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s);
         /** index operator, reading */
-        T  operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s) const;
+        SCHNEK_INLINE T  operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s) const;
 
         /** assign a value */
-        GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+        SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>&
           operator=(const T &val);
 
         template<
           typename T2,
           class CheckingPolicy2
         >
-        GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+        SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>&
           operator-=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy>&);
 
         template<
@@ -159,14 +160,14 @@ namespace schnek {
           class CheckingPolicy2,
           class StoragePolicy2
         >
-        GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+        SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>&
           operator-=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>&);
 
         template<
           typename T2,
           class CheckingPolicy2
         >
-        GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+        SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>&
           operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy>&);
 
 
@@ -175,7 +176,7 @@ namespace schnek {
           class CheckingPolicy2,
           class StoragePolicy2
         >
-        GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+        SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>&
           operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>&);
 
         /** Resize to size[0] x ... x size[rank-1]
