@@ -32,576 +32,518 @@
 
 namespace schnek
 {
-//=================================================================
-//============================ GridBase ===========================
-//=================================================================
 
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase() : StoragePolicy()
-{}
+namespace internal {
+  //=================================================================
+  //============================ GridBase ===========================
+  //=================================================================
 
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<template<size_t> class ArrayCheckingPolicy>
-GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const Array<int,rank,ArrayCheckingPolicy> &size)
-  : StoragePolicy(IndexType::Zero(), size-IndexType::Ones())
-{}
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase() : StoragePolicy()
+  {}
 
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<template<size_t> class ArrayCheckingPolicy>
-GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const Array<int,rank,ArrayCheckingPolicy> &low, const Array<int,rank,ArrayCheckingPolicy> &high)
-  : StoragePolicy(low,high)
-{}
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<template<size_t> class ArrayCheckingPolicy>
+  GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const Array<int,rank,ArrayCheckingPolicy> &size)
+    : StoragePolicy(IndexType::Zero(), size-IndexType::Ones())
+  {}
 
-// -------------------------------------------------------------
-// inline functions
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<template<size_t> class ArrayCheckingPolicy>
+  GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const Array<int,rank,ArrayCheckingPolicy> &low, const Array<int,rank,ArrayCheckingPolicy> &high)
+    : StoragePolicy(low,high)
+  {}
 
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<template<size_t> class ArrayCheckingPolicy>
-inline T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
-  ::operator[](const Array<int,rank,ArrayCheckingPolicy>& pos)
-{
-  return this->get(this->check(pos,this->getLo(),this->getHi()));
-}
+  // -------------------------------------------------------------
+  // inline functions
 
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<template<size_t> class ArrayCheckingPolicy>
-inline T GridBase<T, rank, CheckingPolicy, StoragePolicy>
-  ::operator[](const Array<int,rank,ArrayCheckingPolicy>& pos) const
-{
-  return this->get(this->check(pos,this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<class Operator, int Length>
-inline T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
-  ::operator[](const ArrayExpression<Operator, Length>& pos)
-{
-  return this->operator[](IndexType(pos));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<class Operator, int Length>
-inline T GridBase<T, rank, CheckingPolicy, StoragePolicy>
-  ::operator[](const ArrayExpression<Operator, Length>& pos) const
-{
-  return this->operator[](IndexType(pos));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i)
-{
-  return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i) const
-{
-  return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i)
-{
-  return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i) const
-{
-  return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
-}
-
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j)
-{
-  return this->get(this->check(IndexType(i,j),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j) const
-{
-  return this->get(this->check(IndexType(i,j),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k)
-{
-  return this->get(this->check(IndexType(i,j,k),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k) const
-{
-  return this->get(this->check(IndexType(i,j,k),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l)
-{
-  return this->get(this->check(IndexType(i,j,k,l),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l) const
-{
-  return this->get(this->check(IndexType(i,j,k,l),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m)
-{
-  return this->get(this->check(IndexType(i,j,k,l,m),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m) const
-{
-  return this->get(this->check(IndexType(i,j,k,l,m),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o)
-{
-  return this->get(this->check(IndexType(i,j,k,l,m,o),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o) const
-{
-  return this->get(this->check(IndexType(i,j,k,l,m,o),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p)
-{
-  return this->get(this->check(IndexType(i,j,k,l,m,o,p),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p) const
-{
-  return this->get(this->check(IndexType(i,j,k,l,m,o,p),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q)
-{
-  return this->get(this->check(IndexType(i,j,k,l,m,o,p,q),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q) const
-{
-  return this->get(this->check(IndexType(i,j,k,l,m,o,p,q),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r)
-{
-  return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r) const
-{
-  return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s)
-{
-  return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r,s),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s) const
-{
-  return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r,s),this->getLo(),this->getHi()));
-}
-
-template<
-  typename T, 
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-  GridBase<T, rank, CheckingPolicy, StoragePolicy>
-    ::operator=(const GridBase<T, rank, CheckingPolicy, StoragePolicy> &grid)
-{
-  this->resize(grid);
-  this->copyFromGrid(grid);
-  return *this;
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<
-  typename T2,
-  class CheckingPolicy2,
-  class StoragePolicy2
->
-GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-  GridBase<T, rank, CheckingPolicy, StoragePolicy>
-    ::operator=(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy2> &grid)
-{
-  this->resize(grid);
-  this->copyFromGrid(grid);
-  return *this;
-}
-
-template<
-  typename T, 
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-  GridBase<T, rank, CheckingPolicy, StoragePolicy>
-    ::operator=(const T &val)
-{
-  typedef typename StoragePolicy::storage_iterator Iterator;
-  Iterator end = this->end();
-  Iterator dest = this->begin();
-  while (dest != end)
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<template<size_t> class ArrayCheckingPolicy>
+  inline T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
+    ::operator[](const Array<int,rank,ArrayCheckingPolicy>& pos)
   {
-    *dest = val;
-    ++dest;
-  }
-  
-  return *this;
-}
-
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<
-  typename T2,
-  class CheckingPolicy2
->
-GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-  GridBase<T, rank, CheckingPolicy, StoragePolicy>
-    ::operator-=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy>& grid)
-{
-  typedef typename StoragePolicy::storage_iterator Iterator;
-  Iterator dest = this->begin();
-  Iterator src = grid.begin();
-  Iterator end = grid.end();
-  while (src != end)
-  {
-    *dest -= *src;
-    ++dest;
-    ++src;
+    return this->get(this->check(pos,this->getLo(),this->getHi()));
   }
 
-  return *this;
-}
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<template<size_t> class ArrayCheckingPolicy>
+  inline T GridBase<T, rank, CheckingPolicy, StoragePolicy>
+    ::operator[](const Array<int,rank,ArrayCheckingPolicy>& pos) const
+  {
+    return this->get(this->check(pos,this->getLo(),this->getHi()));
+  }
 
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<
-  typename T2,
-  class CheckingPolicy2,
-  class StoragePolicy2
->
-GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<class Operator, int Length>
+  inline T& GridBase<T, rank, CheckingPolicy, StoragePolicy>
+    ::operator[](const ArrayExpression<Operator, Length>& pos)
+  {
+    return this->operator[](IndexType(pos));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<class Operator, int Length>
+  inline T GridBase<T, rank, CheckingPolicy, StoragePolicy>
+    ::operator[](const ArrayExpression<Operator, Length>& pos) const
+  {
+    return this->operator[](IndexType(pos));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i)
+  {
+    return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator [](int i) const
+  {
+    return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i)
+  {
+    return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i) const
+  {
+    return this->get(this->check(IndexType(i),this->getLo(),this->getHi()));
+  }
+
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j)
+  {
+    return this->get(this->check(IndexType(i,j),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j) const
+  {
+    return this->get(this->check(IndexType(i,j),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k)
+  {
+    return this->get(this->check(IndexType(i,j,k),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k) const
+  {
+    return this->get(this->check(IndexType(i,j,k),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l)
+  {
+    return this->get(this->check(IndexType(i,j,k,l),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l) const
+  {
+    return this->get(this->check(IndexType(i,j,k,l),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m)
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m) const
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o)
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m,o),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o) const
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m,o),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p)
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m,o,p),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p) const
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m,o,p),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q)
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m,o,p,q),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q) const
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m,o,p,q),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r)
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r) const
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s)
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r,s),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  inline  T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator ()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s) const
+  {
+    return this->get(this->check(IndexType(i,j,k,l,m,o,p,q,r,s),this->getLo(),this->getHi()));
+  }
+
+  template<
+    typename T, 
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+    GridBase<T, rank, CheckingPolicy, StoragePolicy>
+      ::operator=(const T &val)
+  {
+    typedef typename StoragePolicy::storage_iterator Iterator;
+    Iterator end = this->end();
+    Iterator dest = this->begin();
+    while (dest != end)
+    {
+      *dest = val;
+      ++dest;
+    }
+    
+    return *this;
+  }
+
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<
+    typename T2,
+    class CheckingPolicy2
+  >
+  GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+    GridBase<T, rank, CheckingPolicy, StoragePolicy>
+      ::operator-=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy>& grid)
+  {
+    typedef typename StoragePolicy::storage_iterator Iterator;
+    Iterator dest = this->begin();
+    Iterator src = grid.begin();
+    Iterator end = grid.end();
+    while (src != end)
+    {
+      *dest -= *src;
+      ++dest;
+      ++src;
+    }
+
+    return *this;
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<
+    typename T2,
+    class CheckingPolicy2,
+    class StoragePolicy2
+  >
+  GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+    GridBase<T, rank, CheckingPolicy, StoragePolicy>
+      ::operator-=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid)
+  {
+    Range<int, rank> rec(this->getLo(), this->getHi());
+    typename Range<int, rank>::iterator it = rec.begin();
+    typename Range<int, rank>::iterator end = rec.end();
+
+    while (it != end)
+    {
+      this->get(*it) -= grid.get(*it);
+      ++it;
+    }
+
+    return *this;
+  }
+
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<
+    typename T2,
+    class CheckingPolicy2
+  >
+  GridBase<T, rank, CheckingPolicy, StoragePolicy>&
   GridBase<T, rank, CheckingPolicy, StoragePolicy>
-    ::operator-=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid)
-{
-  Range<int, rank> rec(this->getLo(), this->getHi());
-  typename Range<int, rank>::iterator it = rec.begin();
-  typename Range<int, rank>::iterator end = rec.end();
-
-  while (it != end)
+      ::operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy>& grid)
   {
-    this->get(*it) -= grid.get(*it);
-    ++it;
+    typedef typename StoragePolicy::storage_iterator Iterator;
+    Iterator dest = this->begin();
+    Iterator src = grid.begin();
+    Iterator end = grid.end();
+    while (src != end)
+    {
+      *dest += *src;
+      ++dest;
+      ++src;
+    }
+
+    return *this;
   }
 
-  return *this;
-}
-
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<
-  typename T2,
-  class CheckingPolicy2
->
-GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-GridBase<T, rank, CheckingPolicy, StoragePolicy>
-    ::operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy>& grid)
-{
-  typedef typename StoragePolicy::storage_iterator Iterator;
-  Iterator dest = this->begin();
-  Iterator src = grid.begin();
-  Iterator end = grid.end();
-  while (src != end)
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<
+    typename T2,
+    class CheckingPolicy2,
+    class StoragePolicy2
+  >
+  GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+    GridBase<T, rank, CheckingPolicy, StoragePolicy>
+      ::operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid)
   {
-    *dest += *src;
-    ++dest;
-    ++src;
+    Range<int, rank> rec(this->getLo(), this->getHi());
+    typename Range<int, rank>::iterator it = rec.begin();
+    typename Range<int, rank>::iterator end = rec.end();
+
+    while (it != end)
+    {
+      this->get(*it) += grid.get(*it);
+      ++it;
+    }
+
+    return *this;
   }
 
-  return *this;
-}
 
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<
-  typename T2,
-  class CheckingPolicy2,
-  class StoragePolicy2
->
-GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-  GridBase<T, rank, CheckingPolicy, StoragePolicy>
-    ::operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid)
-{
-  Range<int, rank> rec(this->getLo(), this->getHi());
-  typename Range<int, rank>::iterator it = rec.begin();
-  typename Range<int, rank>::iterator end = rec.end();
-
-  while (it != end)
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  void GridBase<T, rank, CheckingPolicy, StoragePolicy>::resize(const IndexType &d)
   {
-    this->get(*it) += grid.get(*it);
-    ++it;
+    IndexType high;
+    for (size_t i=0; i<rank; ++i) high[i] = d[i]-1;
+    StoragePolicy::resize(IndexType::Zero(), high);
   }
 
-  return *this;
-}
-
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-void GridBase<T, rank, CheckingPolicy, StoragePolicy>::resize(const IndexType &d)
-{
-  IndexType high;
-  for (size_t i=0; i<rank; ++i) high[i] = d[i]-1;
-  StoragePolicy::resize(IndexType::Zero(), high);
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-void GridBase<T, rank, CheckingPolicy, StoragePolicy>::resize(const IndexType &low, const IndexType &high)
-{
-  StoragePolicy::resize(low, high);
-}
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<
-  typename T2,
-  class CheckingPolicy2,
-  class StoragePolicy2
->
-void GridBase<T, rank, CheckingPolicy, StoragePolicy>::resize(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid)
-{
-  StoragePolicy::resize(grid.getLo(), grid.getHi());
-}
-
-
-template<
-  typename T,
-  size_t rank,
-  class CheckingPolicy,
-  class StoragePolicy
->
-template<
-  typename T2,
-  class CheckingPolicy2
->
-void GridBase<T, rank, CheckingPolicy, StoragePolicy>
-  ::copyFromGrid(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy>& grid)
-{
-  typedef typename StoragePolicy::const_storage_iterator CIterator;
-  typedef typename StoragePolicy::storage_iterator Iterator;
-  CIterator src = grid.cbegin();
-  CIterator srcEnd = grid.cend();
-  Iterator dest = this->begin();
-  while (src != srcEnd)
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  void GridBase<T, rank, CheckingPolicy, StoragePolicy>::resize(const IndexType &low, const IndexType &high)
   {
-    *dest = static_cast<T2>(*src);
-    ++src;
-    ++dest;
+    StoragePolicy::resize(low, high);
   }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<
+    typename T2,
+    class CheckingPolicy2,
+    class StoragePolicy2
+  >
+  void GridBase<T, rank, CheckingPolicy, StoragePolicy>::resize(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid)
+  {
+    StoragePolicy::resize(grid.getLo(), grid.getHi());
+  }
+
 }
 
 //=================================================================
@@ -615,7 +557,7 @@ template<
   template<typename, size_t> class StoragePolicy
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid()
-  : GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >()
+  : internal::GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >()
 {}
 
 template<
@@ -625,7 +567,7 @@ template<
   template<typename, size_t> class StoragePolicy
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &size)
-  : GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >(size)
+  : internal::GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >(size)
 {}
 
 template<
@@ -635,22 +577,8 @@ template<
   template<typename, size_t> class StoragePolicy
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &low, const IndexType &high)
-  : GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >(low, high)
+  : internal::GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >(low, high)
 {}
-
-template<
-  typename T,
-  size_t rank,
-  template<size_t> class CheckingPolicy,
-  template<typename, size_t> class StoragePolicy
->
-Grid<T, rank, CheckingPolicy, StoragePolicy>
-  ::Grid(const Grid<T, rank, CheckingPolicy, StoragePolicy>& matr)
-  : GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >(matr.getLo(), matr.getHi())
-{
-  this->copyFromGrid(matr);
-}
-
 
 
 //template<

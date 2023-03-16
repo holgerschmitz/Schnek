@@ -131,7 +131,7 @@ template<
   template<int> class CheckingPolicy = GridNoArgCheck
 >
 class GridTransform
-  : public GridBase
+  : public internal::GridBase
     <
       typename Transformation::value_type,
       BaseGrid::Rank,
@@ -145,7 +145,7 @@ class GridTransform
     >
 {
   private:
-    typedef GridBase
+    typedef internal::GridBase
         <
           typename Transformation::value_type,
           BaseGrid::Rank,

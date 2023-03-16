@@ -145,7 +145,7 @@ template<
   template<size_t> class CheckingPolicy = GridNoArgCheck
 >
 class SubGrid
-  : public GridBase
+  : public internal::GridBase
     <
       typename BaseGrid::value_type,
       BaseGrid::Rank,
@@ -158,7 +158,7 @@ class SubGrid
     >
 {
   private:
-    typedef GridBase
+    typedef internal::GridBase
         <
           typename BaseGrid::value_type,
           BaseGrid::Rank,
