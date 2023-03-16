@@ -79,12 +79,26 @@ namespace schnek {
                 executionSpace
             > rangePolicy(range.getLo()[0], range.getHi()[0] + 1);
 
-            Kokkos::parallel_for(rangePolicy, [=](T ind)
+            Kokkos::parallel_for("schnek:forEach", rangePolicy, [=](T ind)
             {
                 func(typename RangeType::LimitType(ind));
             }); 
         }
     };
+
+    namespace internal {
+        template<typename Func, typename RangeType>
+        struct RangeKokkosIterationPolicyFunctor
+        {
+            Func func;
+
+            template<typename... Indices>
+            SCHNEK_INLINE void operator()(Indices... ind) const
+            {
+                func(typename RangeType::LimitType{ind...});
+            }
+        };
+    }
 
     template<
       size_t rank, 
@@ -101,23 +115,22 @@ namespace schnek {
         T hi[rank];
         const typename RangeType::LimitType& loR = range.getLo();
         const typename RangeType::LimitType& hiR = range.getHi();
-        
+
         for (size_t i=0; i<rank; ++i)
         {
             lo[i] = loR[i];
             hi[i] = hiR[i] + 1;
         }
 
-        Kokkos::MDRangePolicy< 
+        Kokkos::MDRangePolicy<
             Kokkos::IndexType<T>,
-            Kokkos::Rank<rank>, 
-            executionSpace 
+            Kokkos::Rank<rank>,
+            executionSpace
         > rangePolicy(lo, hi);
 
-        Kokkos::parallel_for(rangePolicy, [=](auto ... ind)
-        {
-            func(typename RangeType::LimitType{ind...});
-        });
+        internal::RangeKokkosIterationPolicyFunctor<Func, RangeType> functor{func};
+
+        Kokkos::parallel_for("schnek:forEach", rangePolicy, functor);
     }
 
 } // namespace schnek

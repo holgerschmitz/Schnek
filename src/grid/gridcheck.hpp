@@ -30,6 +30,7 @@
 #include "array.hpp"
 
 #include "../util/logger.hpp"
+#include "../macros.hpp"
 #include <cassert>
 
 namespace schnek {
@@ -38,7 +39,7 @@ template<size_t rank>
 class GridNoArgCheck {
   public:
     typedef Array<int,rank,ArrayNoArgCheck> IndexType;
-    static const  IndexType &check(
+    SCHNEK_INLINE static const  IndexType &check(
         const IndexType &pos, 
         const IndexType &low,  
         const IndexType &high
@@ -50,7 +51,7 @@ template<size_t rank>
 class GridAssertCheck {
   public:
     typedef Array<int,rank,ArrayAssertArgCheck> IndexType;
-    static const  IndexType &check(
+    SCHNEK_INLINE static const  IndexType &check(
         const IndexType &pos, 
         const IndexType &low,  
         const IndexType &high
@@ -91,14 +92,14 @@ class GridDebugCheck {
   };
 
 template<size_t rank>
-inline const typename GridNoArgCheck<rank>::IndexType &GridNoArgCheck<rank>::check(
+SCHNEK_INLINE const typename GridNoArgCheck<rank>::IndexType &GridNoArgCheck<rank>::check(
         const IndexType &pos, 
         const IndexType &, const IndexType &
     )
 { return pos; }
 
 template<size_t rank>
-inline const typename GridAssertCheck<rank>::IndexType &GridAssertCheck<rank>::check(
+SCHNEK_INLINE const typename GridAssertCheck<rank>::IndexType &GridAssertCheck<rank>::check(
         const IndexType &pos, 
         const IndexType &low, 
         const IndexType &high

@@ -28,7 +28,10 @@
 #define SCHNEK_ARRAY_HPP_
 
 #include "arraycheck.hpp"
+#include "../macros.hpp"
+
 #include <initializer_list>
+
 namespace schnek {
 
 template<class Operator, size_t Length>
@@ -61,55 +64,55 @@ class Array :
     static constexpr size_t length = Length;
     
     /// The default constructor
-    Array();
+    SCHNEK_INLINE Array();
     /// Copy constructor copies the values
     template<template<size_t> class CheckingPolicy2>
-    Array(const Array<T, Length, CheckingPolicy2> &);
+    SCHNEK_INLINE Array(const Array<T, Length, CheckingPolicy2> &);
 
     /// Construct using an array expression
     template<class Operator>
-    Array(const ArrayExpression<Operator, Length> &);
+    SCHNEK_INLINE Array(const ArrayExpression<Operator, Length> &);
 
     /// Construct using an initializer list
     // Array(std::initializer_list<T> l);
 
     /// Constructor for length=1 arrays setting the data explicitely
-    Array(const T&);
+    SCHNEK_INLINE Array(const T&);
     /// Constructor for length=2 arrays setting the data explicitely
-    Array(const T&, const T&);
+    SCHNEK_INLINE Array(const T&, const T&);
     /// Constructor for length=3 arrays setting the data explicitely
-    Array(const T&, const T&, const T&);
+    SCHNEK_INLINE Array(const T&, const T&, const T&);
     /// Constructor for length=4 arrays setting the data explicitely
-    Array(const T&, const T&, const T&, const T&);
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&);
     /// Constructor for length=5 arrays setting the data explicitely
-    Array(const T&, const T&, const T&, const T&, const T&);
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&);
     /// Constructor for length=6 arrays setting the data explicitely
-    Array(const T&, const T&, const T&, const T&, const T&, 
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
                const T&);
     /// Constructor for length=7 arrays setting the data explicitely
-    Array(const T&, const T&, const T&, const T&, const T&, 
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
                const T&, const T&);
     /// Constructor for length=8 arrays setting the data explicitely
-    Array(const T&, const T&, const T&, const T&, const T&, 
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
                const T&, const T&, const T&);
     /// Constructor for length=9 arrays setting the data explicitely
-    Array(const T&, const T&, const T&, const T&, const T&, 
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
                const T&, const T&, const T&, const T&);
     /// Constructor for length=10 arrays setting the data explicitely
-    Array(const T&, const T&, const T&, const T&, const T&, 
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
                const T&, const T&, const T&, const T&, const T&);
 
-    ~Array() {}
+    SCHNEK_INLINE ~Array() {}
 
     /// Accessor operator
-    T& operator[](size_t);
+    SCHNEK_INLINE T& operator[](size_t);
     /// Constant accessor operator
-    T operator[](size_t) const;
+    SCHNEK_INLINE T operator[](size_t) const;
 
     /// Accessor operator
-    T& at(size_t);
+    SCHNEK_INLINE T& at(size_t);
     /// Constant accessor operator
-    T at(size_t) const;
+    SCHNEK_INLINE T at(size_t) const;
 
   public:
     /** Assignment operator
@@ -119,11 +122,11 @@ class Array :
      * of the LHS.
      */
     template<class T2, template <size_t> class CheckingPolicy2>
-    Array<T,Length,CheckingPolicy> &operator=(const Array<T2,Length,CheckingPolicy2>&);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator=(const Array<T2,Length,CheckingPolicy2>&);
 
     /// Assignment operator using an array expression
     template<class Operator>
-    Array<T,Length,CheckingPolicy> &operator=(const ArrayExpression<Operator, Length> &);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator=(const ArrayExpression<Operator, Length> &);
 
     /** Addition Assignment operator
      *

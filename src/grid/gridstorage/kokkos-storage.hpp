@@ -27,6 +27,7 @@
 #define SCHNEK_GRID_GRIDSTORAGE_KOKKOSSTORAGE_HPP_
 
 #include "../../config.hpp"
+#include "../../macros.hpp"
 #include "../array.hpp"
 
 #ifdef SCHNEK_HAVE_KOKKOS
@@ -104,25 +105,25 @@ namespace schnek {
         const T &get(const Index &index) const;
 
         /// Get the lowest coordinate in the grid (inclusive)
-        const Index &getLo() const { return this->lo; }
+        SCHNEK_INLINE const Index &getLo() const { return this->lo; }
 
         /// Get the highest coordinate in the grid (inclusive)
-        const Index &getHi() const { return this->hi; }
+        SCHNEK_INLINE const Index &getHi() const { return this->hi; }
 
         /// Get the dimensions of the grid `dims = high - low + 1`
-        const Index &getDims() const { return this->dims; }
+        SCHNEK_INLINE const Index &getDims() const { return this->dims; }
 
         /// Get k-th component of the lowest coordinate in the grid (inclusive)
-        int getLo(int k) const { return this->lo[k]; }
+        SCHNEK_INLINE int getLo(int k) const { return this->lo[k]; }
 
         /// Get k-th component of the highest coordinate in the grid (inclusive)
-        int getHi(int k) const { return this->hi[k]; }
+        SCHNEK_INLINE int getHi(int k) const { return this->hi[k]; }
 
         /// Get k-th component of the dimensions of the grid `dims = high - low + 1`
-        int getDims(int k) const { return this->dims[k]; }
+        SCHNEK_INLINE int getDims(int k) const { return this->dims[k]; }
 
         /// Get the length of the allocated array
-        int getSize() const { return this->size; }
+        SCHNEK_INLINE int getSize() const { return this->size; }
 
         /**
          * @brief resizes to grid with lower indices low[0],...,low[rank-1]
@@ -157,23 +158,23 @@ namespace schnek {
         }
 
         template<std::size_t... I>
-        T& getFromViewImpl(const Index& pos, std::index_sequence<I...>)
+        SCHNEK_INLINE T& getFromViewImpl(const Index& pos, std::index_sequence<I...>)
         {
             return view(pos[I]...);
         }
 
         template<std::size_t... I>
-        const T& getFromViewImpl(const Index& pos, std::index_sequence<I...>) const
+        SCHNEK_INLINE const T& getFromViewImpl(const Index& pos, std::index_sequence<I...>) const
         {
             return view(pos[I]...);
         }
 
-        T& getFromView(const Index& pos)
+        SCHNEK_INLINE T& getFromView(const Index& pos)
         {
             return getFromViewImpl(pos, std::make_index_sequence<rank>{});
         }
 
-        const T& getFromView(const Index& pos) const
+        SCHNEK_INLINE const T& getFromView(const Index& pos) const
         {
             return getFromViewImpl(pos, std::make_index_sequence<rank>{});
         }
@@ -196,10 +197,13 @@ namespace schnek {
 
     template <typename T, size_t rank, class ...ViewProperties>
     KokkosGridStorage<T, rank, ViewProperties...>::KokkosGridStorage(const Index &lo, const Index &hi) :
-        lo(lo), hi(hi), dims(hi - lo + 1)
+        lo(lo), hi(hi)
     {
+        for (size_t i = 0; i < rank; ++i)
+        {
+            dims[i] = hi[i] - lo[i] + 1;
+        }
         view = createKokkosView(dims);
-
     }
 
     template <typename T, size_t rank, class ...ViewProperties>
@@ -207,15 +211,25 @@ namespace schnek {
     {}
 
     template <typename T, size_t rank, class ...ViewProperties>
-    inline const T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index) const
+    SCHNEK_INLINE const T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index) const
     {
-        return getFromView(index - lo);
+        Index pos;
+        for (size_t i=0; i<rank; ++i)
+        {
+            pos[i] = index[i] - lo[i];
+        }
+        return getFromView(pos);
     }
 
     template <typename T, size_t rank, class ...ViewProperties>
-    inline T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index)
-    {
-        return getFromView(index - lo);
+    SCHNEK_INLINE T &KokkosGridStorage<T, rank, ViewProperties...>::get(const Index &index)
+    {       
+        Index pos;
+        for (size_t i=0; i<rank; ++i)
+        {
+            pos[i] = index[i] - lo[i];
+        }
+        return getFromView(pos);
     }
     
     template <typename T, size_t rank, class ...ViewProperties>
@@ -228,7 +242,7 @@ namespace schnek {
     }
 
     template <typename T, size_t rank, class ...ViewProperties>
-    inline ptrdiff_t KokkosGridStorage<T, rank, ViewProperties...>::stride(size_t dim) const
+    SCHNEK_INLINE ptrdiff_t KokkosGridStorage<T, rank, ViewProperties...>::stride(size_t dim) const
     {
         return this->view.stride(dim);
     }
