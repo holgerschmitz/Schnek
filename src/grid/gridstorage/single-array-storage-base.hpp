@@ -87,11 +87,11 @@ namespace schnek
         typedef T* storage_iterator;
         typedef const T* const_storage_iterator;
 
-        storage_iterator begin() { return this->data; }
-        storage_iterator end() { return this->data + this->size; }
+        storage_iterator begin() { return this->data->ptr; }
+        storage_iterator end() { return this->data->ptr + this->size; }
 
-        const_storage_iterator cbegin() const { return this->data; }
-        const_storage_iterator cend() const { return this->data + this->size; }
+        const_storage_iterator cbegin() const { return this->data->ptr; }
+        const_storage_iterator cend() const { return this->data->ptr + this->size; }
     };
 
     /**

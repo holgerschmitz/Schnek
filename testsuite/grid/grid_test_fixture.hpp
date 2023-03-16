@@ -497,21 +497,31 @@ struct GridTest
     struct DeleteCounter
     {
       int value;
-      std::map<int, int> &counters;
+      std::map<int, int> *counters;
 
-      DeleteCounter(int value, std::map<int, int> &counters): value(value), counters(counters
-      )
+      DeleteCounter(): value(0), counters(NULL) {}
+
+      DeleteCounter(int value, std::map<int, int> &counters): value(value), counters(&counters)
       {}
+
+      DeleteCounter(const DeleteCounter&) = default;
 
       ~DeleteCounter() 
       {
-        if (counters.count(value) > 0)
+        if (counters == NULL)
         {
-          ++counters[value];
+          return;
+        }
+
+        if (counters->count(value) > 0)
+        {
+          ++(*counters)[value];
         } else {
-          counters[value] = 1;
+          (*counters)[value] = 1;
         }
       }
+
+      DeleteCounter& operator=(const DeleteCounter& other) = default;
     };
 
     template<size_t rank>

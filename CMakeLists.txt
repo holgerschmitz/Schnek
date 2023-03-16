@@ -7,11 +7,13 @@ enable_language(CXX)
 # set the project name
 project(Schnek VERSION ${SCHNEK_VERSION})
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(MPI)
 find_package(HDF5)
-find_package(Kokkos)
+find_package(Kokkos PATHS ${KOKKOS_DIR})
 find_package(Boost REQUIRED)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -46,14 +48,14 @@ target_include_directories(schnek PUBLIC ${MPI_INCLUDE_PATH})
 target_include_directories(schnek PUBLIC ${HDF5_INCLUDE_DIRS})
 target_include_directories(schnek PUBLIC ${Boost_INCLUDE_DIRS})
 
-target_link_libraries(schnek ${MPI_C_LIBRARIES})
-target_link_libraries(schnek ${HDF5_LIBRARIES})
+target_link_libraries(schnek PUBLIC ${MPI_C_LIBRARIES})
+target_link_libraries(schnek PUBLIC ${HDF5_LIBRARIES})
 
-target_compile_features(schnek PRIVATE cxx_std_14)
 
 if (Kokkos_FOUND)
   target_include_directories(schnek PUBLIC ${Kokkos_INCLUDE_DIR})
-  target_link_libraries(schnek ${Kokkos_LIBRARIES})
+  target_compile_definitions(schnek PUBLIC KOKKOS_DEPENDENCE)
+  target_link_libraries(schnek PUBLIC Kokkos::kokkoscore)
 endif()
 
 set(SCHNEK_HAVE_HDF5 ${HDF5_FOUND})
@@ -108,7 +110,7 @@ if (Kokkos_FOUND)
   target_include_directories(schnek_tests PUBLIC ${Kokkos_INCLUDE_DIR})
   target_link_libraries(schnek_tests ${Kokkos_LIBRARY})
   message("KOKKOS ${Kokkos_VERSION} ${Kokkos_INCLUDE_DIR} | ${Kokkos_LIBRARY}")
-  endif()
+endif()
 
 target_link_libraries(schnek_tests schnek)
 target_link_libraries(schnek_tests ${MPI_C_LIBRARIES})
