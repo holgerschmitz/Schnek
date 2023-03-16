@@ -75,10 +75,10 @@ install(TARGETS schnek
   EXPORT schnek 
   LIBRARY DESTINATION "${lib_dest_root}"
   INCLUDES DESTINATION "${include_dest_root}")
-install(FILES schnek-config.cmake DESTINATION "${lib_dest_root}/schnek")
 install(DIRECTORY src/ DESTINATION "${include_dest}" FILES_MATCHING PATTERN "*.hpp")
 install(DIRECTORY src/ DESTINATION "${include_dest}" FILES_MATCHING PATTERN "*.t")
 install(EXPORT schnek DESTINATION "${lib_dest}")
+install(FILES schnek-config.cmake DESTINATION "${lib_dest_root}/schnek")
 
 ###########################################################
 # Unit Tests
