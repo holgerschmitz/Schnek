@@ -58,7 +58,7 @@ namespace schnek
         SingleArrayGridStorageBase<T, rank, AllocationPolicy> &operator=(const SingleArrayGridStorageBase<T, rank, AllocationPolicy> &) = default;
 
         /// Access to the underlying raw data
-        T *getRawData() const { return this->data; }
+        T *getRawData() const { return this->data->ptr; }
 
         /// Get the lowest coordinate in the grid (inclusive)
         const IndexType &getLo() const { return this->low; }
