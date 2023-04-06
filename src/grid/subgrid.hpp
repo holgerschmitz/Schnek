@@ -104,13 +104,13 @@ class SubGridStorage {
 
     void resize(const IndexType &low_, const IndexType &high_);
 
-    T &get(const IndexType &index)
+    SCHNEK_INLINE T &get(const IndexType &index)
     {
       //typename BaseGrid::CheckingPolicy<rank>::check(index, domain.getLo(), domain.getHi());
       return baseGrid->get(baseGrid->check(index, domain.getLo(), domain.getHi()));
     }
 
-    const T &get(const IndexType &index) const
+    SCHNEK_INLINE const T &get(const IndexType &index) const
     {
       //typename BaseGrid::CheckingPolicy<rank>::check(index, domain.getLo(), domain.getHi());
       return baseGrid->get(baseGrid->check(index, domain.getLo(), domain.getHi()));

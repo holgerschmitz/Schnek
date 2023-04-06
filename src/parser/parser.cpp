@@ -44,12 +44,9 @@ struct ParserInternalError : public SchnekException
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-copy-with-user-provided-copy"
 
 #include "deckgrammar.inc"
 
-#pragma GCC diagnostic pop
 #pragma GCC diagnostic pop
 
 #undef LOGLEVEL

@@ -21,6 +21,99 @@ using namespace schnek;
 
 #ifdef SCHNEK_HAVE_KOKKOS
 
+// #include <schnek/util/logger.hpp>
+// #include <schnek/grid/iteration/range-iteration.hpp>
+// #include <schnek/grid/iteration/kokkos-iteration.hpp>
+// #include <schnek/grid/gridstorage/kokkos-storage.hpp>
+// #include <schnek/grid/gridstorage.hpp>
+// #include <schnek/grid/grid.hpp>
+
+// #include <Kokkos_Core.hpp>
+
+// // #include <string>
+// #include <chrono>
+// #include <cassert>
+
+// #ifdef KOKKOS_ENABLE_CUDA
+//     typedef Kokkos::Cuda Execution;
+//     typedef Kokkos::CudaSpace Memory;
+
+//     template <typename T, size_t rank>
+//     using GridStorage = schnek::KokkosGridStorage<T, rank, Memory>;
+    
+//     template <typename T, size_t rank>
+//     using GridStoragePinned = schnek::KokkosGridStorage<T, rank, Kokkos::CudaHostPinnedSpace>;
+
+//     typedef schnek::RangeKokkosIterationPolicy<2, Execution> Iteration;
+// #else
+//     typedef Kokkos::Serial Execution;
+//     typedef Kokkos::HostSpace Memory;
+
+//     template <typename T, size_t rank>
+//     using GridStorage = schnek::SingleArrayGridStorage<T, rank>;
+//     template <typename T, size_t rank>
+//     using GridStoragePinned = schnek::SingleArrayGridStorage<T, rank>;
+
+//     typedef schnek::RangeCIterationPolicy<2> Iteration;
+// #endif
+
+// typedef schnek::Grid<double, 2, schnek::GridNoArgCheck, GridStorage> Grid;
+// typedef schnek::Grid<double, 2, schnek::GridNoArgCheck, GridStoragePinned> GridPinned;
+
+// typedef schnek::Array<int, 2> Index;
+// typedef schnek::Range<int, 2> Range;
+
+// Range gridRange = Range(Index(0, 0), Index(1000, 1000));
+
+// template<typename GridTo = Grid, typename GridFrom = Grid>
+// struct CopyGrid
+// {
+//     mutable GridTo to;
+//     GridFrom from;
+//     KOKKOS_INLINE_FUNCTION void operator()(Index i) const
+//     {
+//         int x = i[0];
+//         int y = i[1];
+//         to(x,y) = from(x,y);
+//     }
+// };
+
+// void perform_calculations()
+// {   
+//     Grid in(gridRange.getLo(), gridRange.getHi());
+//     GridPinned pinned(gridRange.getLo(), gridRange.getHi());
+
+//     for (int i=0; i<=1000; ++i) {
+//         for (int j=0; j<=1000; ++j) {
+//             pinned(i, j) = 0;
+//         }
+//     }
+//     pinned(500, 500) = 1;
+    
+//     CopyGrid<Grid, GridPinned> toHost{in, pinned};
+
+//     Iteration::forEach(gridRange, toHost);
+//     Kokkos::fence();
+
+// }
+
+
+#ifdef KOKKOS_ENABLE_CUDA
+    typedef Kokkos::Cuda Execution;
+    
+    template <typename T, size_t rank>
+    using GridStorage = schnek::KokkosGridStorage<T, rank, Kokkos::CudaHostPinnedSpace>;
+
+    typedef schnek::RangeKokkosIterationPolicy<2, Execution> Iteration;
+#else
+    typedef Kokkos::Serial Execution;
+
+    template <typename T, size_t rank>
+    using GridStorage = schnek::SingleArrayGridStorage<T, rank>;
+
+    typedef schnek::RangeCIterationPolicy<2> Iteration;
+#endif
+
 struct KokkosIterationTest : public RangeIterationTest
 {
     KokkosIterationTest() : RangeIterationTest() {
@@ -35,26 +128,78 @@ struct KokkosIterationTest : public RangeIterationTest
     }
 };
 
+struct Assign1d {
+    typedef Grid<int, 1, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    mutable GridType grid;
+    SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
+    {
+        grid[pos] = pos[0];
+    }
+};
+
+struct Assign2d {
+    typedef Grid<int, 2, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    mutable GridType grid;
+    SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
+    {
+        grid[pos] = pos[0] + 3*pos[1];
+    }
+};
+
+struct Assign3d {
+    typedef Grid<int, 3, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    mutable GridType grid;
+    SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
+    {
+        grid[pos] = pos[0] + 3*pos[1] + 7*pos[2];
+    }
+};
+
+struct Assign4d {
+    typedef Grid<int, 4, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    mutable GridType grid;
+    SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
+    {
+        grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3];
+    }
+};
+
+struct Assign5d {
+    typedef Grid<int, 5, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    mutable GridType grid;
+    SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
+    {
+        grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3] + 23*pos[4];
+    }
+};
+
+struct Assign6d {
+    typedef Grid<int, 6, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    mutable GridType grid;
+    SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
+    {
+        grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3] + 23*pos[4] + 47*pos[5];
+    }
+};
+
 BOOST_AUTO_TEST_SUITE( range_iteration )
 
 BOOST_AUTO_TEST_SUITE( kokkos )
 
 BOOST_FIXTURE_TEST_CASE( iterate_1d,  KokkosIterationTest)
 {
-    typedef Grid<int, 1, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-
-    GridType::IndexType lo(-10), hi(10);
+    Assign1d::GridType::IndexType lo(-10), hi(10);
 
     boost::timer::progress_display show_progress(30);
+
     for (int n=0; n<30; ++n)
     {
         random_extent<1>(lo, hi);
-        Range<int, 1, ArrayBoostTestArgCheck> range(lo, hi);
-        GridType grid(lo, hi);
-
-        RangeKokkosIterationPolicy<1>::forEach(range, [&](const GridType::IndexType& pos){
-            grid[pos] = pos[0];
-        });
+        Range<int, 1, ArrayNoArgCheck> range(lo, hi);
+        Assign1d::GridType grid(lo, hi);
+        
+        Assign1d assign{grid};
+        RangeKokkosIterationPolicy<1, Execution>::forEach(range, assign);
         
         Kokkos::fence();
 
@@ -66,24 +211,22 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d,  KokkosIterationTest)
     }
 }
 
+
 BOOST_FIXTURE_TEST_CASE( iterate_2d, KokkosIterationTest )
 {
-    typedef Grid<int, 2, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-
-    GridType::IndexType lo, hi;
+    Assign2d::GridType::IndexType lo, hi;
 
     boost::timer::progress_display show_progress(30);
+
 
     for (int n=0; n<30; ++n)
     {
         random_extent<2>(lo, hi);
-        Range<int, 2, ArrayBoostTestArgCheck> range(lo, hi);
-        GridType grid(lo, hi);
-        auto dims = grid.getDims();
+        Range<int, 2, ArrayNoArgCheck> range(lo, hi);
+        Assign2d::GridType grid(lo, hi);
 
-        RangeKokkosIterationPolicy<2>::forEach(range, [&](const GridType::IndexType& pos){
-            grid[pos] = pos[0] + 3*pos[1];
-        });
+        Assign2d assign{grid};
+        RangeKokkosIterationPolicy<2>::forEach(range, assign);
 
         Kokkos::fence();
 
@@ -100,22 +243,18 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, KokkosIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_3d, KokkosIterationTest )
 {
-    typedef Grid<int, 3, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-
-    GridType::IndexType lo, hi;
+    Assign3d::GridType::IndexType lo, hi;
 
     boost::timer::progress_display show_progress(30);
 
     for (int n=0; n<30; ++n)
     {
         random_extent<3>(lo, hi);
-        Range<int, 3, ArrayBoostTestArgCheck> range(lo, hi);
-        GridType grid(lo, hi);
-        auto dims = grid.getDims();
+        Range<int, 3, ArrayNoArgCheck> range(lo, hi);
+        Assign3d::GridType grid(lo, hi);
 
-        RangeKokkosIterationPolicy<3>::forEach(range, [&](const GridType::IndexType& pos){
-            grid[pos] = pos[0] + 3*pos[1] + 7*pos[2];
-        });
+        Assign3d assign{grid};
+        RangeKokkosIterationPolicy<3>::forEach(range, assign);
 
         Kokkos::fence();
 
@@ -135,22 +274,18 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, KokkosIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_4d, KokkosIterationTest )
 {
-    typedef Grid<int, 4, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-
-    GridType::IndexType lo, hi;
+    Assign4d::GridType::IndexType lo, hi;
 
     boost::timer::progress_display show_progress(30);
 
     for (int n=0; n<30; ++n)
     {
         random_extent<4>(lo, hi);
-        Range<int, 4, ArrayBoostTestArgCheck> range(lo, hi);
-        GridType grid(lo, hi);
-        auto dims = grid.getDims();
+        Range<int, 4, ArrayNoArgCheck> range(lo, hi);
+        Assign4d::GridType grid(lo, hi);
 
-        RangeKokkosIterationPolicy<4>::forEach(range, [&](const GridType::IndexType& pos){
-            grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3];
-        });
+        Assign4d assign{grid};
+        RangeKokkosIterationPolicy<4>::forEach(range, assign);
 
         Kokkos::fence();
 
@@ -176,22 +311,18 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, KokkosIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_5d, KokkosIterationTest )
 {
-    typedef Grid<int, 5, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-
-    GridType::IndexType lo, hi;
+    Assign5d::GridType::IndexType lo, hi;
 
     boost::timer::progress_display show_progress(30);
 
     for (int n=0; n<30; ++n)
     {
         random_extent<5>(lo, hi);
-        Range<int, 5, ArrayBoostTestArgCheck> range(lo, hi);
-        GridType grid(lo, hi);
-        auto dims = grid.getDims();
+        Range<int, 5, ArrayNoArgCheck> range(lo, hi);
+        Assign5d::GridType grid(lo, hi);
 
-        RangeKokkosIterationPolicy<5>::forEach(range, [&](const GridType::IndexType& pos){
-            grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3] + 23*pos[4];
-        });
+        Assign5d assign{grid};
+        RangeKokkosIterationPolicy<5>::forEach(range, assign);
 
         Kokkos::fence();
 
@@ -220,22 +351,18 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, KokkosIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_6d, KokkosIterationTest )
 {
-    typedef Grid<int, 6, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
-
-    GridType::IndexType lo, hi;
+    Assign6d::GridType::IndexType lo, hi;
 
     boost::timer::progress_display show_progress(30);
 
     for (int n=0; n<30; ++n)
     {
         random_extent<6>(lo, hi);
-        Range<int, 6, ArrayBoostTestArgCheck> range(lo, hi);
-        GridType grid(lo, hi);
-        auto dims = grid.getDims();
+        Range<int, 6, ArrayNoArgCheck> range(lo, hi);
+        Assign6d::GridType grid(lo, hi);
 
-        RangeKokkosIterationPolicy<6>::forEach(range, [&](const GridType::IndexType& pos){
-            grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3] + 23*pos[4] + 47*pos[5];
-        });
+        Assign6d assign{grid};
+        RangeKokkosIterationPolicy<6>::forEach(range, assign);
 
         Kokkos::fence();
 

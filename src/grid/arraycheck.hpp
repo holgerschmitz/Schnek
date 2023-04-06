@@ -27,6 +27,7 @@
 #ifndef SCHNEK_ARRAYCHECK_HPP_
 #define SCHNEK_ARRAYCHECK_HPP_
 
+#include "../config.hpp"
 #include "../macros.hpp"
 
 #include <cassert>

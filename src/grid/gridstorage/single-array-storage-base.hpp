@@ -61,37 +61,34 @@ namespace schnek
         T *getRawData() const { return this->data->ptr; }
 
         /// Get the lowest coordinate in the grid (inclusive)
-        const IndexType &getLo() const { return this->low; }
+        SCHNEK_INLINE const IndexType &getLo() const { return this->low; }
 
         /// Get the highest coordinate in the grid (inclusive)
-        const IndexType &getHi() const { return this->high; }
+        SCHNEK_INLINE const IndexType &getHi() const { return this->high; }
 
         /// Get the dimensions of the grid `dims = high - low + 1`
-        const IndexType &getDims() const { return this->dims; }
+        SCHNEK_INLINE const IndexType &getDims() const { return this->dims; }
 
         /// Get k-th component of the lowest coordinate in the grid (inclusive)
-        int getLo(int k) const { return this->low[k]; }
+        SCHNEK_INLINE int getLo(int k) const { return this->low[k]; }
 
         /// Get k-th component of the highest coordinate in the grid (inclusive)
-        int getHi(int k) const { return this->high[k]; }
+        SCHNEK_INLINE int getHi(int k) const { return this->high[k]; }
 
         /// Get k-th component of the dimensions of the grid `dims = high - low + 1`
-        int getDims(int k) const { return this->dims[k]; }
+        SCHNEK_INLINE int getDims(int k) const { return this->dims[k]; }
 
         /// Get the length of the allocated array
-        int getSize() const { return this->size; }
-
-        template<typename Func>
-        void forAll(Func func);
+        SCHNEK_INLINE int getSize() const { return this->size; }
 
         typedef T* storage_iterator;
         typedef const T* const_storage_iterator;
 
-        storage_iterator begin() { return this->data->ptr; }
-        storage_iterator end() { return this->data->ptr + this->size; }
+        SCHNEK_INLINE storage_iterator begin() { return this->data->ptr; }
+        SCHNEK_INLINE storage_iterator end() { return this->data->ptr + this->size; }
 
-        const_storage_iterator cbegin() const { return this->data->ptr; }
-        const_storage_iterator cend() const { return this->data->ptr + this->size; }
+        SCHNEK_INLINE const_storage_iterator cbegin() const { return this->data->ptr; }
+        SCHNEK_INLINE const_storage_iterator cend() const { return this->data->ptr + this->size; }
     };
 
     /**
@@ -140,7 +137,7 @@ namespace schnek
          * @param index The grid index
          * @return the lvalue at the grid index
          */
-        T &get(const IndexType &index);
+        SCHNEK_INLINE T &get(const IndexType &index);
 
         /**
          * @brief Get the rvalue at a given grid index
@@ -148,7 +145,7 @@ namespace schnek
          * @param index The grid index
          * @return the rvalue at the grid index
          */
-        const T &get(const IndexType &index) const;
+        SCHNEK_INLINE const T &get(const IndexType &index) const;
 
         /**
          * @brief resizes to grid with lower indices low[0],...,low[rank-1]
@@ -206,7 +203,7 @@ namespace schnek
          * @param index The grid index
          * @return the lvalue at the grid index
          */
-        T &get(const IndexType &index);
+        SCHNEK_INLINE T &get(const IndexType &index);
 
         /**
          * @brief Get the rvalue at a given grid index
@@ -214,7 +211,7 @@ namespace schnek
          * @param index The grid index
          * @return the rvalue at the grid index
          */
-        const T &get(const IndexType &index) const;
+        SCHNEK_INLINE const T &get(const IndexType &index) const;
 
         /**
          * @brief resizes to grid with lower indices low[0],...,low[rank-1]
@@ -250,7 +247,7 @@ namespace schnek
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
-    inline T &SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
+    SCHNEK_INLINE T &SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
     {
         int pos = index[0];
         for (size_t i = 1; i < rank; ++i)
@@ -261,7 +258,7 @@ namespace schnek
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
-    inline const T &SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
+    SCHNEK_INLINE const T &SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
     {
         int pos = index[0];
         for (size_t i = 1; i < rank; ++i)
@@ -307,7 +304,7 @@ namespace schnek
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
-    inline T &SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
+    SCHNEK_INLINE T &SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index)
     {
         int pos = index[rank - 1];
         for (int i = int(rank) - 2; i >= 0; --i)
@@ -318,7 +315,7 @@ namespace schnek
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
-    inline const T &SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
+    SCHNEK_INLINE const T &SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) const
     {
         int pos = index[rank - 1];
         for (int i = int(rank) - 2; i >= 0; --i)

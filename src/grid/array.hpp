@@ -28,6 +28,8 @@
 #define SCHNEK_ARRAY_HPP_
 
 #include "arraycheck.hpp"
+
+#include "../config.hpp"
 #include "../macros.hpp"
 
 #include <initializer_list>
@@ -135,7 +137,7 @@ class Array :
      * of the LHS.
      */
     template<class T2, template <size_t> class CheckingPolicy2>
-    Array<T,Length,CheckingPolicy> &operator+=(const Array<T2,Length,CheckingPolicy2>&);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator+=(const Array<T2,Length,CheckingPolicy2>&);
 
     /** Element-wise multiplication assignment operator
      *
@@ -144,7 +146,7 @@ class Array :
      * of the LHS.
      */
     template<class T2, template <size_t> class CheckingPolicy2>
-    Array<T,Length,CheckingPolicy> &operator*=(const Array<T2,Length,CheckingPolicy2>&);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator*=(const Array<T2,Length,CheckingPolicy2>&);
 
     /** Element-wise division assignment operator
      *
@@ -153,7 +155,7 @@ class Array :
      * of the LHS.
      */
     template<class T2, template <size_t> class CheckingPolicy2>
-    Array<T,Length,CheckingPolicy> &operator/=(const Array<T2,Length,CheckingPolicy2>&);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator/=(const Array<T2,Length,CheckingPolicy2>&);
 
     /** Subtraction Assignment operator
      *
@@ -162,7 +164,7 @@ class Array :
      * of the LHS.
      */
     template<class T2, template <size_t> class CheckingPolicy2>
-    Array<T,Length,CheckingPolicy> &operator-=(const Array<T2,Length,CheckingPolicy2>&);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator-=(const Array<T2,Length,CheckingPolicy2>&);
 
     /** Addition Assignment operator with scalar RHS.
      *
@@ -171,7 +173,7 @@ class Array :
      * of the LHS.
      */
     template<typename T2>
-    Array<T,Length,CheckingPolicy> &operator+=(const T2);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator+=(const T2);
 
     /** Subtraction Assignment operator with scalar RHS.
      *
@@ -180,7 +182,7 @@ class Array :
      * of the LHS.
      */
     template<typename T2>
-    Array<T,Length,CheckingPolicy> &operator-=(const T2);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator-=(const T2);
 
     /** Multiplication Assignment operator with scalar RHS.
      *
@@ -189,7 +191,7 @@ class Array :
      * of the LHS.
      */
     template<typename T2>
-    Array<T,Length,CheckingPolicy> &operator*=(const T2);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator*=(const T2);
 
     /** Division Assignment operator with scalar RHS.
      *
@@ -198,24 +200,24 @@ class Array :
      * of the LHS.
      */
     template<typename T2>
-    Array<T,Length,CheckingPolicy> &operator/=(const T2);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator/=(const T2);
 
 
     /// Addition Assignment operator using an array expression
     template<class Operator>
-    Array<T,Length,CheckingPolicy> &operator+=(const ArrayExpression<Operator, Length> &);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator+=(const ArrayExpression<Operator, Length> &);
 
     /// Subtraction Assignment operator using an array expression
     template<class Operator>
-    Array<T,Length,CheckingPolicy> &operator-=(const ArrayExpression<Operator, Length> &);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator-=(const ArrayExpression<Operator, Length> &);
 
     /// Element-wise multiplication assignment operator using an array expression
     template<class Operator>
-    Array<T,Length,CheckingPolicy> &operator*=(const ArrayExpression<Operator, Length> &);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator*=(const ArrayExpression<Operator, Length> &);
 
     /// Element-wise multiplication assignment operator using an array expression
     template<class Operator>
-    Array<T,Length,CheckingPolicy> &operator/=(const ArrayExpression<Operator, Length> &);
+    SCHNEK_INLINE Array<T,Length,CheckingPolicy> &operator/=(const ArrayExpression<Operator, Length> &);
 
   public:
     /// Sets all fields to zero
@@ -259,7 +261,7 @@ template<
   size_t Length, 
   template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
-bool operator==(
+SCHNEK_INLINE bool operator==(
   const schnek::Array<T1,Length,CheckingPolicy1>&,
   const schnek::Array<T2,Length,CheckingPolicy2>&
 );
@@ -269,7 +271,7 @@ template<
   size_t Length, 
   template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
-bool operator!=(
+SCHNEK_INLINE bool operator!=(
   const schnek::Array<T1,Length,CheckingPolicy1>&,
   const schnek::Array<T2,Length,CheckingPolicy2>&
 );
@@ -279,7 +281,7 @@ template<
   size_t Length, 
   template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
-bool operator<(
+SCHNEK_INLINE bool operator<(
   const schnek::Array<T1,Length,CheckingPolicy1>&,
   const schnek::Array<T2,Length,CheckingPolicy2>&
 );
@@ -289,7 +291,7 @@ template<
   size_t Length, 
   template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2
 >
-bool operator<=(
+SCHNEK_INLINE bool operator<=(
   const schnek::Array<T1,Length,CheckingPolicy1>&,
   const schnek::Array<T2,Length,CheckingPolicy2>&
 );
