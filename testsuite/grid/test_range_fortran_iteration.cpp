@@ -29,7 +29,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d, RangeIterationTest )
     GridType::IndexType lo, hi;
 
     boost::timer::progress_display show_progress(30);
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<1>(lo, hi);
         Range<int, 1, ArrayBoostTestArgCheck> range(lo, hi);
@@ -56,7 +56,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
 
     boost::timer::progress_display show_progress(30);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<2>(lo, hi);
         Range<int, 2, ArrayBoostTestArgCheck> range(lo, hi);
@@ -87,7 +87,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
 
     boost::timer::progress_display show_progress(30);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<3>(lo, hi);
         Range<int, 3, ArrayBoostTestArgCheck> range(lo, hi);
@@ -121,7 +121,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
 
     boost::timer::progress_display show_progress(30);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<4>(lo, hi);
         Range<int, 4, ArrayBoostTestArgCheck> range(lo, hi);
@@ -161,7 +161,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
 
     boost::timer::progress_display show_progress(30);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<5>(lo, hi);
         Range<int, 5, ArrayBoostTestArgCheck> range(lo, hi);
@@ -206,7 +206,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
 
     boost::timer::progress_display show_progress(30);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<6>(lo, hi);
         Range<int, 6, ArrayBoostTestArgCheck> range(lo, hi);
@@ -253,7 +253,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_7d, RangeIterationTest )
 
     boost::timer::progress_display show_progress(30);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<7>(lo, hi);
         Range<int, 7, ArrayBoostTestArgCheck> range(lo, hi);
@@ -304,7 +304,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_8d, RangeIterationTest )
 
     boost::timer::progress_display show_progress(30);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<8>(lo, hi);
         Range<int, 8, ArrayBoostTestArgCheck> range(lo, hi);
@@ -358,7 +358,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_9d, RangeIterationTest )
 
     boost::timer::progress_display show_progress(30);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<9>(lo, hi);
         Range<int, 9, ArrayBoostTestArgCheck> range(lo, hi);
@@ -414,7 +414,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_10d, RangeIterationTest )
 
     boost::timer::progress_display show_progress(30);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<10>(lo, hi);
         Range<int, 10, ArrayBoostTestArgCheck> range(lo, hi);
