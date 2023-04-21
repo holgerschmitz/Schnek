@@ -44,7 +44,9 @@ namespace schnek
     public:
         /// The grid index type
         typedef Array<int, rank> IndexType;
-
+        
+        /// The grid range type
+        typedef Range<int, rank> RangeType;
     public:
         /// Default constructor
         SingleArrayGridStorageBase();
@@ -55,25 +57,30 @@ namespace schnek
         /**
          * @brief Assignment operator
          */
-        SingleArrayGridStorageBase<T, rank, AllocationPolicy> &operator=(const SingleArrayGridStorageBase<T, rank, AllocationPolicy> &) = default;
+        SingleArrayGridStorageBase<T, rank, AllocationPolicy> &operator=(
+            const SingleArrayGridStorageBase<T, rank, AllocationPolicy>&
+        ) = default;
 
         /// Access to the underlying raw data
         T *getRawData() const { return this->data->ptr; }
 
         /// Get the lowest coordinate in the grid (inclusive)
-        SCHNEK_INLINE const IndexType &getLo() const { return this->low; }
+        SCHNEK_INLINE const IndexType &getLo() const { return this->range.getLo(); }
 
         /// Get the highest coordinate in the grid (inclusive)
-        SCHNEK_INLINE const IndexType &getHi() const { return this->high; }
+        SCHNEK_INLINE const IndexType &getHi() const { return this->range.getHi(); }
+
+        /// Get the lowest coordinate in the grid (inclusive)
+        SCHNEK_INLINE const RangeType &getRange() const { return this->range; }
 
         /// Get the dimensions of the grid `dims = high - low + 1`
         SCHNEK_INLINE const IndexType &getDims() const { return this->dims; }
 
         /// Get k-th component of the lowest coordinate in the grid (inclusive)
-        SCHNEK_INLINE int getLo(int k) const { return this->low[k]; }
+        SCHNEK_INLINE int getLo(int k) const { return this->range.getLo(k); }
 
         /// Get k-th component of the highest coordinate in the grid (inclusive)
-        SCHNEK_INLINE int getHi(int k) const { return this->high[k]; }
+        SCHNEK_INLINE int getHi(int k) const { return this->range.getHi(k); }
 
         /// Get k-th component of the dimensions of the grid `dims = high - low + 1`
         SCHNEK_INLINE int getDims(int k) const { return this->dims[k]; }
@@ -112,6 +119,9 @@ namespace schnek
         /// The grid index type
         typedef typename BaseType::IndexType IndexType;
 
+        /// The grid index type
+        typedef typename BaseType::RangeType RangeType;
+
         /// Default constructor
         SingleArrayGridCOrderStorageBase() : BaseType(), data_fast(NULL) {}
 
@@ -119,17 +129,26 @@ namespace schnek
         SingleArrayGridCOrderStorageBase(const SingleArrayGridCOrderStorageBase&) = default;
 
         /**
-         * @brief Assignment operator
+         * @brief Construct with a given size
+         * 
+         * @param lo the lowest coordinate in the grid (inclusive)
+         * @param hi the highest coordinate in the grid (inclusive)
          */
-        SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy> &operator=(const SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy> &) = default;
+        SingleArrayGridCOrderStorageBase(const IndexType &lo, const IndexType &hi);
 
         /**
          * @brief Construct with a given size
          * 
-         * @param lo the lowest coordinate in the grid (inclusive)
-         * @param lo the highest coordinate in the grid (inclusive)
+         * @param range the lowest and highest coordinates in the grid (inclusive)
          */
-        SingleArrayGridCOrderStorageBase(const IndexType &low_, const IndexType &high_);
+        SingleArrayGridCOrderStorageBase(const RangeType &range);
+
+        /**
+         * @brief Assignment operator
+         */
+        SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy> &operator=(
+            const SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy> &
+        ) = default;
 
         /**
          * @brief Get the lvalue at a given grid index
@@ -148,10 +167,16 @@ namespace schnek
         SCHNEK_INLINE const T &get(const IndexType &index) const;
 
         /**
-         * @brief resizes to grid with lower indices low[0],...,low[rank-1]
-         * and upper indices high[0],...,high[rank-1]
+         * @brief resizes to grid with lower indices lo[0],...,lo[rank-1]
+         * and upper indices hi[0],...,hi[rank-1]
          */
         void resize(const IndexType &low, const IndexType &high);
+
+        /**
+         * @brief resizes to grid with the range. 
+         * The endponts of the range are inclusive
+         */
+        void resize(const RangeType range);
 
         /**
          * @brief returns the stride of the specified dimension 
@@ -174,8 +199,14 @@ namespace schnek
         /// A pointer offset to the origin for faster access
         T *data_fast;
     public:
+        /// Base class type
         typedef SingleArrayGridStorageBase<T, rank, AllocationPolicy> BaseType;
+
+        /// The grid index type
         typedef typename BaseType::IndexType IndexType;
+
+        /// The grid index type
+        typedef typename BaseType::RangeType RangeType;
 
         /// Default constructor
         SingleArrayGridFortranOrderStorageBase() : BaseType(), data_fast(NULL) {}
@@ -183,19 +214,27 @@ namespace schnek
         /// Copy constructor
         SingleArrayGridFortranOrderStorageBase(const SingleArrayGridFortranOrderStorageBase&) = default;
         
-
-        /**
-         * @brief Assignment operator
-         */
-        SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy> &operator=(const SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy> &) = default;
-
         /**
          * @brief Construct with a given size
          * 
          * @param lo the lowest coordinate in the grid (inclusive)
          * @param lo the highest coordinate in the grid (inclusive)
          */
-        SingleArrayGridFortranOrderStorageBase(const IndexType &low_, const IndexType &high_);
+        SingleArrayGridFortranOrderStorageBase(const IndexType &lo, const IndexType &hi);
+
+        /**
+         * @brief Construct with a given size
+         * 
+         * @param range the lowest and highest coordinates in the grid (inclusive)
+         */
+        SingleArrayGridFortranOrderStorageBase(const RangeType &range);
+
+        /**
+         * @brief Assignment operator
+         */
+        SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy> &operator=(
+            const SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy> &
+        ) = default;
 
         /**
          * @brief Get the lvalue at a given grid index
@@ -220,6 +259,12 @@ namespace schnek
         void resize(const IndexType &low, const IndexType &high);
 
         /**
+         * @brief resizes to grid with the range. 
+         * The endponts of the range are inclusive
+         */
+        void resize(const RangeType range);
+
+        /**
          * @brief returns the stride of the specified dimension 
          */
         ptrdiff_t stride(size_t dim) const;    
@@ -240,10 +285,20 @@ namespace schnek
     //=================================================================
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
-    SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::SingleArrayGridCOrderStorageBase(const IndexType &low_, const IndexType &high_)
-        : BaseType(), data_fast(NULL)
+    SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::SingleArrayGridCOrderStorageBase(
+        const IndexType &lo, 
+        const IndexType &hi
+    ) : BaseType(), data_fast(NULL)
     {
-        resize(low_, high_);
+        resize(lo, hi);
+    }
+
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
+    SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::SingleArrayGridCOrderStorageBase(
+        const RangeType &range
+    ) : BaseType(), data_fast(NULL)
+    {
+        resize(range.getLo(), range.getHi());
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
@@ -269,16 +324,22 @@ namespace schnek
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
-    inline void SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::resize(const IndexType &low, const IndexType &high) 
+    inline void SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::resize(const IndexType &lo, const IndexType &hi) 
     {
-        this->resizeImpl(low, high);
-        int p = -this->low[0];
+        this->resizeImpl(lo, hi);
+        int p = -this->range.getLo(0);
 
         for (size_t d = 1; d < rank; ++d)
         {
-            p = p * this->dims[d] - this->low[d];
+            p = p * this->dims[d] - this->getLo(d);
         }
         data_fast = this->data->ptr + p;
+    }
+
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
+    inline void SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::resize(const RangeType range)
+    {
+        this->resize(range.getLo(), range.getHi());
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
@@ -297,10 +358,20 @@ namespace schnek
     //=================================================================
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
-    SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::SingleArrayGridFortranOrderStorageBase(const IndexType &low_, const IndexType &high_)
-        : BaseType(), data_fast(NULL)
+    SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::SingleArrayGridFortranOrderStorageBase(
+        const IndexType &lo, 
+        const IndexType &hi
+    ) : BaseType(), data_fast(NULL)
     {
-        resize(low_, high_);
+        resize(lo, hi);
+    }
+
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
+    SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::SingleArrayGridFortranOrderStorageBase(
+        const RangeType &range
+    ) : BaseType(), data_fast(NULL)
+    {
+        resize(range.getLo(), range.getHi());
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
@@ -326,16 +397,22 @@ namespace schnek
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
-    inline void SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::resize(const IndexType &low, const IndexType &high) 
+    inline void SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::resize(const IndexType &lo, const IndexType &hi) 
     {
-        this->resizeImpl(low, high);
-        int p = -this->low[rank - 1];
+        this->resizeImpl(lo, hi);
+        int p = -lo[rank - 1];
 
         for (int d = int(rank) - 2; d >= 0; --d)
         {
-            p = p * this->dims[d] - this->low[d];
+            p = p * this->dims[d] - lo[d];
         }
         data_fast = this->data->ptr + p;
+    }
+
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
+    inline void SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::resize(const RangeType range)
+    {
+        this->resize(range.getLo(), range.getHi());
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>

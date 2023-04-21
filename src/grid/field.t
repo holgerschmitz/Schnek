@@ -46,17 +46,18 @@ template<
   template<size_t> class ArrayCheckingPolicy,
   template<size_t> class RangeCheckingPolicy,
   template<size_t> class StaggerCheckingPolicy>
-Field<T, rank, CheckingPolicy, StoragePolicy>
-  ::Field(const Array<int,rank,ArrayCheckingPolicy> &size_,
-      const Range<double, rank,RangeCheckingPolicy> &range_,
-      const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_)
-  : Grid<T, rank, CheckingPolicy, StoragePolicy>(),
-    range(range_),
-    stagger(stagger_),
-    ghostCells(ghostCells_)
+Field<T, rank, CheckingPolicy, StoragePolicy>::Field(
+    const Array<int,rank,ArrayCheckingPolicy> &size,
+    const Range<double, rank,RangeCheckingPolicy> &domain,
+    const Array<bool, rank, StaggerCheckingPolicy> &stagger,
+    int ghostCells
+) : Grid<T, rank, CheckingPolicy, StoragePolicy>(),
+    domain(domain),
+    stagger(stagger),
+    ghostCells(ghostCells)
 {
-  IndexType low(IndexType::Zero());
-  IndexType high(size_);
+  IndexType low{IndexType::Zero()};
+  IndexType high{size};
   for (int i=0; i<rank; ++i)
   {
     low[i]  -= ghostCells;
@@ -75,30 +76,58 @@ template<
   template<size_t> class ArrayCheckingPolicy,
   template<size_t> class RangeCheckingPolicy,
   template<size_t> class StaggerCheckingPolicy>
-Field<T, rank, CheckingPolicy, StoragePolicy>
-  ::Field(const Array<int,rank,ArrayCheckingPolicy> &low_,
-      const Array<int,rank,ArrayCheckingPolicy> &high_,
-      const Range<double, rank,RangeCheckingPolicy> &range_,
-      const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_)
-  : Grid<T, rank, CheckingPolicy, StoragePolicy>(),
-    range(range_),
-    stagger(stagger_),
-    ghostCells(ghostCells_)
+Field<T, rank, CheckingPolicy, StoragePolicy>::Field(
+    const Array<int,rank,ArrayCheckingPolicy> &low,
+    const Array<int,rank,ArrayCheckingPolicy> &high,
+    const Range<double, rank,RangeCheckingPolicy> &domain,
+    const Array<bool, rank, StaggerCheckingPolicy> &stagger,
+    int ghostCells
+) : Grid<T, rank, CheckingPolicy, StoragePolicy>(),
+    domain(domain),
+    stagger(stagger),
+    ghostCells(ghostCells)
 {
-  IndexType low(low_);
-  IndexType high(high_);
+  IndexType lo{low};
+  IndexType hi{high};
   for (int i=0; i<rank; ++i)
   {
-    low[i]  -= ghostCells;
-    high[i] += ghostCells;
+    lo[i] -= ghostCells;
+    hi[i] += ghostCells;
   }
-//  std::cerr << "Field Constructor " << std::endl;
-//  for (int i=0; i<rank; ++i)
-//    std::cerr << low[i] << " " << high[i] << std::endl;
-
-  this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(low, high);
+  
+  this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(lo, hi);
 }
 
+template<
+  typename T,
+  size_t rank,
+  template<size_t> class CheckingPolicy,
+  template<typename, size_t> class StoragePolicy
+>
+template<
+  template<size_t> class ArrayCheckingPolicy,
+  template<size_t> class RangeCheckingPolicy,
+  template<size_t> class StaggerCheckingPolicy>
+Field<T, rank, CheckingPolicy, StoragePolicy>::Field(
+    const Range<int,rank,ArrayCheckingPolicy> &range,
+    const Range<double, rank,RangeCheckingPolicy> &domain,
+    const Array<bool, rank, StaggerCheckingPolicy> &stagger,
+    int ghostCells
+) : Grid<T, rank, CheckingPolicy, StoragePolicy>(),
+    domain(domain),
+    stagger(stagger),
+    ghostCells(ghostCells)
+{
+  IndexType lo{range.getLo()};
+  IndexType hi{range.getHi()};
+  for (int i=0; i<rank; ++i)
+  {
+    lo[i] -= ghostCells;
+    hi[i] += ghostCells;
+  }
+  
+  this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(lo, hi);
+}
 
 template<
   typename T,
@@ -108,7 +137,7 @@ template<
 >
 Field<T, rank, CheckingPolicy, StoragePolicy>::Field(const Field<T, rank, CheckingPolicy, StoragePolicy> &field)
   : Grid<T, rank, CheckingPolicy, StoragePolicy>(field),
-    range(field.range),
+    domain(field.domain),
     stagger(field.stagger),
     ghostCells(field.ghostCells)
 {
@@ -124,8 +153,8 @@ inline void Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int d
 {
     int lo = this->getLo()[dim];
     int hi = this->getHi()[dim];
-    double xnorm = (pos - range.getLo()[dim])*(hi-lo-2*ghostCells+1)
-        /(range.getHi()[dim] - range.getLo()[dim])
+    double xnorm = (pos - domain.getLo()[dim])*(hi-lo-2*ghostCells+1)
+        /(domain.getHi()[dim] - domain.getLo()[dim])
         - 0.5*int(stagger[dim]) + ghostCells + lo;
     index = int(floor(xnorm));
     offset = xnorm - index;
@@ -143,11 +172,13 @@ template<
   template<size_t> class StaggerCheckingPolicy
 >
 void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
-            const Array<int,rank,ArrayCheckingPolicy> &size_,
-            const Range<double, rank,RangeCheckingPolicy> &range_,
-            const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_)
+    const Array<int,rank,ArrayCheckingPolicy> &size_,
+    const Range<double, rank,RangeCheckingPolicy> &domain_,
+    const Array<bool, rank, StaggerCheckingPolicy> &stagger_,
+    int ghostCells_
+)
 {
-  range = range_;
+  domain = domain_;
   stagger = stagger_;
   ghostCells = ghostCells_;
   IndexType low(IndexType::Zero());
@@ -169,18 +200,53 @@ template<
 template<
   template<size_t> class ArrayCheckingPolicy,
   template<size_t> class RangeCheckingPolicy,
-  template<size_t> class StaggerCheckingPolicy>
+  template<size_t> class StaggerCheckingPolicy
+>
 void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
-            const Array<int,rank,ArrayCheckingPolicy> &low_,
-            const Array<int,rank,ArrayCheckingPolicy> &high_,
-            const Range<double, rank,RangeCheckingPolicy> &range_,
-            const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_)
+    const Array<int,rank,ArrayCheckingPolicy> &low_,
+    const Array<int,rank,ArrayCheckingPolicy> &high_,
+    const Range<double, rank,RangeCheckingPolicy> &domain_,
+    const Array<bool, rank, StaggerCheckingPolicy> &stagger_,
+    int ghostCells_
+)
 {
-  range = range_;
+  domain = domain_;
   stagger = stagger_;
   ghostCells = ghostCells_;
   IndexType low(low_);
   IndexType high(high_);
+  for (int i=0; i<rank; ++i)
+  {
+    low[i]  -= ghostCells;
+    high[i] += ghostCells;
+  }
+
+  this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(low, high);
+}
+
+template<
+  typename T,
+  size_t rank,
+  template<size_t> class CheckingPolicy,
+  template<typename, size_t> class StoragePolicy
+>
+template<
+  template<size_t> class ArrayCheckingPolicy,
+  template<size_t> class RangeCheckingPolicy,
+  template<size_t> class StaggerCheckingPolicy
+>
+void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
+    const Range<int,rank,ArrayCheckingPolicy> &range_,
+    const Range<double, rank,RangeCheckingPolicy> &domain_,
+    const Array<bool, rank, StaggerCheckingPolicy> &stagger_,
+    int ghostCells_
+)
+{
+  domain = domain_;
+  stagger = stagger_;
+  ghostCells = ghostCells_;
+  IndexType low(range_.getLo());
+  IndexType high(range_.getHi());
   for (int i=0; i<rank; ++i)
   {
     low[i]  -= ghostCells;
@@ -201,8 +267,8 @@ inline int Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int di
 {
   int lo = this->getLo()[dim];
   int hi = this->getHi()[dim];
-  return int(floor((pos - range.getLo()[dim])*(hi-lo-2*ghostCells+1)
-      /(range.getHi()[dim] - range.getLo()[dim])
+  return int(floor((pos - domain.getLo()[dim])*(hi-lo-2*ghostCells+1)
+      /(domain.getHi()[dim] - domain.getLo()[dim])
       - 0.5*int(stagger[dim]) + ghostCells + lo));
 }
 
@@ -219,19 +285,19 @@ inline double Field<T, rank, CheckingPolicy, StoragePolicy>::indexToPosition(int
 
 //  if ((dim==0) && (index==50))
 //  {
-//    double pos = (range.getHi()[dim] - range.getLo()[dim])
-//          * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells + 1) + range.getLo()[dim];
+//    double pos = (domain.getHi()[dim] - domain.getLo()[dim])
+//          * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells + 1) + domain.getLo()[dim];
 //    std::cerr << index << " " << lo << " " << hi << " "
-//        << range.getLo()[dim] << " " << range.getHi()[dim] << " "
+//        << domain.getLo()[dim] << " " << domain.getHi()[dim] << " "
 //        << ghostCells << " " << int(stagger[dim]) << std::endl;
-//    std::cerr << (range.getHi()[dim] - range.getLo()[dim]) << " "
+//    std::cerr << (domain.getHi()[dim] - domain.getLo()[dim]) << " "
 //        << (index- lo + 0.5*int(stagger[dim])-ghostCells) << " "
 //        << (hi - lo - 2*ghostCells + 1) << " "
 //        << pos << std::endl;
 //  }
 
-  return (range.getHi()[dim] - range.getLo()[dim])
-      * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells + 1) + range.getLo()[dim];
+  return (domain.getHi()[dim] - domain.getLo()[dim])
+      * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells + 1) + domain.getLo()[dim];
 }
 
 } // namespace

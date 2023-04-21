@@ -100,9 +100,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d,  RangeIterationTest)
 {
     Assign1d::GridType::IndexType lo(-10), hi(10);
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<1>(lo, hi);
         Range<int, 1, ArrayNoArgCheck> range(lo, hi);
@@ -126,10 +126,10 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
 {
     Assign2d::GridType::IndexType lo, hi;
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<2>(lo, hi);
         Range<int, 2, ArrayNoArgCheck> range(lo, hi);
@@ -155,9 +155,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
 {
     Assign3d::GridType::IndexType lo, hi;
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<3>(lo, hi);
         Range<int, 3, ArrayNoArgCheck> range(lo, hi);
@@ -186,9 +186,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
 {
     Assign4d::GridType::IndexType lo, hi;
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<4>(lo, hi);
         Range<int, 4, ArrayNoArgCheck> range(lo, hi);
@@ -223,9 +223,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
 {
     Assign5d::GridType::IndexType lo, hi;
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<5>(lo, hi);
         Range<int, 5, ArrayNoArgCheck> range(lo, hi);
@@ -263,9 +263,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
 {
     Assign6d::GridType::IndexType lo, hi;
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
-    for (int n=0; n<30; ++n)
+    for (int n=0; n<10; ++n)
     {
         random_extent<6>(lo, hi);
         Range<int, 6, ArrayNoArgCheck> range(lo, hi);

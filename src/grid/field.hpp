@@ -42,14 +42,15 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
 {
   public:
     typedef T value_type;
-    typedef Range<double, rank> RangeType;
+    typedef Range<double, rank> DomainType;
     typedef typename Range<double, rank>::LimitType RangeLimit;
     typedef Array<bool, rank> Stagger;
-    typedef typename Grid<T, rank, CheckingPolicy, StoragePolicy>::IndexType IndexType;
     typedef Field<T, rank, CheckingPolicy, StoragePolicy> FieldType;
     typedef Grid<T, rank, CheckingPolicy, StoragePolicy> BaseType;
+    typedef typename BaseType::IndexType IndexType;
+    typedef typename BaseType::RangeType RangeType;
   private:
-    RangeType range;
+    DomainType domain;
     Stagger stagger;
     int ghostCells;
   public:
@@ -63,27 +64,47 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
       template<size_t> class ArrayCheckingPolicy,
       template<size_t> class RangeCheckingPolicy,
       template<size_t> class StaggerCheckingPolicy>
-    Field(const Array<int,rank,ArrayCheckingPolicy> &size,
-        const Range<double, rank,RangeCheckingPolicy> &range_,
-        const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
+    Field(
+        const Array<int,rank,ArrayCheckingPolicy> &size,
+        const Range<double, rank,RangeCheckingPolicy> &domain,
+        const Array<bool, rank, StaggerCheckingPolicy> &stagger, 
+        int ghostCells
+    );
 
     template<
       template<size_t> class ArrayCheckingPolicy,
       template<size_t> class RangeCheckingPolicy,
       template<size_t> class StaggerCheckingPolicy>
-    Field(const Array<int,rank,ArrayCheckingPolicy> &low_,
-        const Array<int,rank,ArrayCheckingPolicy> &high_,
-        const Range<double, rank,RangeCheckingPolicy> &range_,
-        const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
+    Field(
+        const Array<int,rank,ArrayCheckingPolicy> &low,
+        const Array<int,rank,ArrayCheckingPolicy> &high,
+        const Range<double, rank,RangeCheckingPolicy> &domain,
+        const Array<bool, rank, StaggerCheckingPolicy> &stagger, 
+        int ghostCells
+    );
+
+    template<
+      template<size_t> class ArrayCheckingPolicy,
+      template<size_t> class RangeCheckingPolicy,
+      template<size_t> class StaggerCheckingPolicy>
+    Field(
+        const Range<int,rank,ArrayCheckingPolicy> &range,
+        const Range<double, rank,RangeCheckingPolicy> &domain,
+        const Array<bool, rank, StaggerCheckingPolicy> &stagger, 
+        int ghostCells
+    );
 
     /** copy constructor */
     Field(const FieldType&);
 
-    /** Get the lo if the inner domain */
-    IndexType getInnerLo() {return this->getLo()+ghostCells;}
+    /** Get the lo of the inner grid range */
+    IndexType getInnerLo() { return this->getLo() + ghostCells; }
 
-    /** Get the hi if the inner domain */
-    IndexType getInnerHi() {return this->getHi()-ghostCells;}
+    /** Get the hi of the inner grid range */
+    IndexType getInnerHi() { return this->getHi() - ghostCells; }
+
+    /** Get the range the inner grid range */
+    RangeType getInnerRange() { return RangeType{this->getLo() + ghostCells, this->getHi() - ghostCells}; }
 
     /** Calculates index and offset from a position on the field
      *
@@ -107,6 +128,11 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     bool getStagger(int i) { return stagger[i]; }
 
     /**
+     * @brief Get the physical domain of the field
+     */
+    const DomainType& getDomain() { return domain; }
+
+    /**
      * @brief Assignment operator
      */
     FieldType &operator=(const FieldType&) = default;
@@ -125,18 +151,35 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
       template<size_t> class ArrayCheckingPolicy,
       template<size_t> class RangeCheckingPolicy,
       template<size_t> class StaggerCheckingPolicy>
-    void resize(const Array<int,rank,ArrayCheckingPolicy> &size,
-                const Range<double, rank,RangeCheckingPolicy> &range_,
-                const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
+    void resize(
+        const Array<int,rank,ArrayCheckingPolicy> &size,
+        const Range<double, rank,RangeCheckingPolicy> &domain,
+        const Array<bool, rank, StaggerCheckingPolicy> &stagger,
+        int ghostCells
+    );
 
     template<
       template<size_t> class ArrayCheckingPolicy,
       template<size_t> class RangeCheckingPolicy,
       template<size_t> class StaggerCheckingPolicy>
-    void resize(const Array<int,rank,ArrayCheckingPolicy> &low_,
-                const Array<int,rank,ArrayCheckingPolicy> &high_,
-                const Range<double, rank,RangeCheckingPolicy> &range_,
-                const Array<bool, rank, StaggerCheckingPolicy> &stagger_, int ghostCells_);
+    void resize(
+        const Array<int,rank,ArrayCheckingPolicy> &low,
+        const Array<int,rank,ArrayCheckingPolicy> &high,
+        const Range<double, rank,RangeCheckingPolicy> &domain,
+        const Array<bool, rank, StaggerCheckingPolicy> &stagger, 
+        int ghostCells
+    );
+
+    template<
+      template<size_t> class ArrayCheckingPolicy,
+      template<size_t> class RangeCheckingPolicy,
+      template<size_t> class StaggerCheckingPolicy>
+    void resize(
+        const Range<int,rank,ArrayCheckingPolicy> &range,
+        const Range<double, rank,RangeCheckingPolicy> &domain,
+        const Array<bool, rank, StaggerCheckingPolicy> &stagger, 
+        int ghostCells
+    );
 
 };
 

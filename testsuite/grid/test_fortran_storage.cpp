@@ -245,6 +245,66 @@ BOOST_FIXTURE_TEST_CASE( access_10d, GridTest )
   }
 }
 
+BOOST_FIXTURE_TEST_CASE( range_access_1d, GridTest )
+{
+  typedef schnek::Grid<double, 1, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+  generic_range_access_Nd<1, GridType>();
+}
+
+BOOST_FIXTURE_TEST_CASE( range_access_2d, GridTest )
+{
+  typedef schnek::Grid<double, 2, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+  generic_range_access_Nd<2, GridType>();
+}
+
+BOOST_FIXTURE_TEST_CASE( range_access_3d, GridTest )
+{
+  typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+  generic_range_access_Nd<3, GridType>();
+}
+
+BOOST_FIXTURE_TEST_CASE( range_access_4d, GridTest )
+{
+  typedef schnek::Grid<double, 4, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+  generic_range_access_Nd<4, GridType>();
+}
+
+BOOST_FIXTURE_TEST_CASE( range_access_5d, GridTest )
+{
+  typedef schnek::Grid<double, 5, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+  generic_range_access_Nd<5, GridType>();
+}
+
+BOOST_FIXTURE_TEST_CASE( range_access_6d, GridTest )
+{
+  typedef schnek::Grid<double, 6, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+  generic_range_access_Nd<6, GridType>();
+}
+
+BOOST_FIXTURE_TEST_CASE( range_access_7d, GridTest )
+{
+  typedef schnek::Grid<double, 7, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+  generic_range_access_Nd<7, GridType>();
+}
+
+BOOST_FIXTURE_TEST_CASE( range_access_8d, GridTest )
+{
+  typedef schnek::Grid<double, 8, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+  generic_range_access_Nd<8, GridType>();
+}
+
+BOOST_FIXTURE_TEST_CASE( range_access_9d, GridTest )
+{
+  typedef schnek::Grid<double, 9, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+  generic_range_access_Nd<9, GridType>();
+}
+
+BOOST_FIXTURE_TEST_CASE( range_access_10d, GridTest )
+{
+  typedef schnek::Grid<double, 10, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+  generic_range_access_Nd<10, GridType>();
+}
+
 BOOST_FIXTURE_TEST_CASE( stride_1d, GridTest )
 {
   typedef schnek::Grid<double, 1, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;

@@ -71,18 +71,24 @@ class Range {
     }
 
     /// Return rectangle minimum
-    const LimitType &getLo() const {
-      return lo;
-    }
+    SCHNEK_INLINE const LimitType &getLo() const { return lo; }
     /// Return rectangle maximum
-    const LimitType &getHi() const {
-      return hi;
-    }
+    SCHNEK_INLINE const LimitType &getHi() const { return hi; }
 
     /// Return rectangle minimum
-    LimitType &getLo() {return lo;}
+    SCHNEK_INLINE LimitType &getLo() {return lo;}
     /// Return rectangle maximum
-    LimitType &getHi() {return hi;}
+    SCHNEK_INLINE LimitType &getHi() {return hi;}
+
+    /// Return the i-th coordinate of the rectangle minimum
+    SCHNEK_INLINE T &getLo(size_t i) { return lo[i]; }
+    /// Return the i-th coordinate of the rectangle maximum
+    SCHNEK_INLINE T &getHi(size_t i) { return hi[i]; }
+
+    /// Return the i-th coordinate of the rectangle minimum
+    SCHNEK_INLINE const T getLo(size_t i) const { return lo[i]; }
+    /// Return the i-th coordinate of the rectangle maximum
+    SCHNEK_INLINE const T getHi(size_t i) const { return hi[i]; }
 
     /// Returns true if the argument lies within the range
     bool inside(const LimitType &p)
