@@ -17,27 +17,23 @@
 #include <iostream>
 #include <limits>
 
-struct KokkosStorageTest : public GridTest
-{
-    KokkosStorageTest() : GridTest() {
-        Kokkos::InitArguments args;
-        args.num_threads = 0;
-        args.num_numa = 0;
-        Kokkos::initialize(args);
-    }
+#ifdef SCHNEK_HAVE_KOKKOS
 
-    ~KokkosStorageTest() {
-        Kokkos::finalize();
-    }
-};
+#ifdef KOKKOS_ENABLE_CUDA    
+    template <typename T, size_t rank>
+    using GridStorage = schnek::KokkosGridStorage<T, rank, Kokkos::CudaHostPinnedSpace>;
+#else
+    template <typename T, size_t rank>
+    using GridStorage = schnek::KokkosGridStorage<T, rank>;
+#endif
 
 BOOST_AUTO_TEST_SUITE( grid )
 
 BOOST_AUTO_TEST_SUITE( kokkos_storage )
 
-BOOST_FIXTURE_TEST_CASE( access_1d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( access_1d, GridTest )
 {
-  typedef schnek::Grid<double, 1, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 1, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -55,9 +51,9 @@ BOOST_FIXTURE_TEST_CASE( access_1d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( access_2d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( access_2d, GridTest )
 {
-  typedef schnek::Grid<double, 2, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 2, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -75,9 +71,9 @@ BOOST_FIXTURE_TEST_CASE( access_2d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( access_3d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( access_3d, GridTest )
 {
-  typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 3, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -95,9 +91,9 @@ BOOST_FIXTURE_TEST_CASE( access_3d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( access_4d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( access_4d, GridTest )
 {
-  typedef schnek::Grid<double, 4, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 4, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -115,9 +111,9 @@ BOOST_FIXTURE_TEST_CASE( access_4d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( access_5d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( access_5d, GridTest )
 {
-  typedef schnek::Grid<double, 5, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 5, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -135,9 +131,9 @@ BOOST_FIXTURE_TEST_CASE( access_5d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( access_6d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( access_6d, GridTest )
 {
-  typedef schnek::Grid<double, 6, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 6, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -155,9 +151,9 @@ BOOST_FIXTURE_TEST_CASE( access_6d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( access_7d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( access_7d, GridTest )
 {
-  typedef schnek::Grid<double, 7, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 7, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -175,9 +171,9 @@ BOOST_FIXTURE_TEST_CASE( access_7d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( access_8d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( access_8d, GridTest )
 {
-  typedef schnek::Grid<double, 8, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 8, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -195,9 +191,9 @@ BOOST_FIXTURE_TEST_CASE( access_8d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( stride_1d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( stride_1d, GridTest )
 {
-  typedef schnek::Grid<double, 1, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 1, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -215,9 +211,9 @@ BOOST_FIXTURE_TEST_CASE( stride_1d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( stride_2d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( stride_2d, GridTest )
 {
-  typedef schnek::Grid<double, 2, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 2, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -235,9 +231,9 @@ BOOST_FIXTURE_TEST_CASE( stride_2d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( stride_3d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( stride_3d, GridTest )
 {
-  typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 3, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -255,9 +251,9 @@ BOOST_FIXTURE_TEST_CASE( stride_3d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( stride_4d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( stride_4d, GridTest )
 {
-  typedef schnek::Grid<double, 4, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 4, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -275,9 +271,9 @@ BOOST_FIXTURE_TEST_CASE( stride_4d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( stride_5d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( stride_5d, GridTest )
 {
-  typedef schnek::Grid<double, 5, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 5, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -295,9 +291,9 @@ BOOST_FIXTURE_TEST_CASE( stride_5d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( stride_6d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( stride_6d, GridTest )
 {
-  typedef schnek::Grid<double, 6, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 6, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -315,9 +311,9 @@ BOOST_FIXTURE_TEST_CASE( stride_6d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( stride_7d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( stride_7d, GridTest )
 {
-  typedef schnek::Grid<double, 7, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 7, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -335,9 +331,9 @@ BOOST_FIXTURE_TEST_CASE( stride_7d, KokkosStorageTest )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( stride_8d, KokkosStorageTest )
+BOOST_FIXTURE_TEST_CASE( stride_8d, GridTest )
 {
-  typedef schnek::Grid<double, 8, GridBoostTestCheck, schnek::KokkosDefaultGridStorage> GridType;
+  typedef schnek::Grid<double, 8, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
   boost::timer::progress_display show_progress(100);
   for (int n=0; n<10; ++n)
@@ -358,3 +354,5 @@ BOOST_FIXTURE_TEST_CASE( stride_8d, KokkosStorageTest )
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
+
+#endif

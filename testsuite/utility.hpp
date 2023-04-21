@@ -80,6 +80,4 @@ class GridBoostTestCheck {
     }
 };
 
-
-
 #endif /* TESTSUITE_UTILITY_HPP_ */

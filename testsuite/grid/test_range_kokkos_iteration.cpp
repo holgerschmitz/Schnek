@@ -21,82 +21,6 @@ using namespace schnek;
 
 #ifdef SCHNEK_HAVE_KOKKOS
 
-// #include <schnek/util/logger.hpp>
-// #include <schnek/grid/iteration/range-iteration.hpp>
-// #include <schnek/grid/iteration/kokkos-iteration.hpp>
-// #include <schnek/grid/gridstorage/kokkos-storage.hpp>
-// #include <schnek/grid/gridstorage.hpp>
-// #include <schnek/grid/grid.hpp>
-
-// #include <Kokkos_Core.hpp>
-
-// // #include <string>
-// #include <chrono>
-// #include <cassert>
-
-// #ifdef KOKKOS_ENABLE_CUDA
-//     typedef Kokkos::Cuda Execution;
-//     typedef Kokkos::CudaSpace Memory;
-
-//     template <typename T, size_t rank>
-//     using GridStorage = schnek::KokkosGridStorage<T, rank, Memory>;
-    
-//     template <typename T, size_t rank>
-//     using GridStoragePinned = schnek::KokkosGridStorage<T, rank, Kokkos::CudaHostPinnedSpace>;
-
-//     typedef schnek::RangeKokkosIterationPolicy<2, Execution> Iteration;
-// #else
-//     typedef Kokkos::Serial Execution;
-//     typedef Kokkos::HostSpace Memory;
-
-//     template <typename T, size_t rank>
-//     using GridStorage = schnek::SingleArrayGridStorage<T, rank>;
-//     template <typename T, size_t rank>
-//     using GridStoragePinned = schnek::SingleArrayGridStorage<T, rank>;
-
-//     typedef schnek::RangeCIterationPolicy<2> Iteration;
-// #endif
-
-// typedef schnek::Grid<double, 2, schnek::GridNoArgCheck, GridStorage> Grid;
-// typedef schnek::Grid<double, 2, schnek::GridNoArgCheck, GridStoragePinned> GridPinned;
-
-// typedef schnek::Array<int, 2> Index;
-// typedef schnek::Range<int, 2> Range;
-
-// Range gridRange = Range(Index(0, 0), Index(1000, 1000));
-
-// template<typename GridTo = Grid, typename GridFrom = Grid>
-// struct CopyGrid
-// {
-//     mutable GridTo to;
-//     GridFrom from;
-//     KOKKOS_INLINE_FUNCTION void operator()(Index i) const
-//     {
-//         int x = i[0];
-//         int y = i[1];
-//         to(x,y) = from(x,y);
-//     }
-// };
-
-// void perform_calculations()
-// {   
-//     Grid in(gridRange.getLo(), gridRange.getHi());
-//     GridPinned pinned(gridRange.getLo(), gridRange.getHi());
-
-//     for (int i=0; i<=1000; ++i) {
-//         for (int j=0; j<=1000; ++j) {
-//             pinned(i, j) = 0;
-//         }
-//     }
-//     pinned(500, 500) = 1;
-    
-//     CopyGrid<Grid, GridPinned> toHost{in, pinned};
-
-//     Iteration::forEach(gridRange, toHost);
-//     Kokkos::fence();
-
-// }
-
 
 #ifdef KOKKOS_ENABLE_CUDA
     typedef Kokkos::Cuda Execution;
@@ -114,22 +38,8 @@ using namespace schnek;
     typedef schnek::RangeCIterationPolicy<2> Iteration;
 #endif
 
-struct KokkosIterationTest : public RangeIterationTest
-{
-    KokkosIterationTest() : RangeIterationTest() {
-        Kokkos::InitArguments args;
-        args.num_threads = 0;
-        args.num_numa = 0;
-        Kokkos::initialize(args);
-    }
-
-    ~KokkosIterationTest() {
-        Kokkos::finalize();
-    }
-};
-
 struct Assign1d {
-    typedef Grid<int, 1, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    typedef Grid<int, 1, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
@@ -138,7 +48,7 @@ struct Assign1d {
 };
 
 struct Assign2d {
-    typedef Grid<int, 2, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    typedef Grid<int, 2, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
@@ -147,7 +57,7 @@ struct Assign2d {
 };
 
 struct Assign3d {
-    typedef Grid<int, 3, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    typedef Grid<int, 3, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
@@ -156,7 +66,7 @@ struct Assign3d {
 };
 
 struct Assign4d {
-    typedef Grid<int, 4, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    typedef Grid<int, 4, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
@@ -165,7 +75,7 @@ struct Assign4d {
 };
 
 struct Assign5d {
-    typedef Grid<int, 5, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    typedef Grid<int, 5, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
@@ -174,7 +84,7 @@ struct Assign5d {
 };
 
 struct Assign6d {
-    typedef Grid<int, 6, GridNoArgCheck, schnek::KokkosDefaultGridStorage> GridType;
+    typedef Grid<int, 6, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
@@ -186,7 +96,7 @@ BOOST_AUTO_TEST_SUITE( range_iteration )
 
 BOOST_AUTO_TEST_SUITE( kokkos )
 
-BOOST_FIXTURE_TEST_CASE( iterate_1d,  KokkosIterationTest)
+BOOST_FIXTURE_TEST_CASE( iterate_1d,  RangeIterationTest)
 {
     Assign1d::GridType::IndexType lo(-10), hi(10);
 
@@ -212,7 +122,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d,  KokkosIterationTest)
 }
 
 
-BOOST_FIXTURE_TEST_CASE( iterate_2d, KokkosIterationTest )
+BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
 {
     Assign2d::GridType::IndexType lo, hi;
 
@@ -241,7 +151,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, KokkosIterationTest )
     }
 }
 
-BOOST_FIXTURE_TEST_CASE( iterate_3d, KokkosIterationTest )
+BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
 {
     Assign3d::GridType::IndexType lo, hi;
 
@@ -272,7 +182,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, KokkosIterationTest )
     }
 }
 
-BOOST_FIXTURE_TEST_CASE( iterate_4d, KokkosIterationTest )
+BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
 {
     Assign4d::GridType::IndexType lo, hi;
 
@@ -309,7 +219,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, KokkosIterationTest )
 }
 
 
-BOOST_FIXTURE_TEST_CASE( iterate_5d, KokkosIterationTest )
+BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
 {
     Assign5d::GridType::IndexType lo, hi;
 
@@ -349,7 +259,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, KokkosIterationTest )
 }
 
 
-BOOST_FIXTURE_TEST_CASE( iterate_6d, KokkosIterationTest )
+BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
 {
     Assign6d::GridType::IndexType lo, hi;
 
