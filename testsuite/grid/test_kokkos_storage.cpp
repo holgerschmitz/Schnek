@@ -35,7 +35,7 @@ BOOST_FIXTURE_TEST_CASE( access_1d, GridTest )
 {
   typedef schnek::Grid<double, 1, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(30);
   for (int n=0; n<5; ++n)
   {
     random_extent<1>(lo, hi);
@@ -55,7 +55,7 @@ BOOST_FIXTURE_TEST_CASE( access_2d, GridTest )
 {
   typedef schnek::Grid<double, 2, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(30);
   for (int n=0; n<5; ++n)
   {
     random_extent<2>(lo, hi);
@@ -75,7 +75,7 @@ BOOST_FIXTURE_TEST_CASE( access_3d, GridTest )
 {
   typedef schnek::Grid<double, 3, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(30);
   for (int n=0; n<5; ++n)
   {
     random_extent<3>(lo, hi);
@@ -95,7 +95,7 @@ BOOST_FIXTURE_TEST_CASE( access_4d, GridTest )
 {
   typedef schnek::Grid<double, 4, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(30);
   for (int n=0; n<5; ++n)
   {
     random_extent<4>(lo, hi);
@@ -115,7 +115,7 @@ BOOST_FIXTURE_TEST_CASE( access_5d, GridTest )
 {
   typedef schnek::Grid<double, 5, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(30);
   for (int n=0; n<5; ++n)
   {
     random_extent<5>(lo, hi);
@@ -135,7 +135,7 @@ BOOST_FIXTURE_TEST_CASE( access_6d, GridTest )
 {
   typedef schnek::Grid<double, 6, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(30);
   for (int n=0; n<5; ++n)
   {
     random_extent<6>(lo, hi);
@@ -155,7 +155,7 @@ BOOST_FIXTURE_TEST_CASE( access_7d, GridTest )
 {
   typedef schnek::Grid<double, 7, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(30);
   for (int n=0; n<5; ++n)
   {
     random_extent<7>(lo, hi);
@@ -175,7 +175,7 @@ BOOST_FIXTURE_TEST_CASE( access_8d, GridTest )
 {
   typedef schnek::Grid<double, 8, GridBoostTestCheck, GridStorage> GridType;
   GridType::IndexType lo, hi;
-  boost::timer::progress_display show_progress(100);
+  boost::timer::progress_display show_progress(30);
   for (int n=0; n<5; ++n)
   {
     random_extent<8>(lo, hi);

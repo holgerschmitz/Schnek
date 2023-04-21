@@ -100,7 +100,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d,  RangeIterationTest)
 {
     Assign1d::GridType::IndexType lo(-10), hi(10);
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
     for (int n=0; n<10; ++n)
     {
@@ -126,7 +126,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
 {
     Assign2d::GridType::IndexType lo, hi;
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
 
     for (int n=0; n<10; ++n)
@@ -155,7 +155,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
 {
     Assign3d::GridType::IndexType lo, hi;
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
     for (int n=0; n<10; ++n)
     {
@@ -186,7 +186,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
 {
     Assign4d::GridType::IndexType lo, hi;
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
     for (int n=0; n<10; ++n)
     {
@@ -223,7 +223,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
 {
     Assign5d::GridType::IndexType lo, hi;
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
     for (int n=0; n<10; ++n)
     {
@@ -263,7 +263,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
 {
     Assign6d::GridType::IndexType lo, hi;
 
-    boost::timer::progress_display show_progress(30);
+    boost::timer::progress_display show_progress(10);
 
     for (int n=0; n<10; ++n)
     {
