@@ -108,8 +108,8 @@ target_include_directories(schnek_tests PUBLIC ${Boost_INCLUDE_DIRS})
 
 if (Kokkos_FOUND)
   target_include_directories(schnek_tests PUBLIC ${Kokkos_INCLUDE_DIR})
-  target_link_libraries(schnek_tests ${Kokkos_LIBRARY})
-  message("KOKKOS ${Kokkos_VERSION} ${Kokkos_INCLUDE_DIR} | ${Kokkos_LIBRARY}")
+  target_compile_definitions(schnek_tests PUBLIC KOKKOS_DEPENDENCE)
+  target_link_libraries(schnek PUBLIC Kokkos::kokkoscore)
 endif()
 
 target_link_libraries(schnek_tests schnek)

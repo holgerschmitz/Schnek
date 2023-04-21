@@ -21,18 +21,30 @@
 // safe comparison of two floating point numbers
 bool is_equal(double a, double b);
 
-/** Class to plug into the Array as CheckingPolicy.
+
+
+/** 
+ *  Class to plug into the Array as CheckingPolicy.
  *  Performs Boost Test argument checking for unit tests.
  */
 template<size_t limit>
 class ArrayBoostTestArgCheck
 {
-  public:
-    /** The check method does not do anything */
-    void check(size_t i) const
+  private:
+    void checkImpl(size_t i) const
     {
       BOOST_CHECK_GE(i,size_t(0));
       BOOST_CHECK_LT(i,limit);
+    }
+
+  public:
+
+    #ifdef SCHNEK_WITH_CUDA__
+    #pragma hd_warning_disable
+    #endif
+    SCHNEK_INLINE void check(size_t i) const
+    {
+      checkImpl(i);
     }
 };
 
@@ -40,7 +52,8 @@ template<size_t rank>
 class GridBoostTestCheck {
   public:
     typedef schnek::Array<int,rank,ArrayBoostTestArgCheck> IndexType;
-    static const  IndexType &check(
+  private:
+    static const IndexType &checkImpl(
         const IndexType &pos,
         const IndexType &low,
         const IndexType &high
@@ -52,6 +65,18 @@ class GridBoostTestCheck {
         BOOST_CHECK_LE(pos[i],high[i]);
       }
       return pos;
+    }
+  public:
+    #ifdef SCHNEK_WITH_CUDA__
+    #pragma hd_warning_disable
+    #endif
+    SCHNEK_INLINE static const IndexType &check(
+        const IndexType &pos,
+        const IndexType &low,
+        const IndexType &high
+    )
+    {
+      return checkImpl(pos, low, high);
     }
 };
 

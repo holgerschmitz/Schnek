@@ -78,33 +78,33 @@ class GridTransformStorage {
 
     GridTransformStorage();
 
-    T&  get(const IndexType &index)
+    SCHNEK_INLINE T&  get(const IndexType &index)
     {
       static T result;
       result = transformation(baseGrid->get(index));
       return result;
     }
 
-    T get(const IndexType &index) const
+    SCHNEK_INLINE T get(const IndexType &index) const
     {
       return transformation(baseGrid->get(index));
     }
     /** */
-    const IndexType& getLo() const { return baseGrid->getLo(); }
+    SCHNEK_INLINE const IndexType& getLo() const { return baseGrid->getLo(); }
     /** */
-    const IndexType& getHi() const { return baseGrid->getHi(); }
+    SCHNEK_INLINE const IndexType& getHi() const { return baseGrid->getHi(); }
     /** */
-    const IndexType& getDims() const { return baseGrid->getDims(); }
+    SCHNEK_INLINE const IndexType& getDims() const { return baseGrid->getDims(); }
 
     /** */
-    int getLo(int k) const { return baseGrid->getLo(k); }
+    SCHNEK_INLINE int getLo(int k) const { return baseGrid->getLo(k); }
     /** */
-    int getHi(int k) const { return baseGrid->getHi(k); }
+    SCHNEK_INLINE int getHi(int k) const { return baseGrid->getHi(k); }
     /** */
-    int getDims(int k) const { return baseGrid->getDims(k); }
+    SCHNEK_INLINE int getDims(int k) const { return baseGrid->getDims(k); }
 
-    const_storage_iterator begin() { return const_storage_iterator(baseGrid->begin(), *this); }
-    const_storage_iterator end() { return const_storage_iterator(baseGrid->end(), *this); }
+    SCHNEK_INLINE const_storage_iterator begin() { return const_storage_iterator(baseGrid->begin(), *this); }
+    SCHNEK_INLINE const_storage_iterator end() { return const_storage_iterator(baseGrid->end(), *this); }
 
     const_storage_iterator cbegin() const { return const_storage_iterator(baseGrid->cbegin(), *this); }
     const_storage_iterator cend() const { return const_storage_iterator(baseGrid->cend(), *this); }

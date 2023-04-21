@@ -102,7 +102,15 @@ namespace schnek {
          * @param index The grid index
          * @return the rvalue at the grid index
          */
-        const T &get(const Index &index) const;
+        SCHNEK_INLINE const T& get(const Index &index) const;
+
+        /**
+         * @brief Get the lvalue at a given grid index
+         * 
+         * @param index The grid index
+         * @return the lvalue at the grid index
+         */
+        SCHNEK_INLINE T& get(const Index &index);
 
         /// Get the lowest coordinate in the grid (inclusive)
         SCHNEK_INLINE const Index &getLo() const { return this->lo; }
@@ -134,15 +142,7 @@ namespace schnek {
         /**
          * @brief returns the stride of the specified dimension 
          */
-        ptrdiff_t stride(size_t dim) const;
-
-        /**
-         * @brief Get the lvalue at a given grid index
-         * 
-         * @param index The grid index
-         * @return the lvalue at the grid index
-         */
-        T &get(const Index &index);
+        SCHNEK_INLINE ptrdiff_t stride(size_t dim) const;
 
     private:
         template<std::size_t... I>

@@ -63,29 +63,6 @@ namespace schnek {
     //==================== RangeKokkosIterationPolicy =================
     //=================================================================
 
-    // specialization for 1d because Kokkos::MDRangePolicy can only be used for rank>1
-    template<typename executionSpace>
-    struct RangeKokkosIterationPolicy<1, executionSpace>
-    {
-        template<
-            class RangeType,
-            typename Func
-        >
-        static void forEach(const RangeType& range, const Func &func)
-        {
-            typedef typename RangeType::value_type T;
-            Kokkos::RangePolicy<
-                Kokkos::IndexType<T>,
-                executionSpace
-            > rangePolicy(range.getLo()[0], range.getHi()[0] + 1);
-
-            Kokkos::parallel_for("schnek:forEach", rangePolicy, [=](T ind)
-            {
-                func(typename RangeType::LimitType(ind));
-            }); 
-        }
-    };
-
     namespace internal {
         template<typename Func, typename RangeType>
         struct RangeKokkosIterationPolicyFunctor
@@ -99,6 +76,30 @@ namespace schnek {
             }
         };
     }
+
+    // specialization for 1d because Kokkos::MDRangePolicy can only be used for rank>1
+    template<typename executionSpace>
+    struct RangeKokkosIterationPolicy<1, executionSpace>
+    {
+        template<
+            class RangeType,
+            typename Func
+        >
+        static void forEach(const RangeType& range, const Func &func)
+        {
+            typedef typename RangeType::value_type T;
+            typedef Kokkos::RangePolicy<
+                Kokkos::IndexType<T>,
+                executionSpace
+            > ExecutionPolicy;
+            
+            ExecutionPolicy rangePolicy(range.getLo()[0], range.getHi()[0] + 1);
+
+            internal::RangeKokkosIterationPolicyFunctor<Func, RangeType> functor{func};
+
+            Kokkos::parallel_for("schnek:forEach", rangePolicy, functor); 
+        }
+    };
 
     template<
       size_t rank, 

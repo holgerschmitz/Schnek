@@ -189,8 +189,8 @@ SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 SCHNEK_INLINE T& Array<T,Length,CheckingPolicy>::at(size_t pos)
 {
- this->check(pos);
- return data[pos];
+  this->check(pos);
+  return data[pos];
 }
 
 /// Constant accessor operator
@@ -226,7 +226,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator=(const 
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class T2, template <size_t> class CheckingPolicy2>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator+=(const Array<T2,Length,CheckingPolicy2>& val)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator+=(const Array<T2,Length,CheckingPolicy2>& val)
 {
   for (size_t i=0; i<Length; ++i)
     data[i] += val[i];
@@ -235,7 +235,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator+=(const
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class T2, template <size_t> class CheckingPolicy2>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator-=(const Array<T2,Length,CheckingPolicy2>& val)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator-=(const Array<T2,Length,CheckingPolicy2>& val)
 {
   for (size_t i=0; i<Length; ++i)
     data[i] -= val[i];
@@ -244,7 +244,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator-=(const
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class T2, template <size_t> class CheckingPolicy2>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator*=(const Array<T2,Length,CheckingPolicy2>& val)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator*=(const Array<T2,Length,CheckingPolicy2>& val)
 {
   for (size_t i=0; i<Length; ++i)
     data[i] *= val[i];
@@ -253,7 +253,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator*=(const
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class T2, template <size_t> class CheckingPolicy2>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator/=(const Array<T2,Length,CheckingPolicy2>& val)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator/=(const Array<T2,Length,CheckingPolicy2>& val)
 {
   for (size_t i=0; i<Length; ++i)
     data[i] /= val[i];
@@ -262,7 +262,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator/=(const
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<typename T2>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator+=(const T2 val)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator+=(const T2 val)
 {
   for (size_t i=0; i<Length; ++i)
     data[i] += val;
@@ -271,7 +271,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator+=(const
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<typename T2>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator-=(const T2 val)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator-=(const T2 val)
 {
   for (size_t i=0; i<Length; ++i)
     data[i] -= val;
@@ -280,7 +280,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator-=(const
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<typename T2>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator*=(const T2 val)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator*=(const T2 val)
 {
   for (size_t i=0; i<Length; ++i)
     data[i] *= val;
@@ -289,7 +289,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator*=(const
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<typename T2>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator/=(const T2 val)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator/=(const T2 val)
 {
   for (size_t i=0; i<Length; ++i)
     data[i] /= val;

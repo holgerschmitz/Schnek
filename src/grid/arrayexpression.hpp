@@ -51,17 +51,17 @@ class ArrayExpression {
     static constexpr size_t length = Length;
 
     /**Construct the expression by passing a reference*/
-    ArrayExpression(const Operator Op_) : Op(Op_) {}
+    SCHNEK_INLINE ArrayExpression(const Operator Op_) : Op(Op_) {}
 
     /**Copy constructor*/
-    ArrayExpression(const ArrayExpression &Expr) : Op(Expr.Op) {}
+    SCHNEK_INLINE ArrayExpression(const ArrayExpression &Expr) : Op(Expr.Op) {}
 
-    operator Array<value_type, Length, ArrayNoArgCheck> () {
+    SCHNEK_INLINE operator Array<value_type, Length, ArrayNoArgCheck> () {
       return Array<value_type, Length, ArrayNoArgCheck>(*this);
     }
 
     template<template<size_t> class CheckingPolicy>
-    operator Array<value_type, Length, CheckingPolicy> () {
+    SCHNEK_INLINE operator Array<value_type, Length, CheckingPolicy> () {
       return Array<value_type, Length, CheckingPolicy>(*this);
     }
 
@@ -73,11 +73,8 @@ class ArrayExpression {
 //    }
 
     /**Return the i-th element of the expression*/
-    value_type operator[](size_t i) const 
+    SCHNEK_INLINE value_type operator[](size_t i) const 
     { 
-//      value_type result = Op[i];
-//      std::cerr << "ArrayExpression -- " << result << std::endl;
-//      return result;
       return Op[i];
     }
 };
@@ -95,16 +92,16 @@ class ArrayUnaryOp {
     typedef typename OperatorType::value_type value_type;
 
     /**Construct passing the reference to the expressions*/
-    ArrayUnaryOp(const Exp1 &A_) : A(A_) {}
+    SCHNEK_INLINE ArrayUnaryOp(const Exp1 &A_) : A(A_) {}
 
     /**Copy constructor*/
-    ArrayUnaryOp(const ArrayUnaryOp &Op) : A(Op.A) {}
+    SCHNEK_INLINE ArrayUnaryOp(const ArrayUnaryOp &Op) : A(Op.A) {}
 
     /**Return the i-th element of the operator expression
      * Gets the i-th elements of A and B and asks the static OperatorType::apply
      * method to perform the calculation
      */
-    value_type operator[](size_t i) const { return OperatorType::apply(A[i]); }
+    SCHNEK_INLINE value_type operator[](size_t i) const { return OperatorType::apply(A[i]); }
 };
 
 
@@ -123,16 +120,16 @@ class ArrayBinaryOp {
     typedef typename OperatorType::value_type value_type;
   
     /**Construct passing the two references to the expressions*/
-    ArrayBinaryOp(const Exp1 &A_, const Exp2 &B_) : A(A_), B(B_) {}
+    SCHNEK_INLINE ArrayBinaryOp(const Exp1 &A_, const Exp2 &B_) : A(A_), B(B_) {}
 
     /**Copy constructor*/
-    ArrayBinaryOp(const ArrayBinaryOp &Op) : A(Op.A), B(Op.B) {}
+    SCHNEK_INLINE ArrayBinaryOp(const ArrayBinaryOp &Op) : A(Op.A), B(Op.B) {}
 
     /**Return the i-th element of the operator expression
      * Gets the i-th elements of A and B and asks the static OperatorType::apply 
      * method to perform the calculation
      */
-    value_type operator[](size_t i) const { return OperatorType::apply(A[i], B[i]); }
+    SCHNEK_INLINE value_type operator[](size_t i) const { return OperatorType::apply(A[i], B[i]); }
 };
 
 template<typename T>
@@ -141,8 +138,8 @@ struct ArrayConstantExp {
     T val;
   public:
     typedef T value_type;
-    ArrayConstantExp(const T& val_) : val(val_) {}
-    value_type operator[](size_t) const { return val; }
+    SCHNEK_INLINE ArrayConstantExp(const T& val_) : val(val_) {}
+    SCHNEK_INLINE value_type operator[](size_t) const { return val; }
 };
 
 /**An operator type implementing addition
@@ -152,7 +149,7 @@ struct ArrayOpPlus {
   typedef T value_type;
 
   /// Returns the sum of the two elements
-  static value_type apply(value_type x, value_type y) { return x+y; }
+  static SCHNEK_INLINE value_type apply(value_type x, value_type y) { return x+y; }
 };
 
 /**An operator type implementing subtraction
@@ -162,7 +159,7 @@ struct ArrayOpMinus {
   typedef T value_type;
 
   /// Returns the sum of the two elements
-  static value_type apply(value_type x, value_type y) { return x-y; }
+  static SCHNEK_INLINE value_type apply(value_type x, value_type y) { return x-y; }
 };
 
 /**An operator type implementing multiplication
@@ -172,7 +169,7 @@ struct ArrayOpMult {
   typedef T value_type;
 
   /// Returns the sum of the two elements
-  static value_type apply(value_type x, value_type y) { return x*y; }
+  static SCHNEK_INLINE value_type apply(value_type x, value_type y) { return x*y; }
 };
 
 /**An operator type implementing division
@@ -182,7 +179,7 @@ struct ArrayOpDiv {
   typedef T value_type;
 
   /// Returns the sum of the two elements
-  static value_type apply(value_type x, value_type y) { return x/y; }
+  static SCHNEK_INLINE value_type apply(value_type x, value_type y) { return x/y; }
 };
 
 /**An operator type implementing division
@@ -192,7 +189,7 @@ struct ArrayOpUnaryPlus {
   typedef T value_type;
 
   /// Returns the sum of the two elements
-  static value_type apply(value_type x) { return x; }
+  static SCHNEK_INLINE value_type apply(value_type x) { return x; }
 };
 
 /**An operator type implementing division
@@ -202,9 +199,12 @@ struct ArrayOpUnaryMinus {
   typedef T value_type;
 
   /// Returns the sum of the two elements
-  static value_type apply(value_type x) { return -x; }
+  static SCHNEK_INLINE value_type apply(value_type x) { return -x; }
 };
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 
 //================================================================
 //======== Here we define all the operators ======================
@@ -224,7 +224,7 @@ struct ArrayOpUnaryMinus {
     >,                                                                          \
     length                                                                      \
   >                                                                             \
-  operator symbol (                                                             \
+  SCHNEK_INLINE operator symbol (                                                             \
     const ArrayExpression<exp1, length> &A,                                     \
     const ArrayExpression<exp2, length> &B)                                     \
   {                                                                             \
@@ -255,7 +255,7 @@ ArrayExpression<                                                                
   >,                                                                            \
   length                                                                        \
 >                                                                               \
-operator symbol (                                                               \
+SCHNEK_INLINE operator symbol (                                                               \
   const Array<T,length,CheckingPolicy1> &A,                                     \
   const Array<T,length,CheckingPolicy2> &B                                      \
 )                                                                               \
@@ -285,7 +285,7 @@ ArrayExpression<                                                                
   >,                                                                            \
   length                                                                        \
 >                                                                               \
-operator symbol (                                                               \
+SCHNEK_INLINE operator symbol (                                                               \
   const ArrayExpression<exp, length> &A,                                        \
   const Array<T,length,CheckingPolicy> &B                                       \
 )                                                                               \
@@ -316,7 +316,7 @@ ArrayExpression<                                                                
   >,                                                                            \
   length                                                                        \
 >                                                                               \
-operator symbol (                                                               \
+SCHNEK_INLINE operator symbol (                                                               \
   const Array<T,length,CheckingPolicy> &A,                                      \
   const ArrayExpression<exp, length> &B                                         \
 )                                                                               \
@@ -341,7 +341,7 @@ ArrayExpression<                                                                
   >,                                                                            \
   length                                                                        \
 >                                                                               \
-operator symbol (const T &A, const ArrayExpression<exp, length> &B)             \
+SCHNEK_INLINE operator symbol (const T &A, const ArrayExpression<exp, length> &B)             \
 {                                                                               \
   typedef ArrayBinaryOp<                                                        \
     ArrayConstantExp<T>,                                                        \
@@ -363,7 +363,7 @@ ArrayExpression<                                                                
   >,                                                                            \
   length                                                                        \
 >                                                                               \
-operator symbol (const ArrayExpression<exp, length> &A, const T &B)             \
+SCHNEK_INLINE operator symbol (const ArrayExpression<exp, length> &A, const T &B)             \
 {                                                                               \
   typedef ArrayBinaryOp<                                                        \
     ArrayExpression<exp, length>,                                               \
@@ -384,7 +384,7 @@ ArrayExpression<                                                                
   >,                                                                            \
   length                                                                        \
 >                                                                               \
-operator symbol (const T &A, const Array<T,length,CheckingPolicy> &B)           \
+SCHNEK_INLINE operator symbol (const T &A, const Array<T,length,CheckingPolicy> &B)           \
 {                                                                               \
   typedef ArrayBinaryOp<                                                        \
     ArrayConstantExp<T>,                                                        \
@@ -406,7 +406,7 @@ ArrayExpression<                                                                
   >,                                                                            \
   length                                                                        \
 >                                                                               \
-operator symbol (const Array<T,length,CheckingPolicy> &A, const T &B)           \
+SCHNEK_INLINE operator symbol (const Array<T,length,CheckingPolicy> &A, const T &B)           \
 {                                                                               \
   typedef ArrayBinaryOp<                                                        \
     Array<T,length,CheckingPolicy>,                                             \
@@ -431,7 +431,7 @@ ArrayExpression<                                                                
   >,                                                                            \
   length                                                                        \
 >                                                                               \
-operator symbol (                                                               \
+SCHNEK_INLINE operator symbol (                                                               \
   const Array<T,length,CheckingPolicy1> &A                                      \
 )                                                                               \
 {                                                                               \
@@ -459,7 +459,7 @@ ArrayExpression<                                                                
   >,                                                                            \
   length                                                                        \
 >                                                                               \
-operator symbol (                                                               \
+SCHNEK_INLINE operator symbol (                                                               \
   const ArrayExpression<exp, length> &A                                         \
 )                                                                               \
 {                                                                               \
@@ -540,10 +540,11 @@ UNARY_EXPR(ArrayOpUnaryMinus,-)
 #undef UNARY_ARR
 #undef UNARY_EXPR
 
+#pragma GCC diagnostic pop
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator=(const ArrayExpression<Operator, Length> &expr)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator=(const ArrayExpression<Operator, Length> &expr)
 {
     for (size_t i=0; i<Length; ++i)
       data[i] = expr[i];
@@ -552,7 +553,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator=(const 
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator+=(const ArrayExpression<Operator, Length> &expr)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator+=(const ArrayExpression<Operator, Length> &expr)
 {
     for (size_t i=0; i<Length; ++i)
       data[i] += expr[i];
@@ -561,7 +562,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator+=(const
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator-=(const ArrayExpression<Operator, Length> &expr)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator-=(const ArrayExpression<Operator, Length> &expr)
 {
     for (size_t i=0; i<Length; ++i)
       data[i] -= expr[i];
@@ -570,7 +571,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator-=(const
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator*=(const ArrayExpression<Operator, Length> &expr)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator*=(const ArrayExpression<Operator, Length> &expr)
 {
     for (size_t i=0; i<Length; ++i)
       data[i] *= expr[i];
@@ -579,7 +580,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator*=(const
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator/=(const ArrayExpression<Operator, Length> &expr)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator/=(const ArrayExpression<Operator, Length> &expr)
 {
     for (size_t i=0; i<Length; ++i)
       data[i] /= expr[i];
@@ -590,7 +591,7 @@ Array<T,Length,CheckingPolicy> &Array<T,Length,CheckingPolicy>::operator/=(const
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 template<class Operator>
-inline Array<T,Length,CheckingPolicy>::Array(const ArrayExpression<Operator, Length> &expr)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(const ArrayExpression<Operator, Length> &expr)
 {
     for (size_t i=0; i<Length; ++i)
       data[i] = expr[i];
