@@ -70,6 +70,8 @@ namespace schnek
         /// The grid index type
         typedef Array<int, rank> IndexType;
 
+        /// The grid range type
+        typedef Range<int, rank> RangeType;
     protected:
         /// The pointer to the data
         std::shared_ptr<internal::SingleArrayAllocationData<T> > data;
@@ -77,11 +79,8 @@ namespace schnek
         /// The length of the allocated array
         size_t size;
 
-        /// The lowest coordinate in the grid (inclusive)
-        IndexType low;
-
-        /// The highest coordinate in the grid (inclusive)
-        IndexType high;
+        /// The lowest and highest coordinates in the grid (inclusive)
+        RangeType range;
 
         /// The dimensions of the grid `dims = high - low + 1`
         IndexType dims;
@@ -104,16 +103,16 @@ namespace schnek
         SingleArrayInstantAllocation<T, rank> &operator=(const SingleArrayInstantAllocation<T, rank> &) = default;
     protected:
         /**
-         * @brief resizes to grid with lower indices low[0],...,low[rank-1]
-         * and upper indices high[0],...,high[rank-1]
+         * @brief resizes to grid with lower indices lo[0],...,lo[rank-1]
+         * and upper indices hi[0],...,hi[rank-1]
          */
-        void resizeImpl(const IndexType &low, const IndexType &high);
+        void resizeImpl(const IndexType &lo, const IndexType &hi);
     private:
         /// Free the allocated memory
         void deleteData();
 
         /// Allocate a new array
-        void newData(const IndexType &low_, const IndexType &high_);
+        void newData(const IndexType &lo, const IndexType &hi);
     };
 
     /**
@@ -135,6 +134,8 @@ namespace schnek
         /// The grid index type
         typedef Array<int, rank> IndexType;
 
+        /// The grid range type
+        typedef Range<int, rank> RangeType;
     protected:
         /// The pointer to the data
         std::shared_ptr<internal::SingleArrayAllocationData<T> > data;
@@ -142,11 +143,8 @@ namespace schnek
         /// The length of the array
         int size;
 
-        /// The lowest coordinate in the grid (inclusive)
-        IndexType low;
-
-        /// The highest coordinate in the grid (inclusive)
-        IndexType high;
+        /// The lowest and highest coordinates in the grid (inclusive)
+        RangeType range;
 
         /// The dimensions of the grid `dims = high - low + 1`
         IndexType dims;
@@ -177,10 +175,10 @@ namespace schnek
         SingleArrayLazyAllocation<T, rank> &operator=(const SingleArrayLazyAllocation<T, rank> &) = default;
     protected:
         /**
-         * @brief resizes to grid with lower indices low[0],...,low[rank-1]
-         * and upper indices high[0],...,high[rank-1]
+         * @brief resizes to grid with lower indices lo[0],...,lo[rank-1]
+         * and upper indices hi[0],...,hi[rank-1]
          */
-        void resizeImpl(const IndexType &low_, const IndexType &high_);
+        void resizeImpl(const IndexType &lo, const IndexType &hi);
 
     private:
         /// Free the allocated memory
@@ -195,10 +193,10 @@ namespace schnek
     //=================================================================
 
     template <typename T, size_t rank>
-    void SingleArrayInstantAllocation<T, rank>::resizeImpl(const IndexType &low_, const IndexType &high_)
+    void SingleArrayInstantAllocation<T, rank>::resizeImpl(const IndexType &lo, const IndexType &hi)
     {
         this->deleteData();
-        this->newData(low_, high_);
+        this->newData(lo, hi);
     }
 
     template <typename T, size_t rank>
@@ -214,17 +212,16 @@ namespace schnek
 
     template <typename T, size_t rank>
     void SingleArrayInstantAllocation<T, rank>::newData(
-        const IndexType &low_,
-        const IndexType &high_)
+        const IndexType &lo,
+        const IndexType &hi
+    )
     {
         size = 1;
-
-        low = low_;
-        high = high_;
+        range = RangeType{lo, hi};
 
         for (size_t d = 0; d < rank; ++d)
         {
-            dims[d] = high[d] - low[d] + 1;
+            dims[d] = hi[d] - lo[d] + 1;
             size *= dims[d];
         }
         data->ptr = new T[size];
@@ -241,16 +238,14 @@ namespace schnek
     }
 
     template <typename T, size_t rank>
-    void SingleArrayLazyAllocation<T, rank>::resizeImpl(const IndexType &low_, const IndexType &high_)
+    void SingleArrayLazyAllocation<T, rank>::resizeImpl(const IndexType &lo, const IndexType &hi)
     {
         int newSize = 1;
-
-        low = low_;
-        high = high_;
+        range = RangeType{lo, hi};
 
         for (size_t d = 0; d < rank; d++)
         {
-            dims[d] = high[d] - low[d] + 1;
+            dims[d] = hi[d] - lo[d] + 1;
             newSize *= dims[d];
         }
 
@@ -285,7 +280,9 @@ namespace schnek
     {
         bufSize = newSize + (int)(4 * sqrt(avgVar));
         if (bufSize <= 0)
+        {
             bufSize = 10;
+        }
         // std::cerr << "Allocating pointer: size = " << newSize  << " " << bufSize << std::endl;
         data->ptr = new T[bufSize];
     }

@@ -65,8 +65,22 @@ namespace internal {
     class StoragePolicy
   >
   template<template<size_t> class ArrayCheckingPolicy>
-  GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(const Array<int,rank,ArrayCheckingPolicy> &low, const Array<int,rank,ArrayCheckingPolicy> &high)
-    : StoragePolicy(low,high)
+  GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(
+    const Array<int,rank,ArrayCheckingPolicy> &low, 
+    const Array<int,rank,ArrayCheckingPolicy> &high
+  ) : StoragePolicy(low,high)
+  {}
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
+  template<template<size_t> class ArrayCheckingPolicy>
+  GridBase<T, rank, CheckingPolicy, StoragePolicy>::GridBase(
+    const Range<int,rank,ArrayCheckingPolicy> &range
+  ) : StoragePolicy(range)
   {}
 
   // -------------------------------------------------------------
@@ -540,6 +554,17 @@ GridBase<T, rank, CheckingPolicy, StoragePolicy>&
     class CheckingPolicy,
     class StoragePolicy
   >
+  void GridBase<T, rank, CheckingPolicy, StoragePolicy>::resize(const RangeType &range)
+  {
+    StoragePolicy::resize(range.getLo(), range.getHi());
+  }
+
+  template<
+    typename T,
+    size_t rank,
+    class CheckingPolicy,
+    class StoragePolicy
+  >
   template<
     typename T2,
     class CheckingPolicy2,
@@ -584,6 +609,16 @@ template<
 >
 Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const IndexType &low, const IndexType &high)
   : internal::GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >(low, high)
+{}
+
+template<
+  typename T,
+  size_t rank,
+  template<size_t> class CheckingPolicy,
+  template<typename, size_t> class StoragePolicy
+>
+Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const RangeType &range)
+  : internal::GridBase<T, rank, CheckingPolicy<rank>,  StoragePolicy<T,Rank> >(range)
 {}
 
 

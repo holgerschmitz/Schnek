@@ -65,6 +65,7 @@ namespace schnek {
         typedef CheckingPolicy CheckingPolicyType;
         typedef StoragePolicy StoragePolicyType;
         typedef typename CheckingPolicy::IndexType IndexType;
+        typedef typename StoragePolicy::RangeType RangeType;
         typedef GridBase<T,rank,CheckingPolicy,StoragePolicy> GridBaseType;
         enum {Rank = rank};
 
@@ -83,6 +84,9 @@ namespace schnek {
 
         template<template<size_t> class ArrayCheckingPolicy>
         GridBase(const Array<int,rank,ArrayCheckingPolicy> &low, const Array<int,rank,ArrayCheckingPolicy> &high);
+
+        template<template<size_t> class ArrayCheckingPolicy>
+        GridBase(const Range<int,rank,ArrayCheckingPolicy> &range);
 
         /** index operator, writing */
         template<template<size_t> class ArrayCheckingPolicy>
@@ -179,33 +183,50 @@ namespace schnek {
         SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>&
           operator+=(GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>&);
 
-        /** Resize to size[0] x ... x size[rank-1]
+        /** 
+         * @brief Resize to size[0] x ... x size[rank-1]
          *
-         *  Example:
-         *  \begin{verbatim}
-         *  Grid<double,2>::IndexType size=(512,512);
-         *  Grid<double,2> m;
-         *  m.resize(size);
-         *  \end{verbatim}
+         * Example:
+         * \begin{verbatim}
+         * Grid<double,2>::IndexType size=(512,512);
+         * Grid<double,2> m;
+         * m.resize(size);
+         * \end{verbatim}
          *
-         *  The ranges then extend from 0 to size[i]-1
+         * The ranges then extend from 0 to size[i]-1
          */
         void resize(const IndexType &size);
 
-        /** Resize to lower indices low[0],...,low[rank-1]
-         *  and upper indices high[0],...,high[rank-1]
+        /** 
+         * @brief Resize to lower indices low[0],...,low[rank-1]
+         * and upper indices high[0],...,high[rank-1]
          *
-         *  Example:
-         *  \begin{verbatim}
-         *  Grid<double,2>::IndexType low(-5,-10);
-         *  Grid<double,2>::IndexType high(15,36);
-         *  Grid<double,2> m;
-         *  m.resize(l,h);
-         *  \end{verbatim}
+         * Example:
+         * \begin{verbatim}
+         * Grid<double,2>::IndexType lo{-5,-10};
+         * Grid<double,2>::IndexType hi{15,36};
+         * Grid<double,2> m;
+         * m.resize(l,h);
+         * \end{verbatim}
          *
-         *  The ranges then extend from low[i] to high[i]
+         * The ranges then extend from low[i] to high[i]
          */
         void resize(const IndexType &low, const IndexType &high);
+
+        /** 
+         * @brief Resize to lower indices range.getLo(0),...,range.getLo(rank-1)
+         * and upper indices range.getHi(0),...,range.getHi(rank-1)
+         *
+         * Example:
+         * \begin{verbatim}
+         * Grid<double,2>::IndexType lo{-5, -10};
+         * Grid<double,2>::IndexType hi{15, 36};
+         * Grid<double,2>::RangeType range{lo, hi};
+         * Grid<double,2> m;
+         * m.resize(range);
+         * \end{verbatim}
+         */
+        void resize(const RangeType &range);
 
         /** Resize to match the size of another matrix */
         template<

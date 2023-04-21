@@ -36,6 +36,9 @@
 #pragma GCC diagnostic pop
 #endif
 
+#include <boost/timer/progress_display.hpp>
+#include <boost/test/unit_test.hpp>
+
 #include <map>
 
 struct GridTest
@@ -415,6 +418,47 @@ struct GridTest
         ptrdiff_t diff = &(grid.get(indexP)) - &(grid.get(index));
         ptrdiff_t stride = grid.stride(i);
         BOOST_CHECK(is_equal(diff, stride));
+      }
+    }
+
+    template<class GridType>
+    void test_range_access(GridType &grid)
+    {
+      typename GridType::IndexType lo = grid.getLo();
+      typename GridType::IndexType hi = grid.getHi();
+      typename GridType::RangeType range = grid.getRange();
+
+      for (size_t i=0; i<GridType::Rank; ++i)
+      {
+        BOOST_CHECK(is_equal(lo[i], range.getLo(i)));
+        BOOST_CHECK(is_equal(hi[i], range.getHi(i)));
+      }
+    }
+
+    template<size_t Rank, typename GridType>
+    void generic_range_access_Nd()
+    {
+      typename GridType::IndexType lo, hi;
+      boost::timer::progress_display show_progress(30);
+      for (int n=0; n<5; ++n)
+      {
+        random_extent<Rank>(lo, hi);
+        typename GridType::RangeType range{lo, hi};
+        GridType g1(lo, hi);
+        GridType g2(range);
+        test_range_access(g1);
+        test_range_access(g2);
+        ++show_progress;
+        for (int m=0; m<5; ++m)
+        {
+          random_extent<Rank>(lo, hi);
+          typename GridType::RangeType range{lo, hi};
+          g1.resize(lo,hi);
+          g2.resize(range);
+          test_range_access(g1);
+          test_range_access(g2);
+          ++show_progress;
+        }
       }
     }
 
