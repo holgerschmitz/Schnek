@@ -7,6 +7,8 @@
 
 #include "utility.hpp"
 
+#include <grid/iteration/kokkos-iteration.hpp>
+
 #include <cmath>
 bool is_equal(double a, double b)
 {

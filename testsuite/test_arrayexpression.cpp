@@ -67,7 +67,9 @@ BOOST_FIXTURE_TEST_CASE( array_expression, ArrayExpressionTest )
     Array<int,3> s2(idist(rGen), idist(rGen), idist(rGen));
 
     {
-      Array<int,3> s3 = s1+s2;
+      auto exp = s1+s2;
+      std::cerr << "Constructed\n";
+      Array<int,3> s3 = exp; 
       Array<int,3> s4;
       BOOST_CHECK_EQUAL(s3[0], s1[0]+s2[0]);
       BOOST_CHECK_EQUAL(s3[1], s1[1]+s2[1]);
