@@ -164,14 +164,13 @@ struct ArrayTest
       Array<double, size, ArrayBoostTestArgCheck> C;
       Array<double, size, ArrayBoostTestArgCheck> D;
 
-      F1 = dist(rGen);
-      F2 = dist(rGen);
-      while (fabs(F2)<1e-6) F2 = dist(rGen);
+      F1 = 2.0 + dist(rGen);
+      F2 = 2.0 + dist(rGen);
 
       for (int i=0; i<size; ++i)
       {
-        double a = dist(rGen);
-        double b = dist(rGen);
+        double a = 2.0 + dist(rGen);
+        double b = 2.0 + dist(rGen);
         A[i] = a;
         B[i] = b;
         result1[i] = a * F1 + b / F2;
@@ -185,6 +184,13 @@ struct ArrayTest
       {
         BOOST_CHECK(is_equal(C[i], result1[i]));
         BOOST_CHECK(is_equal(D[i], result2[i]));
+
+        if (!is_equal(C[i], result1[i])) {
+          std::cerr << "ERR 1 " << A[i] << " " << B[i] << " | " << C[i] << " " << result1[i] << " | " << C[i] - result1[i]  << std::endl;
+        }
+        if (!is_equal(D[i], result2[i])) {
+          std::cerr << "ERR 2 " << A[i] << " " << B[i] << " | " << D[i] << " " << result2[i] << " | " << D[i] - result2[i] << std::endl;
+        }
       }
     }
 

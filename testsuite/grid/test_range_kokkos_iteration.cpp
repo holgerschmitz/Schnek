@@ -8,6 +8,7 @@
 #include "../utility.hpp"
 #include "range_test_fixture.hpp"
 
+#include <grid/iteration/range-iteration.hpp>
 #include <grid/iteration/kokkos-iteration.hpp>
 #include <grid/gridstorage/kokkos-storage.hpp>
 #include <grid/grid.hpp>
