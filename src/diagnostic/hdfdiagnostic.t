@@ -58,9 +58,9 @@ void HdfIStream::readGrid(GridContainer<FieldType> &g)
   typedef typename FieldType::IndexType IndexType;
   typedef typename FieldType::value_type T;
 
-  IndexType mdims = g.grid->getDims();
-  IndexType mlo = g.grid->getLo();
-  IndexType mhi = g.grid->getHi();
+  IndexType mdims = g.grid.getDims();
+  IndexType mlo = g.grid.getLo();
+  IndexType mhi = g.grid.getHi();
 
   IndexType llo = g.local_min;
   IndexType lhi = g.local_max;
@@ -101,7 +101,7 @@ void HdfIStream::readGrid(GridContainer<FieldType> &g)
     }
   }
 
-  T *data = g.grid->getRawData();
+  T *data = g.grid.getRawData();
   hid_t ret;
 
   /* open the dataset collectively */
@@ -172,9 +172,9 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
   typedef typename FieldType::IndexType IndexType;
   typedef typename FieldType::value_type T;
 
-  IndexType mdims = g.grid->getDims();
-  IndexType mlo = g.grid->getLo();
-  IndexType mhi = g.grid->getHi();
+  IndexType mdims = g.grid.getDims();
+  IndexType mlo = g.grid.getLo();
+  IndexType mhi = g.grid.getHi();
 
   IndexType llo = g.local_min;
   IndexType lhi = g.local_max;
@@ -219,7 +219,7 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
     }
   }
 
-  const T *data = g.grid->getRawData();
+  const T *data = g.grid.getRawData();
   hid_t ret;
 
   /* setup dimensionality object */
@@ -335,7 +335,7 @@ void HdfOStream::writeGrid(GridContainer<FieldType> &g)
 template<typename InnerType>
 struct CopyToContainer
 {
-    static void copy(InnerType *field, GridContainer<InnerType> &container);
+    static void copy(InnerType field, GridContainer<InnerType> &container);
 };
 
 
@@ -347,7 +347,7 @@ template<
 >
 struct CopyToContainer<Field<T, rank, CheckingPolicy, StoragePolicy> >
 {
-    static void copy(Field<T, rank, CheckingPolicy, StoragePolicy> *field,
+    static void copy(Field<T, rank, CheckingPolicy, StoragePolicy> field,
                      GridContainer<Field<T, rank, CheckingPolicy, StoragePolicy> > &container);
 };
 
@@ -357,63 +357,63 @@ template<
   template<size_t> class CheckingPolicy,
   template<typename, size_t> class StoragePolicy
 >
-inline void CopyToContainer<Field<T, rank, CheckingPolicy, StoragePolicy> >::copy(Field<T, rank, CheckingPolicy, StoragePolicy> *field,
+inline void CopyToContainer<Field<T, rank, CheckingPolicy, StoragePolicy> >::copy(Field<T, rank, CheckingPolicy, StoragePolicy> field,
          GridContainer<Field<T, rank, CheckingPolicy, StoragePolicy> > &container)
 {
   container.grid = field;
-  container.local_min = field->getInnerLo();
-  container.local_max = field->getInnerHi();
+  container.local_min = field.getInnerLo();
+  container.local_max = field.getInnerHi();
 
 }
 
 
 template<typename InnerType>
-inline void CopyToContainer<InnerType>::copy(InnerType *field, GridContainer<InnerType> &container)
+inline void CopyToContainer<InnerType>::copy(InnerType field, GridContainer<InnerType> &container)
 {
   container.grid = field;
-  container.local_min = field->getLo();
-  container.local_max = field->getHi();
+  container.local_min = field.getLo();
+  container.local_max = field.getHi();
 }
 
 //------------------------------------------------------------------------------
 // HDFGridDiagnostic
 //------------------------------------------------------------------------------
 
-template<typename Type, typename PointerType, class DiagnosticType>
-std::string HDFGridDiagnostic<Type, PointerType, DiagnosticType>::getDatasetName() {
+template<typename Type, class DiagnosticType>
+std::string HDFGridDiagnostic<Type, DiagnosticType>::getDatasetName() {
     return "data";
 }
 
-template<typename Type, typename PointerType, class DiagnosticType>
-void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::open(const std::string &fname)
+template<typename Type, class DiagnosticType>
+void HDFGridDiagnostic<Type, DiagnosticType>::open(const std::string &fname)
 {
   output.open(fname.c_str());
 }
 
-template<typename Type, typename PointerType, class DiagnosticType>
-void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::write()
+template<typename Type, class DiagnosticType>
+void HDFGridDiagnostic<Type, DiagnosticType>::write()
 {
   output.setBlockName(this->getDatasetName());
   output.setAttributes(this->getAttributes());
   output.writeGrid(container);
 }
 
-template<typename Type, typename PointerType, class DiagnosticType>
-void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::close()
+template<typename Type, class DiagnosticType>
+void HDFGridDiagnostic<Type, DiagnosticType>::close()
 {
   output.close();
 }
 
 
 
-template<typename Type, typename PointerType, class DiagnosticType>
-void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::init()
+template<typename Type, class DiagnosticType>
+void HDFGridDiagnostic<Type, DiagnosticType>::init()
 {
-  SimpleDiagnostic<Type, PointerType, DiagnosticType>::init();
+  SimpleDiagnostic<Type, Type, DiagnosticType>::init();
 
   if (!this->isDerived())
   {
-    CopyToContainer<Type>::copy(&(*this->field), container);
+    CopyToContainer<Type>::copy(this->field, container);
     container.global_min = this->getGlobalMin();
     container.global_max = this->getGlobalMax();
   }
@@ -423,44 +423,44 @@ void HDFGridDiagnostic<Type, PointerType, DiagnosticType>::init()
 // HDFGridReader
 //------------------------------------------------------------------------------
 
-template<typename Type, typename PointerType>
-void HDFGridReader<Type, PointerType>::init()
+template<typename Type>
+void HDFGridReader<Type>::init()
 {
   Block::init();
 
   this->retrieveData(fieldName, field);
 
-  CopyToContainer<Type>::copy(&(*field), container);
+  CopyToContainer<Type>::copy(field, container);
   container.global_min = this->getGlobalMin();
   container.global_max = this->getGlobalMax();
 }
 
-template<typename Type, typename PointerType>
-std::string HDFGridReader<Type, PointerType>::getDatasetName() {
+template<typename Type>
+std::string HDFGridReader<Type>::getDatasetName() {
     return "data";
 }
 
-template<typename Type, typename PointerType>
-void HDFGridReader<Type, PointerType>::open()
+template<typename Type>
+void HDFGridReader<Type>::open()
 {
   input.open(fileName.c_str());
 }
 
-template<typename Type, typename PointerType>
-void HDFGridReader<Type, PointerType>::read()
+template<typename Type>
+void HDFGridReader<Type>::read()
 {
   input.setBlockName(this->getDatasetName());
   input.readGrid(container);
 }
 
-template<typename Type, typename PointerType>
-void HDFGridReader<Type, PointerType>::close()
+template<typename Type>
+void HDFGridReader<Type>::close()
 {
   input.close();
 }
 
-template<typename Type, typename PointerType>
-void HDFGridReader<Type, PointerType>::execute()
+template<typename Type>
+void HDFGridReader<Type>::execute()
 {
   open();
   read();
@@ -469,8 +469,8 @@ void HDFGridReader<Type, PointerType>::execute()
 
 
 
-template<typename Type, typename PointerType>
-void HDFGridReader<Type, PointerType>::initParameters(BlockParameters &blockPars)
+template<typename Type>
+void HDFGridReader<Type>::initParameters(BlockParameters &blockPars)
 {
   Block::initParameters(blockPars);
 

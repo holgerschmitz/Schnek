@@ -58,7 +58,7 @@ template<typename FieldType>
 struct GridContainer
 {
   /// The pointer to the grid
-  FieldType *grid;
+  FieldType grid;
 
   /// The global minimum coordinate
   typename FieldType::IndexType global_min;
@@ -231,8 +231,8 @@ class HdfOStream : public HdfStream {
 /**
  * Abstract diagnostic class for writing Grids into HDF5 data files
  */
-template<typename Type, typename PointerType = std::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic >
-class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType, DiagnosticType> {
+template<typename Type, class DiagnosticType = IntervalDiagnostic >
+class HDFGridDiagnostic : public SimpleDiagnostic<Type, Type, DiagnosticType> {
   public:
     typedef typename Type::IndexType IndexType;
   protected:
@@ -279,7 +279,7 @@ class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType, DiagnosticT
  *
  * An interface that
  */
-template<typename Type, typename PointerType = std::shared_ptr<Type> >
+template<typename Type>
 class HDFGridReader : public Block
 {
   public:
@@ -290,7 +290,7 @@ class HDFGridReader : public Block
     /// The container for the grid holding additional data
     GridContainer<Type> container;
     /// The field that the data will be read into
-    PointerType field;
+    Type field;
     /// The name of the field to read the data into
     std::string fieldName;
     /// The name of the file to read the data from
