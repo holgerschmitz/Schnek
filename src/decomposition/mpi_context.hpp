@@ -8,7 +8,7 @@
 #ifndef SCHNEK_DECOMPOSITION_MPI_CONTEXT_HPP_
 #define SCHNEK_DECOMPOSITION_MPI_CONTEXT_HPP_
 
-#include "../schnek_config.hpp"
+#include "../config.hpp"
 
 #ifdef SCHNEK_HAVE_MPI
 

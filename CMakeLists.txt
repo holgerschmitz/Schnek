@@ -28,6 +28,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 add_library(schnek SHARED
     src/diagnostic/diagnostic.cpp
     src/diagnostic/hdfdiagnostic.cpp
+    src/decomposition/mpi_context.cpp
     src/functions.cpp
     src/grid/mpisubdivision.cpp
     src/parser/deckscanner.cpp

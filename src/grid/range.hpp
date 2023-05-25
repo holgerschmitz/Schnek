@@ -99,20 +99,20 @@ class Range {
       return true;
     }
     /// projects the Array onto an Array of shorter length
-    template<int destLength>
+    template<size_t destLength>
     Range<T,destLength,CheckingPolicy> project() const
     {
       return Range<T,destLength,CheckingPolicy>(lo.template project<destLength>(), hi.template project<destLength>());
     }
 
-    Range<T,rank-1,CheckingPolicy> projectDim(int dim) const
+    Range<T,rank-1,CheckingPolicy> projectDim(size_t dim) const
     {
       return Range<T,rank-1,CheckingPolicy>(lo.projectDim(dim), hi.projectDim(dim));
     }
 
     void grow(const T &s)
     {
-      for (int i=0; i<rank; ++i)
+      for (size_t i=0; i<rank; ++i)
       {
         lo[i] -= s;
         hi[i] += s;
@@ -360,7 +360,7 @@ class Range {
 
     template<
       class T2,
-      template<int> class CheckingPolicy2
+      template<size_t> class CheckingPolicy2
     >
     bool operator==(const schnek::Range<T2, rank, CheckingPolicy2> &other) const
     {
@@ -369,7 +369,7 @@ class Range {
 
     template<
       class T2,
-      template<int> class CheckingPolicy2
+      template<size_t> class CheckingPolicy2
     >
     bool operator!=(const schnek::Range<T2, rank, CheckingPolicy2> &other) const
     {
