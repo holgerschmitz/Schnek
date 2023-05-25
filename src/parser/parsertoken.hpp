@@ -34,8 +34,14 @@
 
 #include "../exception.hpp"
 
-#include <boost/shared_ptr.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/variant/apply_visitor.hpp>
+
+#pragma GCC diagnostic pop
+
+#include <memory>
 #include <string>
 
 namespace schnek {
@@ -43,7 +49,7 @@ namespace schnek {
 class ParserOperator;
 class ParserToken;
 
-typedef boost::shared_ptr<ParserToken> pParserToken;
+typedef std::shared_ptr<ParserToken> pParserToken;
 
 
 struct ParserError : public SchnekException

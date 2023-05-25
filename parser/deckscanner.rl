@@ -7,9 +7,9 @@
 #include <string>
 #include <cstring>
 #include <cstdio>
-#include "deckscanner.hpp"
-#include "deckgrammar.hpp"
-#include "tokenlist.hpp"
+#include "../deckscanner.hpp"
+#include "../deckgrammar.hpp"
+#include "../tokenlist.hpp"
 
 using namespace schnek;
 
@@ -139,7 +139,7 @@ void DeckScanner::do_scan(TokenList &tlist)
     %% write exec;
 
     if ( cs == deck_error ) {
-      std::cerr << "PARSE ERROR\n";
+      std::cerr << "TOKENISER ERROR " << cur_line << "\n";
       break;
     }
 

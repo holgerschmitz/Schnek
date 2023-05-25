@@ -16,12 +16,20 @@
 #include <cmath>
 #include <limits>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-copy"
+
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
-#include <boost/progress.hpp>
+#include <boost/timer/progress_display.hpp>
 
 #include <boost/test/unit_test.hpp>
+
+#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 
 using namespace schnek;
 
@@ -52,14 +60,15 @@ BOOST_AUTO_TEST_SUITE( arrayexpression )
 BOOST_FIXTURE_TEST_CASE( array_expression, ArrayExpressionTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     Array<int,3> s1(idist(rGen), idist(rGen), idist(rGen));
     Array<int,3> s2(idist(rGen), idist(rGen), idist(rGen));
 
     {
-      Array<int,3> s3 = s1+s2;
+      auto exp = s1+s2;
+      Array<int,3> s3 = exp; 
       Array<int,3> s4;
       BOOST_CHECK_EQUAL(s3[0], s1[0]+s2[0]);
       BOOST_CHECK_EQUAL(s3[1], s1[1]+s2[1]);
@@ -133,7 +142,7 @@ BOOST_FIXTURE_TEST_CASE( array_expression, ArrayExpressionTest )
 BOOST_FIXTURE_TEST_CASE( compound_assignment, ArrayExpressionTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     Array<int,3> s1(idist(rGen), idist(rGen), idist(rGen));
@@ -220,7 +229,7 @@ BOOST_FIXTURE_TEST_CASE( compound_assignment, ArrayExpressionTest )
 BOOST_FIXTURE_TEST_CASE( grid_constructor, ArrayExpressionTest )
 {
   const int N = 10000;
-  boost::progress_display show_progress(4*N);
+  boost::timer::progress_display show_progress(4*N);
 
   for (int i=0; i<N; i++) {
     Array<int,2> s1(idist_small(rGen), idist_small(rGen));

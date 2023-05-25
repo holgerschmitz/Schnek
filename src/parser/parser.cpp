@@ -29,7 +29,6 @@
 #include "tokenlist.hpp"
 #include "../variables/block.hpp"
 #include "../variables/dependencies.hpp"
-#include <boost/foreach.hpp>
 
 #include "deckgrammar.hpp"
 
@@ -40,7 +39,15 @@ struct ParserInternalError : public SchnekException
     ParserInternalError() : SchnekException() {}
 };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 #include "deckgrammar.inc"
+
+#pragma GCC diagnostic pop
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 pBlock Parser::parse(std::istream &input, std::string filename)
 {
@@ -70,7 +77,7 @@ pBlock Parser::parse(std::istream &input, std::string filename)
     context.blockTree->moveDown();
   }
 
-  BOOST_FOREACH(Token tok, tokens)
+  for(Token tok: tokens)
   {
     try{
       Parse(pParser, tok.getToken(), ParserToken(tok, context));

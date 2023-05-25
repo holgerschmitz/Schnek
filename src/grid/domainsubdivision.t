@@ -24,7 +24,7 @@
  *
  */
 
-#include <boost/make_shared.hpp>
+#include <memory>
 
 namespace schnek {
 
@@ -39,11 +39,11 @@ SerialSubdivision<GridType>::~SerialSubdivision()
 template<class GridType>
 void SerialSubdivision<GridType>::init(const LimitType &low, const LimitType &high, int delta)
 {
-  this->bounds = boost::make_shared<BoundaryType>(low, high, delta);
+  this->bounds = std::make_shared<BoundaryType>(low, high, delta);
 }
 
 template<class GridType>
-void SerialSubdivision<GridType>::exchange(GridType &grid, int dim)
+void SerialSubdivision<GridType>::exchange(GridType &grid, size_t dim)
 {
   DomainType loGhost = this->bounds->getGhostDomain(dim, BoundaryType::Min);
   DomainType hiGhost = this->bounds->getGhostDomain(dim, BoundaryType::Max);
@@ -76,7 +76,7 @@ void SerialSubdivision<GridType>::exchange(GridType &grid, int dim)
 }
 
 template<class GridType>
-void SerialSubdivision<GridType>::accumulate(GridType &grid, int dim)
+void SerialSubdivision<GridType>::accumulate(GridType &grid, size_t dim)
 {
   DomainType loGhost = this->bounds->getGhostDomain(dim, BoundaryType::Min);
   DomainType hiGhost = this->bounds->getGhostDomain(dim, BoundaryType::Max);
@@ -111,7 +111,7 @@ void SerialSubdivision<GridType>::accumulate(GridType &grid, int dim)
 }
 
 template<class GridType>
-void SerialSubdivision<GridType>::exchangeData(int dim, int orientation, BufferType &in, BufferType &out)
+void SerialSubdivision<GridType>::exchangeData(size_t, int, BufferType &in, BufferType &out)
 {
   out = in;
 }

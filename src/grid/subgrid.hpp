@@ -34,7 +34,7 @@ namespace schnek {
 
 template<
   typename T,
-  int rank,
+  size_t rank,
   class BaseGrid
 >
 class SubGridStorage {
@@ -104,13 +104,13 @@ class SubGridStorage {
 
     void resize(const IndexType &low_, const IndexType &high_);
 
-    T &get(const IndexType &index)
+    SCHNEK_INLINE T &get(const IndexType &index)
     {
       //typename BaseGrid::CheckingPolicy<rank>::check(index, domain.getLo(), domain.getHi());
       return baseGrid->get(baseGrid->check(index, domain.getLo(), domain.getHi()));
     }
 
-    const T &get(const IndexType &index) const
+    SCHNEK_INLINE const T &get(const IndexType &index) const
     {
       //typename BaseGrid::CheckingPolicy<rank>::check(index, domain.getLo(), domain.getHi());
       return baseGrid->get(baseGrid->check(index, domain.getLo(), domain.getHi()));
@@ -142,10 +142,10 @@ class SubGridStorage {
 
 template<
   class BaseGrid,
-  template<int> class CheckingPolicy = GridNoArgCheck
+  template<size_t> class CheckingPolicy = GridNoArgCheck
 >
 class SubGrid
-  : public GridBase
+  : public internal::GridBase
     <
       typename BaseGrid::value_type,
       BaseGrid::Rank,
@@ -158,7 +158,7 @@ class SubGrid
     >
 {
   private:
-    typedef GridBase
+    typedef internal::GridBase
         <
           typename BaseGrid::value_type,
           BaseGrid::Rank,

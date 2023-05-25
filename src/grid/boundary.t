@@ -27,34 +27,34 @@
 namespace schnek {
         
 template<
-  int rank,
-  template<int> class CheckingPolicy
+  size_t rank,
+  template<size_t> class CheckingPolicy
 >
 Boundary<rank,CheckingPolicy>::Boundary() : size(), delta(0)
 {}
 
 template<
-  int rank,
-  template<int> class CheckingPolicy
+  size_t rank,
+  template<size_t> class CheckingPolicy
 >
 Boundary<rank,CheckingPolicy>::Boundary(const LimitType &low, const LimitType &high, int delta_)
         : size(low, high), delta(delta_)
 {}
 
 template<
-  int rank,
-  template<int> class CheckingPolicy
+  size_t rank,
+  template<size_t> class CheckingPolicy
 >
 Boundary<rank,CheckingPolicy>::Boundary(DomainType &size_, int delta_)
         : size(size_), delta(delta_)
 {}
 
 template<
-  int rank,
-  template<int> class CheckingPolicy
+  size_t rank,
+  template<size_t> class CheckingPolicy
 >
 typename Boundary<rank,CheckingPolicy>::DomainType
-        Boundary<rank,CheckingPolicy>::getGhostDomain(int dim, bound b)
+        Boundary<rank,CheckingPolicy>::getGhostDomain(size_t dim, bound b)
 {
   typename DomainType::LimitType boundsLo = size.getLo();
   typename DomainType::LimitType boundsHi = size.getHi();
@@ -73,11 +73,11 @@ typename Boundary<rank,CheckingPolicy>::DomainType
 }
 
 template<
-  int rank,
-  template<int> class CheckingPolicy
+  size_t rank,
+  template<size_t> class CheckingPolicy
 >
 typename Boundary<rank,CheckingPolicy>::DomainType
-        Boundary<rank,CheckingPolicy>::getGhostSourceDomain(int dim, bound b)
+        Boundary<rank,CheckingPolicy>::getGhostSourceDomain(size_t dim, bound b)
 {
   typename DomainType::LimitType boundsLo = size.getLo();
   typename DomainType::LimitType boundsHi = size.getHi();
@@ -99,11 +99,11 @@ typename Boundary<rank,CheckingPolicy>::DomainType
 
 
 template<
-  int rank,
-  template<int> class CheckingPolicy
+  size_t rank,
+  template<size_t> class CheckingPolicy
 >
 typename Boundary<rank,CheckingPolicy>::DomainType
-        Boundary<rank,CheckingPolicy>::getBoundaryDomain(int dim, bound b, bool stagger)
+        Boundary<rank,CheckingPolicy>::getBoundaryDomain(size_t dim, bound b, bool stagger)
 {
   DomainType bounds = size;
   switch (b)
@@ -120,15 +120,15 @@ typename Boundary<rank,CheckingPolicy>::DomainType
 }
 
 template<
-  int rank,
-  template<int> class CheckingPolicy
+  size_t rank,
+  template<size_t> class CheckingPolicy
 >
 typename Boundary<rank,CheckingPolicy>::DomainType
     Boundary<rank,CheckingPolicy>::getInnerDomain()
 {
   typename DomainType::LimitType lo = size.getLo();
   typename DomainType::LimitType hi = size.getHi();
-  for (int d=0; d<rank; ++d)
+  for (size_t d=0; d<rank; ++d)
   {
     lo[d] += delta;
     hi[d] -= delta;
@@ -137,27 +137,27 @@ typename Boundary<rank,CheckingPolicy>::DomainType
 }
         
 template<
-  int rank,
-  template<int> class CheckingPolicy
+  size_t rank,
+  template<size_t> class CheckingPolicy
 >
 template<class GridType>
-SubGrid<GridType, CheckingPolicy> Boundary<rank,CheckingPolicy>::getGhostBoundary(int dim, bound b, GridType &grid)
+SubGrid<GridType, CheckingPolicy> Boundary<rank,CheckingPolicy>::getGhostBoundary(size_t dim, bound b, GridType &grid)
 {
         DomainType bounds = getGhostDomain(dim, b);
         return SubGrid<GridType, CheckingPolicy>(bounds.getLo(), bounds.getHi(), grid);
 }
 
 template<
-  int rank,
-  template<int> class CheckingPolicy
+  size_t rank,
+  template<size_t> class CheckingPolicy
 >
 template<
   typename T,
-  template<int> class CheckingPolicy2,
-  template<typename, int> class StoragePolicy
+  template<size_t> class CheckingPolicy2,
+  template<typename, size_t> class StoragePolicy
 >
 SubGrid<Field<T,rank,CheckingPolicy2, StoragePolicy>, CheckingPolicy>
-  Boundary<rank,CheckingPolicy>::getGhostBoundary(int dim, bound b, Field<T,rank,CheckingPolicy2,StoragePolicy> &field)
+  Boundary<rank,CheckingPolicy>::getGhostBoundary(size_t dim, bound b, Field<T,rank,CheckingPolicy2,StoragePolicy> &field)
 {
         DomainType bounds = getBoundaryDomain(dim, b, field.getStagger()[dim]);
         return SubGrid<Field<T,rank,CheckingPolicy2, StoragePolicy>, CheckingPolicy>(bounds.getLo(), bounds.getHi(), field);

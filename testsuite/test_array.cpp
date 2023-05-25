@@ -14,12 +14,20 @@
 #include <cmath>
 #include <limits>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-copy"
+
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
-#include <boost/progress.hpp>
+#include <boost/timer/progress_display.hpp>
 
 #include <boost/test/unit_test.hpp>
+
+#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 
 using namespace schnek;
 
@@ -156,14 +164,13 @@ struct ArrayTest
       Array<double, size, ArrayBoostTestArgCheck> C;
       Array<double, size, ArrayBoostTestArgCheck> D;
 
-      F1 = dist(rGen);
-      F2 = dist(rGen);
-      while (fabs(F2)<1e-6) F2 = dist(rGen);
+      F1 = 2.0 + dist(rGen);
+      F2 = 2.0 + dist(rGen);
 
       for (int i=0; i<size; ++i)
       {
-        double a = dist(rGen);
-        double b = dist(rGen);
+        double a = 2.0 + dist(rGen);
+        double b = 2.0 + dist(rGen);
         A[i] = a;
         B[i] = b;
         result1[i] = a * F1 + b / F2;
@@ -177,6 +184,13 @@ struct ArrayTest
       {
         BOOST_CHECK(is_equal(C[i], result1[i]));
         BOOST_CHECK(is_equal(D[i], result2[i]));
+
+        if (!is_equal(C[i], result1[i])) {
+          std::cerr << "ERR 1 " << A[i] << " " << B[i] << " | " << C[i] << " " << result1[i] << " | " << C[i] - result1[i]  << std::endl;
+        }
+        if (!is_equal(D[i], result2[i])) {
+          std::cerr << "ERR 2 " << A[i] << " " << B[i] << " | " << D[i] << " " << result2[i] << " | " << D[i] - result2[i] << std::endl;
+        }
       }
     }
 
@@ -187,7 +201,7 @@ BOOST_AUTO_TEST_SUITE( array )
 BOOST_FIXTURE_TEST_CASE( constructor_1d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -201,7 +215,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_1d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( constructor_2d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -217,7 +231,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_2d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( constructor_3d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -235,7 +249,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_3d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( constructor_4d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -255,7 +269,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_4d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( constructor_5d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -277,7 +291,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_5d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( constructor_6d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -301,7 +315,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_6d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( constructor_7d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -327,7 +341,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_7d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( constructor_8d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -355,7 +369,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_8d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( constructor_9d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -385,7 +399,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_9d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( constructor_10d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -417,7 +431,7 @@ BOOST_FIXTURE_TEST_CASE( constructor_10d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_addition_1d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionAddition(SizeDummy<1>());
@@ -428,7 +442,7 @@ BOOST_FIXTURE_TEST_CASE( expression_addition_1d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_addition_2d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionAddition(SizeDummy<2>());
@@ -439,7 +453,7 @@ BOOST_FIXTURE_TEST_CASE( expression_addition_2d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_addition_3d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionAddition(SizeDummy<3>());
@@ -450,7 +464,7 @@ BOOST_FIXTURE_TEST_CASE( expression_addition_3d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_addition_4d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionAddition(SizeDummy<4>());
@@ -461,7 +475,7 @@ BOOST_FIXTURE_TEST_CASE( expression_addition_4d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_addition_5d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionAddition(SizeDummy<5>());
@@ -472,7 +486,7 @@ BOOST_FIXTURE_TEST_CASE( expression_addition_5d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_addition_6d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionAddition(SizeDummy<6>());
@@ -483,7 +497,7 @@ BOOST_FIXTURE_TEST_CASE( expression_addition_6d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_addition_7d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionAddition(SizeDummy<7>());
@@ -494,7 +508,7 @@ BOOST_FIXTURE_TEST_CASE( expression_addition_7d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_addition_8d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionAddition(SizeDummy<8>());
@@ -505,7 +519,7 @@ BOOST_FIXTURE_TEST_CASE( expression_addition_8d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_addition_9d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionAddition(SizeDummy<9>());
@@ -516,7 +530,7 @@ BOOST_FIXTURE_TEST_CASE( expression_addition_9d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_addition_10d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionAddition(SizeDummy<10>());
@@ -527,7 +541,7 @@ BOOST_FIXTURE_TEST_CASE( expression_addition_10d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_subtraction_1d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionSubtraction(SizeDummy<1>());
@@ -538,7 +552,7 @@ BOOST_FIXTURE_TEST_CASE( expression_subtraction_1d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_subtraction_2d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionSubtraction(SizeDummy<2>());
@@ -549,7 +563,7 @@ BOOST_FIXTURE_TEST_CASE( expression_subtraction_2d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_subtraction_3d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionSubtraction(SizeDummy<3>());
@@ -560,7 +574,7 @@ BOOST_FIXTURE_TEST_CASE( expression_subtraction_3d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_subtraction_4d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionSubtraction(SizeDummy<4>());
@@ -571,7 +585,7 @@ BOOST_FIXTURE_TEST_CASE( expression_subtraction_4d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_subtraction_5d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionSubtraction(SizeDummy<5>());
@@ -582,7 +596,7 @@ BOOST_FIXTURE_TEST_CASE( expression_subtraction_5d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_subtraction_6d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionSubtraction(SizeDummy<6>());
@@ -593,7 +607,7 @@ BOOST_FIXTURE_TEST_CASE( expression_subtraction_6d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_subtraction_7d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionSubtraction(SizeDummy<7>());
@@ -604,7 +618,7 @@ BOOST_FIXTURE_TEST_CASE( expression_subtraction_7d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_subtraction_8d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionSubtraction(SizeDummy<8>());
@@ -615,7 +629,7 @@ BOOST_FIXTURE_TEST_CASE( expression_subtraction_8d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_subtraction_9d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionSubtraction(SizeDummy<9>());
@@ -626,7 +640,7 @@ BOOST_FIXTURE_TEST_CASE( expression_subtraction_9d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_subtraction_10d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionSubtraction(SizeDummy<10>());
@@ -637,7 +651,7 @@ BOOST_FIXTURE_TEST_CASE( expression_subtraction_10d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_multiplication_1d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionMultiplication(SizeDummy<1>());
@@ -648,7 +662,7 @@ BOOST_FIXTURE_TEST_CASE( expression_multiplication_1d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_multiplication_2d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionMultiplication(SizeDummy<2>());
@@ -659,7 +673,7 @@ BOOST_FIXTURE_TEST_CASE( expression_multiplication_2d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_multiplication_3d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionMultiplication(SizeDummy<3>());
@@ -670,7 +684,7 @@ BOOST_FIXTURE_TEST_CASE( expression_multiplication_3d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_multiplication_4d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionMultiplication(SizeDummy<4>());
@@ -681,7 +695,7 @@ BOOST_FIXTURE_TEST_CASE( expression_multiplication_4d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_multiplication_5d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionMultiplication(SizeDummy<5>());
@@ -692,7 +706,7 @@ BOOST_FIXTURE_TEST_CASE( expression_multiplication_5d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_multiplication_6d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionMultiplication(SizeDummy<6>());
@@ -703,7 +717,7 @@ BOOST_FIXTURE_TEST_CASE( expression_multiplication_6d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_multiplication_7d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionMultiplication(SizeDummy<7>());
@@ -714,7 +728,7 @@ BOOST_FIXTURE_TEST_CASE( expression_multiplication_7d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_multiplication_8d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionMultiplication(SizeDummy<8>());
@@ -725,7 +739,7 @@ BOOST_FIXTURE_TEST_CASE( expression_multiplication_8d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_multiplication_9d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionMultiplication(SizeDummy<9>());
@@ -736,7 +750,7 @@ BOOST_FIXTURE_TEST_CASE( expression_multiplication_9d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_multiplication_10d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionMultiplication(SizeDummy<10>());
@@ -747,7 +761,7 @@ BOOST_FIXTURE_TEST_CASE( expression_multiplication_10d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_division_1d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionDivision(SizeDummy<1>());
@@ -758,7 +772,7 @@ BOOST_FIXTURE_TEST_CASE( expression_division_1d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_division_2d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionDivision(SizeDummy<2>());
@@ -769,7 +783,7 @@ BOOST_FIXTURE_TEST_CASE( expression_division_2d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_division_3d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionDivision(SizeDummy<3>());
@@ -780,7 +794,7 @@ BOOST_FIXTURE_TEST_CASE( expression_division_3d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_division_4d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionDivision(SizeDummy<4>());
@@ -791,7 +805,7 @@ BOOST_FIXTURE_TEST_CASE( expression_division_4d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_division_5d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionDivision(SizeDummy<5>());
@@ -802,7 +816,7 @@ BOOST_FIXTURE_TEST_CASE( expression_division_5d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_division_6d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionDivision(SizeDummy<6>());
@@ -813,7 +827,7 @@ BOOST_FIXTURE_TEST_CASE( expression_division_6d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_division_7d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionDivision(SizeDummy<7>());
@@ -824,7 +838,7 @@ BOOST_FIXTURE_TEST_CASE( expression_division_7d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_division_8d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionDivision(SizeDummy<8>());
@@ -835,7 +849,7 @@ BOOST_FIXTURE_TEST_CASE( expression_division_8d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_division_9d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionDivision(SizeDummy<9>());
@@ -846,7 +860,7 @@ BOOST_FIXTURE_TEST_CASE( expression_division_9d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_division_10d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionDivision(SizeDummy<10>());
@@ -857,7 +871,7 @@ BOOST_FIXTURE_TEST_CASE( expression_division_10d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_precedence_1d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionPrecedence(SizeDummy<1>());
@@ -868,7 +882,7 @@ BOOST_FIXTURE_TEST_CASE( expression_precedence_1d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_precedence_2d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionPrecedence(SizeDummy<2>());
@@ -879,7 +893,7 @@ BOOST_FIXTURE_TEST_CASE( expression_precedence_2d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_precedence_3d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionPrecedence(SizeDummy<3>());
@@ -890,7 +904,7 @@ BOOST_FIXTURE_TEST_CASE( expression_precedence_3d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_precedence_4d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionPrecedence(SizeDummy<4>());
@@ -901,7 +915,7 @@ BOOST_FIXTURE_TEST_CASE( expression_precedence_4d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_precedence_5d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionPrecedence(SizeDummy<5>());
@@ -912,7 +926,7 @@ BOOST_FIXTURE_TEST_CASE( expression_precedence_5d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_precedence_6d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionPrecedence(SizeDummy<6>());
@@ -923,7 +937,7 @@ BOOST_FIXTURE_TEST_CASE( expression_precedence_6d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_precedence_7d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionPrecedence(SizeDummy<7>());
@@ -934,7 +948,7 @@ BOOST_FIXTURE_TEST_CASE( expression_precedence_7d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_precedence_8d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionPrecedence(SizeDummy<8>());
@@ -945,7 +959,7 @@ BOOST_FIXTURE_TEST_CASE( expression_precedence_8d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_precedence_9d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionPrecedence(SizeDummy<9>());
@@ -956,7 +970,7 @@ BOOST_FIXTURE_TEST_CASE( expression_precedence_9d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( expression_precedence_10d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     testExpressionPrecedence(SizeDummy<10>());
@@ -968,7 +982,7 @@ BOOST_FIXTURE_TEST_CASE( expression_precedence_10d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( project_2d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -985,7 +999,7 @@ BOOST_FIXTURE_TEST_CASE( project_2d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( project_3d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -1007,7 +1021,7 @@ BOOST_FIXTURE_TEST_CASE( project_3d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( project_4d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -1032,7 +1046,7 @@ BOOST_FIXTURE_TEST_CASE( project_4d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( project_5d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -1060,7 +1074,7 @@ BOOST_FIXTURE_TEST_CASE( project_5d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( project_6d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -1091,7 +1105,7 @@ BOOST_FIXTURE_TEST_CASE( project_6d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( project_7d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -1125,7 +1139,7 @@ BOOST_FIXTURE_TEST_CASE( project_7d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( project_8d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -1162,7 +1176,7 @@ BOOST_FIXTURE_TEST_CASE( project_8d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( project_9d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -1202,7 +1216,7 @@ BOOST_FIXTURE_TEST_CASE( project_9d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( project_10d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
 
   for (int i=0; i<N; i++) {
     int v1 = idist(rGen);
@@ -1244,7 +1258,7 @@ BOOST_FIXTURE_TEST_CASE( project_10d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_2d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 1);
 
   for (int i=0; i<N; i++) {
@@ -1267,7 +1281,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_2d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_3d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 2);
 
   for (int i=0; i<N; i++) {
@@ -1293,7 +1307,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_3d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_4d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 3);
 
   for (int i=0; i<N; i++) {
@@ -1320,7 +1334,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_4d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_5d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 4);
 
   for (int i=0; i<N; i++) {
@@ -1348,7 +1362,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_5d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_6d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 5);
 
   for (int i=0; i<N; i++) {
@@ -1377,7 +1391,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_6d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_7d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 6);
 
   for (int i=0; i<N; i++) {
@@ -1407,7 +1421,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_7d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_8d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 7);
 
   for (int i=0; i<N; i++) {
@@ -1438,7 +1452,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_8d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_9d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 8);
 
   for (int i=0; i<N; i++) {
@@ -1470,7 +1484,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_9d, ArrayTest )
 BOOST_FIXTURE_TEST_CASE( projectDim_10d, ArrayTest )
 {
   const int N = 100000;
-  boost::progress_display show_progress(N);
+  boost::timer::progress_display show_progress(N);
   boost::random::uniform_int_distribution<> index_dist(0, 9);
 
   for (int i=0; i<N; i++) {

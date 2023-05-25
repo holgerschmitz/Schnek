@@ -34,16 +34,15 @@
 #include "../grid/array.hpp"
 #include "../util/exceptions.hpp"
 
-#include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <map>
 
 namespace schnek {
 
 class DependencyMap;
-typedef boost::shared_ptr<DependencyMap> pDependencyMap;
+typedef std::shared_ptr<DependencyMap> pDependencyMap;
 class Parameter;
-typedef boost::shared_ptr<Parameter> pParameter;
+typedef std::shared_ptr<Parameter> pParameter;
 
 class ParametersGroup
 {
@@ -56,10 +55,10 @@ class ParametersGroup
     bool isElement(pParameter p);
     bool isElement(pVariable v);
 
-    template<int rank, template<int> class CheckingPolicy>
+    template<size_t rank, template<size_t> class CheckingPolicy>
     void addArray(Array<pParameter, rank, CheckingPolicy> &pa)
     {
-        for (int i=0; i<rank; ++i) add(pa[i]);
+        for (size_t i=0; i<rank; ++i) add(pa[i]);
     }
 
 
@@ -68,7 +67,7 @@ class ParametersGroup
     bool hasElements(std::set<long> &ids);
 };
 
-typedef boost::shared_ptr<ParametersGroup> pParametersGroup;
+typedef std::shared_ptr<ParametersGroup> pParametersGroup;
 
 
 class Parameter
@@ -133,7 +132,7 @@ class ConstantParameter : public Parameter
 {
   protected:
   public:
-    ConstantParameter(std::string varName_, pVariable variable_, const T &value_)
+    ConstantParameter(std::string varName_, pVariable variable_, const T &)
       : Parameter(varName_, variable_, pParametersGroup(new ParametersGroup())) {}
 
     void evaluate()
@@ -178,7 +177,7 @@ class BlockParameters
         variable = pVariable(new Variable(defaultValue, hasDefault, false));
       else
       {
-        typedef boost::shared_ptr<Expression<T> > ParExpression;
+        typedef std::shared_ptr<Expression<T> > ParExpression;
         ParExpression pexp(new ExternalValue<T>(var));
         if (hasDefault) *var = defaultValue;
         variable = pVariable(new Variable(pexp, true, true));
@@ -219,8 +218,8 @@ class BlockParameters
 
     template<
       class T,
-      int rank,
-      template<int> class CheckingPolicy
+      size_t rank,
+      template<size_t> class CheckingPolicy
     >
     Array<pParameter, rank, CheckingPolicy> addArrayParameter(
         std::string varName,
@@ -239,8 +238,8 @@ class BlockParameters
 
     template<
       class T,
-      int rank,
-      template<int> class CheckingPolicy
+      size_t rank,
+      template<size_t> class CheckingPolicy
     >
     Array<pParameter, rank, CheckingPolicy> addArrayParameter(
         std::string varName,
@@ -260,8 +259,8 @@ class BlockParameters
 
     template<
       class T,
-      int rank,
-      template<int> class CheckingPolicy
+      size_t rank,
+      template<size_t> class CheckingPolicy
     >
     Array<pParameter, rank, CheckingPolicy> addArrayParameter(
         std::string varName,
@@ -282,7 +281,7 @@ class BlockParameters
     void evaluate()
     {
       typedef std::pair<std::string, pParameter> ParameterPair;
-      BOOST_FOREACH(ParameterPair par, parameterMap)
+      for(ParameterPair par: parameterMap)
       {
         par.second->evaluate();
       }

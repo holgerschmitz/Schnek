@@ -27,7 +27,7 @@
 #ifndef SCHNEK_HDFDIAGNOSTIC_HPP_
 #define SCHNEK_HDFDIAGNOSTIC_HPP_
 
-#include "../schnek_config.hpp"
+#include "../config.hpp"
 #ifdef SCHNEK_HAVE_HDF5
 
 #include "../grid/grid.hpp"
@@ -35,8 +35,11 @@
 
 #include <hdf5.h>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+#include <memory>
+
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
+#include <mpi.h>
+#endif
 
 #include <map>
 
@@ -55,7 +58,7 @@ template<typename FieldType>
 struct GridContainer
 {
   /// The pointer to the grid
-  FieldType *grid;
+  FieldType grid;
 
   /// The global minimum coordinate
   typename FieldType::IndexType global_min;
@@ -83,7 +86,7 @@ struct HdfAttributes {
       hsize_t dims;
       const void *buffer;
     };
-    typedef boost::shared_ptr<Info> pInfo;
+    typedef std::shared_ptr<Info> pInfo;
 
     std::map<std::string, pInfo> attributes;
   public:
@@ -107,7 +110,7 @@ struct HdfAttributes {
     void set(std::string name, const T &value, hsize_t dims = 1);
 };
 
-typedef boost::shared_ptr<HdfAttributes> pHdfAttributes;
+typedef std::shared_ptr<HdfAttributes> pHdfAttributes;
 
 /** @brief IO class for handling HDF files
   *
@@ -203,6 +206,11 @@ class HdfIStream : public HdfStream {
 class HdfOStream : public HdfStream {
   private:
     hid_t dxpl_id;
+#if defined (H5_HAVE_PARALLEL) && defined (SCHNEK_USE_HDF_PARALLEL)
+    MPI_Info mpi_info;
+#endif
+    hid_t plist_id;
+    bool initialised;
   public:
     /// constructor
     HdfOStream();
@@ -223,8 +231,8 @@ class HdfOStream : public HdfStream {
 /**
  * Abstract diagnostic class for writing Grids into HDF5 data files
  */
-template<typename Type, typename PointerType = boost::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic >
-class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType, DiagnosticType> {
+template<typename Type, class DiagnosticType = IntervalDiagnostic >
+class HDFGridDiagnostic : public SimpleDiagnostic<Type, Type, DiagnosticType> {
   public:
     typedef typename Type::IndexType IndexType;
   protected:
@@ -260,7 +268,7 @@ class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType, DiagnosticT
      * @return  an empty attributes set
      */
     virtual pHdfAttributes getAttributes() {
-      return boost::make_shared<HdfAttributes>();
+      return std::make_shared<HdfAttributes>();
     };
   public:
     virtual ~HDFGridDiagnostic() {}
@@ -271,7 +279,7 @@ class HDFGridDiagnostic : public SimpleDiagnostic<Type, PointerType, DiagnosticT
  *
  * An interface that
  */
-template<typename Type, typename PointerType = boost::shared_ptr<Type> >
+template<typename Type>
 class HDFGridReader : public Block
 {
   public:
@@ -282,7 +290,7 @@ class HDFGridReader : public Block
     /// The container for the grid holding additional data
     GridContainer<Type> container;
     /// The field that the data will be read into
-    PointerType field;
+    Type field;
     /// The name of the field to read the data into
     std::string fieldName;
     /// The name of the file to read the data from

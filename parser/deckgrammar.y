@@ -64,7 +64,7 @@ signed_atomic_expression(LHS) ::= PLUS atomic_expression(RHS). { SCHNEK_TRACE_LO
 signed_atomic_expression(LHS) ::= MINUS atomic_expression(A). { SCHNEK_TRACE_LOG(5,"Parser: Rule 25"<< toString(A.getType()) << " " << A.getString()); LHS.assignUnaryOperator<expression::OperatorNeg>(A); }  // --done--
 signed_atomic_expression(LHS) ::= atomic_expression(RHS). { SCHNEK_TRACE_LOG(5,"Parser: Rule 26"<< toString(RHS.getType()) << " " << RHS.getString()); LHS = RHS; }  // --done--
 
-atomic_expression(LHS) ::= LBRACKET expression(RHS) RBRACKET. { SCHNEK_TRACE_LOG(5,"Parser: Rule 27"<< toString(RHS.getType()) << " " << RHS.getString()); LHS = RHS; }
+atomic_expression(LHS) ::= LBRACKET expression(RHS) RBRACKET. { SCHNEK_TRACE_LOG(5,"Parser: Rule 27"<< toString(RHS.getType()) << " " << RHS.getString()); LHS.assignUnaryOperator<expression::OperatorId>(RHS); }
 atomic_expression(LHS) ::= IDENTIFIER(A) LBRACKET expressionlist(B) RBRACKET. { SCHNEK_TRACE_LOG(5,"Parser: Rule 28"<< toString(A.getType()) << " " << A.getString()<< " "<< toString(B.getType()) << " " << B.getString()); LHS.assignFunction(A,B); }
 atomic_expression(LHS) ::= IDENTIFIER(A) LBRACKET RBRACKET. { SCHNEK_TRACE_LOG(5,"Parser: Rule 28b"<< toString(A.getType()) << " " << A.getString()); LHS.assignFunction(A); }
 

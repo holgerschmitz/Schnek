@@ -34,7 +34,7 @@
 namespace schnek {
 
 class BlockTree;
-typedef boost::shared_ptr<BlockTree> pBlockTree;
+typedef std::shared_ptr<BlockTree> pBlockTree;
 
 struct ParserContext
 {

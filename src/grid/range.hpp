@@ -37,27 +37,28 @@ namespace schnek {
  */
 template<
   class T,
-  int rank,
-  template<int> class CheckingPolicy = ArrayNoArgCheck
+  size_t rank,
+  template<size_t> class CheckingPolicy = ArrayNoArgCheck
 >
 class Range {
   public:
     typedef Array<T,rank,CheckingPolicy> LimitType;
+    typedef T value_type;
   private:
     /// Minimum and maximum corners of the rectangle
     LimitType lo, hi;
   public:
     /// Default constructor
-    Range() : lo(0), hi(0) {};
+    Range() : lo(0), hi(0) {}
+    Range(const Range &domain): lo(domain.lo), hi(domain.hi) {}
 
     /// Construct with rectangle minimum and maximum
-
-    template<template<int> class ArrayCheckingPolicy>
+    template<template<size_t> class ArrayCheckingPolicy>
     Range(const Array<T,rank,ArrayCheckingPolicy> &lo_, const Array<T,rank,ArrayCheckingPolicy> &hi_)
     : lo(lo_), hi(hi_) {}
 
     /// Copy constructor
-    template<template<int> class ArrayCheckingPolicy>
+    template<template<size_t> class ArrayCheckingPolicy>
     Range(const Range<T,rank,ArrayCheckingPolicy> &domain)
     : lo(domain.getLo()), hi(domain.getHi()) {}
 
@@ -70,18 +71,24 @@ class Range {
     }
 
     /// Return rectangle minimum
-    const LimitType &getLo() const {
-      return lo;
-    }
+    SCHNEK_INLINE const LimitType &getLo() const { return lo; }
     /// Return rectangle maximum
-    const LimitType &getHi() const {
-      return hi;
-    }
+    SCHNEK_INLINE const LimitType &getHi() const { return hi; }
 
     /// Return rectangle minimum
-    LimitType &getLo() {return lo;}
+    SCHNEK_INLINE LimitType &getLo() {return lo;}
     /// Return rectangle maximum
-    LimitType &getHi() {return hi;}
+    SCHNEK_INLINE LimitType &getHi() {return hi;}
+
+    /// Return the i-th coordinate of the rectangle minimum
+    SCHNEK_INLINE T &getLo(size_t i) { return lo[i]; }
+    /// Return the i-th coordinate of the rectangle maximum
+    SCHNEK_INLINE T &getHi(size_t i) { return hi[i]; }
+
+    /// Return the i-th coordinate of the rectangle minimum
+    SCHNEK_INLINE const T getLo(size_t i) const { return lo[i]; }
+    /// Return the i-th coordinate of the rectangle maximum
+    SCHNEK_INLINE const T getHi(size_t i) const { return hi[i]; }
 
     /// Returns true if the argument lies within the range
     bool inside(const LimitType &p)
@@ -270,8 +277,10 @@ class Range {
       hi[9] += d9;
     }
 
-    /** Forward iterator over the rectangular domain
-     *  Implements operator* and getPos which both return the current iterator position
+    /** 
+     * @brief Forward iterator over the rectangular domain
+     * 
+     * Implements operator* and getPos which both return the current iterator position
      */
     class iterator : public std::iterator<std::forward_iterator_tag, LimitType> {
       private:

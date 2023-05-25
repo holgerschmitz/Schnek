@@ -38,8 +38,8 @@
  */
 template<
   class T, 
-  int length, 
-  template<int> class CheckingPolicy
+  size_t length, 
+  template<size_t> class CheckingPolicy
 >
 std::ostream &operator<<(std::ostream&, const schnek::Array<T,length,CheckingPolicy>&);
 
@@ -49,8 +49,8 @@ std::ostream &operator<<(std::ostream&, const schnek::Array<T,length,CheckingPol
  */
 template<
   typename T,
-  template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<size_t> class CheckingPolicy,
+  template<typename, size_t> class StoragePolicy
 >
 std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 1, CheckingPolicy, StoragePolicy>&);
 
@@ -61,8 +61,8 @@ std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 1, CheckingPolicy,
  */
 template<
   typename T,
-  template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<size_t> class CheckingPolicy,
+  template<typename, size_t> class StoragePolicy
 >
 std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 2, CheckingPolicy, StoragePolicy>&);
 
@@ -74,8 +74,8 @@ std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 2, CheckingPolicy,
  */
 template<
   typename T,
-  template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<size_t> class CheckingPolicy,
+  template<typename, size_t> class StoragePolicy
 >
 std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 3, CheckingPolicy, StoragePolicy>&);
 
@@ -87,8 +87,8 @@ std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 3, CheckingPolicy,
  */
 template<
   typename T,
-  template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<size_t> class CheckingPolicy,
+  template<typename, size_t> class StoragePolicy
 >
 std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 4, CheckingPolicy, StoragePolicy>&);
 
@@ -101,8 +101,8 @@ std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 4, CheckingPolicy,
  */
 template<
   typename T,
-  template<int> class CheckingPolicy,
-  template<typename, int> class StoragePolicy
+  template<size_t> class CheckingPolicy,
+  template<typename, size_t> class StoragePolicy
 >
 std::ostream &operator<<(std::ostream&, const schnek::Grid<T, 5, CheckingPolicy, StoragePolicy>&);
 

@@ -32,7 +32,12 @@
 #include "../datastream.hpp"
 #include "../diagnostic/diagnostic.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/lexical_cast.hpp>
+
+#pragma GCC diagnostic pop
 
 #include <iostream>
 #include <vector>
@@ -46,7 +51,7 @@ namespace schnek {
 template<class GridType>
 MPICartSubdivision<GridType>::MPICartSubdivision() : comm(0), prevcoord(0), nextcoord(0)
 {
-  for (int i=0; i<Rank; ++i)
+  for (size_t i=0; i<Rank; ++i)
   {
     sendarr[i] = 0;
     recvarr[i] = 0;
@@ -66,7 +71,7 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
 
   std::vector<int> box(Rank);
 
-  for (int i=0; i<Rank; ++i)
+  for (size_t i=0; i<Rank; ++i)
   {
     box[i] = High[i]-Low[i];
     periodic[i] = true;
@@ -91,7 +96,7 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
 
   //std::cout << "Calculating exchange size product: " << exchangeSizeProduct << std::endl;
 
-  for (int i=0; i<Rank; ++i)
+  for (size_t i=0; i<Rank; ++i)
   {
     errorCode = MPI_Cart_shift(comm,i,1,&prevcoord[i],&nextcoord[i]);
     SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "Could not shift Cartesian coordinates ("+boost::lexical_cast<std::string>(errorCode)+")");
@@ -111,7 +116,7 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
     exchangeSizeProduct *= (High[i]-Low[i]+1);
   }
 
-  for (int i=0; i<Rank; ++i)
+  for (size_t i=0; i<Rank; ++i)
   {
     exchSize[i] = exchangeSizeProduct/(High[i]-Low[i]+1);
     //std::cout << "Calculating exchange size "<<i<<": " << exchSize[i] << std::endl;
@@ -133,7 +138,7 @@ void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi
 template<class GridType>
 MPICartSubdivision<GridType>::~MPICartSubdivision()
 {
-  for (int i=0; i<Rank; ++i)
+  for (size_t i=0; i<Rank; ++i)
   {
     if (sendarr[i]!=0) delete[] sendarr[i];
     if (recvarr[i]!=0) delete[] recvarr[i];
@@ -142,7 +147,7 @@ MPICartSubdivision<GridType>::~MPICartSubdivision()
 }
 
 template<class GridType>
-void MPICartSubdivision<GridType>::exchange(GridType &grid, int dim)
+void MPICartSubdivision<GridType>::exchange(GridType &grid, size_t dim)
 {
   // nothing to be done
   //if (dims[dim]==1) return;
@@ -230,7 +235,7 @@ void MPICartSubdivision<GridType>::exchange(GridType &grid, int dim)
 
 
 template<class GridType>
-void MPICartSubdivision<GridType>::accumulate(GridType &grid, int dim)
+void MPICartSubdivision<GridType>::accumulate(GridType &grid, size_t dim)
 {
   // This algorithm uses four MPI communication calls.
   // For the usual bounds class this could be reduced to two calls but we will only do this
@@ -376,7 +381,7 @@ void MPICartSubdivision<GridType>::accumulate(GridType &grid, int dim)
 
 template<class GridType>
 void MPICartSubdivision<GridType>::exchangeData(
-        int dim,
+        size_t dim,
         int orientation,
         BufferType &in,
         BufferType &out)

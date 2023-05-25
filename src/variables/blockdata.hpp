@@ -40,7 +40,7 @@ class BlockData : public Singleton<BlockData<T> >
 {
   private:
     typedef std::map<std::string, T*> DataMap;
-    typedef boost::shared_ptr<DataMap> pDataMap;
+    typedef std::shared_ptr<DataMap> pDataMap;
     typedef std::map<long, pDataMap> BlockDataMap;
 
     BlockDataMap blockDataMap;

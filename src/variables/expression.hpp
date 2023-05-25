@@ -28,10 +28,14 @@
 #define SCHNEK_EXPRESSION_HPP_
 
 #include "variables.hpp"
+#include "../util/logger.hpp"
 
-#include <boost/shared_ptr.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-copy"
+
 #include <boost/lexical_cast.hpp>
-
 #include <boost/function.hpp>
 
 #include <boost/fusion/include/push_back.hpp>
@@ -43,9 +47,16 @@
 #include <boost/mpl/next.hpp>
 #include <boost/mpl/deref.hpp>
 
+#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
+
+#include <memory>
 #include <string>
 #include <iostream>
 #include <set>
+
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 namespace fusion = boost::fusion;
 namespace mpl = boost::mpl;
@@ -99,7 +110,7 @@ class Expression
     virtual DependencyList getDependencies() { return DependencyList(); }
 
     /// A pointer to an Expression
-    typedef boost::shared_ptr<Expression> pExpression;
+    typedef std::shared_ptr<Expression> pExpression;
     typedef vtype ValueType;
 };
 
@@ -123,7 +134,11 @@ class Value : public Expression<vtype>
     /// Construct with a value
     Value(vtype val_) : val(val_) {}
     /// Return the stored value
-    vtype eval() { return val; }
+    vtype eval()
+    {
+      SCHNEK_TRACE_LOG(5, "Value<vtype>::eval(" << val << ")")
+      return val;
+    }
     /// A literal is a constant
     bool isConstant() { return true; }
     /// Return a reference to the value
@@ -153,6 +168,7 @@ class ReferencedValue : public Expression<vtype>
 //      else
 //        return boost::get<vtype>(var->evaluateExpression());
        // it is assumed that the referenced variable has been evaluated
+      SCHNEK_TRACE_LOG(5, "ReferencedValue<vtype>::eval(" << var->getValue() << ")")
       return boost::get<vtype>(var->getValue());
     }
     /// Constancy depends on the constancy of the variable
@@ -182,6 +198,7 @@ class ExternalValue : public Expression<vtype>
     /// Return the value
     vtype eval() {
 //      std::cout << "Returning value " << *var << "\n";
+      SCHNEK_TRACE_LOG(5, "ExternalValue<vtype>::eval(" << *var << ")")
       return *var;
     }
 
@@ -217,6 +234,14 @@ class UnaryOp : public Expression<vtype>
     }
 };
 
+template<class vtype>
+struct ExpressionInfo {
+  bool positive;
+  typename Expression<vtype>::pExpression expression;
+  ExpressionInfo(bool positive_, typename Expression<vtype>::pExpression expression_)
+    : positive(positive_), expression(expression_) {}
+};
+
 /** Binary operator expression
  *
  * This expression calculates a value from two arguments according to a
@@ -226,35 +251,111 @@ template<class oper, class vtype>
 class BinaryOp : public Expression<vtype>
 {
   private:
+    typedef BinaryOp<oper, vtype> SelfType;
     typedef typename Expression<vtype>::pExpression pExpression;
+
+    typedef BinaryOp<typename oper::Inverted, vtype> InvType;
+    typedef std::shared_ptr<InvType> pInvType;
+    friend class BinaryOp<typename oper::Inverted, vtype>;
+
     /// pointers to the expressions to modify
-    typename Expression<vtype>::pExpression expr1, expr2;
+    std::list<ExpressionInfo<vtype> > expressions;
   public:
     BinaryOp(pExpression expr1_, pExpression expr2_)
-      : expr1(expr1_), expr2(expr2_) {}
+    {
+      typedef std::shared_ptr<BinaryOp<oper, vtype> > pBinaryOp;
+
+      pBinaryOp binaryExpr1 = std::dynamic_pointer_cast<SelfType>(expr1_);
+      pInvType invExpr1 = std::dynamic_pointer_cast<InvType>(expr1_);
+
+      pBinaryOp binaryExpr2 = std::dynamic_pointer_cast<SelfType>(expr2_);
+      pInvType invExpr2 = std::dynamic_pointer_cast<InvType>(expr2_);
+
+      if (binaryExpr1)
+      {
+        expressions.insert(expressions.end(), binaryExpr1->expressions.begin(), binaryExpr1->expressions.end());
+      }
+      else if (invExpr1)
+      {
+        expressions.insert(expressions.end(), invExpr1->expressions.begin(), invExpr1->expressions.end());
+      }
+      else
+      {
+        expressions.push_back(ExpressionInfo<vtype>(true, expr1_));
+      }
+
+      if (binaryExpr2)
+      {
+        typename std::list<ExpressionInfo<vtype> >::iterator it = binaryExpr2->expressions.begin();
+        if (!oper::isPositive)
+        {
+          expressions.push_back(ExpressionInfo<vtype>(!it->positive, it->expression));
+          ++it;
+        }
+        expressions.insert(expressions.end(), it, binaryExpr2->expressions.end());
+      }
+      else if (invExpr2)
+      {
+        typename std::list<ExpressionInfo<vtype> >::iterator it = invExpr2->expressions.begin();
+        if (!oper::isPositive)
+        {
+          expressions.push_back(ExpressionInfo<vtype>(!it->positive, it->expression));
+          ++it;
+        }
+        expressions.insert(expressions.end(), it, invExpr2->expressions.end());
+      }
+      else
+      {
+        expressions.push_back(ExpressionInfo<vtype>(oper::isPositive, expr2_));
+      }
+    }
 
     /// Return the calculated value
-    vtype eval() { return oper::eval(expr1->eval(), expr2->eval()); }
+    vtype eval() {
+      typedef typename oper::Positive opPositive;
+      typedef typename oper::Negative opNegative;
+      typename std::list<ExpressionInfo<vtype> >::iterator it = expressions.begin();
+//      std::cout << std::endl << "EVAL: " << expressions.size() << std::endl;
+      vtype val = it->expression->eval();
+
+      while (++it != expressions.end())
+      {
+//        std::cout << "    : " << val << " " << it->positive << " " << it->expression->eval() << " ";
+        val = it->positive ? opPositive::eval(val, it->expression->eval()) : opNegative::eval(val, it->expression->eval());
+//        std::cout << val << std::endl;
+      }
+      return val;
+    }
 
     /// Constancy depends on the constancy of both expressions
-    bool isConstant() { return expr1->isConstant() && expr2->isConstant(); }
+    bool isConstant() {
+      for(ExpressionInfo<vtype> exp: expressions)
+      {
+          if (!exp.expression->isConstant()) return false;
+      }
+      return true;
+    }
 
     /// returns the joint dependencies of both sub expression
     DependencyList getDependencies()
     {
-        DependencyList dep1 = expr1->getDependencies();
-        DependencyList dep2 = expr2->getDependencies();
-        dep1.insert(dep2.begin(), dep2.end());
-        return dep1;
+      DependencyList dependencies;
+
+      for(ExpressionInfo<vtype> exp: expressions)
+      {
+        DependencyList dep = exp.expression->getDependencies();
+        dependencies.insert(dep.begin(), dep.end());
+      }
+      return dependencies;
     }
 };
 
 template<class vtype>
 struct FastCast
 {
-    vtype operator()(int a);
-    vtype operator()(double a);
-    vtype operator()(std::string a);
+  vtype operator()(int a);
+  vtype operator()(double a);
+  vtype operator()(std::string a);
 };
 
 template<>
@@ -338,7 +439,8 @@ struct DependenciesGetter : public boost::static_visitor<DependencyList>
   DependencyList operator()(ExpressionPointer e) { return e->getDependencies(); }
 };
 
-
+#undef LOGLEVEL
+#define LOGLEVEL 0
 
 } // namespace schnek
 

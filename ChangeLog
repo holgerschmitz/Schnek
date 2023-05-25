@@ -1,3 +1,8 @@
+Version 2.0.0
+* Grid and Field types now have reference semantics when copying and assigning
+* added support for Kokkos
+* new functional style iteration policies replace declarative style loops
+
 Version 1.2.0
 * Fixed issues when specifying --with-hdf5 with a folder in configure script
 * Added HDF5 dataset attributes to HDF5GridDiagnostic 

@@ -26,7 +26,6 @@
 
 #include "block.hpp"
 #include "blockdata.hpp"
-#include <boost/foreach.hpp>
 
 using namespace schnek;
 
@@ -76,7 +75,7 @@ void BlockTree::moveUp()
 void Block::evaluateParameters()
 {
   blockParameters.evaluate();
-  BOOST_FOREACH(pBlock child, children)
+  for(pBlock child: children)
   {
     child->evaluateParameters();
   }
@@ -86,7 +85,7 @@ void Block::setup()
 {
   //std::cout << "Block::setup() " << getId() << "  " << this << std::endl;
   this->initParameters(blockParameters);
-  BOOST_FOREACH(pBlock child, children)
+  for(pBlock child: children)
   {
     child->setup();
   }
@@ -102,7 +101,7 @@ void Block::addChild(pBlock child)
 void Block::registerHierarchy()
 {
   this->registerData();
-  BOOST_FOREACH(pBlock child, children)
+  for(pBlock child: children)
   {
     child->registerHierarchy();
   }
@@ -111,7 +110,7 @@ void Block::registerHierarchy()
 void Block::preInitHierarchy()
 {
   this->preInit();
-  BOOST_FOREACH(pBlock child, children)
+  for(pBlock child: children)
   {
     child->preInitHierarchy();
   }
@@ -120,7 +119,7 @@ void Block::preInitHierarchy()
 void Block::initHierarchy()
 {
   this->init();
-  BOOST_FOREACH(pBlock child, children)
+  for(pBlock child: children)
   {
     child->initHierarchy();
   }
@@ -129,7 +128,7 @@ void Block::initHierarchy()
 void Block::postInitHierarchy()
 {
   this->postInit();
-  BOOST_FOREACH(pBlock child, children)
+  for(pBlock child: children)
   {
     child->postInitHierarchy();
   }

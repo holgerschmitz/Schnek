@@ -1,5 +1,3 @@
-
-
 all: parser
 
 parser:scanner lemon
@@ -12,7 +10,7 @@ lemon:
 	
 scanner:
 	ragel deckscanner.rl
-	cp deckscanner.c ../src/parser/deckscanner.cpp
+	cp deckscanner.c ../src/parser/internal/deckscanner.cpp
 
 clean:
 	rm -f deckgrammar.c deckgrammar.h deckgrammar.out deckscanner.c lemon

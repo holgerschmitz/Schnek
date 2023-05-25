@@ -29,8 +29,7 @@
 
 #include "range.hpp"
 
-#include <boost/shared_ptr.hpp>
-
+#include <memory>
 #include <list>
 #include <iterator>
 
@@ -145,7 +144,7 @@ class RecDomain : public Range<int, rank, CheckingPolicy>
 
 */
 
-//typedef boost::shared_ptr<RecDomain> pRecDomain;
+//typedef std::shared_ptr<RecDomain> pRecDomain;
 //
 // /** MultiRecDomain contains a list of RecDomain rectangular domains.
 // *
@@ -174,7 +173,7 @@ class RecDomain : public Range<int, rank, CheckingPolicy>
 //    }
 //};
 //
-//typedef boost::shared_ptr<MultiRecDomain> pMultiRecDomain;
+//typedef std::shared_ptr<MultiRecDomain> pMultiRecDomain;
 
 } // namespace schnek
 

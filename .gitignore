@@ -1,8 +1,9 @@
+# IDE configurations
 .cproject
 .project
 .settings/
+.vscode
 
-/Debug/
 /doc
 
 /parser/deckgrammar.c
@@ -10,12 +11,30 @@
 /parser/deckgrammar.out
 /parser/deckscanner.c
 /parser/lemon
+!/parser/Makefile
+
+# CMake files
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+DartConfiguration.tcl
+build/
+
 
 # Compiled Object files
 *.slo
 *.lo
 *.o
 *.obj
+/schnek_tests
 
 # Precompiled Headers
 *.gch
@@ -41,9 +60,8 @@
 *.out
 *.app
 
-# Automake and Libtool stuff
-autom4te.cache/
-.deps
-.libs
-.dirstamp
-Makefile
+/src/config.hpp
+
+# Docs
+/docs/doxygen
+/docs/sphinx

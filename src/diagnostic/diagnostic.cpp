@@ -116,6 +116,9 @@ void IntervalDiagnostic::initParameters(BlockParameters &blockPars)
   blockPars.addParameter("interval", &interval, 100);
 }
 
+int IntervalDiagnostic::getInterval() {
+  return interval;
+}
 
 DeltaTimeDiagnostic::DeltaTimeDiagnostic() : deltaTime(1.0), nextOutput(0.0), count(0)
 {
@@ -142,6 +145,10 @@ void DeltaTimeDiagnostic::execute(bool master, int rank, double physicalTime)
 double DeltaTimeDiagnostic::getNextOutput()
 {
   return nextOutput;
+}
+
+double DeltaTimeDiagnostic::getDeltaTime() {
+  return deltaTime;
 }
 
 void DeltaTimeDiagnostic::initParameters(BlockParameters &blockPars)
@@ -198,12 +205,12 @@ void DiagnosticManager::execute()
   if ((!usePhysicalTime && !timecounter) || (usePhysicalTime && !physicalTime))
     throw schnek::VariableNotInitialisedException("In DiagnosticManager: A time counter or physical time must be specified!");
 
-  BOOST_FOREACH(IntervalDiagnostic *diag, intervalDiags)
+  for(IntervalDiagnostic *diag: intervalDiags)
   {
     diag->execute(master, rank, *timecounter);
   }
 
-  BOOST_FOREACH(DeltaTimeDiagnostic *diag, deltaTimeDiags)
+  for(DeltaTimeDiagnostic *diag: deltaTimeDiags)
   {
     diag->execute(master, rank, *physicalTime);
   }
@@ -215,7 +222,7 @@ double DiagnosticManager::adjustDeltaT(double deltaT)
   double adjustedDt = deltaT;
 
 
-  BOOST_FOREACH(DeltaTimeDiagnostic *diag, deltaTimeDiags)
+  for(DeltaTimeDiagnostic *diag: deltaTimeDiags)
   {
     double dt = diag->getNextOutput() - *physicalTime;
     if (dt>0) adjustedDt = std::min(adjustedDt, dt);

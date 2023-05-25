@@ -28,7 +28,7 @@
 #define SCHNEK_MPISUBDIVISION_HPP
 
 #include "domainsubdivision.hpp"
-#include "../schnek_config.hpp"
+#include "../config.hpp"
 
 #ifdef SCHNEK_HAVE_MPI
 
@@ -93,22 +93,22 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
     ~MPICartSubdivision();
 
     ///initialize
-    void init(const LimitType &low, const LimitType &high, int delta);
+    void init(const LimitType &low, const LimitType &high, int delta) override;
 
     /// Return the global domain size excluding ghost cells
-    const DomainType &getGlobalDomain() const { return globalDomain; }
+    const DomainType &getGlobalDomain() const override { return globalDomain; }
 
     /** @brief Exchanges the boundaries in direction specified by dim.
      *
      *  The outermost simulated cells are sent and the surrounding
      *  ghost cells are filled with values
      */
-    void exchange(GridType &field, int dim);
+    void exchange(GridType &field, size_t dim) override;
 
     /** @brief Exchange the boundaries of a field function
      *  summing the data from ghost cells and inner cells
      */
-    void accumulate(GridType &grid, int dim);
+    void accumulate(GridType &grid, size_t dim) override;
 
     /**
      * @param dim
@@ -116,43 +116,43 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
      * @param in
      * @param out
      */
-    void exchangeData(int dim, int orientation, BufferType &in, BufferType &out);
+    void exchangeData(size_t dim, int orientation, BufferType &in, BufferType &out) override;
 
     /// Use MPIALLReduce to calculate the sum and then divide by the number of processes.
-    double avgReduce(double val) const;
+    double avgReduce(double val) const override;
 
     /// Use MPIALLReduce to calculate the sum and then divide by the number of processes.
-    int avgReduce(int val) const;
+    int avgReduce(int val) const override;
 
     /// Use MPIALLReduce to calculate the maximum
-    double maxReduce(double val) const;
+    double maxReduce(double val) const override;
 
     /// Use MPIALLReduce to calculate the maximum
-    int maxReduce(int val) const;
+    int maxReduce(int val) const override;
 
     /// Use MPIALLReduce to calculate the minimum
-    double minReduce(double val) const;
+    double minReduce(double val) const override;
 
     /// Use MPIALLReduce to calculate the minimum
-    int minReduce(int val) const;
+    int minReduce(int val) const override;
 
     /// Use MPIALLReduce to calculate the maximum
-    double sumReduce(double val) const;
+    double sumReduce(double val) const override;
 
     /// Use MPIALLReduce to calculate the maximum
-    int sumReduce(int val) const;
+    int sumReduce(int val) const override;
 
     /// The process with the rank zero is designated master process
-    bool master() const { return ComRank==0; }
+    bool master() const override { return ComRank==0; }
 
     /// Returns the comm rank as given by mpi
-    int procnum() const { return ComRank; }
+    int procnum() const override { return ComRank; }
 
     /// Return the total number of processes
-    int procCount() const { return ComSize; }
+    int procCount() const override { return ComSize; }
 
     ///returns an ID, which consists of the Dimensions and coordinates
-    int getUniqueId() const;
+    int getUniqueId() const override;
 
     /** Returns true if this process is on the lower bound of the
      * global domain
@@ -164,7 +164,7 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
      * @return A boolean indicating if this process is on the lower boud of the
      * global domain
      */
-    bool isBoundLo(int dim) { return mycoord[dim]==0; }
+    bool isBoundLo(size_t dim) override { return mycoord[dim]==0; }
 
     /** Returns true if this process is on the upper bound of the
      * global domain.
@@ -176,7 +176,7 @@ class MPICartSubdivision : public DomainSubdivision<GridType>
      * @return A boolean indicating if this process is on the upper boud of the
      * global domain
      */
-    bool isBoundHi(int dim) { return mycoord[dim]==dims[dim]-1; }
+    bool isBoundHi(size_t dim) override { return mycoord[dim]==dims[dim]-1; }
 };
 
 template<typename value_type>

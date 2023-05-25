@@ -25,17 +25,16 @@
  */
 
 #include "../grid/range.hpp"
-#include <boost/foreach.hpp>
 
 namespace schnek
 {
 
 template<
   typename T,
-  int rank,
-  template<int> class GridCheckingPolicy,
-  template<int> class ArrayCheckingPolicy,
-  template<typename, int> class StoragePolicy
+  size_t rank,
+  template<size_t> class GridCheckingPolicy,
+  template<size_t> class ArrayCheckingPolicy,
+  template<typename, size_t> class StoragePolicy
 >
 void fill_field(
     Field<T, rank, GridCheckingPolicy, StoragePolicy> &field,
@@ -51,10 +50,10 @@ void fill_field(
   {
     const typename Range<int, rank>::LimitType &pos=*it;
 //    std::cerr << " fill_field (";
-//    for (int i=0; i<rank; ++i)
+//    for (size_t i=0; i<rank; ++i)
 //      std::cerr << " " << pos[i];
 //    std::cerr << ") (";
-    for (int i=0; i<rank; ++i) {
+    for (size_t i=0; i<rank; ++i) {
       coords[i] = field.indexToPosition(i,pos[i]);
 //      std::cerr << " " << coords[i];
     }
@@ -68,10 +67,10 @@ void fill_field(
 
 template<
   typename T,
-  int rank,
-  template<int> class GridCheckingPolicy,
-  template<int> class ArrayCheckingPolicy,
-  template<typename, int> class StoragePolicy
+  size_t rank,
+  template<size_t> class GridCheckingPolicy,
+  template<size_t> class ArrayCheckingPolicy,
+  template<typename, size_t> class StoragePolicy
 >
 void fill_field(
     Field<T, rank, GridCheckingPolicy, StoragePolicy> &field,
