@@ -49,10 +49,26 @@ namespace schnek {
             };
         }
 
+        /**
+         * A type list
+         * 
+         * This is a type list. It is a list of types that can be accessed by index.
+         * 
+         * @tparam Types The types in the list
+         */
         template<typename... Types>
         struct TypeList {
+            /**
+             * The number of types in the list
+             */
             static constexpr int size = sizeof...(Types);
             
+            /**
+             * Get the type at index n
+             * 
+             * @tparam n The index
+             * @return The type at index n
+             */
             template<size_t n>
             struct get
             {
