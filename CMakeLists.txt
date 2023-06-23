@@ -93,6 +93,7 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/test_parser.cpp
     testsuite/test_range.cpp
     testsuite/utility.cpp
+    testsuite/generic/test_typelist.cpp
     testsuite/grid/test_c_storage.cpp
     testsuite/grid/test_fortran_storage.cpp
     testsuite/grid/test_kokkos_storage.cpp
