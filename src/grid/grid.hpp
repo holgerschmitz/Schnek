@@ -152,6 +152,10 @@ namespace schnek {
         SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>&
           operator=(const T &val);
 
+        /** copy constructor */
+        SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>&
+          operator=(const GridBase<T, rank, CheckingPolicy, StoragePolicy> &val) = default;
+
         template<
           typename T2,
           class CheckingPolicy2

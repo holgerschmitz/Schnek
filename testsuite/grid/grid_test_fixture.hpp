@@ -538,6 +538,38 @@ struct GridTest
       BOOST_CHECK(is_equal(sumDirect, sumGridAfter));
     }
 
+    template<class GridType>
+    void test_copy_resize(GridType &grid)
+    {
+      GridType copied{grid};
+      typename GridType::IndexType lo = grid.getLo();
+      typename GridType::IndexType hi = grid.getHi();
+
+      random_extent(lo, hi);
+      grid.resize(lo, hi);
+
+      typename GridType::IndexType loCopied = copied.getLo();
+      typename GridType::IndexType hiCopied = copied.getHi();
+
+      for (size_t i=0; i<GridType::Rank; ++i)
+      {
+        BOOST_CHECK_EQUAL(loCopied[i], lo[i]);
+        BOOST_CHECK_EQUAL(hiCopied[i], hi[i]);
+      }
+
+      random_extent(loCopied, loCopied);
+      copied.resize(loCopied, loCopied);
+
+      lo = grid.getLo();
+      hi = grid.getHi();
+
+      for (size_t i=0; i<GridType::Rank; ++i)
+      {
+        BOOST_CHECK_EQUAL(loCopied[i], lo[i]);
+        BOOST_CHECK_EQUAL(hiCopied[i], hi[i]);
+      }
+    }
+
     struct DeleteCounter
     {
       int value;

@@ -181,7 +181,10 @@ namespace schnek
         /**
          * @brief returns the stride of the specified dimension 
          */
-        ptrdiff_t stride(size_t dim) const;    
+        ptrdiff_t stride(size_t dim) const;
+    private:
+        void updateDataFast();
+
     };
 
     /**
@@ -267,7 +270,9 @@ namespace schnek
         /**
          * @brief returns the stride of the specified dimension 
          */
-        ptrdiff_t stride(size_t dim) const;    
+        ptrdiff_t stride(size_t dim) const;  
+    private:
+        void updateDataFast();  
     };
 
     //=================================================================
@@ -290,6 +295,7 @@ namespace schnek
         const IndexType &hi
     ) : BaseType(), data_fast(NULL)
     {
+
         resize(lo, hi);
     }
 
@@ -353,6 +359,18 @@ namespace schnek
         return stride;
     }
 
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
+    void SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::updateDataFast()
+    {
+        int p = -this->range.getLo(0);
+
+        for (size_t d = 1; d < rank; ++d)
+        {
+            p = p * this->dims[d] - this->getLo(d);
+        }
+        data_fast = this->data->ptr + p;
+    }
+
     //=================================================================
     //============ SingleArrayGridFortranOrderStorageBase =============
     //=================================================================
@@ -400,13 +418,6 @@ namespace schnek
     inline void SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::resize(const IndexType &lo, const IndexType &hi) 
     {
         this->resizeImpl(lo, hi);
-        int p = -lo[rank - 1];
-
-        for (int d = int(rank) - 2; d >= 0; --d)
-        {
-            p = p * this->dims[d] - lo[d];
-        }
-        data_fast = this->data->ptr + p;
     }
 
     template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
@@ -424,6 +435,18 @@ namespace schnek
             stride *= this->dims[i];
         }
         return stride;
+    }
+
+    template <typename T, size_t rank, template <typename, size_t> class AllocationPolicy>
+    void SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::updateDataFast()
+    {
+        int p = -this->getLo(rank - 1);
+
+        for (int d = int(rank) - 2; d >= 0; --d)
+        {
+            p = p * this->dims[d] - this->getLo(d);
+        }
+        data_fast = this->data->ptr + p;
     }
 
 }
