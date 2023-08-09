@@ -16,7 +16,7 @@ int main()
   Field<double, 3>::IndexType lo(0,0,0), hi(9,9,9);
   Field<double, 3>::RangeLimit physLo(-0.5, -0.5, -0.5), physHi(0.5, 0.5, 0.5);
   Field<double, 3>::DomainType physRange(physLo, physHi);
-  Field<double, 3>::Stagger stagger(false, true, false);
+  Field<double, 3>::StaggerType stagger(false, true, false);
 
   Field<double, 3> field(lo, hi, physRange, stagger, 2);
 

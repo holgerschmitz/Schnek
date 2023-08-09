@@ -42,12 +42,6 @@ SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(const Array<T, Length, Check
     data[i] = arr[i];
 }
 
-// template<class T, size_t Length, template <size_t> class CheckingPolicy>
-// inline Array<T,Length,CheckingPolicy>::Array(std::initializer_list<T> l)
-// {
-//   data = l;
-// }
-
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
 SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(const T& v0)
 {
@@ -55,135 +49,140 @@ SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(const T& v0)
 }
 
 template<class T, size_t Length, template <size_t> class CheckingPolicy>
-SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
-                  const T& v0, const T& v1
-)
+SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(std::initializer_list<T> l): data(l)
 {
-  BOOST_STATIC_ASSERT(2==Length);
-  data[0] = v0;
-  data[1] = v1;
 }
 
-template<class T, size_t Length, template <size_t> class CheckingPolicy>
-SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
-                  const T& v0, const T& v1, const T& v2
-)
-{
-  BOOST_STATIC_ASSERT(3==Length);
-  data[0] = v0;
-  data[1] = v1;
-  data[2] = v2;
-}
+// template<class T, size_t Length, template <size_t> class CheckingPolicy>
+// SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
+//                   const T& v0, const T& v1
+// )
+// {
+//   BOOST_STATIC_ASSERT(2==Length);
+//   data[0] = v0;
+//   data[1] = v1;
+// }
 
-template<class T, size_t Length, template <size_t> class CheckingPolicy>
-SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
-                  const T& v0, const T& v1, const T& v2, const T& v3
-)
-{
-  BOOST_STATIC_ASSERT(4==Length);
-  data[0] = v0;
-  data[1] = v1;
-  data[2] = v2;
-  data[3] = v3;
-}
+// template<class T, size_t Length, template <size_t> class CheckingPolicy>
+// SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
+//                   const T& v0, const T& v1, const T& v2
+// )
+// {
+//   BOOST_STATIC_ASSERT(3==Length);
+//   data[0] = v0;
+//   data[1] = v1;
+//   data[2] = v2;
+// }
 
-template<class T, size_t Length, template <size_t> class CheckingPolicy>
-SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
-                  const T& v0, const T& v1, const T& v2, const T& v3, const T& v4
-)
-{
-  BOOST_STATIC_ASSERT(5==Length);
-  data[0] = v0;
-  data[1] = v1;
-  data[2] = v2;
-  data[3] = v3;
-  data[4] = v4;
-}
+// template<class T, size_t Length, template <size_t> class CheckingPolicy>
+// SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
+//                   const T& v0, const T& v1, const T& v2, const T& v3
+// )
+// {
+//   BOOST_STATIC_ASSERT(4==Length);
+//   data[0] = v0;
+//   data[1] = v1;
+//   data[2] = v2;
+//   data[3] = v3;
+// }
 
-template<class T, size_t Length, template <size_t> class CheckingPolicy>
-SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
-                  const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
-                  const T& v5
-)
-{
-  BOOST_STATIC_ASSERT(6==Length);
-  data[0] = v0;
-  data[1] = v1;
-  data[2] = v2;
-  data[3] = v3;
-  data[4] = v4;
-  data[5] = v5;
-}
+// template<class T, size_t Length, template <size_t> class CheckingPolicy>
+// SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
+//                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4
+// )
+// {
+//   BOOST_STATIC_ASSERT(5==Length);
+//   data[0] = v0;
+//   data[1] = v1;
+//   data[2] = v2;
+//   data[3] = v3;
+//   data[4] = v4;
+// }
 
-template<class T, size_t Length, template <size_t> class CheckingPolicy>
-SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
-                  const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
-                  const T& v5, const T& v6
-)
-{
-  BOOST_STATIC_ASSERT(7==Length);
-  data[0] = v0;
-  data[1] = v1;
-  data[2] = v2;
-  data[3] = v3;
-  data[4] = v4;
-  data[5] = v5;
-  data[6] = v6;
-}
+// template<class T, size_t Length, template <size_t> class CheckingPolicy>
+// SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
+//                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
+//                   const T& v5
+// )
+// {
+//   BOOST_STATIC_ASSERT(6==Length);
+//   data[0] = v0;
+//   data[1] = v1;
+//   data[2] = v2;
+//   data[3] = v3;
+//   data[4] = v4;
+//   data[5] = v5;
+// }
 
-template<class T, size_t Length, template <size_t> class CheckingPolicy>
-SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
-                  const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
-                  const T& v5, const T& v6, const T& v7
-)
-{
-  BOOST_STATIC_ASSERT(8==Length);
-  data[0] = v0;
-  data[1] = v1;
-  data[2] = v2;
-  data[3] = v3;
-  data[4] = v4;
-  data[5] = v5;
-  data[6] = v6;
-  data[7] = v7;
-}
+// template<class T, size_t Length, template <size_t> class CheckingPolicy>
+// SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
+//                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
+//                   const T& v5, const T& v6
+// )
+// {
+//   BOOST_STATIC_ASSERT(7==Length);
+//   data[0] = v0;
+//   data[1] = v1;
+//   data[2] = v2;
+//   data[3] = v3;
+//   data[4] = v4;
+//   data[5] = v5;
+//   data[6] = v6;
+// }
 
-template<class T, size_t Length, template <size_t> class CheckingPolicy>
-SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
-                  const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
-                  const T& v5, const T& v6, const T& v7, const T& v8
-)
-{
-  BOOST_STATIC_ASSERT(9==Length);
-  data[0] = v0;
-  data[1] = v1;
-  data[2] = v2;
-  data[3] = v3;
-  data[4] = v4;
-  data[5] = v5;
-  data[6] = v6;
-  data[7] = v7;
-  data[8] = v8;
-}
+// template<class T, size_t Length, template <size_t> class CheckingPolicy>
+// SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
+//                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
+//                   const T& v5, const T& v6, const T& v7
+// )
+// {
+//   BOOST_STATIC_ASSERT(8==Length);
+//   data[0] = v0;
+//   data[1] = v1;
+//   data[2] = v2;
+//   data[3] = v3;
+//   data[4] = v4;
+//   data[5] = v5;
+//   data[6] = v6;
+//   data[7] = v7;
+// }
 
-template<class T, size_t Length, template <size_t> class CheckingPolicy>
-SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
-                  const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
-                  const T& v5, const T& v6, const T& v7, const T& v8, const T& v9
-)
-{
-  BOOST_STATIC_ASSERT(10==Length);
-  data[0] = v0;
-  data[1] = v1;
-  data[2] = v2;
-  data[3] = v3;
-  data[4] = v4;
-  data[5] = v5;
-  data[6] = v6;
-  data[7] = v7;
-  data[8] = v8;
-  data[9] = v9;
-}
+// template<class T, size_t Length, template <size_t> class CheckingPolicy>
+// SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
+//                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
+//                   const T& v5, const T& v6, const T& v7, const T& v8
+// )
+// {
+//   BOOST_STATIC_ASSERT(9==Length);
+//   data[0] = v0;
+//   data[1] = v1;
+//   data[2] = v2;
+//   data[3] = v3;
+//   data[4] = v4;
+//   data[5] = v5;
+//   data[6] = v6;
+//   data[7] = v7;
+//   data[8] = v8;
+// }
+
+// template<class T, size_t Length, template <size_t> class CheckingPolicy>
+// SCHNEK_INLINE Array<T,Length,CheckingPolicy>::Array(
+//                   const T& v0, const T& v1, const T& v2, const T& v3, const T& v4, 
+//                   const T& v5, const T& v6, const T& v7, const T& v8, const T& v9
+// )
+// {
+//   BOOST_STATIC_ASSERT(10==Length);
+//   data[0] = v0;
+//   data[1] = v1;
+//   data[2] = v2;
+//   data[3] = v3;
+//   data[4] = v4;
+//   data[5] = v5;
+//   data[6] = v6;
+//   data[7] = v7;
+//   data[8] = v8;
+//   data[9] = v9;
+// }
 
 /// Accessor operator
 template<class T, size_t Length, template <size_t> class CheckingPolicy>

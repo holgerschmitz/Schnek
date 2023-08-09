@@ -42,16 +42,18 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
 {
   public:
     typedef T value_type;
+    typedef typename Grid<T, rank, CheckingPolicy, StoragePolicy>::IndexType IndexType;
+    typedef typename Grid<T, rank, CheckingPolicy, StoragePolicy>::RangeType RangeType;
     typedef Range<double, rank> DomainType;
     typedef typename Range<double, rank>::LimitType RangeLimit;
-    typedef Array<bool, rank> Stagger;
+    typedef Array<bool, rank> StaggerType;
     typedef Field<T, rank, CheckingPolicy, StoragePolicy> FieldType;
     typedef Grid<T, rank, CheckingPolicy, StoragePolicy> BaseType;
     typedef typename BaseType::IndexType IndexType;
     typedef typename BaseType::RangeType RangeType;
   private:
     DomainType domain;
-    Stagger stagger;
+    StaggerType stagger;
     int ghostCells;
   public:
     /** default constructor creates an empty grid */
@@ -122,7 +124,7 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     double indexToPosition(int dim, int index);
 
     /// Get all three components of the grid stagger
-    Stagger& getStagger() { return stagger; }
+    StaggerType& getStagger() { return stagger; }
 
     /// Get a single component of the grid stagger
     bool getStagger(int i) { return stagger[i]; }
