@@ -505,6 +505,81 @@ BOOST_FIXTURE_TEST_CASE( stride_10d, GridTest )
   }
 }
 
+BOOST_FIXTURE_TEST_CASE( copy_constructor, GridTest )
+{
+  typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+
+  GridType::IndexType lo, hi;
+  random_extent<3>(lo, hi);
+  GridType g(lo,hi);
+  test_copy_constructor(g);
+}
+
+BOOST_FIXTURE_TEST_CASE( assignment_operator, GridTest )
+{
+  typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+
+  GridType::IndexType lo, hi;
+  random_extent<3>(lo, hi);
+  GridType g(lo,hi);
+  test_assignment_operator(g);
+}
+
+BOOST_FIXTURE_TEST_CASE( copy_then_resize, GridTest )
+{
+  typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+
+  GridType::IndexType lo, hi;
+  random_extent<3>(lo, hi);
+  GridType g(lo,hi);
+  test_copy_resize(g);
+}
+
+BOOST_FIXTURE_TEST_CASE( free_shared, GridTest )
+{
+  typedef schnek::Grid<DeleteCounter, 1, GridBoostTestCheck, schnek::SingleArrayGridStorageFortran> GridType;
+  std::map<int, int> counters;
+
+  DeleteCounter del1(1, counters);
+  DeleteCounter del2(2, counters);
+
+  GridType::IndexType lo(0), hi(10);
+  GridType *ga = new GridType(lo, hi);
+  GridType *gb = new GridType(lo, hi);
+  GridType *gc = new GridType(*ga);
+  *ga = del1;
+  *gb = del2;
+
+  BOOST_CHECK_EQUAL(counters.count(1), 0ul);
+  BOOST_CHECK_EQUAL(counters.count(2), 0ul);
+
+  *gb = *ga;
+
+  BOOST_CHECK_EQUAL(counters.count(1), 0ul);
+  BOOST_CHECK_EQUAL(counters.count(2), 1ul);
+  BOOST_CHECK_EQUAL(counters[2], 11);
+  
+  delete ga;
+  
+  BOOST_CHECK_EQUAL(counters.count(1), 0ul);
+  BOOST_CHECK_EQUAL(counters.count(2), 1ul);
+  BOOST_CHECK_EQUAL(counters[2], 11);
+  
+  delete gc;
+  
+  BOOST_CHECK_EQUAL(counters.count(1), 0ul);
+  BOOST_CHECK_EQUAL(counters.count(2), 1ul);
+  BOOST_CHECK_EQUAL(counters[2], 11);
+  
+  delete gb;
+  
+  BOOST_CHECK_EQUAL(counters.count(1), 1ul);
+  BOOST_CHECK_EQUAL(counters.count(2), 1ul);
+  BOOST_CHECK_EQUAL(counters[1], 11);
+  BOOST_CHECK_EQUAL(counters[2], 11);
+}
+
+
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()

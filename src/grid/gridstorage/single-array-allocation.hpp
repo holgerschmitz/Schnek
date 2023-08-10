@@ -186,10 +186,10 @@ namespace schnek
     {
     public:
         /// The grid index type
-        typedef Array<int, rank> IndexType;
+        typedef Array<size_t, rank> IndexType;
 
         /// The grid range type
-        typedef Range<int, rank> RangeType;
+        typedef Range<size_t, rank> RangeType;
     protected:
         struct SizeInfo {
             IndexType lo;
@@ -272,7 +272,7 @@ namespace schnek
         void deleteData();
 
         /// Allocate a new array
-        void newData(int size);
+        void newData(size_t size);
     };
 
     //=================================================================
@@ -290,7 +290,7 @@ namespace schnek
     SingleArrayInstantAllocation<T, rank>::SingleArrayInstantAllocation(const SingleArrayInstantAllocation<T, rank> &other)
         : data(other.data), size(other.size), range(other.range), dims(other.dims)
     {
-        this->data->addUpdater(this, [this](const SizeInfo& sizeInfo) { this->updateSizeInfo(sizeInfo); });        
+        this->data->addUpdater(this, [this](const SizeInfo& sizeInfo) { this->updateSizeInfo(sizeInfo); }); 
     };
 
     template <typename T, size_t rank>
@@ -444,7 +444,7 @@ namespace schnek
     template <typename T, size_t rank>
     void SingleArrayLazyAllocation<T, rank>::resizeImpl(const IndexType &lo, const IndexType &hi)
     {
-        int newSize = 1;
+        size_t newSize = 1;
         range = RangeType{lo, hi};
 
         for (size_t d = 0; d < rank; d++)
@@ -454,7 +454,7 @@ namespace schnek
         }
 
         avgSize = r * newSize + (1 - r) * avgSize;
-        int diff = newSize - avgSize;
+        ptrdiff_t diff = newSize - avgSize;
         avgVar = r * diff * diff + (1 - r) * avgVar;
 
         if ((newSize > bufSize) || (((newSize + 32.0 * sqrt(avgVar)) < bufSize) && (bufSize > 100)))
@@ -481,14 +481,13 @@ namespace schnek
 
     template <typename T, size_t rank>
     void SingleArrayLazyAllocation<T, rank>::newData(
-        int newSize)
+        size_t newSize)
     {
-        bufSize = newSize + (int)(4 * sqrt(avgVar));
+        bufSize = newSize + (size_t)(4 * sqrt(avgVar));
         if (bufSize <= 0)
         {
             bufSize = 10;
         }
-        // std::cerr << "Allocating pointer: size = " << newSize  << " " << bufSize << std::endl;
         data->ptr = new T[bufSize];
     }
 }

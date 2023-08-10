@@ -557,8 +557,8 @@ struct GridTest
         BOOST_CHECK_EQUAL(hiCopied[i], hi[i]);
       }
 
-      random_extent(loCopied, loCopied);
-      copied.resize(loCopied, loCopied);
+      random_extent(loCopied, hiCopied);
+      copied.resize(loCopied, hiCopied);
 
       lo = grid.getLo();
       hi = grid.getHi();
