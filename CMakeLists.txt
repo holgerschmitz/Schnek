@@ -58,6 +58,14 @@ if (Kokkos_FOUND)
   target_link_libraries(schnek PUBLIC Kokkos::kokkoscore)
 endif()
 
+# Uncomment to see all defined variables
+
+# get_cmake_property(_variableNames VARIABLES)
+# list (SORT _variableNames)
+# foreach (_variableName ${_variableNames})
+#     message(STATUS "${_variableName}=${${_variableName}}")
+# endforeach()
+
 set(SCHNEK_HAVE_HDF5 ${HDF5_FOUND})
 set(SCHNEK_HAVE_MPI ${MPI_FOUND})
 set(SCHNEK_USE_HDF_PARALLEL ${HDF5_IS_PARALLEL})
