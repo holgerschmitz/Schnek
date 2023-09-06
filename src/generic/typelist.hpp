@@ -74,8 +74,7 @@ namespace schnek {
             {
                 static_assert(n < size, "Index out of bounds");
                 typedef typename internal::TypeListGet<n, Types...>::type type;
-            };
-            
+            };   
         };
     }
 }

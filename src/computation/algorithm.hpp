@@ -26,6 +26,11 @@
 #ifndef SCHNEK_COMPUTATION_ALGORITHM_HPP_
 #define SCHNEK_COMPUTATION_ALGORITHM_HPP_
 
+#include "../grid/grid.hpp"
+#include "../grid/field.hpp"
+
+#include <cstddef>
+
 // Work in progress
 // This file is brainstorming for a new way to implement algorithms in Schnek.
 // The idea is to have a class that represents an algorithm. The algorithm is a list of steps that are executed in order.
@@ -50,41 +55,89 @@ namespace schnek {
          * 
          */
         template<typename ...Architecture>
-        class ArchitectureCollection {
-            public:
-                static constexpr size_t size = sizeof...(Architecture);
-        };
-
-        template<typename FieldType>
-        class FieldFactory {
-            public:
-                FieldType create(
-                    const typename FieldType::RangeType &size,
-                    const typename FieldTye::DomainType &domain,
-                    const typename FieldTye::StaggerType &stagger, 
-                    int ghostCells
-                );
+        struct ArchitectureCollection {
+            static constexpr size_t size = sizeof...(Architecture);
         };
 
         /**
-         * A factory for fields that can be used on multiple architectures
-         * 
-         * The class defines a factory method for each architecture that can be used to create a field on that architecture.
-         * This is used by the Algorithm class to create fields on the correct architecture.
+         * Used as the FieldType for Fields that can be used on multiple architectures
          */
-        template<typename FieldType, typename Architectures>
-        class MultiArchitectureFieldFactory {
-            public:
-                
+        template<
+            typename T,
+            size_t rank,
+            template<size_t> class CheckingPolicy = GridNoArgCheck
+        >
+        struct FieldTypeWrapper {
+            template<template<typename, size_t> typename GridStorageType>
+            using type = Field<T, rank, CheckingPolicy, GridStorageType>;
+        };
+
+        /**
+         * Used as the FieldType for Grids that can be used on multiple architectures
+         */
+        template<
+            typename T,
+            size_t rank,
+            template<size_t> class CheckingPolicy = GridNoArgCheck
+        >
+        struct GridTypeWrapper {
+            template<template<typename, size_t> typename GridStorageType>
+            using type = Grid<T, rank, CheckingPolicy, GridStorageType>;
+        };
+        
+        /**
+         * A factory for fields that can be used on a single architecture
+         * 
+         * @tparam FieldType The type of field that the factory creates. 
+         */
+        template<template<typename /* StoragePolicy */> typename FieldType>
+        struct MultiArchitectureFieldFactory {
+            template<typename Architecture>
+            static typename FieldType<typename Architecture::GridStorageType>::type create(
+                const typename FieldType<typename Architecture::GridStorageType>::type::RangeType &size,
+                const typename FieldType<typename Architecture::GridStorageType>::type::DomainType &domain,
+                const typename FieldType<typename Architecture::GridStorageType>::type::StaggerType &stagger, 
+                int ghostCells
+            );
+        };
+
+        template<
+            typename T,
+            size_t rank,
+            template<size_t> class CheckingPolicy
+        >
+        struct MultiArchitectureFieldFactory<FieldTypeWrapper<T, rank, CheckingPolicy>::type> {
+            template<typename Architecture>
+            static typename FieldType<typename Architecture::GridStorageType>::type create(
+                const typename FieldType<typename Architecture::GridStorageType>::type::RangeType &size,
+                const typename FieldType<typename Architecture::GridStorageType>::type::DomainType &domain,
+                const typename FieldType<typename Architecture::GridStorageType>::type::StaggerType &stagger, 
+                int ghostCells
+            );
+        };
+
+        template<
+            typename T,
+            size_t rank,
+            template<size_t> class CheckingPolicy
+        >
+        struct MultiArchitectureFieldFactory<GridTypeWrapper<T, rank, CheckingPolicy>::type> {
+            template<typename Architecture>
+            static typename FieldType<Architecture>::type create(
+                const typename FieldType::RangeType &size,
+                const typename FieldType::DomainType &domain,
+                const typename FieldType::StaggerType &stagger, 
+                int ghostCells
+            );
         };
 
         template<typename Architectures>
         class Algorithm {
             public:
                 /**
-                 * Register a field factory for all the di
+                 * Register a field factory for all the architectures in the collection
                  */
-                Registration registerFieldFactory(MultiArchitectureFieldFactory<FieldType> factory);
+                Registration registerFieldFactory(MultiArchitectureFieldFactory<FieldType> &factory);
 
                 /**
                  * Add a step to the algorithm
@@ -94,6 +147,29 @@ namespace schnek {
                  */
                 void addStep(AlgorithmStep step);
         };
+
+    //=================================================================
+    //======================= FieldFactory ============================
+    //=================================================================
+
+        template<
+            typename T,
+            size_t rank,
+            template<size_t> class CheckingPolicy
+        >
+        template<typename Architecture>
+        FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture>
+            MultiArchitectureFieldFactory<FieldTypeWrapper<T, rank, CheckingPolicy>::type>::create<Architecture>(
+                const typename FieldType::RangeType &size,
+                const typename FieldType::DomainType &domain,
+                const typename FieldType::StaggerType &stagger, 
+                int ghostCells
+            )
+        {
+            return FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture>(size, domain, stagger, ghostCells);
+        }
+
+
     } // namespace computation
 } // namespace schnek
 

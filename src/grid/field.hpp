@@ -49,8 +49,6 @@ class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy>
     typedef Array<bool, rank> StaggerType;
     typedef Field<T, rank, CheckingPolicy, StoragePolicy> FieldType;
     typedef Grid<T, rank, CheckingPolicy, StoragePolicy> BaseType;
-    typedef typename BaseType::IndexType IndexType;
-    typedef typename BaseType::RangeType RangeType;
   private:
     DomainType domain;
     StaggerType stagger;

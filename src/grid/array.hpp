@@ -80,31 +80,31 @@ class Array :
     SCHNEK_INLINE Array(const T&);
 
     /// Construct using an initializer list
-    SCHNEK_INLINE Array(std::initializer_list<T> l);
+    // SCHNEK_INLINE Array(std::initializer_list<T> l);
 
-    // /// Constructor for length=2 arrays setting the data explicitely
-    // SCHNEK_INLINE Array(const T&, const T&);
-    // /// Constructor for length=3 arrays setting the data explicitely
-    // SCHNEK_INLINE Array(const T&, const T&, const T&);
-    // /// Constructor for length=4 arrays setting the data explicitely
-    // SCHNEK_INLINE Array(const T&, const T&, const T&, const T&);
-    // /// Constructor for length=5 arrays setting the data explicitely
-    // SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&);
-    // /// Constructor for length=6 arrays setting the data explicitely
-    // SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
-    //            const T&);
-    // /// Constructor for length=7 arrays setting the data explicitely
-    // SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
-    //            const T&, const T&);
-    // /// Constructor for length=8 arrays setting the data explicitely
-    // SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
-    //            const T&, const T&, const T&);
-    // /// Constructor for length=9 arrays setting the data explicitely
-    // SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
-    //            const T&, const T&, const T&, const T&);
-    // /// Constructor for length=10 arrays setting the data explicitely
-    // SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
-    //            const T&, const T&, const T&, const T&, const T&);
+    /// Constructor for length=2 arrays setting the data explicitely
+    SCHNEK_INLINE Array(const T&, const T&);
+    /// Constructor for length=3 arrays setting the data explicitely
+    SCHNEK_INLINE Array(const T&, const T&, const T&);
+    /// Constructor for length=4 arrays setting the data explicitely
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&);
+    /// Constructor for length=5 arrays setting the data explicitely
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&);
+    /// Constructor for length=6 arrays setting the data explicitely
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
+               const T&);
+    /// Constructor for length=7 arrays setting the data explicitely
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
+               const T&, const T&);
+    /// Constructor for length=8 arrays setting the data explicitely
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
+               const T&, const T&, const T&);
+    /// Constructor for length=9 arrays setting the data explicitely
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
+               const T&, const T&, const T&, const T&);
+    /// Constructor for length=10 arrays setting the data explicitely
+    SCHNEK_INLINE Array(const T&, const T&, const T&, const T&, const T&, 
+               const T&, const T&, const T&, const T&, const T&);
 
     SCHNEK_INLINE ~Array() {}
 
