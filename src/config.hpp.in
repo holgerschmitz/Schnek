@@ -12,3 +12,6 @@
 
 /* Integer Schnek Version Number */
 #cmakedefine SCHNEK_VERSION @SCHNEK_VERSION@
+
+/* Skip C++ definitions when using Open MPI */
+#define OMPI_SKIP_MPICXX
