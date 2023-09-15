@@ -68,8 +68,8 @@ namespace schnek {
             template<size_t> class CheckingPolicy = GridNoArgCheck
         >
         struct FieldTypeWrapper {
-            template<template<typename, size_t> typename GridStorageType>
-            using type = Field<T, rank, CheckingPolicy, GridStorageType>;
+            template<template<typename, size_t> typename StorageType>
+            using type = Field<T, rank, CheckingPolicy, StorageType>;
         };
 
         /**
@@ -81,8 +81,8 @@ namespace schnek {
             template<size_t> class CheckingPolicy = GridNoArgCheck
         >
         struct GridTypeWrapper {
-            template<template<typename, size_t> typename GridStorageType>
-            using type = Grid<T, rank, CheckingPolicy, GridStorageType>;
+            template<template<typename, size_t> typename StorageType>
+            using type = Grid<T, rank, CheckingPolicy, StorageType>;
         };
         
         /**
@@ -90,84 +90,87 @@ namespace schnek {
          * 
          * @tparam FieldType The type of field that the factory creates. 
          */
-        template<template<typename /* StoragePolicy */> typename FieldType>
+        template<template<template<typename, size_t> typename /* StorageType */> class FieldType>
         struct MultiArchitectureFieldFactory {
-            template<typename Architecture>
-            static typename FieldType<typename Architecture::GridStorageType>::type create(
-                const typename FieldType<typename Architecture::GridStorageType>::type::RangeType &size,
-                const typename FieldType<typename Architecture::GridStorageType>::type::DomainType &domain,
-                const typename FieldType<typename Architecture::GridStorageType>::type::StaggerType &stagger, 
+            template<template<typename, size_t> typename StorageType>
+            static typename FieldType<StorageType>::type create(
+                const typename FieldType<StorageType>::type::RangeType &size,
+                const typename FieldType<StorageType>::type::DomainType &domain,
+                const typename FieldType<StorageType>::type::StaggerType &stagger, 
                 int ghostCells
             );
         };
 
-        template<
-            typename T,
-            size_t rank,
-            template<size_t> class CheckingPolicy
-        >
-        struct MultiArchitectureFieldFactory<FieldTypeWrapper<T, rank, CheckingPolicy>::type> {
-            template<typename Architecture>
-            static typename FieldType<typename Architecture::GridStorageType>::type create(
-                const typename FieldType<typename Architecture::GridStorageType>::type::RangeType &size,
-                const typename FieldType<typename Architecture::GridStorageType>::type::DomainType &domain,
-                const typename FieldType<typename Architecture::GridStorageType>::type::StaggerType &stagger, 
-                int ghostCells
-            );
-        };
+        // template<
+        //     typename T,
+        //     size_t rank,
+        //     template<size_t> class CheckingPolicy
+        // >
+        // struct MultiArchitectureFieldFactory<FieldTypeWrapper<T, rank, CheckingPolicy>> {
+        //     template<template<typename, size_t> typename Architecture>
+        //     using FieldType = typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture>;
 
-        template<
-            typename T,
-            size_t rank,
-            template<size_t> class CheckingPolicy
-        >
-        struct MultiArchitectureFieldFactory<GridTypeWrapper<T, rank, CheckingPolicy>::type> {
-            template<typename Architecture>
-            static typename FieldType<Architecture>::type create(
-                const typename FieldType::RangeType &size,
-                const typename FieldType::DomainType &domain,
-                const typename FieldType::StaggerType &stagger, 
-                int ghostCells
-            );
-        };
+        //     template<template<typename, size_t> typename StorageType>
+        //     static typename FieldType<StorageType>::type create(
+        //         const typename FieldType<StorageType>::type::RangeType &size,
+        //         const typename FieldType<StorageType>::type::DomainType &domain,
+        //         const typename FieldType<StorageType>::type::StaggerType &stagger, 
+        //         int ghostCells
+        //     );
+        // };
 
-        template<typename Architectures>
-        class Algorithm {
-            public:
-                /**
-                 * Register a field factory for all the architectures in the collection
-                 */
-                Registration registerFieldFactory(MultiArchitectureFieldFactory<FieldType> &factory);
+        // template<
+        //     typename T,
+        //     size_t rank,
+        //     template<size_t> class CheckingPolicy
+        // >
+        // struct MultiArchitectureFieldFactory<GridTypeWrapper<T, rank, CheckingPolicy>::type> {
+        //     template<typename Architecture>
+        //     static typename FieldType<Architecture>::type create(
+        //         const typename FieldType::RangeType &size,
+        //         const typename FieldType::DomainType &domain,
+        //         const typename FieldType::StaggerType &stagger, 
+        //         int ghostCells
+        //     );
+        // };
 
-                /**
-                 * Add a step to the algorithm
-                 * 
-                 * The step is added to the end of the algorithm.
-                 * The AlgorithmStep also defines the architecture that the step is to be run on.
-                 */
-                void addStep(AlgorithmStep step);
-        };
+        // template<typename Architectures>
+        // class Algorithm {
+        //     public:
+        //         /**
+        //          * Register a field factory for all the architectures in the collection
+        //          */
+        //         Registration registerFieldFactory(MultiArchitectureFieldFactory<FieldType> &factory);
+
+        //         /**
+        //          * Add a step to the algorithm
+        //          * 
+        //          * The step is added to the end of the algorithm.
+        //          * The AlgorithmStep also defines the architecture that the step is to be run on.
+        //          */
+        //         void addStep(AlgorithmStep step);
+        // };
 
     //=================================================================
     //======================= FieldFactory ============================
     //=================================================================
 
-        template<
-            typename T,
-            size_t rank,
-            template<size_t> class CheckingPolicy
-        >
-        template<typename Architecture>
-        FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture>
-            MultiArchitectureFieldFactory<FieldTypeWrapper<T, rank, CheckingPolicy>::type>::create<Architecture>(
-                const typename FieldType::RangeType &size,
-                const typename FieldType::DomainType &domain,
-                const typename FieldType::StaggerType &stagger, 
-                int ghostCells
-            )
-        {
-            return FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture>(size, domain, stagger, ghostCells);
-        }
+        // template<
+        //     typename T,
+        //     size_t rank,
+        //     template<size_t> class CheckingPolicy
+        // >
+        // template<typename Architecture>
+        // FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture>
+        //     MultiArchitectureFieldFactory<FieldTypeWrapper<T, rank, CheckingPolicy>::type>::create<Architecture>(
+        //         const typename FieldType::RangeType &size,
+        //         const typename FieldType::DomainType &domain,
+        //         const typename FieldType::StaggerType &stagger, 
+        //         int ghostCells
+        //     )
+        // {
+        //     return FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture>(size, domain, stagger, ghostCells);
+        // }
 
 
     } // namespace computation

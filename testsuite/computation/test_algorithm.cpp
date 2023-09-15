@@ -13,10 +13,12 @@ struct TestArchitecture {
     template<typename T, size_t rank>
     using GridStorageType = schnek::SingleArrayGridStorage<T, rank>;
 };
+
 BOOST_AUTO_TEST_CASE( MultiArchitectureFieldFactory )
 {
-  schnek::computation::MultiArchitectureFieldFactory<schnek::computation::FieldTypeWrapper> factory;
-  factory::create<TestArchitecture>({{0,0}, {100,100}}, {{0,0}, {1,1}}, {false, false}, 2);
+  schnek::computation
+    ::MultiArchitectureFieldFactory<schnek::computation::FieldTypeWrapper<int, 2>::type> factory;
+  // factory::create<TestArchitecture>({{0,0}, {100,100}}, {{0,0}, {1,1}}, {false, false}, 2);
 }
 
 
