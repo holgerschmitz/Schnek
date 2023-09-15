@@ -85,39 +85,46 @@ namespace schnek {
             using type = Grid<T, rank, CheckingPolicy, StorageType>;
         };
         
+        struct SimpleHostArchitecture {
+            template<typename T, size_t rank> 
+            using GridStorageType = SingleArrayGridStorage<T, rank>;
+        };
+
         /**
          * A factory for fields that can be used on a single architecture
          * 
          * @tparam FieldType The type of field that the factory creates. 
          */
-        template<template<template<typename, size_t> typename /* StorageType */> class FieldType>
+        template<class FieldType>
         struct MultiArchitectureFieldFactory {
-            template<template<typename, size_t> typename StorageType>
-            static typename FieldType<StorageType>::type create(
-                const typename FieldType<StorageType>::type::RangeType &size,
-                const typename FieldType<StorageType>::type::DomainType &domain,
-                const typename FieldType<StorageType>::type::StaggerType &stagger, 
+            template<typename Architecture>
+            typename FieldType::type<Architecture::template GridStorageType> create(
+                const typename FieldType::type<Architecture::template GridStorageType>::RangeType &size,
+                const typename FieldType::type<Architecture::template GridStorageType>::DomainType &domain,
+                const typename FieldType::type<Architecture::template GridStorageType>::StaggerType &stagger, 
                 int ghostCells
             );
         };
 
-        // template<
-        //     typename T,
-        //     size_t rank,
-        //     template<size_t> class CheckingPolicy
-        // >
-        // struct MultiArchitectureFieldFactory<FieldTypeWrapper<T, rank, CheckingPolicy>> {
-        //     template<template<typename, size_t> typename Architecture>
-        //     using FieldType = typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture>;
+        template<
+            typename T,
+            size_t rank,
+            template<size_t> class CheckingPolicy
+        >
+        struct MultiArchitectureFieldFactory< FieldTypeWrapper<T, rank, CheckingPolicy> > {
 
-        //     template<template<typename, size_t> typename StorageType>
-        //     static typename FieldType<StorageType>::type create(
-        //         const typename FieldType<StorageType>::type::RangeType &size,
-        //         const typename FieldType<StorageType>::type::DomainType &domain,
-        //         const typename FieldType<StorageType>::type::StaggerType &stagger, 
-        //         int ghostCells
-        //     );
-        // };
+            template<typename Architecture>
+            typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture::template GridStorageType> create(
+                const typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture::template GridStorageType>::RangeType &size,
+                const typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture::template GridStorageType>::DomainType &domain,
+                const typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture::template GridStorageType>::StaggerType &stagger, 
+                int ghostCells
+            )
+            {
+                typedef typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture::template GridStorageType> FieldType;
+                return FieldType(size, domain, stagger, ghostCells);
+            }
+        };
 
         // template<
         //     typename T,
@@ -161,16 +168,13 @@ namespace schnek {
         //     template<size_t> class CheckingPolicy
         // >
         // template<typename Architecture>
-        // FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture>
-        //     MultiArchitectureFieldFactory<FieldTypeWrapper<T, rank, CheckingPolicy>::type>::create<Architecture>(
-        //         const typename FieldType::RangeType &size,
-        //         const typename FieldType::DomainType &domain,
-        //         const typename FieldType::StaggerType &stagger, 
+        // typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture::template GridStorageType>
+        //     MultiArchitectureFieldFactory< FieldTypeWrapper<T, rank, CheckingPolicy> >::create<Architecture>(
+        //         const typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture::template GridStorageType>::RangeType &size,
+        //         const typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture::template GridStorageType>::DomainType &domain,
+        //         const typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture::template GridStorageType>::StaggerType &stagger, 
         //         int ghostCells
         //     )
-        // {
-        //     return FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture>(size, domain, stagger, ghostCells);
-        // }
 
 
     } // namespace computation

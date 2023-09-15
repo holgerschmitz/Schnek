@@ -58,7 +58,7 @@ Field<T, rank, CheckingPolicy, StoragePolicy>::Field(
 {
   IndexType low{IndexType::Zero()};
   IndexType high{size};
-  for (int i=0; i<rank; ++i)
+  for (size_t i=0; i<rank; ++i)
   {
     low[i]  -= ghostCells;
     high[i] += ghostCells - 1;
@@ -89,7 +89,7 @@ Field<T, rank, CheckingPolicy, StoragePolicy>::Field(
 {
   IndexType lo{low};
   IndexType hi{high};
-  for (int i=0; i<rank; ++i)
+  for (size_t i=0; i<rank; ++i)
   {
     lo[i] -= ghostCells;
     hi[i] += ghostCells;
@@ -120,7 +120,7 @@ Field<T, rank, CheckingPolicy, StoragePolicy>::Field(
 {
   IndexType lo{range.getLo()};
   IndexType hi{range.getHi()};
-  for (int i=0; i<rank; ++i)
+  for (size_t i=0; i<rank; ++i)
   {
     lo[i] -= ghostCells;
     hi[i] += ghostCells;
@@ -183,7 +183,7 @@ void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
   ghostCells = ghostCells_;
   IndexType low(IndexType::Zero());
   IndexType high(size_);
-  for (int i=0; i<rank; ++i)
+  for (size_t i=0; i<rank; ++i)
   {
     low[i]  -= ghostCells;
     high[i] += ghostCells - 1;
@@ -215,7 +215,7 @@ void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
   ghostCells = ghostCells_;
   IndexType low(low_);
   IndexType high(high_);
-  for (int i=0; i<rank; ++i)
+  for (size_t i=0; i<rank; ++i)
   {
     low[i]  -= ghostCells;
     high[i] += ghostCells;
@@ -247,7 +247,7 @@ void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
   ghostCells = ghostCells_;
   IndexType low(range_.getLo());
   IndexType high(range_.getHi());
-  for (int i=0; i<rank; ++i)
+  for (size_t i=0; i<rank; ++i)
   {
     low[i]  -= ghostCells;
     high[i] += ghostCells;
