@@ -30,6 +30,7 @@
 #include "../grid/field.hpp"
 
 #include <cstddef>
+#include <algorithm>
 
 // Work in progress
 // This file is brainstorming for a new way to implement algorithms in Schnek.
@@ -40,6 +41,8 @@
 // and the algorithm class creates them using the registered factories.
 namespace schnek {
     namespace computation {
+        class Algorithm;
+
         /**
          * Meta-type definition for an architecture:
          * 
@@ -141,23 +144,137 @@ namespace schnek {
         //     );
         // };
 
-        // template<typename Architectures>
-        // class Algorithm {
-        //     public:
-        //         /**
-        //          * Register a field factory for all the architectures in the collection
-        //          */
-        //         Registration registerFieldFactory(MultiArchitectureFieldFactory<FieldType> &factory);
+        /**
+         * A Registration object is returned by the registerFieldFactory method of the Algorithm class.
+         * 
+         * The registration object is used to keep track of the fields that have been registered. They
+         * are used to reference fields in the algorithm steps.
+         */
+        class Registration {
+            private:
+                class RegistrationRef {
+                    virtual ~RegistrationRef() {}
+                };
+                
+                std::shared_ptr<RegistrationRef> ref;
+                Registration(std::shared_ptr<RegistrationRef> ref): ref(ref) {}
+                friend class Algorithm;
+            public:
+                Registration(const Registration &other): ref(other.ref) {}
+                Registration(Registration &&other): ref(std::move(other.ref)) {}
+                Registration &operator=(const Registration &other) {
+                    ref = other.ref;
+                    return *this;
+                }
+                Registration &operator=(Registration &&other) {
+                    ref = std::move(other.ref);
+                    return *this;
+                }
+        };
 
-        //         /**
-        //          * Add a step to the algorithm
-        //          * 
-        //          * The step is added to the end of the algorithm.
-        //          * The AlgorithmStep also defines the architecture that the step is to be run on.
-        //          */
-        //         void addStep(AlgorithmStep step);
-        // };
+        namespace internal {
 
+            template<template<typename /* StoragePolicy */> typename FieldType>
+            class RegistrationImpl : public RegistrationRef {
+                private:
+                    MultiArchitectureFieldFactory<FieldType> &factory;
+                public:
+                    RegistrationImpl(MultiArchitectureFieldFactory<FieldType> &factory): factory(factory) {}
+            };
+
+        }
+
+        template<typename Architectures>
+        class Algorithm {
+            private:
+                std::list<Registration> registrations;
+            public:
+                /**
+                 * Register a field factory for all the architectures in the collection
+                 */
+                template<template<typename /* StoragePolicy */> typename FieldType>
+                Registration registerFieldFactory(MultiArchitectureFieldFactory<FieldType> &factory);
+
+                /**
+                 * Add a step to the algorithm
+                 * 
+                 * The step is added to the end of the algorithm.
+                 * The AlgorithmStep also defines the architecture that the step is to be run on.
+                 */
+                template<typename Architecture>
+                void addStep(AlgorithmStep<Architecture> step);
+
+                /**
+                 * Get a builder to create an AlgorithmStep
+                 */
+                template<typename Architecture>
+                AlgorithmStepBuilder<Architecture> stepBuilder();
+        };
+
+        namespace internal {
+            template<int tRank, int tGhostCells>
+            struct InputDefinition {
+                static constexpr bool isInput = true;
+                static constexpr bool isOutput = false;
+                static constexpr int ghostCells = tGhostCells;
+                static constexpr int rank = tRank;
+            };
+
+            template<int tRank, int tGhostCells>
+            struct OutputDefinition {
+                static constexpr bool isInput = false;
+                static constexpr bool isOutput = true;
+                static constexpr int ghostCells = tGhostCells;
+                static constexpr int rank = tRank;
+            };
+        }
+
+        template<int rank, typename Architectures, typename... InputOutputDefinitions>
+        class AlgorithmStepBuilder {
+            private:
+                std::list<Registration> inputRegistrations;
+                std::list<Registration> outputRegistrations;
+            public:
+                AlgorithmStepBuilder(
+                    std::list<Registration> &inputRegistrations, 
+                    std::list<Registration> &outputRegistrations
+                ): inputRegistrations(inputRegistrations), outputRegistrations(outputRegistrations)
+                {}
+
+                template<int ghostCells>
+                AlgorithmStepBuilder<
+                    Architectures, 
+                    InputOutputDefinitions..., 
+                    internal::InputDefinition<Architecture::rank, ghostCells>
+                > input(Registration registration) {
+                    inputRegistrations.push_back(registration);
+                    return AlgorithmStepBuilder<
+                        Architectures, 
+                        InputOutputDefinitions..., 
+                        internal::InputDefinition<Architecture::rank, ghostCells>
+                    >(inputRegistrations, outputRegistrations);
+                }
+
+                template<int ghostCells>
+                AlgorithmStepBuilder<
+                    Architectures, 
+                    InputOutputDefinitions..., 
+                    internal::OututDefinition<Architecture::rank, ghostCells>
+                > output(Registration registration) {
+                    inputRegistrations.push_back(registration);
+                    return AlgorithmStepBuilder<
+                        Architectures, 
+                        InputOutputDefinitions..., 
+                        internal::OututDefinition<Architecture::rank, ghostCells>
+                    >(inputRegistrations, outputRegistrations);
+                }
+
+                template<typename Architecture>
+                AlgorithmStep<Architectures, InputOutputDefinitions..., internal::InputDefinition<Architecture::rank, Architecture::ghostCells>> build() {
+                    return AlgorithmStep<Architectures, InputOutputDefinitions..., internal::InputDefinition<Architecture::rank, Architecture::ghostCells>>(algorithm, inputOutputDefinitions);
+                }
+        };
+        };
     //=================================================================
     //======================= FieldFactory ============================
     //=================================================================
@@ -176,6 +293,18 @@ namespace schnek {
         //         int ghostCells
         //     )
 
+        //=================================================================
+        //========================= Algorithm =============================
+        //=================================================================
+
+        template<typename Architectures>
+        template<template<typename /* StoragePolicy */> typename FieldType>
+        Registration Algorithm<Architectures>::registerFieldFactory(MultiArchitectureFieldFactory<FieldType> &factory) {
+            auto ref = std::make_shared<internal::RegistrationImpl<FieldType>>(factory);
+            auto registration = Registration(ref);
+            registrations.push_back(registration);
+            return registration;
+        }
 
     } // namespace computation
 } // namespace schnek
