@@ -24,8 +24,8 @@
  */
 
 
-#ifndef SCHNEK_GENERIC_TYPEMAP_HPP_
-#define SCHNEK_GENERIC_TYPEMAP_HPP_
+#ifndef SCHNEK_GENERIC_STATIC_RANGE_HPP_
+#define SCHNEK_GENERIC_STATIC_RANGE_HPP_
 
 #include "typelist.hpp"
 
@@ -67,4 +67,4 @@ namespace schnek {
     }
 }
 
-#endif // SCHNEK_GENERIC_TYPEMAP_HPP_
+#endif // SCHNEK_GENERIC_STATIC_RANGE_HPP_

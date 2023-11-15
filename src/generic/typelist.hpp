@@ -28,6 +28,7 @@
 #define SCHNEK_GENERIC_TYPELIST_HPP_
 
 #include <cstddef>
+#include <tuple>
 
 namespace schnek {
     namespace generic {
@@ -47,6 +48,14 @@ namespace schnek {
                 typedef T type;
                 static constexpr long value = 1;
             };
+        }
+        
+        namespace internal {
+            template<template <typename T> typename mapper, typename TypeListType, typename... InputTypes>
+            struct TypeListMapper {};
+
+            template<template <typename T> typename conditional, typename TypeListType, typename... InputTypes>
+            struct TypeListFilter {};
         }
 
         /**
@@ -74,8 +83,92 @@ namespace schnek {
             {
                 static_assert(n < size, "Index out of bounds");
                 typedef typename internal::TypeListGet<n, Types...>::type type;
-            };   
+            };
+
+            /**
+             * @brief Push a type to the back of the type list
+             * 
+             * @tparam T The type to push
+             */
+            template<typename T>
+            using push_back = TypeList<Types..., T>;
+
+            template<typename T>
+            using push_front = TypeList<T, Types...>;
+
+            template<template <typename T> typename mapper>
+            using map = typename internal::TypeListMapper<mapper, TypeList<>, Types...>::type;
+
+            template<template <typename T> typename conditional>
+            using filter = typename internal::TypeListFilter<conditional, TypeList<>, Types...>::type;
+
+            template<template <typename... T> typename Dest>
+            using apply = Dest<Types...>;
         };
+
+        namespace internal {
+            template<template <typename T> typename mapper, typename TypeListType, typename Head, typename... InputTypes>
+            struct TypeListMapper<mapper, TypeListType, Head, InputTypes...> {
+                
+                typedef typename TypeListMapper<
+                    mapper, 
+                    typename TypeListType::push_back<typename mapper<Head>::type>,
+                    InputTypes...
+                >::type type;
+            };
+
+            template<template <typename T> typename mapper, typename TypeListType>
+            struct TypeListMapper<mapper, TypeListType> {
+                typedef TypeListType type;
+            };
+
+            template<bool condition, typename TypeListType, typename Head>
+            struct TypeListFilterSelect {};
+
+            template<typename TypeListType, typename Head>
+            struct TypeListFilterSelect<true, TypeListType, Head> {
+                typedef typename TypeListType::push_back<Head> type;
+            };
+
+            template<typename TypeListType, typename Head>
+            struct TypeListFilterSelect<false, TypeListType, Head> {
+                typedef TypeListType type;
+            };
+
+            template<template <typename T> typename conditional, typename TypeListType, typename Head, typename... InputTypes>
+            struct TypeListFilter<conditional, TypeListType, Head, InputTypes...> {
+                typedef typename TypeListFilter<
+                    conditional, 
+                    typename TypeListFilterSelect<conditional<Head>::value, TypeListType, Head>::type,
+                    InputTypes...
+                >::type type;
+            };
+
+            template<template <typename T> typename conditional, typename TypeListType>
+            struct TypeListFilter<conditional, TypeListType> {
+                typedef TypeListType type;
+            };
+
+            template<typename SourceTuple, typename DestTuple, int index>
+            struct TupleAssignImpl {
+                static void assign(const SourceTuple &source, DestTuple &dest) {
+                    TupleAssignImpl<SourceTuple, DestTuple, index - 1>::assign(source, dest);
+                    std::get<index - 1>(dest) = std::get<index - 1>(source);
+                }
+            };
+
+            template<typename SourceTuple, typename DestTuple>
+            struct TupleAssignImpl<SourceTuple, DestTuple, 0> {
+                static void assign(const SourceTuple &, DestTuple &) {}
+            };
+        }
+
+        template<typename SourceTuple, typename DestTuple>
+        DestTuple tupleAssign(SourceTuple source) {
+            DestTuple dest;
+            internal::TupleAssignImpl<SourceTuple, DestTuple, std::tuple_size<SourceTuple>::value>::assign(source, dest);
+            return dest;
+        }
     }
 }
 

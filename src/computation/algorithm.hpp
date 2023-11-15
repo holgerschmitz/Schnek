@@ -151,43 +151,17 @@ namespace schnek {
          * The registration object is used to keep track of the fields that have been registered. They
          * are used to reference fields in the algorithm steps.
          */
+        template<typename FieldType>
         class Registration {
-            public:
-                class RegistrationRef {
-                    virtual ~RegistrationRef() {}
-                };
             private:
-                
-                std::shared_ptr<RegistrationRef> ref;
-                Registration(std::shared_ptr<RegistrationRef> ref): ref(ref) {}
+                MultiArchitectureFieldFactory<FieldType> &factory;
+                Registration(MultiArchitectureFieldFactory<FieldType> &factory): factory(factory) {}
                 friend class Algorithm;
             public:
-
-                Registration(const Registration &other): ref(other.ref) {}
-                Registration(Registration &&other): ref(std::move(other.ref)) {}
-                Registration &operator=(const Registration &other) {
-                    ref = other.ref;
-                    return *this;
-                }
-                Registration &operator=(Registration &&other) {
-                    ref = std::move(other.ref);
-                    return *this;
-                }
+                Registration(const Registration &other): factory(other.factory) {}
         };
 
-        namespace internal {
-
-            template<typename FieldType>
-            class RegistrationImpl : public Registration::RegistrationRef {
-                private:
-                    MultiArchitectureFieldFactory<FieldType> &factory;
-                public:
-                    RegistrationImpl(MultiArchitectureFieldFactory<FieldType> &factory): factory(factory) {}
-            };
-
-        }
-
-        template<size_t rank, typename Architecture, typename... InputOutputDefinitions>
+        template<size_t rank, typename FuncType, typename Architecture, typename... InputOutputDefinitions>
         class AlgorithmStep;
 
         template<size_t rank, typename Architecture, typename... InputOutputDefinitions>
@@ -202,7 +176,7 @@ namespace schnek {
                  * Register a field factory for all the architectures in the collection
                  */
                 template<typename FieldType>
-                Registration registerFieldFactory(MultiArchitectureFieldFactory<FieldType> &factory);
+                Registration<FieldType> registerFieldFactory(MultiArchitectureFieldFactory<FieldType> &factory);
 
                 /**
                  * Add a step to the algorithm
@@ -211,78 +185,156 @@ namespace schnek {
                  * The AlgorithmStep also defines the architecture that the step is to be run on.
                  */
                 template<size_t rank, typename Architecture, typename... InputOutputDefinitions>
-                void addStep(AlgorithmStep<rank, Architecture, InputOutputDefinitions...> step);
+                void addStep(AlgorithmStep<rank, Architecture, InputOutputDefinitions...> &step);
 
                 /**
                  * Get a builder to create an AlgorithmStep
                  */
                 template<size_t rank, typename Architecture>
-                AlgorithmStepBuilder<rank, Architecture> stepBuilder();
+                AlgorithmStepBuilder<rank, Architecture> stepBuilder() {
+                    return AlgorithmStepBuilder<rank, Architecture>();
+                }
         };
 
         namespace internal {
-            template<size_t tRank, typename tGhostCells>
+            template<size_t tRank, typename tGhostCells, typename tFieldType>
             struct InputDefinition {
                 static constexpr bool isInput = true;
                 static constexpr bool isOutput = false;
                 static constexpr size_t rank = tRank;
                 typedef tGhostCells GhostCells;
+                typedef tFieldType FieldType;
             };
 
-            template<size_t tRank, typename tGhostCells>
+            template<size_t tRank, typename tGhostCells, typename tFieldType>
             struct OutputDefinition {
                 static constexpr bool isInput = false;
                 static constexpr bool isOutput = true;
                 static constexpr size_t rank = tRank;
                 typedef tGhostCells GhostCells;
+                typedef tFieldType FieldType;
             };
+
+            template<typename InputOutputDefinition>
+            struct IsInputDefinition {
+                static constexpr bool value = InputOutputDefinition::isInput;
+            };
+
+            template<typename InputOutputDefinition>
+            struct IsOutputDefinition {
+                static constexpr bool value = InputOutputDefinition::isOutput;
+            };
+
+            template<typename InputOutputDefinition>
+            struct IODefinitionToRegistration {
+                typedef Registration<typename InputOutputDefinition::FieldType> type;
+            };
+
+            template<typename... InputOutputDefinitions>
+            using InputRegistrationsTuple = typename TypeList<InputOutputDefinitions...>
+                ::filter<internal::IsInputDefinition>
+                ::map<IODefinitionToRegistration>
+                ::apply<std::tuple>;
+
+            template<typename... InputOutputDefinitions>
+            using OutputRegistrationsTuple = typename TypeList<InputOutputDefinitions...>
+                ::filter<internal::IsOutputDefinition>
+                ::map<IODefinitionToRegistration>
+                ::apply<std::tuple>;
+
+
         }
+
+        template<size_t rank, typename FuncType, typename Architecture, typename... InputOutputDefinitions>
+        class AlgorithmStep {
+            public:
+                using InputRegistrationsTuple = internal::InputRegistrationsTuple<InputOutputDefinitions...>;
+                using OutputRegistrationsTuple = internal::OutputRegistrationsTuple<InputOutputDefinitions...>;
+            private:
+                InputRegistrationsTuple inputRegistrations;
+                OutputRegistrationsTuple outputRegistrations;
+                FuncType func;
+            public:
+                AlgorithmStep(
+                    InputRegistrationsTuple &inputRegistrations, 
+                    OutputRegistrationsTuple &outputRegistrations,
+                    FuncType func
+                ): inputRegistrations(inputRegistrations), outputRegistrations(outputRegistrations), func(func)
+                {}
+        };
+
 
         template<size_t rank, typename Architecture, typename... InputOutputDefinitions>
         class AlgorithmStepBuilder {
+            public:
+                using InputRegistrationsTuple = internal::InputRegistrationsTuple<InputOutputDefinitions...>;
+                using OutputRegistrationsTuple = internal::OutputRegistrationsTuple<InputOutputDefinitions...>;
             private:
-                std::list<Registration> inputRegistrations;
-                std::list<Registration> outputRegistrations;
+                InputRegistrationsTuple inputRegistrations;
+                OutputRegistrationsTuple outputRegistrations;
             public:
                 AlgorithmStepBuilder(
-                    std::list<Registration> &inputRegistrations, 
-                    std::list<Registration> &outputRegistrations
+                    InputRegistrationsTuple &inputRegistrations, 
+                    OutputRegistrationsTuple &outputRegistrations,
                 ): inputRegistrations(inputRegistrations), outputRegistrations(outputRegistrations)
                 {}
 
-                template<typename ghostCells>
+                template<typename ghostCells, typename FieldType>
                 AlgorithmStepBuilder<
                     rank,
                     Architecture, 
                     InputOutputDefinitions..., 
-                    internal::InputDefinition<rank, ghostCells>
-                > input(Registration registration) {
-                    inputRegistrations.push_back(registration);
+                    internal::InputDefinition<rank, ghostCells, FieldType>
+                > input(Registration<FieldType> &registration) {
+                    using NewInputRegistrationsTuple = internal::InputRegistrationsTuple<
+                        InputOutputDefinitions..., 
+                        internal::InputDefinition<rank, ghostCells, FieldType>
+                    >;
+
+                    auto newInputRegistrations = generic::tupleAssign<InputRegistrationsTuple, NewInputRegistrationsTuple>(inputRegistrations);
+                    std::get<std::tuple_size<NewInputRegistrationsTuple>::value-1>(newInputRegistrations) = registration;
+                    
                     return AlgorithmStepBuilder<
                         rank,
                         Architecture, 
                         InputOutputDefinitions..., 
                         internal::InputDefinition<rank, ghostCells>
-                    >(inputRegistrations, outputRegistrations);
+                    >(
+                        newInputRegistrations, 
+                        outputRegistrations
+                    );
                 }
 
-                template<typename ghostCells>
+                template<typename ghostCells, typename FieldType>
                 AlgorithmStepBuilder<
                     rank,
                     Architecture, 
                     InputOutputDefinitions..., 
-                    internal::OutputDefinition<rank, ghostCells>
-                > output(Registration registration) {
-                    inputRegistrations.push_back(registration);
+                    internal::OutputDefinition<rank, ghostCells, FieldType>
+                > output(Registration<FieldType> &registration) {
+                    using NewOutputRegistrationsTuple = internal::OutputRegistrationsTuple<
+                        InputOutputDefinitions..., 
+                        internal::OutputDefinition<rank, ghostCells, FieldType>
+                    >;
+
+                    auto newOutputRegistrations = generic::tupleAssign<OutputRegistrationsTuple, NewOutputRegistrationsTuple>(outputRegistrations);
+                    std::get<std::tuple_size<NewOutputRegistrationsTuple>::value-1>(newOutputRegistrations) = registration;
+
                     return AlgorithmStepBuilder<
                         rank,
                         Architecture, 
                         InputOutputDefinitions..., 
                         internal::OutputDefinition<rank, ghostCells>
-                    >(inputRegistrations, outputRegistrations);
+                    >(
+                        inputRegistrations,
+                        newOutputRegistrations
+                    );
                 }
 
-                AlgorithmStep<rank, Architecture, InputOutputDefinitions...> build();
+                template<typename Func>
+                AlgorithmStep<rank, Architecture, InputOutputDefinitions...> build(Func f) {
+
+                }
         };
     //=================================================================
     //======================= FieldFactory ============================

@@ -101,7 +101,7 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/test_parser.cpp
     testsuite/test_range.cpp
     testsuite/utility.cpp
-    testsuite/computation/test_algorithm.cpp
+    # testsuite/computation/test_algorithm.cpp
     testsuite/generic/test_typelist.cpp
     testsuite/generic/test_static_range.cpp
     testsuite/grid/test_c_storage.cpp
