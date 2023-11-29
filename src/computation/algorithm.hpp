@@ -28,6 +28,8 @@
 
 #include "../grid/grid.hpp"
 #include "../grid/field.hpp"
+#include "../generic/typelist.hpp"
+
 
 #include <cstddef>
 #include <algorithm>
@@ -170,7 +172,7 @@ namespace schnek {
 
         class Algorithm {
             private:
-                std::list<Registration> registrations;
+                // std::list<Registration> registrations;
             public:
                 /**
                  * Register a field factory for all the architectures in the collection
@@ -231,15 +233,15 @@ namespace schnek {
             };
 
             template<typename... InputOutputDefinitions>
-            using InputRegistrationsTuple = typename TypeList<InputOutputDefinitions...>
+            using InputRegistrationsTuple = typename generic::TypeList<InputOutputDefinitions...>
                 ::filter<internal::IsInputDefinition>
-                ::map<IODefinitionToRegistration>
+                ::map<internal::IODefinitionToRegistration>
                 ::apply<std::tuple>;
 
             template<typename... InputOutputDefinitions>
-            using OutputRegistrationsTuple = typename TypeList<InputOutputDefinitions...>
+            using OutputRegistrationsTuple = typename generic::TypeList<InputOutputDefinitions...>
                 ::filter<internal::IsOutputDefinition>
-                ::map<IODefinitionToRegistration>
+                ::map<internal::IODefinitionToRegistration>
                 ::apply<std::tuple>;
 
 
@@ -275,7 +277,7 @@ namespace schnek {
             public:
                 AlgorithmStepBuilder(
                     InputRegistrationsTuple &inputRegistrations, 
-                    OutputRegistrationsTuple &outputRegistrations,
+                    OutputRegistrationsTuple &outputRegistrations
                 ): inputRegistrations(inputRegistrations), outputRegistrations(outputRegistrations)
                 {}
 
@@ -298,7 +300,7 @@ namespace schnek {
                         rank,
                         Architecture, 
                         InputOutputDefinitions..., 
-                        internal::InputDefinition<rank, ghostCells>
+                        internal::InputDefinition<rank, ghostCells, FieldType>
                     >(
                         newInputRegistrations, 
                         outputRegistrations
@@ -324,16 +326,21 @@ namespace schnek {
                         rank,
                         Architecture, 
                         InputOutputDefinitions..., 
-                        internal::OutputDefinition<rank, ghostCells>
+                        internal::OutputDefinition<rank, ghostCells, FieldType
+                        >
                     >(
                         inputRegistrations,
                         newOutputRegistrations
                     );
                 }
 
-                template<typename Func>
-                AlgorithmStep<rank, Architecture, InputOutputDefinitions...> build(Func f) {
-
+                template<typename FunctionObject>
+                AlgorithmStep<rank, FunctionObject, Architecture, InputOutputDefinitions...> build(FunctionObject func) {
+                    return AlgorithmStep<rank, FunctionObject, Architecture, InputOutputDefinitions...>{
+                        inputRegistrations,
+                        outputRegistrations,
+                        func
+                    };
                 }
         };
     //=================================================================
@@ -359,10 +366,10 @@ namespace schnek {
         //=================================================================
 
         template<typename FieldType>
-        Registration Algorithm::registerFieldFactory(MultiArchitectureFieldFactory<FieldType> &factory) {
-            auto ref = std::make_shared<internal::RegistrationImpl<FieldType>>(factory);
-            auto registration = Registration(ref);
-            registrations.push_back(registration);
+        Registration<FieldType> Algorithm::registerFieldFactory(MultiArchitectureFieldFactory<FieldType> &factory) {
+            Registration<FieldType> registration = std::make_shared< Registration<FieldType> >(factory);
+            // auto registration = Registration(ref);
+            // registrations.push_back(registration);
             return registration;
         }
 
