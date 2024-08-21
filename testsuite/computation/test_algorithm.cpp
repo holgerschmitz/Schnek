@@ -10,13 +10,19 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <string>
+
 BOOST_AUTO_TEST_SUITE( computation )
 BOOST_AUTO_TEST_SUITE( algorithm )
 
 struct TestArchitecture {
     template<typename T, size_t rank>
     using GridStorageType = schnek::SingleArrayGridStorage<T, rank>;
+
+    static const std::string id;
 };
+
+const std::string TestArchitecture::id{"TestArchitecture"};
 
 struct TestFunction {
   double operator()(double x) {
@@ -80,6 +86,7 @@ BOOST_AUTO_TEST_CASE( registerFieldFactory )
     .build(testFunction);
   
   algorithm.addStep(step);
+  auto actions = algorithm.makeActions();
 }
 
 

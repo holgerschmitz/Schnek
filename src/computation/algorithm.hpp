@@ -31,6 +31,7 @@
 #include <cstddef>
 #include <list>
 #include <map>
+#include <string>
 
 #include "../generic/type-util.hpp"
 #include "../generic/typelist.hpp"
@@ -61,6 +62,8 @@ namespace schnek::computation {
     class AlgorithmStepWrapper : public schnek::Unique<AlgorithmStepWrapper> {
       public:
         virtual ~AlgorithmStepWrapper() {}
+        virtual const std::string &getArchitectureName() const = 0;
+        virtual std::list<long> getInputIds() = 0;
     };
     typedef std::shared_ptr<AlgorithmStepWrapper> pAlgorithmStepWrapper;
 
@@ -119,6 +122,9 @@ namespace schnek::computation {
     };
 
     typedef std::unique_ptr<AlgorithmAction> pAlgorithmAction;
+
+    template<typename... Architectures>
+    struct AlgorithmState;
   }  // namespace internal
 
   template<size_t rank, typename FuncType, typename Architecture, typename... InputOutputDefinitions>
@@ -126,7 +132,7 @@ namespace schnek::computation {
 
   template<size_t rank, typename Architecture, typename... InputOutputDefinitions>
   class AlgorithmStepBuilder;
-
+  
   template<typename... Architectures>
   class Algorithm {
     private:
@@ -135,6 +141,13 @@ namespace schnek::computation {
       static_assert(
           (concepts::ArchitectureConcept<Architectures>::value && ...),
           "Architectures must meet ArchitecturesConcept requirements"
+      );
+
+    private:
+      bool findGoodFieldAndCopy(
+          std::list<internal::pAlgorithmAction> &actions,
+          internal::AlgorithmState<Architectures...> &state,
+          long inputId
       );
 
     public:
@@ -235,6 +248,18 @@ namespace schnek::computation {
           : inputRegistrations(inputRegistrations), outputRegistrations(outputRegistrations), func(func) {}
 
       AlgorithmStep(const AlgorithmStep &other) = default;
+
+      std::list<long> getInputIds() const {
+        std::list<long> ids;
+        std::apply([&ids](auto... r) { (ids.push_back(r->getId()), ...); }, inputRegistrations);
+        return ids;
+      }
+
+      std::list<long> getOutputIds() const {
+        std::list<long> ids;
+        std::apply([&ids](auto... r) { (ids.push_back(r->getId()), ...); }, outputRegistrations);
+        return ids;
+      }
   };
 
   namespace internal {
@@ -244,6 +269,9 @@ namespace schnek::computation {
         AlgorithmStep<rank, FuncType, Architecture, InputOutputDefinitions...> step;
         AlgorithmStepWrapperImpl(AlgorithmStep<rank, FuncType, Architecture, InputOutputDefinitions...> step)
             : step(step) {}
+
+        const std::string &getArchitectureName() const override { return Architecture::id; }
+        std::list<long> getInputIds() override { return step.getInputIds(); }
     };
   }  // namespace internal
 
@@ -316,20 +344,54 @@ namespace schnek::computation {
 
   namespace internal {
     /**
+     * @brief The state of a field on a single architecture
+     * 
+     * The state of a field is one of:
+     * - GOOD:  The field is up to date in the inner region and the ghost cells. 
+     *          It can be used as input to a step. 
+     * - OLD:   The field is not up to date and must be copied from another architecture.
+     * - LOCAL: The field is up to date in the inner region but not in the ghost cells.
+     */
+    enum class AlgorithmFieldState { GOOD, OLD, LOCAL };
+
+
+    /**
      * @brief Records the state of the fields in the algorithm as the algroithm is executed
      *
      * @tparam Architectures The architectures that the algorithm is run on
      */
     template<typename... Architectures>
     struct AlgorithmState {
-        enum class State { GOOD, OLD, LOCAL };
 
         /**
          * @brief Maps registration IDs to the field states
          */
-        typedef std::map<long, State> FieldStates;
+        typedef std::map<long, AlgorithmFieldState> FieldStates;
+        
         std::array<FieldStates, sizeof...(Architectures)> fieldStates;
     };
+
+    template<typename... Architectures>
+    struct ArchitectureIndexHelper;
+
+    template<typename Architecture, typename... Rest>
+    struct ArchitectureIndexHelper<Architecture, Rest...> {
+        static size_t getArchitectureIndex(const std::string &id) {
+            return (id == Architecture::id) ? 0 :
+                1 + ArchitectureIndexHelper<Rest...>::getArchitectureIndex(id);
+        }
+    };
+
+    template<>
+    struct ArchitectureIndexHelper<> {
+        static size_t getArchitectureIndex(const std::string &) { return 0; }
+    };
+
+    // Return the index of the architecture in the template parameter pack based on the ID string
+    template<typename... Architectures>
+    size_t getArchitectureIndex(const std::string &id) {
+        return ArchitectureIndexHelper<Architectures...>::getArchitectureIndex(id);
+    }
   }  // namespace internal
 
   //=================================================================
@@ -371,11 +433,55 @@ namespace schnek::computation {
   }
 
   template<typename... Architectures>
+  bool Algorithm<Architectures...>::findGoodFieldAndCopy(
+      std::list<internal::pAlgorithmAction> &actions,
+      internal::AlgorithmState<Architectures...> &state,
+      long inputId
+  ) {
+    using namespace internal;
+    for (size_t i = 0; i < sizeof...(Architectures); i++) {
+      auto states = state.fieldStates[i];
+      auto fieldState = states.find(inputId);
+      if (fieldState != states.end() && fieldState->second == AlgorithmFieldState::GOOD) {
+        // Copy the field from the architecture where it is in the GOOD state
+        // If the field is in the LOCAL state on all architectures, copy the field from the architecture where it is in
+        // the LOCAL state
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  template<typename... Architectures>
   std::list<internal::pAlgorithmAction> Algorithm<Architectures...>::makeActions() {
-    std::list<internal::pAlgorithmAction> actions;
-    internal::AlgorithmState<Architectures...> state;
-    for (auto &step : steps) {
-      // check peconditions of the step; the required registrations must be present and in the GOOD state
+    using namespace internal;
+    
+    std::list<pAlgorithmAction> actions;
+    AlgorithmState<Architectures...> state;
+    for (auto step : steps) {
+      for (long inputId: step->getInputIds()) {
+        size_t architectureIndex 
+          = getArchitectureIndex<Architectures...>(step->getArchitectureName());
+
+        AlgorithmFieldState fieldState = state.fieldStates[architectureIndex][inputId];
+        // If the field is not GOOD on the achitecture, copy the field from another architecture
+        if (fieldState != AlgorithmFieldState::GOOD) {
+          // Try to find an architecture where the field is in the GOOD state
+          findGoodFieldAndCopy(actions, state, inputId) || false;
+
+          // If the field is not GOOD anywhere, find an architecture where the field is in the LOCAL state
+          // then exchange the boundary cells to make the field GOOD
+
+          // Copy the field from another architecture
+          // If the field is in the OLD state on all architectures, the algorithm is invalid
+        }
+        // if not, copy the field from the architecture where it is in the GOOD state
+        // if the field is in the LOCAL state on all architectures, copy the field from the architecture where it is in
+        // the LOCAL state
+      }
+
+      // check preconditions of the step; the required registrations must be present and in the GOOD state
       // on at least one architecture
 
       // create the necessary actions that copy data between architectures and/or update boundary cells

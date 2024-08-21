@@ -31,18 +31,27 @@
 
 #include <type_traits>
 #include <utility>
+#include <string>
 
 #include "../../grid/gridstorage/grid-storage-concept.hpp"
 
 namespace schnek::computation::concepts {
 
   namespace internal::architecture {
+
+    // Check if Architecture has a GridStorageType member
     template<typename, typename = std::void_t<>>
     struct has_grid_storage_type : std::false_type {};
 
     template<typename T>
     struct has_grid_storage_type<T, std::void_t<typename T::template GridStorageType<int, 1>>> : std::true_type {};
 
+    // Check if Architecture has a string ID
+    template<typename, typename = std::void_t<>>
+    struct has_id_string : std::false_type {};
+
+    template<typename T>
+    struct has_id_string<T, std::void_t<decltype(T::id)>> : std::is_same<decltype(T::id), std::string> {};
   }  // namespace internal::architecture
 
   /**
@@ -53,25 +62,11 @@ namespace schnek::computation::concepts {
   template<typename Architecture>
   struct ArchitectureConcept {
       static constexpr bool has_grid_storage_type = internal::architecture::has_grid_storage_type<Architecture>::value;
-      // static constexpr bool grid_storage_type_meets_concept = schnek::concepts::GridStorageConcept<typename
-      // Architecture::GridStorageType>::value;
 
       static_assert(has_grid_storage_type, "Architecture must have a GridStorageType member");
       // static_assert(grid_storage_type_meets_concept, "Architecture's GridStorageType must meet GridStorageConcept");
       static constexpr bool value = has_grid_storage_type;
   };
-
-  // // Helper metafunction to perform the check on all architectures
-  // template <typename... Architectures>
-  // struct check_all_grid_storage_concepts;
-
-  // template <>
-  // struct check_all_grid_storage_concepts<> : std::true_type {};
-
-  // template <typename First, typename... Rest>
-  // struct check_all_grid_storage_concepts<First, Rest...>
-  //     : std::integral_constant<bool, ArchitectureConcept<First>::value &&
-  //     check_all_grid_storage_concepts<Rest...>::value> {};
 
 }  // namespace schnek::computation::concepts
 
