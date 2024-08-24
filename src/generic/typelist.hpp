@@ -46,9 +46,7 @@ namespace schnek::generic {
         typedef T type;
         static constexpr long value = 1;
     };
-  }  // namespace internal
-
-  namespace internal {
+    
     template<template<typename T> typename mapper, typename TypeListType, typename... InputTypes>
     struct TypeListMapper {};
 
@@ -98,6 +96,9 @@ namespace schnek::generic {
 
       template<template<typename T> typename conditional>
       using filter = typename internal::TypeListFilter<conditional, TypeList<>, Types...>::type;
+
+      template<typename T>
+      using contains = std::disjunction<std::is_same<T, Types>...>;
 
       template<template<typename... T> typename Dest>
       using apply = Dest<Types...>;
