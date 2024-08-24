@@ -15,11 +15,26 @@
 BOOST_AUTO_TEST_SUITE( computation )
 BOOST_AUTO_TEST_SUITE( algorithm )
 
+struct TestArchitecture;
+struct TestArchitecture2;
+
 struct TestArchitecture {
     template<typename T, size_t rank>
     using GridStorageType = schnek::SingleArrayGridStorage<T, rank>;
 
     static const std::string id;
+    
+    typedef schnek::generic::TypeList<TestArchitecture2> AllowedCopySources;
+};
+
+struct TestArchitecture2 {
+    template<typename T, size_t rank>
+    using GridStorageType = schnek::SingleArrayGridStorage<T, rank>;
+
+    static const std::string id;
+
+    typedef TestArchitecture PreferredCopySource;
+    typedef schnek::generic::TypeList<TestArchitecture> AllowedCopySources;
 };
 
 const std::string TestArchitecture::id{"TestArchitecture"};

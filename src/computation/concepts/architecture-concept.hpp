@@ -34,6 +34,7 @@
 #include <string>
 
 #include "../../grid/gridstorage/grid-storage-concept.hpp"
+#include "../../generic/concept/typelist-concept.hpp"
 
 namespace schnek::computation::concepts {
 
@@ -51,7 +52,22 @@ namespace schnek::computation::concepts {
     struct has_id_string : std::false_type {};
 
     template<typename T>
-    struct has_id_string<T, std::void_t<decltype(T::id)>> : std::is_same<decltype(T::id), std::string> {};
+    struct has_id_string<T, std::void_t<decltype(T::id)>> : std::is_same<decltype(T::id), const std::string> {};
+
+    // Check is Architecture has a PreferredCopySource member
+    template<typename, typename = std::void_t<>>
+    struct has_preferred_copy_source : std::false_type {};
+
+    template<typename T>
+    struct has_preferred_copy_source<T, std::void_t<typename T::PreferredCopySource>> : std::true_type {};
+
+    // Check if Architecture has an AllowedCopySources type list
+    template<typename, typename = std::void_t<>>
+    struct has_allowed_copy_sources : std::false_type {};
+
+    template<typename T>
+    struct has_allowed_copy_sources<T, std::void_t<typename T::AllowedCopySources>> 
+      : schnek::generic::concepts::is_typelist<typename T::AllowedCopySources> {};
   }  // namespace internal::architecture
 
   /**
@@ -62,9 +78,16 @@ namespace schnek::computation::concepts {
   template<typename Architecture>
   struct ArchitectureConcept {
       static constexpr bool has_grid_storage_type = internal::architecture::has_grid_storage_type<Architecture>::value;
-
       static_assert(has_grid_storage_type, "Architecture must have a GridStorageType member");
-      // static_assert(grid_storage_type_meets_concept, "Architecture's GridStorageType must meet GridStorageConcept");
+
+      static constexpr bool has_id_string = internal::architecture::has_id_string<Architecture>::value;
+      static_assert(has_id_string, "Architecture must have a string ID");
+
+      static constexpr bool has_preferred_copy_source = internal::architecture::has_preferred_copy_source<Architecture>::value;
+
+      static constexpr bool has_allowed_copy_sources = internal::architecture::has_allowed_copy_sources<Architecture>::value;
+      static_assert(has_allowed_copy_sources, "Architecture must have an AllowedCopySources type list");
+
       static constexpr bool value = has_grid_storage_type;
   };
 
