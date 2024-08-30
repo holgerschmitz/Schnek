@@ -17,6 +17,7 @@ BOOST_AUTO_TEST_SUITE( algorithm )
 
 struct TestArchitecture;
 struct TestArchitecture2;
+struct TestArchitecture3;
 
 struct TestArchitecture {
     template<typename T, size_t rank>
@@ -37,7 +38,19 @@ struct TestArchitecture2 {
     typedef schnek::generic::TypeList<TestArchitecture> AllowedCopySources;
 };
 
+struct TestArchitecture3 {
+    template<typename T, size_t rank>
+    using GridStorageType = schnek::SingleArrayGridStorage<T, rank>;
+
+    static const std::string id;
+
+    typedef TestArchitecture PreferredCopySource;
+    typedef schnek::generic::TypeList<TestArchitecture, TestArchitecture2> AllowedCopySources;
+};
+
 const std::string TestArchitecture::id{"TestArchitecture"};
+const std::string TestArchitecture2::id{"TestArchitecture2"};
+const std::string TestArchitecture3::id{"TestArchitecture3"};
 
 struct TestFunction {
   double operator()(double x) {
@@ -104,6 +117,16 @@ BOOST_AUTO_TEST_CASE( registerFieldFactory )
   auto actions = algorithm.makeActions();
 }
 
+BOOST_AUTO_TEST_CASE( architecture )
+{
+  schnek::computation::Architecture<TestArchitecture3> architecture;
+  BOOST_CHECK_EQUAL(architecture.getId(), "TestArchitecture3");
+  BOOST_CHECK_EQUAL(architecture.getPreferredCopySource(), "TestArchitecture");
+  auto allowedCopySources = architecture.getAllowedCopySources();
+  BOOST_CHECK_EQUAL(allowedCopySources.size(), 2);
+  BOOST_CHECK_EQUAL(allowedCopySources[0], "TestArchitecture");
+  BOOST_CHECK_EQUAL(allowedCopySources[1], "TestArchitecture2");
+}
 
 
 BOOST_AUTO_TEST_SUITE_END()

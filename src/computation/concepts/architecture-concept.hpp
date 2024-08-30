@@ -75,20 +75,20 @@ namespace schnek::computation::concepts {
    *
    * @tparam Architecture
    */
-  template<typename Architecture>
+  template<typename ArchitectureTraits>
   struct ArchitectureConcept {
-      static constexpr bool has_grid_storage_type = internal::architecture::has_grid_storage_type<Architecture>::value;
-      static_assert(has_grid_storage_type, "Architecture must have a GridStorageType member");
+      static constexpr bool has_grid_storage_type = internal::architecture::has_grid_storage_type<ArchitectureTraits>::value;
+      static_assert(has_grid_storage_type, "ArchitectureTraits must have a GridStorageType member");
 
-      static constexpr bool has_id_string = internal::architecture::has_id_string<Architecture>::value;
-      static_assert(has_id_string, "Architecture must have a string ID");
+      static constexpr bool has_id_string = internal::architecture::has_id_string<ArchitectureTraits>::value;
+      static_assert(has_id_string, "ArchitectureTraits must have a string ID");
 
-      static constexpr bool has_preferred_copy_source = internal::architecture::has_preferred_copy_source<Architecture>::value;
+      static constexpr bool has_preferred_copy_source = internal::architecture::has_preferred_copy_source<ArchitectureTraits>::value;
 
-      static constexpr bool has_allowed_copy_sources = internal::architecture::has_allowed_copy_sources<Architecture>::value;
-      static_assert(has_allowed_copy_sources, "Architecture must have an AllowedCopySources type list");
+      static constexpr bool has_allowed_copy_sources = internal::architecture::has_allowed_copy_sources<ArchitectureTraits>::value;
+      static_assert(has_allowed_copy_sources, "ArchitectureTraits must have an AllowedCopySources type list");
 
-      static constexpr bool value = has_grid_storage_type;
+      static constexpr bool value = has_grid_storage_type && has_id_string && has_allowed_copy_sources;
   };
 
 }  // namespace schnek::computation::concepts

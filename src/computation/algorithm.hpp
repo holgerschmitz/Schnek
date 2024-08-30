@@ -40,6 +40,7 @@
 #include "../util/unique.hpp"
 #include "architecture.hpp"
 #include "concepts/architecture-concept.hpp"
+#include "internal/algorithm-action.hpp"
 
 // Work in progress
 // This file is brainstorming for a new way to implement algorithms in Schnek.
@@ -116,12 +117,6 @@ namespace schnek::computation {
         RegistrationWrapperImpl(Registration<FieldType> registration) : registration(registration) {}
     };
 
-    class AlgorithmAction {
-      public:
-        virtual void execute() = 0;
-    };
-
-    typedef std::unique_ptr<AlgorithmAction> pAlgorithmAction;
 
     template<typename... Architectures>
     struct AlgorithmState;
