@@ -127,8 +127,8 @@ namespace schnek::computation {
         "Architectures must meet ArchitecturesConcept requirements"
     );
 
-    std::tuple<
-      std::vector< typename FieldType::type<typename Architectures::GridStorageType> >...
+    std::vector<
+        std::tuple< typename FieldType::type<typename Architectures::GridStorageType>... >
     > fields;
   };
 
