@@ -31,6 +31,10 @@
 
 #include "../grid/field.hpp"
 #include "../grid/grid.hpp"
+#include "concepts/field-type-concept.hpp"
+#include "concepts/architecture-concept.hpp"
+
+#include <string>
 
 namespace schnek::computation {
 
@@ -41,7 +45,13 @@ namespace schnek::computation {
   struct FieldTypeWrapper {
       template<template<typename, size_t> typename StorageType>
       using type = Field<T, rank, CheckingPolicy, StorageType>;
+
+      static std::string id;
   };
+
+  template<typename T, size_t rank, template<size_t> class CheckingPolicy>
+  std::string FieldTypeWrapper<T, rank, CheckingPolicy>::id 
+    = "Field<" + std::string(typeid(T).name()) + "," + std::to_string(rank) + ">";
 
   /**
    * Used as the FieldType for Grids that can be used on multiple architectures
@@ -50,7 +60,13 @@ namespace schnek::computation {
   struct GridTypeWrapper {
       template<template<typename, size_t> typename StorageType>
       using type = Grid<T, rank, CheckingPolicy, StorageType>;
+
+      static std::string id;
   };
+
+  template<typename T, size_t rank, template<size_t> class CheckingPolicy>
+  std::string GridTypeWrapper<T, rank, CheckingPolicy>::id 
+    = "Grid<" + std::string(typeid(T).name()) + "," + std::to_string(rank) + ">";
 
   struct SimpleHostArchitecture {
       template<typename T, size_t rank>
@@ -64,6 +80,10 @@ namespace schnek::computation {
    */
   template<class FieldType>
   struct MultiArchitectureFieldFactory {
+      static_assert(concepts::FieldTypeConcept<FieldType>::value,
+          "FieldType must meet FieldTypeConcept requirements"
+      );
+
       template<typename Architecture>
       typename FieldType::type<Architecture::template GridStorageType> create(
           const typename FieldType::type<Architecture::template GridStorageType>::RangeType &size,
@@ -90,6 +110,28 @@ namespace schnek::computation {
         return FieldType(size, domain, stagger, ghostCells);
       }
   };
+
+
+  template<typename ...FieldTypes>
+  struct FieldTypeCollection {
+      static constexpr size_t size = sizeof...(FieldTypes);
+  };
+
+  template<typename FieldType, typename ...Architectures>
+  struct FieldStore {
+    static_assert(concepts::FieldTypeConcept<FieldType>::value,
+        "FieldType must meet FieldTypeConcept requirements"
+    );
+    static_assert(
+        (concepts::ArchitectureConcept<Architectures>::value && ...),
+        "Architectures must meet ArchitecturesConcept requirements"
+    );
+
+    std::tuple<
+      std::vector< typename FieldType::type<typename Architectures::GridStorageType> >...
+    > fields;
+  };
+
 
   // template<
   //     typename T,

@@ -26,6 +26,9 @@
 #ifndef SCHNEK_COMPUTATION_INTERNAL_ALGORITHM_ACTION_HPP_
 #define SCHNEK_COMPUTATION_INTERNAL_ALGORITHM_ACTION_HPP_
 
+#include "../concepts/field-type-concept.hpp"
+#include "../concepts/architecture-concept.hpp"
+
 #include <memory>
 
 namespace schnek::computation::internal {
@@ -36,6 +39,21 @@ namespace schnek::computation::internal {
     };
 
     typedef std::unique_ptr<AlgorithmAction> pAlgorithmAction;
+
+    // template<typename FieldType, typename ArchitectureFrom, typename ArchitectureTo>
+    // class AlgorithmCopyAction : public AlgorithmAction {
+    //     static_assert(schnek::computation::concepts::FieldTypeConcept<FieldType>::value,
+    //                   "FieldType must satisfy FieldTypeConcept");
+    //     static_assert(schnek::computation::concepts::ArchitectureConcept<ArchitectureFrom>::value,
+    //                   "ArchitectureFrom must satisfy ArchitectureConcept");
+    //     static_assert(schnek::computation::concepts::ArchitectureConcept<ArchitectureTo>::value,
+    //                   "ArchitectureTo must satisfy ArchitectureConcept");
+    //   public:
+
+    //     void execute() override {
+    //       to_.copyFrom(from_, field_);
+    //     }
+    // }
 }
 
 #endif  // SCHNEK_COMPUTATION_INTERNAL_ALGORITHM_ACTION_HPP_

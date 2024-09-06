@@ -363,6 +363,9 @@ namespace schnek::computation {
          */
         typedef std::map<long, AlgorithmFieldState> FieldStates;
         
+        /**
+         * @brief The state of the fields on each architecture
+         */
         std::array<FieldStates, sizeof...(Architectures)> fieldStates;
     };
 
