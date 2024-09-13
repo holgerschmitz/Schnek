@@ -187,10 +187,10 @@ namespace schnek {
       static constexpr size_t rank = Rank;
 
       /// The grid index type
-      typedef Array<size_t, Rank> IndexType;
+      typedef Array<int, Rank> IndexType;
 
       /// The grid range type
-      typedef Range<size_t, Rank> RangeType;
+      typedef Range<int, Rank> RangeType;
 
     protected:
       struct SizeInfo {

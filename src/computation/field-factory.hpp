@@ -35,6 +35,7 @@
 #include "concepts/architecture-concept.hpp"
 
 #include <string>
+#include <optional>
 
 namespace schnek::computation {
 
@@ -43,7 +44,9 @@ namespace schnek::computation {
    */
   template<typename T, size_t rank, template<size_t> class CheckingPolicy = GridNoArgCheck>
   struct FieldTypeWrapper {
-      template<template<typename, size_t> typename StorageType>
+      typedef T value_type;
+      static constexpr size_t r = rank;
+      template<template<typename, size_t> class StorageType>
       using type = Field<T, rank, CheckingPolicy, StorageType>;
 
       static std::string id;
@@ -58,7 +61,10 @@ namespace schnek::computation {
    */
   template<typename T, size_t rank, template<size_t> class CheckingPolicy = GridNoArgCheck>
   struct GridTypeWrapper {
-      template<template<typename, size_t> typename StorageType>
+      typedef T value_type;
+      static constexpr size_t r = rank;
+
+      template<template<typename, size_t> class StorageType>
       using type = Grid<T, rank, CheckingPolicy, StorageType>;
 
       static std::string id;
@@ -117,18 +123,12 @@ namespace schnek::computation {
       static constexpr size_t size = sizeof...(FieldTypes);
   };
 
-  template<typename FieldType, typename ...Architectures>
+  template<typename FTW, typename ...Architectures>
   struct FieldStore {
-    static_assert(concepts::FieldTypeConcept<FieldType>::value,
-        "FieldType must meet FieldTypeConcept requirements"
-    );
-    static_assert(
-        (concepts::ArchitectureConcept<Architectures>::value && ...),
-        "Architectures must meet ArchitecturesConcept requirements"
-    );
-
     std::vector<
-        std::tuple< typename FieldType::type<typename Architectures::GridStorageType>... >
+        std::tuple<
+            std::optional<typename FTW::template type<Architectures::template GridStorageType>>...
+        >
     > fields;
   };
 

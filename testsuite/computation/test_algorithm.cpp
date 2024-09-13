@@ -30,7 +30,7 @@ struct TestArchitecture {
 
 struct TestArchitecture2 {
     template<typename T, size_t rank>
-    using GridStorageType = schnek::SingleArrayGridStorage<T, rank>;
+    using GridStorageType = schnek::SingleArrayGridStorageFortran<T, rank>;
 
     static const std::string id;
 
@@ -40,7 +40,7 @@ struct TestArchitecture2 {
 
 struct TestArchitecture3 {
     template<typename T, size_t rank>
-    using GridStorageType = schnek::SingleArrayGridStorage<T, rank>;
+    using GridStorageType = schnek::LazyArrayGridStorage<T, rank>;
 
     static const std::string id;
 
@@ -128,6 +128,25 @@ BOOST_AUTO_TEST_CASE( architecture )
   BOOST_CHECK_EQUAL(allowedCopySources[1], "TestArchitecture2");
 }
 
+BOOST_AUTO_TEST_CASE( field_store )
+{
+  typedef schnek::computation::FieldStore<
+    schnek::computation::GridTypeWrapper<double, 2>,
+    TestArchitecture,
+    TestArchitecture2,
+    TestArchitecture3
+  > Grid2dStorage;
+
+  Grid2dStorage store;
+  schnek::Array<int, 2> lo(0, 10);
+  schnek::Array<int, 2> hi(100, 150);
+  store.fields.push_back(std::make_tuple(
+    schnek::Grid<double, 2, schnek::GridNoArgCheck, TestArchitecture::GridStorageType>(lo, hi),
+    std::optional<schnek::Grid<double, 2, schnek::GridNoArgCheck, TestArchitecture2::GridStorageType>>(),
+    schnek::Grid<double, 2, schnek::GridNoArgCheck, TestArchitecture3::GridStorageType>(lo, hi)
+  ));
+
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()
