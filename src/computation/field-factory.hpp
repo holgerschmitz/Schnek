@@ -123,6 +123,20 @@ namespace schnek::computation {
       static constexpr size_t size = sizeof...(FieldTypes);
   };
 
+  /**
+   * @brief A store for fields that can be used on multiple architectures
+   * 
+   * Each instance of this class stores one field, e.g. electric field Ex or density rho.
+   * A vector of Grids or Fields is stored, one for each architecture, to allow for
+   * non-rectangular domains. The number and extents of the fields are controlled by the
+   * DomainDecomposition.
+   * 
+   * For each rectangular domain, the store contains an optional Grid or Field for each architecture.
+   * The Grid or Field is only created on an architecture if it is needed.
+   * 
+   * @tparam FTW A Field type wrapper, e.g. {@link GridTypeWrapper} or {@link FieldTypeWrapper}
+   * @tparam Architectures A list of architectures
+   */
   template<typename FTW, typename ...Architectures>
   struct FieldStore {
     std::vector<
