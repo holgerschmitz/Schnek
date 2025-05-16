@@ -7,8 +7,8 @@
 
 #include "utility.hpp"
 
-#include <grid/array.hpp>
-#include <grid/arrayexpression.hpp>
+#include <../src/grid/array.hpp>
+#include <../src/grid/arrayexpression.hpp>
 #include <iostream>
 #include <vector>
 #include <cmath>

@@ -19,9 +19,6 @@ find_package(HDF5)
 find_package(Kokkos PATHS ${KOKKOS_DIR})
 find_package(Boost REQUIRED)
 
-# set(BOOST_ROOT /home/terencel411/spack/opt/spack/linux-ubuntu22.04-skylake/gcc-12.3.0/boost-1.82.0-3zvrwkhbsxoaivfmmy2gonv4qwdn36fb/include)
-# find_package(Boost REQUIRED PATHS ${BOOST_ROOT})
-
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
@@ -50,14 +47,13 @@ add_library(schnek SHARED
     src/variables/variables.cpp
 )
 
-# Add Boost include directory explicitly
 target_include_directories(schnek PUBLIC ${MPI_INCLUDE_PATH})
 target_include_directories(schnek PUBLIC ${HDF5_INCLUDE_DIRS})
 target_include_directories(schnek PUBLIC ${Boost_INCLUDE_DIRS})
 
 target_link_libraries(schnek PUBLIC ${MPI_C_LIBRARIES})
 target_link_libraries(schnek PUBLIC ${HDF5_LIBRARIES})
-target_link_libraries(schnek PUBLIC ${Boost_LIBRARIES})
+
 
 if (Kokkos_FOUND)
   target_include_directories(schnek PUBLIC ${Kokkos_INCLUDE_DIR})
@@ -84,6 +80,7 @@ set(lib_dest_root "lib")
 set(lib_dest "${lib_dest_root}/schnek")
 
 configure_file(src/config.hpp.in src/config.hpp)
+
 
 install(TARGETS schnek 
   EXPORT schnek 
@@ -132,11 +129,8 @@ endif()
 target_link_libraries(schnek_tests schnek)
 target_link_libraries(schnek_tests ${MPI_C_LIBRARIES})
 target_link_libraries(schnek_tests ${HDF5_LIBRARIES})
-target_link_libraries(schnek_tests ${Boost_LIBRARIES})
 
 target_compile_features(schnek_tests PRIVATE cxx_std_14)
 
 add_test(NAME test COMMAND schnek_tests)
 enable_testing()
-
-message(STATUS "Boost include directory: ${Boost_INCLUDE_DIRS}")
