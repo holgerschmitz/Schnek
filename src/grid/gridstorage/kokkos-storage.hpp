@@ -100,6 +100,11 @@ namespace schnek {
       KokkosGridStorage(const KokkosGridStorage &);
 
       /**
+       * @brief Explicitly defaulting the copy assignment operator
+       */
+      KokkosGridStorage& operator=(const KokkosGridStorage&) = default;
+
+      /**
        * @brief Construct with a given size
        *
        * @param lo the lowest coordinate in the grid (inclusive)

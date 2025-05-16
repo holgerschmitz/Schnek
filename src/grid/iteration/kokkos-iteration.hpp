@@ -63,7 +63,7 @@ namespace schnek {
 
         template<typename... Indices>
         SCHNEK_INLINE void operator()(Indices... ind) const {
-          func(typename RangeType::LimitType{ind...});
+          func(typename RangeType::LimitType{static_cast<int>(ind)...});
         }
     };
   }  // namespace internal

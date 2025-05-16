@@ -19,9 +19,13 @@ class KokkosInitialiser
 
     KokkosInitialiser() {
         std::cerr << "KOKKOS INIT\n";
-        Kokkos::InitArguments args;
-        args.num_threads = 0;
-        args.num_numa = 0;
+
+        Kokkos::InitializationSettings args;
+        
+        args.set_num_threads(0);
+        args.set_map_device_id_by("random");    // selects a random device from the available devices
+        // args.set_map_device_id_by("mpi_rank");  // selects a device based on assignment of local mpi ranks
+        
         Kokkos::initialize(args);
     }
 
