@@ -185,15 +185,6 @@ namespace schnek {
        */
       SCHNEK_INLINE void resize(const IndexType &low, const IndexType &high);
 
-      template<typename reduceFunctor>
-      T reduce(reduceFunctor func, T initialValue) const;
-
-      template<typename reduceFunctor, typename GridType>
-      T reduceGridParams(reduceFunctor func, const GridType& grid1, T initialValue) const;
-
-      template<typename mergeFunctor, typename GridType>
-      void mergeGrids(mergeFunctor func, GridType& grid1, const GridType& grid3) const;
-
       KokkosGridStorage<T, rank_t, ViewProperties...> &operator=(const T &val);
       
       void fill(const T &val);
@@ -347,112 +338,6 @@ namespace schnek {
   SCHNEK_INLINE ptrdiff_t KokkosGridStorage<T, rank_t, ViewProperties...>::stride(size_t dim) const {
     return this->view.stride(dim);
   }
-
-  // template<typename T, size_t rank, template<size_t> class CheckingPolicy = GridAssertCheck>
-  // void fill_kokkos_grid(Grid<T, rank, CheckingPolicy, KokkosDefaultGridStorage>& grid, const T& value) {
-  //     auto& storage = static_cast<KokkosDefaultGridStorage<T, rank>&>(grid);
-  //     storage.fill(value);
-  // }
-
-  // template<typename T, size_t rank_t, class... ViewProperties>
-  // KokkosGridStorage<T, rank_t, ViewProperties...>& 
-  // KokkosGridStorage<T, rank_t, ViewProperties...>::operator=(const T& val) {
-  //     Kokkos::parallel_for("fill_grid", 
-  //         Kokkos::MDRangePolicy<Kokkos::Rank<rank_t>>(IndexType(0), dims),
-  //         // [=] KOKKOS_LAMBDA (const int i, const int j) {
-  //         [&](int i, int j) {
-  //             IndexType pos;
-  //             pos[0] = i;
-  //             pos[1] = j;
-  //             this->getFromView(pos) = val;
-  //         }
-  //     );
-  //     return *this;
-  // }
-  
-  template<typename T, size_t rank_t, class... ViewProperties>
-  template<typename reduceFunctor>
-  T KokkosGridStorage<T, rank_t, ViewProperties...>::reduce(reduceFunctor func, T initialValue) const {
-      T result = initialValue;
-
-      // std::vector<int> begDims(rank_t, 0);
-      // std::vector<int> endDims(dims[0], dims[rank_t - 1]);
-
-      // handles 1d case
-      if constexpr (rank_t == 1) {
-        Kokkos::parallel_reduce("1d reduce",
-          Kokkos::RangePolicy<>(0, dims[0]),
-          [&](int i, T& value) {
-              IndexType index;
-              index[0] = i + range.getLo(0);
-              value = func(value, get(index));
-          },
-          result
-        );
-        
-      } // handles 2d case
-      else if constexpr (rank_t == 2) {
-        Kokkos::parallel_reduce("2d reduce",
-          Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0}, {dims[0], dims[1]}),
-          [&](int i, int j, T& value) {
-              IndexType index;
-              index[0] = i + range.getLo(0);
-              index[1] = j + range.getLo(1);
-              value = func(value, get(index));
-          },
-          result
-        );
-      }
-    
-      return result;
-  }
-
-  template<typename T, size_t rank_t, class... ViewProperties>
-  template<typename reduceFunctor, typename GridType>
-  T KokkosGridStorage<T, rank_t, ViewProperties...>::reduceGridParams(
-    reduceFunctor func, 
-    const GridType& grid1, 
-    T initialValue) const {
-
-      T result = initialValue;
-
-      // check if grid has same dims?
-
-      // handles 1d case
-      if constexpr (rank_t == 1) {
-        Kokkos::parallel_reduce("1d reduce with grid params",
-          Kokkos::RangePolicy<>(0, dims[0]),
-          [&](int i, T& value) {
-              IndexType index;
-              index[0] = i + range.getLo(0);
-              value = func(value, func(get(index), grid1.get(index)));
-          },
-          result
-        );
-      }
-
-      // else nD cases
-    
-      return result;
-  }
-
-  template<typename T, size_t rank_t, class... ViewProperties>
-  template<typename mergeFunctor, typename GridType>
-  void KokkosGridStorage<T, rank_t, ViewProperties...>::mergeGrids(
-    mergeFunctor func, 
-    GridType& grid1, 
-    const GridType& grid3) const {
-
-      Kokkos::parallel_for("1d merge grids",
-        Kokkos::RangePolicy<>(0, dims[0]),
-        [&](int i) {
-            IndexType index;
-            index[0] = i + range.getLo(0);
-            // this->get(index) = func(grid2.get(index), grid3.get(index));
-            grid1[index] = func(get(index), grid3.get(index));
-        }
-      );
-  }
   
   template<typename T, size_t rank_t, class... ViewProperties>
   void KokkosGridStorage<T, rank_t, ViewProperties...>::fill(const T& val) {
@@ -479,9 +364,6 @@ namespace schnek {
       Kokkos::fence(); // Ensure operations complete
   }
 
-  // CHECK:
-  // parallel_transform_reduce - can perform some value transformation before applying reduction
-
   template<typename T, size_t rank_t, class... ViewProperties>
   template<typename FunctionType>
   void KokkosGridStorage<T, rank_t, ViewProperties...>::parallel_func(
@@ -490,6 +372,7 @@ namespace schnek {
       FunctionType func) const {
       
       if constexpr (rank_t == 2) {
+        // std::cout << "parallel_func is being called" << std::endl;
           Kokkos::parallel_for("kokkos_parallel_2d",
               Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
                   {low[0], low[1]}, 
@@ -518,6 +401,7 @@ namespace schnek {
         FunctionType func) {
         
         if constexpr (GridType::Rank == 2) {
+          // std::cout << "parallel_kokkos_parallel_for is being called" << std::endl;
             Kokkos::parallel_for("parallel_operation",
                 Kokkos::MDRangePolicy<Kokkos::Rank<2>>(
                     {low[0], low[1]}, 
@@ -543,6 +427,7 @@ namespace schnek {
         using RangeType = schnek::Range<int, GridType::Rank, schnek::ArrayNoArgCheck>;
         RangeType range(low, high);
         
+        // std::cout << "parallel_kokkos_iteration is being called" << std::endl;
         schnek::RangeKokkosIterationPolicy<GridType::Rank>::forEach(range, func);
 
         // if constexpr (GridType::Rank == 1) {
@@ -553,6 +438,42 @@ namespace schnek {
         // }
 
         Kokkos::fence();   
+    }
+
+    template<typename GridType, typename FunctionType>
+    void parallel_kokkos_parallel_for_v1(
+        const typename GridType::IndexType& low,
+        const typename GridType::IndexType& high,
+        FunctionType func) {
+        
+        if constexpr (GridType::Rank == 2) {
+            int ni = high[0] - low[0] + 1;
+            int nj = high[1] - low[1] + 1;
+            
+            // int team_size = 32; vector_length = 32;
+            
+            // Kokkos::TeamPolicy<> policy(ni, team_size, vector_length);
+
+            Kokkos::TeamPolicy<> policy(ni, Kokkos::AUTO); // calc team size automaticlaly
+            
+            Kokkos::parallel_for("parallel_hierarchical", policy, 
+                SCHNEK_DEVICE_LAMBDA (const Kokkos::TeamPolicy<>::member_type& team_member) {
+                    const int i = team_member.league_rank() + low[0];
+                    
+                    Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, nj), 
+                        SCHNEK_DEVICE_LAMBDA (const int j_local) {
+                            const int j = j_local + low[1];
+                            
+                            typename GridType::IndexType pos;
+                            pos[0] = i;
+                            pos[1] = j;
+                            func(pos);
+                        }
+                    );
+                }
+            );
+            Kokkos::fence();
+        }
     }
   } // namespace kokkos_utils
 
