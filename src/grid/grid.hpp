@@ -302,7 +302,7 @@ namespace schnek {
       //    IndexedGrid<GridType, TYPELIST_2(Arg0, Arg1) > operator()(
       //      const Arg0 &i0, const Arg1 &i1
       //    );
-
+      
       /** assign another grid */
       GridType& operator=(const T& val) {
         BaseType::operator=(val);

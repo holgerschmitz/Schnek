@@ -146,7 +146,7 @@ namespace schnek {
        */
       SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>
           &operator=(const SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy> &) = default;
-
+      
       /**
        * @brief Get the lvalue at a given grid index
        *
@@ -179,6 +179,11 @@ namespace schnek {
        * @brief returns the stride of the specified dimension
        */
       ptrdiff_t stride(size_t dim) const;
+
+      template<typename FunctionType>
+      void parallel_func(const IndexType& low, const IndexType& high, FunctionType func) const;
+
+      SCHNEK_INLINE void set(const IndexType &index, const T &value);
 
     private:
       /**
@@ -293,6 +298,36 @@ namespace schnek {
   //=============== SingleArrayGridCOrderStorageBase ================
   //=================================================================
 
+
+  template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
+  template<typename FunctionType>
+  SCHNEK_INLINE void SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::parallel_func(const IndexType& low, const IndexType& high, FunctionType func) const {
+      if constexpr (rank == 1) {
+          for (int i = low[0]; i <= high[0]; ++i) {
+              IndexType pos;
+              pos[0] = i;
+              func(pos);
+          }
+      }
+      else if constexpr (rank == 2) {
+          for (int i = low[0]; i <= high[0]; ++i) {
+              for (int j = low[1]; j <= high[1]; ++j) {
+                  IndexType pos;
+                  pos[0] = i;
+                  pos[1] = j;
+                  func(pos);
+              }
+          }
+      }
+  }
+  
+  template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
+  SCHNEK_INLINE void SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::set(
+    const IndexType &index, 
+    const T &value) {
+      this->get(index) = value;
+    }
+      
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
   SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::SingleArrayGridCOrderStorageBase()
       : BaseType(), data_fast(NULL) {

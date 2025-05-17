@@ -141,6 +141,8 @@ namespace schnek {
        */
       const DomainType &getDomain() { return domain; }
 
+      int getghostCells() { return ghostCells; }
+
       /**
        * @brief Assignment operator
        */

@@ -30,6 +30,8 @@
 #include "arrayexpression.hpp"
 #include "range.hpp"
 
+#include "gridstorage/kokkos-storage.hpp"
+
 namespace schnek {
 
   namespace internal {
@@ -224,14 +226,18 @@ namespace schnek {
     template<typename T, size_t rank, class CheckingPolicy, class StoragePolicy>
     SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>&
     GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator=(const T& val) {
-      typedef typename StoragePolicy::storage_iterator Iterator;
-      Iterator end = this->end();
-      Iterator dest = this->begin();
-      while (dest != end) {
-        *dest = val;
-        ++dest;
+      if constexpr (std::is_base_of_v<KokkosGridStorage<T, rank>, StoragePolicy> || 
+                    std::is_same_v<StoragePolicy, KokkosGridStorage<T, rank>>) {
+        static_cast<KokkosGridStorage<T, rank>&>(*this).fill(val);
+      } else {
+          typedef typename StoragePolicy::storage_iterator Iterator;
+          Iterator end = this->end();
+          Iterator dest = this->begin();
+          while (dest != end) {
+            *dest = val;
+            ++dest;
+        }
       }
-
       return *this;
     }
 
