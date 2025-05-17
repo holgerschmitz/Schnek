@@ -106,7 +106,7 @@ namespace schnek {
        * @brief Explicitly defaulting the copy assignment operator
        */
       KokkosGridStorage& operator=(const KokkosGridStorage&) = default;
-      
+
       /**
        * @brief Construct with a given size
        *
