@@ -302,12 +302,6 @@ namespace schnek {
       //    IndexedGrid<GridType, TYPELIST_2(Arg0, Arg1) > operator()(
       //      const Arg0 &i0, const Arg1 &i1
       //    );
-
-      template<typename reduceFunctor>
-      T reduce(reduceFunctor func, T initialValue) const {
-          return StoragePolicy<T, rank>::reduce(func, initialValue);
-          // return static_cast<const StoragePolicy<T, rank>&>(*this).reduce(func, initialValue);
-      } 
       
       /** assign another grid */
       GridType& operator=(const T& val) {

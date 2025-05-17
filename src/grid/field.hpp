@@ -48,11 +48,6 @@ namespace schnek {
       typedef Field<T, rank, CheckingPolicy, StoragePolicy> FieldType;
       typedef Grid<T, rank, CheckingPolicy, StoragePolicy> BaseType;
 
-      template<typename reduceFunctor>
-        T reduce(reduceFunctor func, T initialValue) const {
-            return StoragePolicy<T, rank>::reduce(func, initialValue);
-        }
-
     private:
       DomainType domain;
       StaggerType stagger;

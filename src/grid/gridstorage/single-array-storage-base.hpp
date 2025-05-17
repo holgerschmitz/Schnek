@@ -180,9 +180,6 @@ namespace schnek {
        */
       ptrdiff_t stride(size_t dim) const;
 
-      template<typename reduceFunctor>
-      T reduce(reduceFunctor func, T initialValue) const;
-
       template<typename FunctionType>
       void parallel_func(const IndexType& low, const IndexType& high, FunctionType func) const;
 
@@ -330,42 +327,6 @@ namespace schnek {
     const T &value) {
       this->get(index) = value;
     }
-
-  // template<typename FunctionType>
-  // void parallel_func(const IndexType& low, const IndexType& high, FunctionType func) const {
-  //     if constexpr (rank == 1) {
-  //         for (int i = low[0]; i <= high[0]; ++i) {
-  //             IndexType pos;
-  //             pos[0] = i;
-  //             func(pos);
-  //         }
-  //     }
-  //     else if constexpr (rank == 2) {
-  //         for (int i = low[0]; i <= high[0]; ++i) {
-  //             for (int j = low[1]; j <= high[1]; ++j) {
-  //                 IndexType pos;
-  //                 pos[0] = i;
-  //                 pos[1] = j;
-  //                 func(pos);
-  //             }
-  //         }
-  //     }
-  // }
-
-  // SCHNEK_INLINE void set(const IndexType &index, const T &value) {
-  //     this->get(index) = value;
-  // }
-
-  template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
-  template<typename reduceFunctor>
-  T SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::reduce(reduceFunctor func, T initialValue) const {
-      T result = initialValue;
-      const T* end = this->data->ptr + this->size;
-      for (const T* p = this->data->ptr; p != end; ++p) {
-          result = func(result, *p);
-      }
-      return result;
-  } 
       
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
   SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::SingleArrayGridCOrderStorageBase()

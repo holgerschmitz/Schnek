@@ -223,27 +223,6 @@ namespace schnek {
       return this->get(this->check(IndexType(i, j, k, l, m, o, p, q, r, s), this->getLo(), this->getHi()));
     }
 
-    // template<typename T, size_t rank, class CheckingPolicy, class StoragePolicy>
-    // SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>&
-    // GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator=(const T& val) {
-    //   typedef typename StoragePolicy::storage_iterator Iterator;
-    //   Iterator end = this->end();
-    //   Iterator dest = this->begin();
-    //   while (dest != end) {
-    //     *dest = val;
-    //     ++dest;
-    //   }
-
-    //   return *this;
-    // }
-
-    // template<typename T, size_t rank, class CheckingPolicy, class StoragePolicy>
-    // SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, KokkosGridStorage<T, rank>>&
-    // GridBase<T, rank, CheckingPolicy, KokkosGridStorage<T, rank>>::operator=(const T& val) {
-    //   static_cast<KokkosGridStorage<T, rank>&>(*this).fill(val);
-    //   return *this;
-    // }
-
     template<typename T, size_t rank, class CheckingPolicy, class StoragePolicy>
     SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>&
     GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator=(const T& val) {
