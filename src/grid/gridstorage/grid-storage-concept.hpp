@@ -27,6 +27,8 @@
 #ifndef SCHNEK_GRID_GRIDSTORAGE_GRID_STORAGE_CONCEPT_HPP_
 #define SCHNEK_GRID_GRIDSTORAGE_GRID_STORAGE_CONCEPT_HPP_
 
+#include "../../generic/is-detected.hpp"
+
 #include <stddef.h>
 
 #include <type_traits>
@@ -34,98 +36,64 @@
 
 namespace schnek {
   namespace concepts {
-    template<typename, typename = void>
-    struct has_value_type : std::false_type {};
+    // Detection templates for typedefs
+    template<typename T>
+    using value_type_t = typename T::value_type;
 
     template<typename T>
-    struct has_value_type<T, std::void_t<typename T::value_type>> : std::true_type {};
-
-    template<typename, typename = void>
-    struct has_rank : std::false_type {};
+    using rank_t = decltype(T::rank);
 
     template<typename T>
-    struct has_rank<T, std::void_t<decltype(T::rank)>> : std::is_same<decltype(T::rank), const size_t> {};
+    struct has_rank : std::conjunction<is_detected<rank_t, T>, std::is_same<detected_t<rank_t, T>, const size_t>> {};
 
     namespace internal::grid_storage {
-      template<typename, typename = void>
-      struct has_index_type : std::false_type {};
+      // Detection templates for typedefs
       template<typename T>
-      struct has_index_type<T, std::void_t<typename T::IndexType>> : std::true_type {};
-
-      template<typename, typename = std::void_t<>>
-      struct has_range_type : std::false_type {};
-      template<typename T>
-      struct has_range_type<T, std::void_t<typename T::RangeType>> : std::true_type {};
-
-      template<typename, typename, typename = void>
-      struct has_method_range : std::false_type {};
-      template<typename T, typename IndexType>
-      struct has_method_range<T, IndexType, std::void_t<decltype(std::declval<T>().range()>> : std::true_type {};
-
-      template<typename, typename, typename = void>
-      struct has_method_get : std::false_type {};
-      template<typename T, typename IndexType>
-      struct has_method_get<
-          T,
-          IndexType,
-          std::void_t<decltype(std::declval<T>().get(std::declval<const IndexType&>()))>> : std::true_type {};
-
-      template<typename, typename, typename = void>
-      struct has_method_resize : std::false_type {};
-      template<typename T, typename IndexType>
-      struct has_method_resize<
-          T,
-          IndexType,
-          std::void_t<
-              decltype(std::declval<T>().resize(std::declval<const IndexType&>(), std::declval<const IndexType&>()))>>
-          : std::true_type {};
-
-      template<typename, typename = void>
-      struct has_method_resize_range : std::false_type {};
+      using index_type_t = typename T::IndexType;
 
       template<typename T>
-      struct has_method_resize_range<
-          T,
-          std::void_t<decltype(std::declval<T>().resize(std::declval<typename T::RangeType>()))>> : std::true_type {};
+      using range_type_t = typename T::RangeType;
+
+      // Detection templates for methods
+      template<typename T>
+      using range_method_t = decltype(std::declval<T>().range());
+
+      template<typename T>
+      using get_method_t = decltype(std::declval<T>().get(std::declval<typename T::IndexType&>()));
+
+      template<typename T>
+      using resize_method_t = decltype(std::declval<T>().resize(std::declval<typename T::IndexType>(), std::declval<typename T::IndexType>()));
+
+      template<typename T>
+      using resize_range_method_t = decltype(std::declval<T>().resize(std::declval<typename T::RangeType>()));
 
       // Optional methods
-      template<typename, typename = void>
-      struct has_method_stride : std::false_type {};
+      template<typename T>
+      using stride_method_t = decltype(std::declval<const T>().stride(std::declval<size_t>()));
 
       template<typename T>
-      struct has_method_stride<T, std::void_t<decltype(std::declval<const T>().stride(std::declval<size_t>()))>>
-          : std::true_type {};
-
-      template<typename, typename = void>
-      struct has_method_get_raw_data : std::false_type {};
-
-      template<typename T>
-      struct has_method_get_raw_data<T, std::void_t<decltype(std::declval<const T>().getRawData())>> : std::true_type {
-      };
-
+      using get_raw_data_method_t = decltype(std::declval<const T>().getRawData());
     }  // namespace internal::grid_storage
 
     // Reusable template class to check GridStorage requirements
     template<class GridStorage>
     struct GridStorageConcept {
-        static constexpr bool has_value_type = has_value_type<GridStorage>::value;
+        static constexpr bool has_value_type = is_detected<value_type_t, GridStorage>::value;
         static constexpr bool has_rank = has_rank<GridStorage>::value;
-        static constexpr bool has_index_type = internal::grid_storage::has_index_type<GridStorage>::value;
-        static constexpr bool has_range_type = internal::grid_storage::has_range_type<GridStorage>::value;
-        static constexpr bool has_get_method =
-            internal::grid_storage::has_method_get<GridStorage, typename GridStorage::IndexType>::value;
+        static constexpr bool has_index_type = is_detected<internal::grid_storage::index_type_t, GridStorage>::value;
+        static constexpr bool has_range_type = is_detected<internal::grid_storage::range_type_t, GridStorage>::value;
+        static constexpr bool has_get_method = is_detected<internal::grid_storage::get_method_t, GridStorage>::value;
         static constexpr bool has_resize_method =
-            internal::grid_storage::has_method_resize<GridStorage, typename GridStorage::IndexType>::value;
+            is_detected<internal::grid_storage::resize_method_t, GridStorage>::value;
         static constexpr bool has_resize_range_method =
-            internal::grid_storage::has_method_resize_range<GridStorage>::value;
+            is_detected<internal::grid_storage::resize_range_method_t, GridStorage>::value;
 
-        static constexpr bool has_stride_method = internal::grid_storage::has_method_stride<GridStorage>::value;
+        static constexpr bool has_stride_method = is_detected<internal::grid_storage::stride_method_t, GridStorage>::value;
         static constexpr bool has_get_raw_data_method =
-            internal::grid_storage::has_method_get_raw_data<GridStorage>::value;
+            is_detected<internal::grid_storage::get_raw_data_method_t, GridStorage>::value;
 
         static constexpr bool value = has_value_type && has_rank && has_index_type && has_range_type &&
-                                      has_get_method && has_resize_method && has_resize_range_method &&
-                                      has_stride_method && has_get_raw_data_method;
+                                      has_get_method && has_resize_method && has_resize_range_method;
 
         static_assert(has_value_type, "GridStorage must have value_type typedef");
         static_assert(has_index_type, "GridStorage must have IndexType typedef");
