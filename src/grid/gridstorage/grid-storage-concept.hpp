@@ -49,19 +49,21 @@ namespace schnek {
     namespace internal::grid_storage {
       template<typename, typename = void>
       struct has_index_type : std::false_type {};
-
       template<typename T>
       struct has_index_type<T, std::void_t<typename T::IndexType>> : std::true_type {};
 
       template<typename, typename = std::void_t<>>
       struct has_range_type : std::false_type {};
-
       template<typename T>
       struct has_range_type<T, std::void_t<typename T::RangeType>> : std::true_type {};
 
       template<typename, typename, typename = void>
-      struct has_method_get : std::false_type {};
+      struct has_method_range : std::false_type {};
+      template<typename T, typename IndexType>
+      struct has_method_range<T, IndexType, std::void_t<decltype(std::declval<T>().range()>> : std::true_type {};
 
+      template<typename, typename, typename = void>
+      struct has_method_get : std::false_type {};
       template<typename T, typename IndexType>
       struct has_method_get<
           T,
@@ -70,7 +72,6 @@ namespace schnek {
 
       template<typename, typename, typename = void>
       struct has_method_resize : std::false_type {};
-
       template<typename T, typename IndexType>
       struct has_method_resize<
           T,

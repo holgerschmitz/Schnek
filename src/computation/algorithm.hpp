@@ -310,7 +310,8 @@ namespace schnek::computation {
       template<typename FunctionObject>
       AlgorithmStep<rank, FunctionObject, Architecture, InputOutputDefinitions...> build(FunctionObject func) {
         return AlgorithmStep<rank, FunctionObject, Architecture, InputOutputDefinitions...>{
-            inputRegistrations, outputRegistrations, func};
+            inputRegistrations, outputRegistrations, func
+        };
       }
   };
 

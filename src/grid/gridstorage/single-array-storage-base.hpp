@@ -56,8 +56,8 @@ namespace schnek {
       /**
        * @brief Assignment operator
        */
-      SingleArrayGridStorageBase<T, rank, AllocationPolicy>
-          &operator=(const SingleArrayGridStorageBase<T, rank, AllocationPolicy> &) = default;
+      SingleArrayGridStorageBase<T, rank, AllocationPolicy> &
+      operator=(const SingleArrayGridStorageBase<T, rank, AllocationPolicy> &) = default;
 
       /// Access to the underlying raw data
       T *getRawData() const { return this->data->ptr; }
@@ -144,8 +144,8 @@ namespace schnek {
       /**
        * @brief Assignment operator
        */
-      SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>
-          &operator=(const SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy> &) = default;
+      SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy> &
+      operator=(const SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy> &) = default;
 
       /**
        * @brief Get the lvalue at a given grid index
@@ -242,8 +242,8 @@ namespace schnek {
       /**
        * @brief Assignment operator
        */
-      SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>
-          &operator=(const SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy> &) = default;
+      SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy> &
+      operator=(const SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy> &) = default;
 
       /**
        * @brief Get the lvalue at a given grid index

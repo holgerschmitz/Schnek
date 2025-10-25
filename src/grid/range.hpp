@@ -291,11 +291,12 @@ namespace schnek {
           /// The type "pointed to" by the iterator.
           typedef LimitType value_type;
           /// Distance between iterators is represented as this type.
-          typedef ptrdiff_t  difference_type;
+          typedef ptrdiff_t difference_type;
           /// This type represents a pointer-to-value_type.
-          typedef LimitType* pointer;
+          typedef LimitType *pointer;
           /// This type represents a reference-to-value_type.
-          typedef LimitType& reference;
+          typedef LimitType &reference;
+
         private:
           BOOST_CONCEPT_ASSERT((boost::Integer<T>));
           friend class Range;
