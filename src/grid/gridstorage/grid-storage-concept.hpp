@@ -77,7 +77,7 @@ namespace schnek {
 
     // Reusable template class to check GridStorage requirements
     template<class GridStorage>
-    struct GridStorageConcept {
+    struct GridStorageConceptCondition {
         static constexpr bool has_value_type = is_detected<value_type_t, GridStorage>::value;
         static constexpr bool has_rank = has_rank<GridStorage>::value;
         static constexpr bool has_index_type = is_detected<internal::grid_storage::index_type_t, GridStorage>::value;
@@ -94,14 +94,18 @@ namespace schnek {
 
         static constexpr bool value = has_value_type && has_rank && has_index_type && has_range_type &&
                                       has_get_method && has_resize_method && has_resize_range_method;
+    };
 
-        static_assert(has_value_type, "GridStorage must have value_type typedef");
-        static_assert(has_index_type, "GridStorage must have IndexType typedef");
-        static_assert(has_range_type, "GridStorage must have RangeType typedef");
-        static_assert(has_rank, "GridStorage must define the rank as a const size_t");
-        static_assert(has_get_method, "GridStorage must have method T& get(const IndexType&)");
+    template<class GridStorage>
+    struct GridStorageConcept: public GridStorageConceptCondition<GridStorage> {
+        typedef GridStorageConceptCondition<GridStorage> Concept;
+        static_assert(Concept::has_value_type, "GridStorage must have value_type typedef");
+        static_assert(Concept::has_index_type, "GridStorage must have IndexType typedef");
+        static_assert(Concept::has_range_type, "GridStorage must have RangeType typedef");
+        static_assert(Concept::has_rank, "GridStorage must define the rank as a const size_t");
+        static_assert(Concept::has_get_method, "GridStorage must have method T& get(const IndexType&)");
         static_assert(
-            has_resize_method, "GridStorage must have method void resize(const IndexType&, const IndexType&)"
+            Concept::has_resize_method, "GridStorage must have method void resize(const IndexType&, const IndexType&)"
         );
     };
 

@@ -29,32 +29,34 @@
 #include <cstddef>
 #include <tuple>
 
-namespace schnek {
-  namespace generic {
+namespace schnek::generic {
     template<typename... Types>
     struct TypeList;
 
     namespace internal {
 
-      template<long n, typename T, typename... Types>
-      struct TypeListGet {
-          typedef typename TypeListGet<n - 1, Types...>::type type;
-          static constexpr long value = TypeListGet<n - 1, Types...>::value + 1;
-      };
+        template<long n, typename T, typename... Types>
+        struct TypeListGet {
+            typedef typename TypeListGet<n - 1, Types...>::type type;
+            static constexpr long value = TypeListGet<n - 1, Types...>::value + 1;
+        };
 
-      template<typename T, typename... Types>
-      struct TypeListGet<0, T, Types...> {
-          typedef T type;
-          static constexpr long value = 1;
-      };
+        template<typename T, typename... Types>
+        struct TypeListGet<0, T, Types...> {
+            typedef T type;
+            static constexpr long value = 1;
+        };
     }  // namespace internal
 
     namespace internal {
-      template<template<typename T> typename mapper, typename TypeListType, typename... InputTypes>
-      struct TypeListMapper {};
+        template<template<typename T> typename mapper, typename TypeListType, typename... InputTypes>
+        struct TypeListMapper {};
 
-      template<template<typename T> typename conditional, typename TypeListType, typename... InputTypes>
-      struct TypeListFilter {};
+        template<template<typename T> typename conditional, typename TypeListType, typename... InputTypes>
+        struct TypeListFilter {};
+
+        template<typename TypeListType, typename DefaultType>
+        struct TypeSingleElementOrDefault;
     }  // namespace internal
 
     /**
@@ -100,62 +102,73 @@ namespace schnek {
         template<template<typename T> typename conditional>
         using filter = typename internal::TypeListFilter<conditional, TypeList<>, Types...>::type;
 
+        template<template<typename T> typename conditional, typename DefaultType>
+        using getWithDefault = typename internal::TypeSingleElementOrDefault<
+            typename internal::TypeListFilter<conditional, TypeList<>, Types...>::type,
+            DefaultType>::type;
+
         template<template<typename... T> typename Dest>
         using apply = Dest<Types...>;
     };
 
     namespace internal {
-      template<template<typename T> typename mapper, typename TypeListType, typename Head, typename... InputTypes>
-      struct TypeListMapper<mapper, TypeListType, Head, InputTypes...> {
-          typedef typename TypeListMapper<
-              mapper,
-              typename TypeListType::push_back<typename mapper<Head>::type>,
-              InputTypes...>::type type;
-      };
+        template<template<typename T> typename mapper, typename TypeListType, typename Head, typename... InputTypes>
+        struct TypeListMapper<mapper, TypeListType, Head, InputTypes...> {
+            typedef typename TypeListMapper<
+                mapper,
+                typename TypeListType::push_back<typename mapper<Head>::type>,
+                InputTypes...>::type type;
+        };
 
-      template<template<typename T> typename mapper, typename TypeListType>
-      struct TypeListMapper<mapper, TypeListType> {
-          typedef TypeListType type;
-      };
+        template<template<typename T> typename mapper, typename TypeListType>
+        struct TypeListMapper<mapper, TypeListType> {
+            typedef TypeListType type;
+        };
 
-      template<bool condition, typename TypeListType, typename Head>
-      struct TypeListFilterSelect {};
+        template<bool condition, typename TypeListType, typename Head>
+        struct TypeListFilterSelect {};
 
-      template<typename TypeListType, typename Head>
-      struct TypeListFilterSelect<true, TypeListType, Head> {
-          typedef typename TypeListType::push_back<Head> type;
-      };
+        template<typename TypeListType, typename Head>
+        struct TypeListFilterSelect<true, TypeListType, Head> {
+            typedef typename TypeListType::push_back<Head> type;
+        };
 
-      template<typename TypeListType, typename Head>
-      struct TypeListFilterSelect<false, TypeListType, Head> {
-          typedef TypeListType type;
-      };
+        template<typename TypeListType, typename Head>
+        struct TypeListFilterSelect<false, TypeListType, Head> {
+            typedef TypeListType type;
+        };
 
-      template<template<typename T> typename conditional, typename TypeListType, typename Head, typename... InputTypes>
-      struct TypeListFilter<conditional, TypeListType, Head, InputTypes...> {
-          typedef typename TypeListFilter<
-              conditional,
-              typename TypeListFilterSelect<conditional<Head>::value, TypeListType, Head>::type,
-              InputTypes...>::type type;
-      };
+        template<template<typename T> typename conditional, typename TypeListType, typename Head, typename... InputTypes>
+        struct TypeListFilter<conditional, TypeListType, Head, InputTypes...> {
+            typedef typename TypeListFilter<
+                conditional,
+                typename TypeListFilterSelect<conditional<Head>::value, TypeListType, Head>::type,
+                InputTypes...>::type type;
+        };
 
-      template<template<typename T> typename conditional, typename TypeListType>
-      struct TypeListFilter<conditional, TypeListType> {
-          typedef TypeListType type;
-      };
+        template<template<typename T> typename conditional, typename TypeListType>
+        struct TypeListFilter<conditional, TypeListType> {
+            typedef TypeListType type;
+        };
 
-      template<typename SourceTuple, typename DestTuple, int index>
-      struct TupleAssignImpl {
-          static void assign(const SourceTuple &source, DestTuple &dest) {
+        template<typename TypeListType, typename DefaultType>
+        struct TypeSingleElementOrDefault {
+            static_assert(TypeListType::size < 2, "TypeList must have at most one unique element");
+            typedef typename TypeListType::push_back<DefaultType>::get<0>::type type;
+        };
+
+        template<typename SourceTuple, typename DestTuple, int index>
+        struct TupleAssignImpl {
+            static void assign(const SourceTuple &source, DestTuple &dest) {
             TupleAssignImpl<SourceTuple, DestTuple, index - 1>::assign(source, dest);
             std::get<index - 1>(dest) = std::get<index - 1>(source);
-          }
-      };
+            }
+        };
 
-      template<typename SourceTuple, typename DestTuple>
-      struct TupleAssignImpl<SourceTuple, DestTuple, 0> {
-          static void assign(const SourceTuple &, DestTuple &) {}
-      };
+        template<typename SourceTuple, typename DestTuple>
+        struct TupleAssignImpl<SourceTuple, DestTuple, 0> {
+            static void assign(const SourceTuple &, DestTuple &) {}
+        };
     }  // namespace internal
 
     /**
@@ -170,11 +183,10 @@ namespace schnek {
      */
     template<typename SourceTuple, typename DestTuple>
     DestTuple tupleAssign(SourceTuple source) {
-      DestTuple dest;
-      internal::TupleAssignImpl<SourceTuple, DestTuple, std::tuple_size<SourceTuple>::value>::assign(source, dest);
-      return dest;
+        DestTuple dest;
+        internal::TupleAssignImpl<SourceTuple, DestTuple, std::tuple_size<SourceTuple>::value>::assign(source, dest);
+        return dest;
     }
-  }  // namespace generic
-}  // namespace schnek
+}  // namespace schnek::generic
 
 #endif  // SCHNEK_GENERIC_TYPELIST_HPP_

@@ -34,6 +34,7 @@
 
 #include "../array.hpp"
 #include "../range.hpp"
+#include "../../util/logger.hpp"
 
 /**
  * @page Grid Allocation Policies
