@@ -38,21 +38,26 @@ namespace schnek {
    * @tparam rank The rank of the grid
    * @tparam AllocationPolicy The allocation policy
    */
-  template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
-  class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
-    private:
-      concepts::GridAllocationConcept<AllocationPolicy<T, rank>> concept_check;
-
+  template<typename T, size_t Rank, template<typename, size_t> class AllocationPolicy>
+  class SingleArrayGridStorageBase  {
     public:
+      typedef T value_type;
+      static constexpr size_t rank = Rank;
+
       /// The grid index type
       typedef Array<int, rank> IndexType;
 
       /// The grid range type
       typedef Range<int, rank> RangeType;
 
+    private:
+      concepts::GridAllocationConcept<AllocationPolicy<T, rank>> concept_check;
+    protected:
+      AllocationPolicy<T, rank> allocation;
+
     public:
       /// Default constructor
-      SingleArrayGridStorageBase();
+      SingleArrayGridStorageBase() = default;
 
       /// Copy constructor
       SingleArrayGridStorageBase(const SingleArrayGridStorageBase &) = default;
@@ -60,44 +65,44 @@ namespace schnek {
       /**
        * @brief Assignment operator
        */
-      SingleArrayGridStorageBase<T, rank, AllocationPolicy> &
-      operator=(const SingleArrayGridStorageBase<T, rank, AllocationPolicy> &) = default;
+      SingleArrayGridStorageBase<T, Rank, AllocationPolicy> &
+      operator=(const SingleArrayGridStorageBase<T, Rank, AllocationPolicy> &) = default;
 
       /// Access to the underlying raw data
-      T *getRawData() const { return this->data->ptr; }
+      T *getRawData() const { return this->allocation.data->ptr; }
 
       /// Get the lowest coordinate in the grid (inclusive)
-      SCHNEK_INLINE const IndexType &getLo() const { return this->range.getLo(); }
+      SCHNEK_INLINE const IndexType &getLo() const { return this->allocation.range.getLo(); }
 
       /// Get the highest coordinate in the grid (inclusive)
-      SCHNEK_INLINE const IndexType &getHi() const { return this->range.getHi(); }
+      SCHNEK_INLINE const IndexType &getHi() const { return this->allocation.range.getHi(); }
 
       /// Get the lowest coordinate in the grid (inclusive)
-      SCHNEK_INLINE const RangeType &getRange() const { return this->range; }
+      SCHNEK_INLINE const RangeType &getRange() const { return this->allocation.range; }
 
       /// Get the dimensions of the grid `dims = high - low + 1`
-      SCHNEK_INLINE const IndexType &getDims() const { return this->dims; }
+      SCHNEK_INLINE const IndexType &getDims() const { return this->allocation.dims; }
 
       /// Get k-th component of the lowest coordinate in the grid (inclusive)
-      SCHNEK_INLINE int getLo(int k) const { return this->range.getLo(k); }
+      SCHNEK_INLINE int getLo(int k) const { return this->allocation.range.getLo(k); }
 
       /// Get k-th component of the highest coordinate in the grid (inclusive)
-      SCHNEK_INLINE int getHi(int k) const { return this->range.getHi(k); }
+      SCHNEK_INLINE int getHi(int k) const { return this->allocation.range.getHi(k); }
 
       /// Get k-th component of the dimensions of the grid `dims = high - low + 1`
-      SCHNEK_INLINE int getDims(int k) const { return this->dims[k]; }
+      SCHNEK_INLINE int getDims(int k) const { return this->allocation.dims[k]; }
 
       /// Get the length of the allocated array
-      SCHNEK_INLINE int getSize() const { return this->size; }
+      SCHNEK_INLINE int getSize() const { return this->allocation.size; }
 
       typedef T *storage_iterator;
       typedef const T *const_storage_iterator;
 
-      SCHNEK_INLINE storage_iterator begin() { return this->data->ptr; }
-      SCHNEK_INLINE storage_iterator end() { return this->data->ptr + this->size; }
+      SCHNEK_INLINE storage_iterator begin() { return this->allocation.data->ptr; }
+      SCHNEK_INLINE storage_iterator end() { return this->allocation.data->ptr + this->allocation.size; }
 
-      SCHNEK_INLINE const_storage_iterator cbegin() const { return this->data->ptr; }
-      SCHNEK_INLINE const_storage_iterator cend() const { return this->data->ptr + this->size; }
+      SCHNEK_INLINE const_storage_iterator cbegin() const { return this->allocation.data->ptr; }
+      SCHNEK_INLINE const_storage_iterator cend() const { return this->allocation.data->ptr + this->allocation.size; }
   };
 
   /**
@@ -287,20 +292,13 @@ namespace schnek {
   };
 
   //=================================================================
-  //================== SingleArrayGridStorageBase ===================
-  //=================================================================
-
-  template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
-  SingleArrayGridStorageBase<T, rank, AllocationPolicy>::SingleArrayGridStorageBase() : AllocationPolicy<T, rank>() {}
-
-  //=================================================================
   //=============== SingleArrayGridCOrderStorageBase ================
   //=================================================================
 
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
   SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::SingleArrayGridCOrderStorageBase()
       : BaseType(), data_fast(NULL) {
-    this->onUpdate([this]() { updateDataFast(); });
+    this->allocation.onUpdate([this]() { updateDataFast(); });
   }
 
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
@@ -308,7 +306,7 @@ namespace schnek {
       const SingleArrayGridCOrderStorageBase &other
   )
       : BaseType(other), data_fast(other.data_fast) {
-    this->onUpdate([this]() { updateDataFast(); });
+    this->allocation.onUpdate([this]() { updateDataFast(); });
   }
 
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
@@ -316,14 +314,14 @@ namespace schnek {
       const IndexType &lo, const IndexType &hi
   )
       : BaseType(), data_fast(NULL) {
-    this->onUpdate([this]() { updateDataFast(); });
+    this->allocation.onUpdate([this]() { updateDataFast(); });
     resize(lo, hi);
   }
 
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
   SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::SingleArrayGridCOrderStorageBase(const RangeType &range)
       : BaseType(), data_fast(NULL) {
-    this->onUpdate([this]() { updateDataFast(); });
+    this->allocation.onUpdate([this]() { updateDataFast(); });
     resize(range.getLo(), range.getHi());
   }
 
@@ -331,7 +329,7 @@ namespace schnek {
   SCHNEK_INLINE T &SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) {
     size_t pos = index[0];
     for (size_t i = 1; i < rank; ++i) {
-      pos = index[i] + this->dims[i] * pos;
+      pos = index[i] + this->allocation.dims[i] * pos;
     }
     return this->data_fast[pos];
   }
@@ -341,7 +339,7 @@ namespace schnek {
   ) const {
     size_t pos = index[0];
     for (size_t i = 1; i < rank; ++i) {
-      pos = index[i] + this->dims[i] * pos;
+      pos = index[i] + this->allocation.dims[i] * pos;
     }
     return this->data_fast[pos];
   }
@@ -350,7 +348,7 @@ namespace schnek {
   inline void SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::resize(
       const IndexType &lo, const IndexType &hi
   ) {
-    this->resizeImpl(lo, hi);
+    this->allocation.resizeImpl(lo, hi);
     // size_t p = -this->range.getLo(0);
 
     // for (size_t d = 1; d < rank; ++d)
@@ -369,19 +367,19 @@ namespace schnek {
   inline ptrdiff_t SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::stride(size_t dim) const {
     size_t stride = 1;
     for (size_t i = rank - 1; i > dim; --i) {
-      stride *= this->dims[i];
+      stride *= this->allocation.dims[i];
     }
     return stride;
   }
 
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
   void SingleArrayGridCOrderStorageBase<T, rank, AllocationPolicy>::updateDataFast() {
-    ptrdiff_t p = -this->range.getLo(0);
+    ptrdiff_t p = -this->allocation.range.getLo(0);
 
     for (size_t d = 1; d < rank; ++d) {
-      p = p * this->dims[d] - this->getLo(d);
+      p = p * this->allocation.dims[d] - this->getLo(d);
     }
-    data_fast = this->data->ptr + p;
+    data_fast = this->allocation.data->ptr + p;
   }
 
   //=================================================================
@@ -391,7 +389,7 @@ namespace schnek {
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
   SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::SingleArrayGridFortranOrderStorageBase()
       : BaseType(), data_fast(NULL) {
-    this->onUpdate([this]() { updateDataFast(); });
+    this->allocation.onUpdate([this]() { updateDataFast(); });
   }
 
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
@@ -399,7 +397,7 @@ namespace schnek {
       const SingleArrayGridFortranOrderStorageBase &other
   )
       : BaseType(other), data_fast(other.data_fast) {
-    this->onUpdate([this]() { updateDataFast(); });
+    this->allocation.onUpdate([this]() { updateDataFast(); });
   }
 
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
@@ -407,7 +405,7 @@ namespace schnek {
       const IndexType &lo, const IndexType &hi
   )
       : BaseType(), data_fast(NULL) {
-    this->onUpdate([this]() { updateDataFast(); });
+    this->allocation.onUpdate([this]() { updateDataFast(); });
     resize(lo, hi);
   }
 
@@ -416,7 +414,7 @@ namespace schnek {
       const RangeType &range
   )
       : BaseType(), data_fast(NULL) {
-    this->onUpdate([this]() { updateDataFast(); });
+    this->allocation.onUpdate([this]() { updateDataFast(); });
     resize(range.getLo(), range.getHi());
   }
 
@@ -424,7 +422,7 @@ namespace schnek {
   SCHNEK_INLINE T &SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::get(const IndexType &index) {
     size_t pos = index[rank - 1];
     for (ptrdiff_t i = ptrdiff_t(rank) - 2; i >= 0; --i) {
-      pos = index[i] + this->dims[i] * pos;
+      pos = index[i] + this->allocation.dims[i] * pos;
     }
     return this->data_fast[pos];
   }
@@ -434,7 +432,7 @@ namespace schnek {
   ) const {
     size_t pos = index[rank - 1];
     for (ptrdiff_t i = ptrdiff_t(rank) - 2; i >= 0; --i) {
-      pos = index[i] + this->dims[i] * pos;
+      pos = index[i] + this->allocation.dims[i] * pos;
     }
     return this->data_fast[pos];
   }
@@ -443,7 +441,7 @@ namespace schnek {
   inline void SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::resize(
       const IndexType &lo, const IndexType &hi
   ) {
-    this->resizeImpl(lo, hi);
+    this->allocation.resizeImpl(lo, hi);
   }
 
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
@@ -455,7 +453,7 @@ namespace schnek {
   inline ptrdiff_t SingleArrayGridFortranOrderStorageBase<T, rank, AllocationPolicy>::stride(size_t dim) const {
     ptrdiff_t stride = 1;
     for (size_t i = 0; i < dim; ++i) {
-      stride *= this->dims[i];
+      stride *= this->allocation.dims[i];
     }
     return stride;
   }
@@ -465,9 +463,9 @@ namespace schnek {
     size_t p = -this->getLo(rank - 1);
 
     for (ptrdiff_t d = ptrdiff_t(rank) - 2; d >= 0; --d) {
-      p = p * this->dims[d] - this->getLo(d);
+      p = p * this->allocation.dims[d] - this->getLo(d);
     }
-    data_fast = this->data->ptr + p;
+    data_fast = this->allocation.data->ptr + p;
   }
 
 }  // namespace schnek
