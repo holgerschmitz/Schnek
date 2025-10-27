@@ -28,6 +28,7 @@
 #define SCHNEK_GRID_GRIDSTORAGE_SINGLESTORAGEBASE_HPP_
 
 #include "../array.hpp"
+#include "grid-allocation-concept.hpp"
 
 namespace schnek {
   /**
@@ -39,6 +40,9 @@ namespace schnek {
    */
   template<typename T, size_t rank, template<typename, size_t> class AllocationPolicy>
   class SingleArrayGridStorageBase : public AllocationPolicy<T, rank> {
+    private:
+      concepts::GridAllocationConcept<AllocationPolicy<T, rank>> concept_check;
+
     public:
       /// The grid index type
       typedef Array<int, rank> IndexType;

@@ -32,9 +32,9 @@
 #include <map>
 #include <memory>
 
+#include "../../util/logger.hpp"
 #include "../array.hpp"
 #include "../range.hpp"
-#include "../../util/logger.hpp"
 
 /**
  * @page Grid Allocation Policies
@@ -99,7 +99,7 @@ namespace schnek {
       /// The grid range type
       typedef Range<int, Rank> RangeType;
 
-    protected:
+    public:
       struct SizeInfo {
           IndexType lo;
           IndexType hi;
@@ -140,7 +140,7 @@ namespace schnek {
        */
       ~SingleArrayInstantAllocation();
 
-    protected:
+    public:
       /**
        * @brief resizes to grid with lower indices lo[0],...,lo[rank-1]
        * and upper indices hi[0],...,hi[rank-1]
@@ -193,7 +193,7 @@ namespace schnek {
       /// The grid range type
       typedef Range<size_t, Rank> RangeType;
 
-    protected:
+    public:
       struct SizeInfo {
           IndexType lo;
           IndexType hi;
@@ -247,7 +247,7 @@ namespace schnek {
        */
       ~SingleArrayLazyAllocation();
 
-    protected:
+    public:
       /**
        * @brief resizes to grid with lower indices lo[0],...,lo[rank-1]
        * and upper indices hi[0],...,hi[rank-1]

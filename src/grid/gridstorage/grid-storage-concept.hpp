@@ -27,33 +27,17 @@
 #ifndef SCHNEK_GRID_GRIDSTORAGE_GRID_STORAGE_CONCEPT_HPP_
 #define SCHNEK_GRID_GRIDSTORAGE_GRID_STORAGE_CONCEPT_HPP_
 
-#include "../../generic/is-detected.hpp"
-
 #include <stddef.h>
 
 #include <type_traits>
 #include <utility>
 
+#include "../../generic/concepts.hpp"
+#include "../../generic/is-detected.hpp"
+
 namespace schnek {
   namespace concepts {
-    // Detection templates for typedefs
-    template<typename T>
-    using value_type_t = typename T::value_type;
-
-    template<typename T>
-    using rank_t = decltype(T::rank);
-
-    template<typename T>
-    struct has_rank : std::conjunction<is_detected<rank_t, T>, std::is_same<detected_t<rank_t, T>, const size_t>> {};
-
     namespace internal::grid_storage {
-      // Detection templates for typedefs
-      template<typename T>
-      using index_type_t = typename T::IndexType;
-
-      template<typename T>
-      using range_type_t = typename T::RangeType;
-
       // Detection templates for methods
       template<typename T>
       using range_method_t = decltype(std::declval<T>().range());
@@ -62,7 +46,9 @@ namespace schnek {
       using get_method_t = decltype(std::declval<T>().get(std::declval<typename T::IndexType&>()));
 
       template<typename T>
-      using resize_method_t = decltype(std::declval<T>().resize(std::declval<typename T::IndexType>(), std::declval<typename T::IndexType>()));
+      using resize_method_t = decltype(std::declval<T>().resize(
+          std::declval<typename T::IndexType>(), std::declval<typename T::IndexType>()
+      ));
 
       template<typename T>
       using resize_range_method_t = decltype(std::declval<T>().resize(std::declval<typename T::RangeType>()));
@@ -80,15 +66,16 @@ namespace schnek {
     struct GridStorageConceptCondition {
         static constexpr bool has_value_type = is_detected<value_type_t, GridStorage>::value;
         static constexpr bool has_rank = has_rank<GridStorage>::value;
-        static constexpr bool has_index_type = is_detected<internal::grid_storage::index_type_t, GridStorage>::value;
-        static constexpr bool has_range_type = is_detected<internal::grid_storage::range_type_t, GridStorage>::value;
+        static constexpr bool has_index_type = is_detected<index_type_t, GridStorage>::value;
+        static constexpr bool has_range_type = is_detected<range_type_t, GridStorage>::value;
         static constexpr bool has_get_method = is_detected<internal::grid_storage::get_method_t, GridStorage>::value;
         static constexpr bool has_resize_method =
             is_detected<internal::grid_storage::resize_method_t, GridStorage>::value;
         static constexpr bool has_resize_range_method =
             is_detected<internal::grid_storage::resize_range_method_t, GridStorage>::value;
 
-        static constexpr bool has_stride_method = is_detected<internal::grid_storage::stride_method_t, GridStorage>::value;
+        static constexpr bool has_stride_method =
+            is_detected<internal::grid_storage::stride_method_t, GridStorage>::value;
         static constexpr bool has_get_raw_data_method =
             is_detected<internal::grid_storage::get_raw_data_method_t, GridStorage>::value;
 
@@ -97,7 +84,7 @@ namespace schnek {
     };
 
     template<class GridStorage>
-    struct GridStorageConcept: public GridStorageConceptCondition<GridStorage> {
+    struct GridStorageConcept : public GridStorageConceptCondition<GridStorage> {
         typedef GridStorageConceptCondition<GridStorage> Concept;
         static_assert(Concept::has_value_type, "GridStorage must have value_type typedef");
         static_assert(Concept::has_index_type, "GridStorage must have IndexType typedef");
