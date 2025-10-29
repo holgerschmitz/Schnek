@@ -28,6 +28,7 @@
 #define SCHNEK_GRID_GRIDSTORAGE_SINGLESTORAGEBASE_HPP_
 
 #include "../array.hpp"
+#include "../../generic/typelist.hpp"
 #include "grid-allocation-concept.hpp"
 
 namespace schnek {
@@ -38,7 +39,7 @@ namespace schnek {
    * @tparam rank The rank of the grid
    * @tparam AllocationPolicy The allocation policy
    */
-  template<typename T, size_t Rank, template<typename, size_t> class AllocationPolicy>
+  template<typename T, size_t Rank, template<typename, size_t> class ...Policies>
   class SingleArrayGridStorageBase  {
     public:
       typedef T value_type;
@@ -59,9 +60,14 @@ namespace schnek {
       /// The dimensions of the grid `dims = high - low + 1`
       IndexType dims;
     private:
-      concepts::GridAllocationConcept<AllocationPolicy<T, rank>> concept_check;
+      using PolicyList = generic::TypeList<Policies<T, rank>...>;
+      using AllocationPolicy = typename PolicyList::template getWithDefault<
+        schnek::concepts::GridAllocationConceptCondition, 
+        schnek::SingleArrayInstantAllocation<T, rank>>;
+
+      concepts::GridAllocationConcept<AllocationPolicy> concept_check;
     protected:
-      AllocationPolicy<T, rank> allocation;
+      AllocationPolicy allocation;
 
     public:
       /// Default constructor
@@ -73,8 +79,8 @@ namespace schnek {
       /**
        * @brief Assignment operator
        */
-      SingleArrayGridStorageBase<T, Rank, AllocationPolicy> &
-      operator=(const SingleArrayGridStorageBase<T, Rank, AllocationPolicy> &) = default;
+      SingleArrayGridStorageBase<T, Rank, Policies...> &
+      operator=(const SingleArrayGridStorageBase<T, Rank, Policies...> &) = default;
 
       /// Access to the underlying raw data
       T *getRawData() const { return this->allocation.getData(); }

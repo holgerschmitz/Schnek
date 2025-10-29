@@ -541,33 +541,38 @@ struct GridTest
     template<class GridType>
     void test_copy_resize(GridType &grid)
     {
-      GridType copied{grid};
+      GridType copiedA{grid};
+      GridType copiedB{grid};
+      GridType copiedC{copiedB};
       typename GridType::IndexType lo = grid.getLo();
       typename GridType::IndexType hi = grid.getHi();
 
       random_extent(lo, hi);
       grid.resize(lo, hi);
 
-      typename GridType::IndexType loCopied = copied.getLo();
-      typename GridType::IndexType hiCopied = copied.getHi();
-
-      for (size_t i=0; i<GridType::Rank; ++i)
+      auto checkCopied = [&](const GridType &g)
       {
-        BOOST_CHECK_EQUAL(loCopied[i], lo[i]);
-        BOOST_CHECK_EQUAL(hiCopied[i], hi[i]);
-      }
+        typename GridType::IndexType loCopied = g.getLo();
+        typename GridType::IndexType hiCopied = g.getHi();
+        
+        for (size_t i=0; i<GridType::Rank; ++i)
+        {
+          BOOST_CHECK_EQUAL(loCopied[i], lo[i]);
+          BOOST_CHECK_EQUAL(hiCopied[i], hi[i]);
+        }
+      };
+      
+      checkCopied(copiedA);
+      checkCopied(copiedB);
+      checkCopied(copiedC);
 
-      random_extent(loCopied, hiCopied);
-      copied.resize(loCopied, hiCopied);
+      random_extent(lo, hi);
+      copiedA.resize(lo, hi);
 
-      lo = grid.getLo();
-      hi = grid.getHi();
-
-      for (size_t i=0; i<GridType::Rank; ++i)
-      {
-        BOOST_CHECK_EQUAL(loCopied[i], lo[i]);
-        BOOST_CHECK_EQUAL(hiCopied[i], hi[i]);
-      }
+      checkCopied(grid);
+      checkCopied(copiedA);
+      checkCopied(copiedB);
+      checkCopied(copiedC);
     }
 
     struct DeleteCounter
