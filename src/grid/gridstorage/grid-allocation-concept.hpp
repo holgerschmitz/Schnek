@@ -33,18 +33,10 @@
 #include <utility>
 
 #include "../../generic/is-detected.hpp"
+#include "../../generic/concepts.hpp"
 
 namespace schnek::concepts {
   namespace internal::grid_allocation {
-    // template<typename T>
-    // using size_info_type_t = typename T::SizeInfo;
-
-    // template<typename T>
-    // using size_info_lo_t = decltype(T::SizeInfo::lo);
-
-    // template<typename T>
-    // using size_info_hi_t = decltype(T::SizeInfo::hi);
-
     template<typename T>
     using updater_type_t = typename T::UpdaterType;
 
@@ -65,16 +57,9 @@ namespace schnek::concepts {
   struct GridAllocationConceptCondition {
       static constexpr bool has_value_type = is_detected<value_type_t, GridAllocation>::value;
       static constexpr bool has_rank = has_rank<GridAllocation>::value;
-    //   static constexpr bool has_size = has_size<GridAllocation>::value;
       static constexpr bool has_index_type = is_detected<index_type_t, GridAllocation>::value;
       static constexpr bool has_range_type = is_detected<range_type_t, GridAllocation>::value;
-    //   static constexpr bool has_range = has_range<GridAllocation>::value;
-    //   static constexpr bool has_dims = has_dims<GridAllocation>::value;
       static constexpr bool has_data_method = is_detected<internal::grid_allocation::get_data_method_t, GridAllocation>::value;
-    //   static constexpr bool has_size_info = std::conjunction<
-    //       is_detected<internal::grid_allocation::size_info_type_t, GridAllocation>,
-    //       is_detected<internal::grid_allocation::size_info_lo_t, GridAllocation>,
-    //       is_detected<internal::grid_allocation::size_info_hi_t, GridAllocation> >::value;
       static constexpr bool has_updater_type =
           is_detected<internal::grid_allocation::updater_type_t, GridAllocation>::value;
       static constexpr bool has_resize_method =
@@ -92,26 +77,13 @@ namespace schnek::concepts {
       typedef GridAllocationConceptCondition<GridAllocation> Concept;
       static_assert(Concept::has_value_type, "GridAllocation must have value_type typedef");
       static_assert(Concept::has_rank, "GridAllocation must define the rank as a const size_t");
-    //   static_assert(Concept::has_size, "GridAllocation must define the size as a const size_t");
       static_assert(Concept::has_index_type, "GridAllocation must have IndexType typedef");
       static_assert(Concept::has_range_type, "GridAllocation must have RangeType typedef");
       static_assert(Concept::has_updater_type, "GridAllocation must have SizeInfo typedef");
-    //   static_assert(Concept::has_range, "GridAllocation must define the size as a RangeType");
-    //   static_assert(Concept::has_dims, "GridAllocation must define the size as a IndexType");
       static_assert(Concept::has_data_method, "GridAllocation must define a data attribute");
       static_assert(Concept::has_resize_method, "GridAllocation must define a resize method");
       static_assert(Concept::has_on_update_method, "GridAllocation must define an onUpdate method");
   };
-
-  template<typename T, size_t rank, template<typename, size_t> class GridAllocation>
-  struct GridAllocationConceptTempl {
-      using Storage = GridAllocation<T, rank>;
-
-      static constexpr bool value = GridAllocationConcept<Storage>::value;
-
-      static_assert(value, "GridAllocation must meet GridAllocationConcept requirements");
-  };
-
 }  // namespace schnek::concepts
 
 #endif  // SCHNEK_GRID_GRIDSTORAGE_GRID_ALLOCATION_CONCEPT_HPP_

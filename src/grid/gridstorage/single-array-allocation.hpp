@@ -175,7 +175,7 @@ namespace schnek {
    * Use this, when a resize is expected regularly.
    *
    * @tparam T The type of data stored in the grid
-   * @tparam rank The rank of the grid
+   * @tparam Rank The rank of the grid
    */
   template<typename T, size_t Rank>
   class SingleArrayLazyAllocation {
@@ -290,6 +290,7 @@ namespace schnek {
   SingleArrayInstantAllocation<T, Rank> &SingleArrayInstantAllocation<T, Rank>::operator=(
       const SingleArrayInstantAllocation<T, Rank> &other
   ) {
+    this->data->removeUpdater(this);
     this->data = other.data;
     this->data->addUpdater(this, [this](const SizeInfo &sizeInfo) { this->updateSizeInfo(sizeInfo); });
     return *this;
