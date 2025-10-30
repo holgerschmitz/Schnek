@@ -291,6 +291,7 @@ namespace schnek {
       const SingleArrayInstantAllocation<T, Rank> &other
   ) {
     this->data->removeUpdater(this);
+    
     this->data = other.data;
     this->data->addUpdater(this, [this](const SizeInfo &sizeInfo) { this->updateSizeInfo(sizeInfo); });
     return *this;
