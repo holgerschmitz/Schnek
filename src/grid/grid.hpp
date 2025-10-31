@@ -27,6 +27,8 @@
 #ifndef SCHNEK_GRID_H_
 #define SCHNEK_GRID_H_
 
+#include <type_traits>
+
 #include "../macros.hpp"
 #include "../typetools.hpp"
 #include "array.hpp"
@@ -53,8 +55,6 @@ namespace schnek {
      */
     template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
     class GridBase : public StoragePolicy {
-      private:
-        CheckingPolicy<T, rank> checking;
       public:
         typedef T value_type;
         template<typename ValueType, size_t Rank>
@@ -103,46 +103,12 @@ namespace schnek {
         /** index operator, for 1D grids, reading */
         SCHNEK_INLINE T operator[](int i) const;
 
-        /** index operator, writing */
-        SCHNEK_INLINE T& operator()(int i);
-        /** index operator, reading */
-        SCHNEK_INLINE T operator()(int i) const;
-        /** index operator, writing */
-        SCHNEK_INLINE T& operator()(int i, int j);
-        /** index operator, reading */
-        SCHNEK_INLINE T operator()(int i, int j) const;
-        /** index operator, writing */
-        SCHNEK_INLINE T& operator()(int i, int j, int k);
-        /** index operator, reading */
-        SCHNEK_INLINE T operator()(int i, int j, int k) const;
-        /** index operator, writing */
-        SCHNEK_INLINE T& operator()(int i, int j, int k, int l);
-        /** index operator, reading */
-        SCHNEK_INLINE T operator()(int i, int j, int k, int l) const;
-        /** index operator, writing */
-        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m);
-        /** index operator, reading */
-        SCHNEK_INLINE T operator()(int i, int j, int k, int l, int m) const;
-        /** index operator, writing */
-        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m, int o);
-        /** index operator, reading */
-        SCHNEK_INLINE T operator()(int i, int j, int k, int l, int m, int o) const;
-        /** index operator, writing */
-        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m, int o, int p);
-        /** index operator, reading */
-        SCHNEK_INLINE T operator()(int i, int j, int k, int l, int m, int o, int p) const;
-        /** index operator, writing */
-        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m, int o, int p, int q);
-        /** index operator, reading */
-        SCHNEK_INLINE T operator()(int i, int j, int k, int l, int m, int o, int p, int q) const;
-        /** index operator, writing */
-        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r);
-        /** index operator, reading */
-        SCHNEK_INLINE T operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r) const;
-        /** index operator, writing */
-        SCHNEK_INLINE T& operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s);
-        /** index operator, reading */
-        SCHNEK_INLINE T operator()(int i, int j, int k, int l, int m, int o, int p, int q, int r, int s) const;
+        /** index operator forwarding to the checking policy, writing */
+        template<typename... Indices>
+        SCHNEK_INLINE T& operator()(Indices... indices);
+        /** index operator forwarding to the checking policy, reading */
+        template<typename... Indices>
+        SCHNEK_INLINE T operator()(Indices... indices) const;
 
         /** assign a value */
         SCHNEK_INLINE GridBase<T, rank, CheckingPolicy, StoragePolicy>& operator=(const T& val);

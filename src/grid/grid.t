@@ -30,6 +30,7 @@
 #include "arrayexpression.hpp"
 #include "range.hpp"
 #include "grid.hpp"
+
 namespace schnek {
 
   namespace internal {
@@ -92,133 +93,23 @@ namespace schnek {
     }
 
     template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator[](int i) {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i), this->getLo(), this->getHi()));
+    template<typename... Indices>
+    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(Indices... indices) {
+      static_assert(sizeof...(Indices) == rank, "GridBase::operator() expects exactly rank indices");
+      static_assert((std::is_convertible_v<Indices, int> && ...), "GridBase::operator() indices must be convertible to int");
+
+      IndexType pos{static_cast<int>(indices)...};
+      return this->get(CheckingPolicy<T, rank>::check(pos, this->getLo(), this->getHi()));
     }
 
     template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator[](int i) const {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i), this->getLo(), this->getHi()));
-    }
+    template<typename... Indices>
+    SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(Indices... indices) const {
+      static_assert(sizeof...(Indices) == rank, "GridBase::operator() expects exactly rank indices");
+      static_assert((std::is_convertible_v<Indices, int> && ...), "GridBase::operator() indices must be convertible to int");
 
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(int i) {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(int i) const {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(int i, int j) {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(int i, int j) const {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(int i, int j, int k) {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(int i, int j, int k) const {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(int i, int j, int k, int l) {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(int i, int j, int k, int l) const {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(int i, int j, int k, int l, int m) {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T
-    GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(int i, int j, int k, int l, int m) const {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(
-        int i, int j, int k, int l, int m, int o
-    ) {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m, o), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T
-    GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(int i, int j, int k, int l, int m, int o) const {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m, o), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(
-        int i, int j, int k, int l, int m, int o, int p
-    ) {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m, o, p), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(
-        int i, int j, int k, int l, int m, int o, int p
-    ) const {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m, o, p), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(
-        int i, int j, int k, int l, int m, int o, int p, int q
-    ) {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m, o, p, q), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(
-        int i, int j, int k, int l, int m, int o, int p, int q
-    ) const {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m, o, p, q), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(
-        int i, int j, int k, int l, int m, int o, int p, int q, int r
-    ) {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m, o, p, q, r), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(
-        int i, int j, int k, int l, int m, int o, int p, int q, int r
-    ) const {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m, o, p, q, r), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(
-        int i, int j, int k, int l, int m, int o, int p, int q, int r, int s
-    ) {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m, o, p, q, r, s), this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
-    SCHNEK_INLINE T GridBase<T, rank, CheckingPolicy, StoragePolicy>::operator()(
-        int i, int j, int k, int l, int m, int o, int p, int q, int r, int s
-    ) const {
-      return this->get(CheckingPolicy<T, rank>::check(IndexType(i, j, k, l, m, o, p, q, r, s), this->getLo(), this->getHi()));
+      IndexType pos{static_cast<int>(indices)...};
+      return this->get(CheckingPolicy<T, rank>::check(pos, this->getLo(), this->getHi()));
     }
 
     template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy, class StoragePolicy>
@@ -379,41 +270,5 @@ namespace schnek {
       class StoragePolicy>
   Grid<T, rank, CheckingPolicy, StoragePolicy>::Grid(const RangeType& range)
       : internal::GridBase<T, rank, CheckingPolicy, StoragePolicy<T, Rank> >(range) {}
-
-  // template<
-  //   typename T,
-  //   size_t rank,
-  //   template<size_t> class CheckingPolicy,
-  //   template<typename, size_t> class StoragePolicy
-  //>
-  // template<typename Arg0>
-  // IndexedGrid<
-  //   Grid<T, rank, CheckingPolicy, StoragePolicy>,
-  //   TYPELIST_1(Arg0)
-  //>
-  // Grid<T, rank, CheckingPolicy, StoragePolicy>::operator()(
-  //   const Arg0 &i0
-  //)
-  //{
-  //   return IndexedGrid<GridType,TYPELIST_1(Arg0)> (i0);
-  // }
-  //
-  // template<
-  //   typename T,
-  //   size_t rank,
-  //   template<size_t> class CheckingPolicy,
-  //   template<typename, size_t> class StoragePolicy
-  //>
-  // template<typename Arg0, typename Arg1>
-  // IndexedGrid<
-  //   Grid<T, rank, CheckingPolicy, StoragePolicy>,
-  //   TYPELIST_2(Arg0, Arg1)
-  //>
-  // Grid<T, rank, CheckingPolicy, StoragePolicy>::operator()(
-  //   const Arg0 &i0, const Arg1 &i1
-  //)
-  //{
-  //   return IndexedGrid<GridType,TYPELIST_2(Arg0, Arg1)> (i0, i1);
-  // }
 
 }  // namespace schnek
