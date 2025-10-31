@@ -28,7 +28,7 @@
 #define SCHNEK_DATABUFFER_HPP_
 
 #include "../grid/grid.hpp"
-#include "../grid/gridcheck.hpp"
+#include "../grid/gridcheck/gridcheck.hpp"
 #include "../grid/gridstorage.hpp"
 
 namespace schnek {

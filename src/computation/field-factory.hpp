@@ -37,7 +37,7 @@ namespace schnek::computation {
   /**
    * Used as the FieldType for Fields that can be used on multiple architectures
    */
-  template<typename T, size_t rank, template<size_t> class CheckingPolicy = GridNoArgCheck>
+  template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy = GridNoArgCheck>
   struct FieldTypeWrapper {
       template<template<typename, size_t> typename StorageType>
       using type = Field<T, rank, CheckingPolicy, StorageType>;
@@ -46,7 +46,7 @@ namespace schnek::computation {
   /**
    * Used as the FieldType for Grids that can be used on multiple architectures
    */
-  template<typename T, size_t rank, template<size_t> class CheckingPolicy = GridNoArgCheck>
+  template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy = GridNoArgCheck>
   struct GridTypeWrapper {
       template<template<typename, size_t> typename StorageType>
       using type = Grid<T, rank, CheckingPolicy, StorageType>;
@@ -73,7 +73,7 @@ namespace schnek::computation {
       );
   };
 
-  template<typename T, size_t rank, template<size_t> class CheckingPolicy>
+  template<typename T, size_t rank, template<typename, size_t> class CheckingPolicy>
   struct MultiArchitectureFieldFactory<FieldTypeWrapper<T, rank, CheckingPolicy> > {
       template<typename Architecture>
       typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture::template GridStorageType> create(

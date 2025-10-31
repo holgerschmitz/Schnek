@@ -25,7 +25,7 @@
 
 #include <generic/typelist.hpp>
 #include <grid/gridstorage.hpp>
-#include <grid/gridcheck.hpp>
+#include <grid/gridcheck/gridcheck.hpp>
 #include <grid/gridstorage/grid-storage-concept.hpp>
 
 #pragma GCC diagnostic push
@@ -53,8 +53,8 @@ BOOST_AUTO_TEST_CASE(get_storage_concept) {
     typedef schnek::SingleArrayGridStorage<double, 3> StorageA;
     typedef schnek::SingleArrayGridStorageFortran<int, 2> StorageB;
     typedef schnek::LazyArrayGridStorage<float, 1> StorageC;
-    typedef schnek::GridNoArgCheck<3> CheckA;
-    typedef schnek::GridAssertCheck<3> CheckB;
+    typedef schnek::GridNoArgCheck<int, 3> CheckA;
+    typedef schnek::GridAssertCheck<int, 3> CheckB;
 
     typedef schnek::generic::TypeList<CheckA, StorageA, CheckB> TypeListA;
     typedef schnek::generic::TypeList<CheckA, StorageA, CheckB, StorageB> TypeListB;

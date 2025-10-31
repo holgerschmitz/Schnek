@@ -24,32 +24,32 @@
  *
  */
 
-#ifndef SCHNEK_GRIDCHECK_H_
-#define SCHNEK_GRIDCHECK_H_
+#ifndef SCHNEK_GRIDCHECK_GRIDCHECK_H_
+#define SCHNEK_GRIDCHECK_GRIDCHECK_H_
 
 #include <cassert>
 
-#include "../macros.hpp"
-#include "../util/logger.hpp"
-#include "array.hpp"
+#include "../../macros.hpp"
+#include "../../util/logger.hpp"
+#include "../array.hpp"
 
 namespace schnek {
 
-  template<size_t rank>
+  template<typename T, size_t rank>
   class GridNoArgCheck {
     public:
       typedef Array<int, rank, ArrayNoArgCheck> IndexType;
       SCHNEK_INLINE static const IndexType &check(const IndexType &pos, const IndexType &low, const IndexType &high);
   };
 
-  template<size_t rank>
+  template<typename T, size_t rank>
   class GridAssertCheck {
     public:
       typedef Array<int, rank, ArrayAssertArgCheck> IndexType;
       SCHNEK_INLINE static const IndexType &check(const IndexType &pos, const IndexType &low, const IndexType &high);
   };
 
-  template<size_t rank>
+  template<typename T, size_t rank>
   class GridDebugCheck {
     public:
       typedef Array<int, rank, ArrayAssertArgCheck> IndexType;
@@ -69,14 +69,14 @@ namespace schnek {
       static IndexType getOffending() { return offending; }
   };
 
-  template<size_t rank>
-  SCHNEK_INLINE const typename GridNoArgCheck<rank>::IndexType &
-  GridNoArgCheck<rank>::check(const IndexType &pos, const IndexType &, const IndexType &) {
+  template<typename T, size_t rank>
+  SCHNEK_INLINE const typename GridNoArgCheck<T, rank>::IndexType &
+  GridNoArgCheck<T, rank>::check(const IndexType &pos, const IndexType &, const IndexType &) {
     return pos;
   }
 
-  template<size_t rank>
-  SCHNEK_INLINE const typename GridAssertCheck<rank>::IndexType &GridAssertCheck<rank>::check(
+  template<typename T, size_t rank>
+  SCHNEK_INLINE const typename GridAssertCheck<T, rank>::IndexType &GridAssertCheck<T, rank>::check(
       const IndexType &pos, const IndexType &low, const IndexType &high
   ) {
     for (size_t i = 0; i < rank; ++i) {
@@ -86,17 +86,17 @@ namespace schnek {
     return pos;
   }
 
-  template<size_t rank>
-  bool GridDebugCheck<rank>::errorFlag = false;
+  template<typename T, size_t rank>
+  bool GridDebugCheck<T, rank>::errorFlag = false;
 
-  template<size_t rank>
-  int GridDebugCheck<rank>::errorInfo = 0;
+  template<typename T, size_t rank>
+  int GridDebugCheck<T, rank>::errorInfo = 0;
 
-  template<size_t rank>
-  typename GridDebugCheck<rank>::IndexType GridDebugCheck<rank>::offending;
+  template<typename T, size_t rank>
+  typename GridDebugCheck<T, rank>::IndexType GridDebugCheck<T, rank>::offending;
 
-  template<size_t rank>
-  inline const typename GridDebugCheck<rank>::IndexType GridDebugCheck<rank>::check(
+  template<typename T, size_t rank>
+  inline const typename GridDebugCheck<T, rank>::IndexType GridDebugCheck<T, rank>::check(
       const IndexType &pos, const IndexType &low, const IndexType &high
   ) {
     IndexType pos_copy(pos);
@@ -106,9 +106,9 @@ namespace schnek {
             1, "schnek::GridDebugCheck index out of range (dim=" << i << "): index=" << pos_copy[i] << "  lo=" << low[i]
         )
         pos_copy[i] = low[i];
-        GridDebugCheck<rank>::errorFlag = true;
-        GridDebugCheck<rank>::errorInfo = -i;
-        GridDebugCheck<rank>::offending = pos;
+        GridDebugCheck<T, rank>::errorFlag = true;
+        GridDebugCheck<T, rank>::errorInfo = -i;
+        GridDebugCheck<T, rank>::offending = pos;
       }
       if (pos_copy[i] > high[i]) {
         SCHNEK_TRACE_ERR(
@@ -116,9 +116,9 @@ namespace schnek {
             "schnek::GridDebugCheck index out of range (dim=" << i << "): index=" << pos_copy[i] << "  hi=" << high[i]
         )
         pos_copy[i] = high[i];
-        GridDebugCheck<rank>::errorFlag = true;
-        GridDebugCheck<rank>::errorInfo = i;
-        GridDebugCheck<rank>::offending = pos;
+        GridDebugCheck<T, rank>::errorFlag = true;
+        GridDebugCheck<T, rank>::errorInfo = i;
+        GridDebugCheck<T, rank>::offending = pos;
       }
     }
     return pos_copy;
@@ -126,4 +126,4 @@ namespace schnek {
 
 }  // namespace schnek
 
-#endif  // SCHNEK_GRIDCHECK_H_
+#endif  // SCHNEK_GRIDCHECK_GRIDCHECK_H_

@@ -24,12 +24,14 @@
  *
  */
 
+#include "field.hpp"
+
 namespace schnek {
 
   template<
       typename T,
       size_t rank,
-      template<size_t>
+      template<typename, size_t>
       class CheckingPolicy,
       template<typename, size_t>
       class StoragePolicy>
@@ -38,7 +40,7 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t>
+      template<typename, size_t>
       class CheckingPolicy,
       template<typename, size_t>
       class StoragePolicy>
@@ -68,7 +70,7 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t>
+      template<typename, size_t>
       class CheckingPolicy,
       template<typename, size_t>
       class StoragePolicy>
@@ -100,7 +102,7 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t>
+      template<typename, size_t>
       class CheckingPolicy,
       template<typename, size_t>
       class StoragePolicy>
@@ -131,7 +133,7 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t>
+      template<typename, size_t>
       class CheckingPolicy,
       template<typename, size_t>
       class StoragePolicy>
@@ -144,7 +146,7 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t>
+      template<typename, size_t>
       class CheckingPolicy,
       template<typename, size_t>
       class StoragePolicy>
@@ -163,7 +165,7 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t>
+      template<typename, size_t>
       class CheckingPolicy,
       template<typename, size_t>
       class StoragePolicy>
@@ -195,7 +197,7 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t>
+      template<typename, size_t>
       class CheckingPolicy,
       template<typename, size_t>
       class StoragePolicy>
@@ -229,7 +231,7 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t>
+      template<typename, size_t>
       class CheckingPolicy,
       template<typename, size_t>
       class StoragePolicy>
@@ -262,7 +264,7 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t>
+      template<typename, size_t>
       class CheckingPolicy,
       template<typename, size_t>
       class StoragePolicy>
@@ -278,7 +280,7 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t>
+      template<typename, size_t>
       class CheckingPolicy,
       template<typename, size_t>
       class StoragePolicy>

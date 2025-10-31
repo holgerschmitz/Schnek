@@ -54,7 +54,8 @@ namespace schnek {
 
       typedef typename GridType::IndexType LimitType;
       typedef typename GridType::value_type value_type;
-      typedef typename GridType::CheckingPolicyType CheckingPolicyType;
+      template<typename ValueType, size_t Rank>
+      using CheckingPolicyType = typename GridType::CheckingPolicyType<ValueType, Rank>;
       typedef typename GridType::StoragePolicyType StoragePolicyType;
 
       // typedef Grid<unsigned char, 1, GridAssertCheck, LazyArrayGridStorage> BufferType;

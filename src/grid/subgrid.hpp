@@ -127,17 +127,17 @@ namespace schnek {
       void setBaseGrid(BaseGridType &baseGrid_) { baseGrid = &baseGrid_; }
   };
 
-  template<class BaseGrid, template<size_t> class CheckingPolicy = GridNoArgCheck>
+  template<class BaseGrid, template<typename, size_t> class CheckingPolicy = GridNoArgCheck>
   class SubGrid : public internal::GridBase<
                       typename BaseGrid::value_type,
                       BaseGrid::Rank,
-                      CheckingPolicy<BaseGrid::Rank>,
+                      CheckingPolicy,
                       SubGridStorage<typename BaseGrid::value_type, BaseGrid::Rank, BaseGrid> > {
     private:
       typedef internal::GridBase<
           typename BaseGrid::value_type,
           BaseGrid::Rank,
-          CheckingPolicy<BaseGrid::Rank>,
+          CheckingPolicy,
           SubGridStorage<typename BaseGrid::value_type, BaseGrid::Rank, BaseGrid> >
           ParentType;
 

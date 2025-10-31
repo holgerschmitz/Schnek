@@ -35,7 +35,7 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t> class CheckingPolicy = GridNoArgCheck,
+      template<typename, size_t> class CheckingPolicy = GridNoArgCheck,
       template<typename, size_t> class StoragePolicy = SingleArrayGridStorage>
   class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy> {
     public:
