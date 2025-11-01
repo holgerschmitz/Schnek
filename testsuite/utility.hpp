@@ -48,7 +48,7 @@ class ArrayBoostTestArgCheck
     }
 };
 
-template<size_t rank>
+template<typename T, size_t rank>
 class GridBoostTestCheck {
   public:
     typedef schnek::Array<int,rank,ArrayBoostTestArgCheck> IndexType;

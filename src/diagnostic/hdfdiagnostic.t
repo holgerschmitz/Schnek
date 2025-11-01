@@ -281,30 +281,18 @@ namespace schnek {
       static void copy(InnerType field, GridContainer<InnerType> &container);
   };
 
-  template<
-      typename T,
-      size_t rank,
-      template<size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
-  struct CopyToContainer<Field<T, rank, CheckingPolicy, StoragePolicy> > {
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  struct CopyToContainer<Field<T, rank, Policies...> > {
       static void copy(
-          Field<T, rank, CheckingPolicy, StoragePolicy> field,
-          GridContainer<Field<T, rank, CheckingPolicy, StoragePolicy> > &container
+          Field<T, rank, Policies...> field,
+          GridContainer<Field<T, rank, Policies...> > &container
       );
   };
 
-  template<
-      typename T,
-      size_t rank,
-      template<size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
-  inline void CopyToContainer<Field<T, rank, CheckingPolicy, StoragePolicy> >::copy(
-      Field<T, rank, CheckingPolicy, StoragePolicy> field,
-      GridContainer<Field<T, rank, CheckingPolicy, StoragePolicy> > &container
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  inline void CopyToContainer<Field<T, rank, Policies...> >::copy(
+      Field<T, rank, Policies...> field,
+      GridContainer<Field<T, rank, Policies...> > &container
   ) {
     container.grid = field;
     container.local_min = field.getInnerLo();

@@ -28,7 +28,7 @@
 #define SCHNEK_DATABUFFER_HPP_
 
 #include "../grid/grid.hpp"
-#include "../grid/gridcheck.hpp"
+#include "../grid/gridcheck/gridcheck.hpp"
 #include "../grid/gridstorage.hpp"
 
 namespace schnek {
@@ -49,11 +49,12 @@ namespace schnek {
           /// The type "pointed to" by the iterator.
           typedef T value_type;
           /// Distance between iterators is represented as this type.
-          typedef ptrdiff_t  difference_type;
+          typedef ptrdiff_t difference_type;
           /// This type represents a pointer-to-value_type.
           typedef T* pointer;
           /// This type represents a reference-to-value_type.
           typedef T& reference;
+
         private:
           friend class DataBuffer;
           unsigned char* data;

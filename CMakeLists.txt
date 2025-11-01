@@ -113,6 +113,7 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/grid/test_range_c_iteration.cpp
     testsuite/grid/test_range_fortran_iteration.cpp
     testsuite/grid/test_range_kokkos_iteration.cpp
+    testsuite/grid/concepts/test_concepts.cpp
 )
 
 target_include_directories(schnek_tests PUBLIC "src")

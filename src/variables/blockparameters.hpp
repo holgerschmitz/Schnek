@@ -242,7 +242,8 @@ namespace schnek {
                 "\")"
         );
         Array<pParameter, rank, CheckingPolicy> result;
-        for (size_t i = 0; i < rank; ++i) result[i] = addParameter(varName + extension[i], &(var[i]), default_value, perm);
+        for (size_t i = 0; i < rank; ++i)
+          result[i] = addParameter(varName + extension[i], &(var[i]), default_value, perm);
         return result;
       }
 

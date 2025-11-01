@@ -32,21 +32,17 @@
 
 namespace schnek {
 
-  template<
-      typename T,
-      size_t rank,
-      template<size_t> class CheckingPolicy = GridNoArgCheck,
-      template<typename, size_t> class StoragePolicy = SingleArrayGridStorage>
-  class Field : public Grid<T, rank, CheckingPolicy, StoragePolicy> {
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  class Field : public Grid<T, rank, Policies...> {
     public:
       typedef T value_type;
-      typedef typename Grid<T, rank, CheckingPolicy, StoragePolicy>::IndexType IndexType;
-      typedef typename Grid<T, rank, CheckingPolicy, StoragePolicy>::RangeType RangeType;
+      typedef typename Grid<T, rank, Policies...>::IndexType IndexType;
+      typedef typename Grid<T, rank, Policies...>::RangeType RangeType;
       typedef Range<double, rank> DomainType;
       typedef typename Range<double, rank>::LimitType RangeLimit;
       typedef Array<bool, rank> StaggerType;
-      typedef Field<T, rank, CheckingPolicy, StoragePolicy> FieldType;
-      typedef Grid<T, rank, CheckingPolicy, StoragePolicy> BaseType;
+      typedef Field<T, rank, Policies...> FieldType;
+      typedef Grid<T, rank, Policies...> BaseType;
 
     private:
       DomainType domain;
