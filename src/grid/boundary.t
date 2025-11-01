@@ -106,21 +106,21 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<class GridType>
-  SubGrid<GridType, GridType::template CheckingPolicyType> Boundary<rank, CheckingPolicy>::getGhostBoundary(
+  SubGrid<GridType> Boundary<rank, CheckingPolicy>::getGhostBoundary(
       size_t dim, bound b, GridType &grid
   ) {
     DomainType bounds = getGhostDomain(dim, b);
-    return SubGrid<GridType, GridType::template CheckingPolicyType>(bounds.getLo(), bounds.getHi(), grid);
+    return SubGrid<GridType>(bounds.getLo(), bounds.getHi(), grid);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  template<typename T, template<typename, size_t> class CheckingPolicy2, template<typename, size_t> class StoragePolicy>
-  SubGrid<Field<T, rank, CheckingPolicy2, StoragePolicy>, CheckingPolicy2>
+  template<typename T, template<typename, size_t> class ...Policies>
+  SubGrid<Field<T, rank, Policies...>>
   Boundary<rank, CheckingPolicy>::getGhostBoundary(
-      size_t dim, bound b, Field<T, rank, CheckingPolicy2, StoragePolicy> &field
+      size_t dim, bound b, Field<T, rank, Policies...> &field
   ) {
     DomainType bounds = getBoundaryDomain(dim, b, field.getStagger()[dim]);
-    return SubGrid<Field<T, rank, CheckingPolicy2, StoragePolicy>, CheckingPolicy2>(
+    return SubGrid<Field<T, rank, Policies...>>(
         bounds.getLo(), bounds.getHi(), field
     );
   }

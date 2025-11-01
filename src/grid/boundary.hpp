@@ -129,7 +129,7 @@ namespace schnek {
        * @return A sub-grid containing ghost cells
        */
       template<class GridType>
-      SubGrid<GridType, GridType::template CheckingPolicyType> getGhostBoundary(size_t dim, bound b, GridType &grid);
+      SubGrid<GridType> getGhostBoundary(size_t dim, bound b, GridType &grid);
 
       /** Returns sub-grid containing only the boundary domain.
        * The bounadry domain has a thickness determined by the number of ghost cells.
@@ -140,9 +140,9 @@ namespace schnek {
        *        domain and Max will return the upper ghost domain
        * @return A sub-grid containing boundary cells
        */
-      template<typename T, template<typename, size_t> class CheckingPolicy2, template<typename, size_t> class StoragePolicy>
-      SubGrid<Field<T, rank, CheckingPolicy2, StoragePolicy>, CheckingPolicy2> getGhostBoundary(
-          size_t dim, bound b, Field<T, rank, CheckingPolicy2, StoragePolicy> &field
+      template<typename T, template<typename, size_t> class ...Policies>
+      SubGrid<Field<T, rank, Policies...>> getGhostBoundary(
+          size_t dim, bound b, Field<T, rank, Policies...> &field
       );
   };
 

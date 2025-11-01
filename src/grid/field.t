@@ -28,22 +28,10 @@
 
 namespace schnek {
 
-  template<
-      typename T,
-      size_t rank,
-      template<typename, size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
-  Field<T, rank, CheckingPolicy, StoragePolicy>::Field() {}
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  Field<T, rank, Policies...>::Field() {}
 
-  template<
-      typename T,
-      size_t rank,
-      template<typename, size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,
@@ -51,29 +39,23 @@ namespace schnek {
       class RangeCheckingPolicy,
       template<size_t>
       class StaggerCheckingPolicy>
-  Field<T, rank, CheckingPolicy, StoragePolicy>::Field(
+  Field<T, rank, Policies...>::Field(
       const Array<int, rank, ArrayCheckingPolicy> &size,
       const Range<double, rank, RangeCheckingPolicy> &domain,
       const Array<bool, rank, StaggerCheckingPolicy> &stagger,
       int ghostCells
   )
-      : Grid<T, rank, CheckingPolicy, StoragePolicy>(), domain(domain), stagger(stagger), ghostCells(ghostCells) {
+      : Grid<T, rank, Policies...>(), domain(domain), stagger(stagger), ghostCells(ghostCells) {
     IndexType low{IndexType::Zero()};
     IndexType high{size};
     for (size_t i = 0; i < rank; ++i) {
       low[i] -= ghostCells;
       high[i] += ghostCells - 1;
     }
-    this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(low, high);
+    this->Grid<T, rank, Policies...>::resize(low, high);
   }
 
-  template<
-      typename T,
-      size_t rank,
-      template<typename, size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,
@@ -81,14 +63,14 @@ namespace schnek {
       class RangeCheckingPolicy,
       template<size_t>
       class StaggerCheckingPolicy>
-  Field<T, rank, CheckingPolicy, StoragePolicy>::Field(
+  Field<T, rank, Policies...>::Field(
       const Array<int, rank, ArrayCheckingPolicy> &low,
       const Array<int, rank, ArrayCheckingPolicy> &high,
       const Range<double, rank, RangeCheckingPolicy> &domain,
       const Array<bool, rank, StaggerCheckingPolicy> &stagger,
       int ghostCells
   )
-      : Grid<T, rank, CheckingPolicy, StoragePolicy>(), domain(domain), stagger(stagger), ghostCells(ghostCells) {
+      : Grid<T, rank, Policies...>(), domain(domain), stagger(stagger), ghostCells(ghostCells) {
     IndexType lo{low};
     IndexType hi{high};
     for (size_t i = 0; i < rank; ++i) {
@@ -96,16 +78,10 @@ namespace schnek {
       hi[i] += ghostCells;
     }
 
-    this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(lo, hi);
+    this->Grid<T, rank, Policies...>::resize(lo, hi);
   }
 
-  template<
-      typename T,
-      size_t rank,
-      template<typename, size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,
@@ -113,13 +89,13 @@ namespace schnek {
       class RangeCheckingPolicy,
       template<size_t>
       class StaggerCheckingPolicy>
-  Field<T, rank, CheckingPolicy, StoragePolicy>::Field(
+  Field<T, rank, Policies...>::Field(
       const Range<int, rank, ArrayCheckingPolicy> &range,
       const Range<double, rank, RangeCheckingPolicy> &domain,
       const Array<bool, rank, StaggerCheckingPolicy> &stagger,
       int ghostCells
   )
-      : Grid<T, rank, CheckingPolicy, StoragePolicy>(), domain(domain), stagger(stagger), ghostCells(ghostCells) {
+      : Grid<T, rank, Policies...>(), domain(domain), stagger(stagger), ghostCells(ghostCells) {
     IndexType lo{range.getLo()};
     IndexType hi{range.getHi()};
     for (size_t i = 0; i < rank; ++i) {
@@ -127,30 +103,18 @@ namespace schnek {
       hi[i] += ghostCells;
     }
 
-    this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(lo, hi);
+    this->Grid<T, rank, Policies...>::resize(lo, hi);
   }
 
-  template<
-      typename T,
-      size_t rank,
-      template<typename, size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
-  Field<T, rank, CheckingPolicy, StoragePolicy>::Field(const Field<T, rank, CheckingPolicy, StoragePolicy> &field)
-      : Grid<T, rank, CheckingPolicy, StoragePolicy>(field),
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  Field<T, rank, Policies...>::Field(const Field<T, rank, Policies...> &field)
+      : Grid<T, rank, Policies...>(field),
         domain(field.domain),
         stagger(field.stagger),
         ghostCells(field.ghostCells) {}
 
-  template<
-      typename T,
-      size_t rank,
-      template<typename, size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
-  inline void Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  inline void Field<T, rank, Policies...>::positionToIndex(
       int dim, double pos, int &index, double &offset
   ) {
     int lo = this->getLo()[dim];
@@ -162,13 +126,7 @@ namespace schnek {
     offset = xnorm - index;
   }
 
-  template<
-      typename T,
-      size_t rank,
-      template<typename, size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,
@@ -176,7 +134,7 @@ namespace schnek {
       class RangeCheckingPolicy,
       template<size_t>
       class StaggerCheckingPolicy>
-  void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
+  void Field<T, rank, Policies...>::resize(
       const Array<int, rank, ArrayCheckingPolicy> &size_,
       const Range<double, rank, RangeCheckingPolicy> &domain_,
       const Array<bool, rank, StaggerCheckingPolicy> &stagger_,
@@ -191,16 +149,10 @@ namespace schnek {
       low[i] -= ghostCells;
       high[i] += ghostCells - 1;
     }
-    this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(low, high);
+    this->Grid<T, rank, Policies...>::resize(low, high);
   }
 
-  template<
-      typename T,
-      size_t rank,
-      template<typename, size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,
@@ -208,7 +160,7 @@ namespace schnek {
       class RangeCheckingPolicy,
       template<size_t>
       class StaggerCheckingPolicy>
-  void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
+  void Field<T, rank, Policies...>::resize(
       const Array<int, rank, ArrayCheckingPolicy> &low_,
       const Array<int, rank, ArrayCheckingPolicy> &high_,
       const Range<double, rank, RangeCheckingPolicy> &domain_,
@@ -225,16 +177,10 @@ namespace schnek {
       high[i] += ghostCells;
     }
 
-    this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(low, high);
+    this->Grid<T, rank, Policies...>::resize(low, high);
   }
 
-  template<
-      typename T,
-      size_t rank,
-      template<typename, size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,
@@ -242,7 +188,7 @@ namespace schnek {
       class RangeCheckingPolicy,
       template<size_t>
       class StaggerCheckingPolicy>
-  void Field<T, rank, CheckingPolicy, StoragePolicy>::resize(
+  void Field<T, rank, Policies...>::resize(
       const Range<int, rank, ArrayCheckingPolicy> &range_,
       const Range<double, rank, RangeCheckingPolicy> &domain_,
       const Array<bool, rank, StaggerCheckingPolicy> &stagger_,
@@ -258,17 +204,11 @@ namespace schnek {
       high[i] += ghostCells;
     }
 
-    this->Grid<T, rank, CheckingPolicy, StoragePolicy>::resize(low, high);
+    this->Grid<T, rank, Policies...>::resize(low, high);
   }
 
-  template<
-      typename T,
-      size_t rank,
-      template<typename, size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
-  inline int Field<T, rank, CheckingPolicy, StoragePolicy>::positionToIndex(int dim, double pos) {
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  inline int Field<T, rank, Policies...>::positionToIndex(int dim, double pos) {
     int lo = this->getLo()[dim];
     int hi = this->getHi()[dim];
     return int(floor(
@@ -277,29 +217,10 @@ namespace schnek {
     ));
   }
 
-  template<
-      typename T,
-      size_t rank,
-      template<typename, size_t>
-      class CheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
-  inline double Field<T, rank, CheckingPolicy, StoragePolicy>::indexToPosition(int dim, int index) {
+  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  inline double Field<T, rank, Policies...>::indexToPosition(int dim, int index) {
     int lo = this->getLo()[dim];
     int hi = this->getHi()[dim];
-
-    //  if ((dim==0) && (index==50))
-    //  {
-    //    double pos = (domain.getHi()[dim] - domain.getLo()[dim])
-    //          * (index- lo + 0.5*int(stagger[dim])-ghostCells)/(hi - lo - 2*ghostCells + 1) + domain.getLo()[dim];
-    //    std::cerr << index << " " << lo << " " << hi << " "
-    //        << domain.getLo()[dim] << " " << domain.getHi()[dim] << " "
-    //        << ghostCells << " " << int(stagger[dim]) << std::endl;
-    //    std::cerr << (domain.getHi()[dim] - domain.getLo()[dim]) << " "
-    //        << (index- lo + 0.5*int(stagger[dim])-ghostCells) << " "
-    //        << (hi - lo - 2*ghostCells + 1) << " "
-    //        << pos << std::endl;
-    //  }
 
     return (domain.getHi()[dim] - domain.getLo()[dim]) * (index - lo + 0.5 * int(stagger[dim]) - ghostCells) /
                (hi - lo - 2 * ghostCells + 1) +

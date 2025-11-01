@@ -33,6 +33,7 @@
 #include <utility>
 
 #include "../../generic/is-detected.hpp"
+#include "../../generic/concepts.hpp"
 
 namespace schnek::concepts {
   namespace internal::grid_check {

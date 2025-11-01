@@ -32,9 +32,9 @@ std::ostream &operator<<(std::ostream &out, const schnek::Array<T, length, Check
   return out;
 }
 
-template<typename T, template<typename, size_t> class CheckingPolicy, template<typename, size_t> class StoragePolicy>
-std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 1, CheckingPolicy, StoragePolicy> &M) {
-  typedef typename schnek::Grid<T, 1, CheckingPolicy, StoragePolicy>::IndexType IndexType;
+template<typename T, template<typename, size_t> class ...Policies>
+std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 1, Policies...> &M) {
+  typedef typename schnek::Grid<T, 1, Policies...>::IndexType IndexType;
 
   const IndexType &low = M.getLo();
   const IndexType &high = M.getHi();
@@ -45,9 +45,9 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 1, CheckingPol
   return out;
 }
 
-template<typename T, template<typename, size_t> class CheckingPolicy, template<typename, size_t> class StoragePolicy>
-std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 2, CheckingPolicy, StoragePolicy> &M) {
-  typedef typename schnek::Grid<T, 2, CheckingPolicy, StoragePolicy>::IndexType IndexType;
+template<typename T, template<typename, size_t> class ...Policies>
+std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 2, Policies...> &M) {
+  typedef typename schnek::Grid<T, 2, Policies...>::IndexType IndexType;
 
   const IndexType &low = M.getLo();
   const IndexType &high = M.getHi();
@@ -62,9 +62,9 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 2, CheckingPol
   return out;
 }
 
-template<typename T, template<typename, size_t> class CheckingPolicy, template<typename, size_t> class StoragePolicy>
-std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 3, CheckingPolicy, StoragePolicy> &M) {
-  typedef typename schnek::Grid<T, 3, CheckingPolicy, StoragePolicy>::IndexType IndexType;
+template<typename T, template<typename, size_t> class ...Policies>
+std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 3, Policies...> &M) {
+  typedef typename schnek::Grid<T, 3, Policies...>::IndexType IndexType;
 
   const IndexType &low = M.getLo();
   const IndexType &high = M.getHi();
@@ -82,9 +82,9 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 3, CheckingPol
   return out;
 }
 
-template<typename T, template<typename, size_t> class CheckingPolicy, template<typename, size_t> class StoragePolicy>
-std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 4, CheckingPolicy, StoragePolicy> &M) {
-  typedef typename schnek::Grid<T, 4, CheckingPolicy, StoragePolicy>::IndexType IndexType;
+template<typename T, template<typename, size_t> class ...Policies>
+std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 4, Policies...> &M) {
+  typedef typename schnek::Grid<T, 4, Policies...>::IndexType IndexType;
 
   const IndexType &low = M.getLo();
   const IndexType &high = M.getHi();
@@ -104,9 +104,9 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 4, CheckingPol
   return out;
 }
 
-template<typename T, template<typename, size_t> class CheckingPolicy, template<typename, size_t> class StoragePolicy>
-std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 5, CheckingPolicy, StoragePolicy> &M) {
-  typedef typename schnek::Grid<T, 5, CheckingPolicy, StoragePolicy>::IndexType IndexType;
+template<typename T, template<typename, size_t> class ...Policies>
+std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 5, Policies...> &M) {
+  typedef typename schnek::Grid<T, 5, Policies...>::IndexType IndexType;
 
   const IndexType &low = M.getLo();
   const IndexType &high = M.getHi();

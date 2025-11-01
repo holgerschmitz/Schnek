@@ -35,14 +35,10 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t>
-      class GridCheckingPolicy,
-      template<size_t>
-      class ArrayCheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
+      template<size_t> class ArrayCheckingPolicy,
+      template<typename, size_t> class ...GridPolicies>
   void fill_field(
-      Field<T, rank, GridCheckingPolicy, StoragePolicy> &field,
+      Field<T, rank, GridPolicies...> &field,
       Array<double, rank, ArrayCheckingPolicy> &coords,
       T &value,
       DependencyUpdater &updater
@@ -52,13 +48,10 @@ namespace schnek {
       typename T,
       size_t rank,
       template<size_t>
-      class GridCheckingPolicy,
-      template<size_t>
       class ArrayCheckingPolicy,
-      template<typename, size_t>
-      class StoragePolicy>
+      template<typename, size_t> class ...GridPolicies>
   void fill_field(
-      Field<T, rank, GridCheckingPolicy, StoragePolicy> &field,
+      Field<T, rank, GridPolicies...> &field,
       Array<double, rank, ArrayCheckingPolicy> &coords,
       T &value,
       DependencyUpdater &updater,
@@ -76,21 +69,18 @@ namespace schnek {
           typename T,
           size_t rank,
           template<size_t>
-          class GridCheckingPolicy,
-          template<size_t>
           class ArrayCheckingPolicy,
-          template<typename, size_t>
-          class StoragePolicy>
+          template<typename, size_t> class ...GridPolicies>
       class impl : public implBase {
         private:
-          Field<T, rank, GridCheckingPolicy, StoragePolicy> &field;
+          Field<T, rank, GridPolicies...> &field;
           Array<double, rank, ArrayCheckingPolicy> &coords;
           T &value;
           DependencyUpdater &updater;
 
         public:
           impl(
-              Field<T, rank, GridCheckingPolicy, StoragePolicy> &field_,
+              Field<T, rank, GridPolicies...> &field_,
               Array<double, rank, ArrayCheckingPolicy> &coords_,
               T &value_,
               DependencyUpdater &updater_
@@ -120,15 +110,10 @@ namespace schnek {
               : coords(coords_), updater(updater_), implementations(implementations_) {}
 
         public:
-          template<
-              typename T,
-              template<size_t>
-              class GridCheckingPolicy,
-              template<typename, size_t>
-              class StoragePolicy>
-          fieldAdder &operator()(Field<T, rank, GridCheckingPolicy, StoragePolicy> &field, T &value) {
+          template<typename T, template<typename, size_t> ...Policies>
+          fieldAdder &operator()(Field<T, rank, Policies...> &field, T &value) {
             pImplBase i(
-                new impl<T, rank, GridCheckingPolicy, ArrayCheckingPolicy, StoragePolicy>(field, coords, value, updater)
+                new impl<T, rank, ArrayCheckingPolicy, Policies...>(field, coords, value, updater)
             );
             implementations.push_back(i);
             return *this;
