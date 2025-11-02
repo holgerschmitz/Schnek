@@ -110,17 +110,3 @@ namespace schnek {
 }  // namespace schnek
 
 #endif  // SCHNEK_GRID_GRIDSTORAGE_GRID_STORAGE_CONCEPT_HPP_
-
-// // Grid class template
-// template <typename T, size_t rank, template <typename, size_t> class GridStorage>
-// class Grid {
-//     GridStorageConcept<T, rank, GridStorage> concept_check;
-
-// public:
-//     using Storage = GridStorage<T, rank>;
-
-//     static constexpr bool has_stride = GridStorageConcept<T, rank, GridStorage>::has_stride_method;
-//     static constexpr bool has_get_raw_data = GridStorageConcept<T, rank, GridStorage>::has_get_raw_data_method;
-
-//     // Implementation of the Grid class
-// };

@@ -184,10 +184,10 @@ namespace schnek {
       static constexpr size_t rank = Rank;
 
       /// The grid index type
-      typedef Array<size_t, Rank> IndexType;
+      typedef Array<int, Rank> IndexType;
 
       /// The grid range type
-      typedef Range<size_t, Rank> RangeType;
+      typedef Range<int, Rank> RangeType;
 
     private:
       struct SizeInfo {
@@ -373,6 +373,8 @@ namespace schnek {
   SingleArrayLazyAllocation<T, Rank> &SingleArrayLazyAllocation<T, Rank>::operator=(
       const SingleArrayLazyAllocation<T, Rank> &other
   ) {
+    this->data->removeUpdater(this);
+
     this->data = other.data;
     this->data->addUpdater(this, [this](const SizeInfo &sizeInfo) { this->updateSizeInfo(sizeInfo); });
     return *this;
