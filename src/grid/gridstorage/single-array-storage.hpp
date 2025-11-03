@@ -179,7 +179,7 @@ namespace schnek {
   };
 
   //=================================================================
-  //================== SingleArrayGridStorageBase ===================
+  //==================== SingleArrayGridStorage =====================
   //=================================================================
 
   template<typename T, size_t Rank, template<typename, size_t> class ...Policies>

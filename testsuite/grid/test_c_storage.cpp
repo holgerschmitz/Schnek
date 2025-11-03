@@ -535,6 +535,15 @@ BOOST_FIXTURE_TEST_CASE( copy_then_resize, GridTest )
   test_copy_resize(g);
 }
 
+BOOST_FIXTURE_TEST_CASE( copy_then_resize_lazy, GridTest )
+{
+  typedef schnek::Grid<double, 3, GridBoostTestCheck, schnek::LazyArrayGridStorage> GridType;
+
+  GridType::IndexType lo{3,3,3}, hi{3,3,3};
+  GridType g{lo,hi};
+  test_copy_resize(g);
+}
+
 BOOST_FIXTURE_TEST_CASE( free_shared, GridTest )
 {
   typedef schnek::Grid<DeleteCounter, 1, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
