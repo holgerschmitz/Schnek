@@ -41,7 +41,7 @@ namespace schnek {
   class Boundary {
     public:
       /// The range type that contains the domain size
-      typedef Range<int, rank, CheckingPolicy> DomainType;
+      typedef Range<ptrdiff_t, rank, CheckingPolicy> DomainType;
       /// The array type that contains the limits of the domain
       typedef typename DomainType::LimitType LimitType;
 
@@ -67,7 +67,7 @@ namespace schnek {
        * @param hi the upper corner of the domain, including the ghost cells
        * @param delta_ the number of ghost cells
        */
-      Boundary(const LimitType &lo, const LimitType &hi, int delta_);
+      Boundary(const LimitType &lo, const LimitType &hi, size_t delta_);
 
       /** Constrauct a boundary supplying a reactangular domain and the
        *  number of ghost cells. The domain given should include the ghost cells.
@@ -75,13 +75,13 @@ namespace schnek {
        * @param size_ the rectangular domain, including the ghost cells
        * @param delta_ the number of ghost cells
        */
-      Boundary(DomainType &size_, int delta_);
+      Boundary(DomainType &size_, size_t delta_);
 
       /** The number of ghost cells
        *
        * @return the number of ghost cells
        */
-      int getDelta() { return delta; }
+      size_t getDelta() { return delta; }
 
       /** Returns the original domain, including the ghost cells */
       const DomainType &getDomain() { return size; }

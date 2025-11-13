@@ -35,14 +35,14 @@ namespace schnek {
   template<typename T, size_t rank, class BaseGrid>
   class SubGridStorage {
     public:
-      typedef Array<int, rank> IndexType;
+      typedef Array<ptrdiff_t, rank> IndexType;
       typedef BaseGrid BaseGridType;
-      typedef Range<int, rank> DomainType;
+      typedef Range<ptrdiff_t, rank> DomainType;
 
     protected:
       BaseGridType *baseGrid;
       DomainType domain;
-      IndexType dims;
+      Array<size_t, rank> dims;
 
     public:
       class storage_iterator {
@@ -112,11 +112,11 @@ namespace schnek {
       const IndexType &getDims() const { return dims; }
 
       /** */
-      int getLo(int k) const { return domain.getLo()[k]; }
+      ptrdiff_t getLo(size_t k) const { return domain.getLo()[k]; }
       /** */
-      int getHi(int k) const { return domain.getHi()[k]; }
+      ptrdiff_t getHi(size_t k) const { return domain.getHi()[k]; }
       /** */
-      int getDims(int k) const { return dims[k]; }
+      size_t getDims(size_t k) const { return dims[k]; }
 
       storage_iterator begin() { return storage_iterator(domain.begin(), baseGrid); }
       storage_iterator end() { return storage_iterator(domain.end(), baseGrid); }
@@ -152,8 +152,8 @@ namespace schnek {
     public:
       enum { Rank = BaseGrid::Rank };
       typedef typename BaseGrid::value_type value_type;
-      typedef Array<int, Rank> IndexType;
-      typedef Range<int, Rank> RangeType;
+      typedef Array<ptrdiff_t, Rank> IndexType;
+      typedef Range<ptrdiff_t, Rank> RangeType;
       typedef BaseGrid BaseGridType;
       /** default constructor creates an empty grid */
       SubGrid();

@@ -106,7 +106,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d,  RangeIterationTest)
     for (int n=0; n<10; ++n)
     {
         random_extent<1>(lo, hi);
-        Range<int, 1, ArrayNoArgCheck> range(lo, hi);
+        Range<ptrdiff_t, 1, ArrayNoArgCheck> range(lo, hi);
         Assign1d::GridType grid(lo, hi);
         
         Assign1d assign{grid};
@@ -114,7 +114,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d,  RangeIterationTest)
         
         Kokkos::fence();
 
-        for (int i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
         {
             BOOST_CHECK_EQUAL(grid(i), i);
         }
@@ -133,7 +133,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
     for (int n=0; n<10; ++n)
     {
         random_extent<2>(lo, hi);
-        Range<int, 2, ArrayNoArgCheck> range(lo, hi);
+        Range<ptrdiff_t, 2, ArrayNoArgCheck> range(lo, hi);
         Assign2d::GridType grid(lo, hi);
 
         Assign2d assign{grid};
@@ -141,9 +141,9 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
 
         Kokkos::fence();
 
-        for (int i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
         {
-            for (int j=lo[1]; j<=hi[1]; ++j)
+            for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
             {
                 BOOST_CHECK_EQUAL(grid(i, j), i + 3*j);
             }
@@ -161,7 +161,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
     for (int n=0; n<10; ++n)
     {
         random_extent<3>(lo, hi);
-        Range<int, 3, ArrayNoArgCheck> range(lo, hi);
+        Range<ptrdiff_t, 3, ArrayNoArgCheck> range(lo, hi);
         Assign3d::GridType grid(lo, hi);
 
         Assign3d assign{grid};
@@ -169,11 +169,11 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
 
         Kokkos::fence();
 
-        for (int i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
         {
-            for (int j=lo[1]; j<=hi[1]; ++j)
+            for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
             {
-                for (int k=lo[2]; k<=hi[2]; ++k)
+                for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
                 {
                     BOOST_CHECK_EQUAL(grid(i, j, k), i + 3*j + 7*k);
                 }
@@ -192,7 +192,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
     for (int n=0; n<10; ++n)
     {
         random_extent<4>(lo, hi);
-        Range<int, 4, ArrayNoArgCheck> range(lo, hi);
+        Range<ptrdiff_t, 4, ArrayNoArgCheck> range(lo, hi);
         Assign4d::GridType grid(lo, hi);
 
         Assign4d assign{grid};
@@ -200,13 +200,13 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
 
         Kokkos::fence();
 
-        for (int i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
         {
-            for (int j=lo[1]; j<=hi[1]; ++j)
+            for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
             {
-                for (int k=lo[2]; k<=hi[2]; ++k)
+                for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
                 {
-                    for (int l=lo[3]; l<=hi[3]; ++l)
+                    for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
                     {
                         BOOST_CHECK_EQUAL(grid(i, j, k, l), 
                             i + 3*j + 7*k + 13*l
@@ -229,7 +229,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
     for (int n=0; n<10; ++n)
     {
         random_extent<5>(lo, hi);
-        Range<int, 5, ArrayNoArgCheck> range(lo, hi);
+        Range<ptrdiff_t, 5, ArrayNoArgCheck> range(lo, hi);
         Assign5d::GridType grid(lo, hi);
 
         Assign5d assign{grid};
@@ -237,15 +237,15 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
 
         Kokkos::fence();
 
-        for (int i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
         {
-            for (int j=lo[1]; j<=hi[1]; ++j)
+            for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
             {
-                for (int k=lo[2]; k<=hi[2]; ++k)
+                for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
                 {
-                    for (int l=lo[3]; l<=hi[3]; ++l)
+                    for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
                     {
-                        for (int m=lo[4]; m<=hi[4]; ++m)
+                        for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
                         {
                             BOOST_CHECK_EQUAL(grid(i, j, k, l, m), 
                                 i + 3*j + 7*k + 13*l + 23*m
@@ -269,7 +269,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
     for (int n=0; n<10; ++n)
     {
         random_extent<6>(lo, hi);
-        Range<int, 6, ArrayNoArgCheck> range(lo, hi);
+        Range<ptrdiff_t, 6, ArrayNoArgCheck> range(lo, hi);
         Assign6d::GridType grid(lo, hi);
 
         Assign6d assign{grid};
@@ -277,17 +277,17 @@ BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
 
         Kokkos::fence();
 
-        for (int i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
         {
-            for (int j=lo[1]; j<=hi[1]; ++j)
+            for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
             {
-                for (int k=lo[2]; k<=hi[2]; ++k)
+                for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
                 {
-                    for (int l=lo[3]; l<=hi[3]; ++l)
+                    for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
                     {
-                        for (int m=lo[4]; m<=hi[4]; ++m)
+                        for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
                         {
-                            for (int n=lo[5]; n<=hi[5]; ++n)
+                            for (ptrdiff_t n=lo[5]; n<=hi[5]; ++n)
                             {
                                 BOOST_CHECK_EQUAL(grid(i, j, k, l, m, n), 
                                     i + 3*j + 7*k + 13*l + 23*m + 47*n

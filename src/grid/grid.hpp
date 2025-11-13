@@ -85,13 +85,13 @@ namespace schnek {
         GridBase(const GridBase&) = default;
 
         template<template<size_t> class ArrayCheckingPolicy>
-        GridBase(const Array<int, rank, ArrayCheckingPolicy>& size);
+        GridBase(const Array<size_t, rank, ArrayCheckingPolicy>& size);
 
         template<template<size_t> class ArrayCheckingPolicy>
-        GridBase(const Array<int, rank, ArrayCheckingPolicy>& low, const Array<int, rank, ArrayCheckingPolicy>& high);
+        GridBase(const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& low, const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& high);
 
         template<template<size_t> class ArrayCheckingPolicy>
-        GridBase(const Range<int, rank, ArrayCheckingPolicy>& range);
+        GridBase(const Range<ptrdiff_t, rank, ArrayCheckingPolicy>& range);
 
         /// Get the lowest coordinate in the grid (inclusive)
         SCHNEK_INLINE const IndexType getLo() const { return this->storage.getLo(); }
@@ -106,42 +106,42 @@ namespace schnek {
         SCHNEK_INLINE const IndexType getDims() const { return this->storage.getDims(); }
   
         /// Get k-th component of the lowest coordinate in the grid (inclusive)
-        SCHNEK_INLINE int getLo(int k) const { return this->storage.getLo(k); }
+        SCHNEK_INLINE ptrdiff_t getLo(size_t k) const { return this->storage.getLo(k); }
   
         /// Get k-th component of the highest coordinate in the grid (inclusive)
-        SCHNEK_INLINE int getHi(int k) const { return this->storage.getHi(k); }
+        SCHNEK_INLINE ptrdiff_t getHi(size_t k) const { return this->storage.getHi(k); }
   
         /// Get k-th component of the dimensions of the grid `dims = high - low + 1`
-        SCHNEK_INLINE int getDims(int k) const { return this->storage.getDims(k); }
+        SCHNEK_INLINE ptrdiff_t getDims(size_t k) const { return this->storage.getDims(k); }
 
         /// Get the stride of the specified dimension
         SCHNEK_INLINE ptrdiff_t stride(size_t dim) const { return this->storage.stride(dim); }
 
         /** get access, writing */
         template<template<size_t> class ArrayCheckingPolicy>
-        SCHNEK_INLINE T& get(const Array<int, rank, ArrayCheckingPolicy>& pos);  // write
+        SCHNEK_INLINE T& get(const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos);  // write
         /** get access, reading */
         template<template<size_t> class ArrayCheckingPolicy>
-        SCHNEK_INLINE T get(const Array<int, rank, ArrayCheckingPolicy>& pos) const;  // read
+        SCHNEK_INLINE T get(const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos) const;  // read
 
         /** index operator, writing */
         template<template<size_t> class ArrayCheckingPolicy>
-        SCHNEK_INLINE T& operator[](const Array<int, rank, ArrayCheckingPolicy>& pos);  // write
+        SCHNEK_INLINE T& operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos);  // write
         /** index operator, reading */
         template<template<size_t> class ArrayCheckingPolicy>
-        SCHNEK_INLINE T operator[](const Array<int, rank, ArrayCheckingPolicy>& pos) const;  // read
+        SCHNEK_INLINE T operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos) const;  // read
 
         /** index operator, writing */
-        template<class Operator, int Length>
+        template<class Operator, size_t Length>
         SCHNEK_INLINE T& operator[](const ArrayExpression<Operator, Length>& pos);  // write
         /** index operator, reading */
-        template<class Operator, int Length>
+        template<class Operator, size_t Length>
         SCHNEK_INLINE T operator[](const ArrayExpression<Operator, Length>& pos) const;  // read
 
         /** index operator, for 1D grids, writing */
-        SCHNEK_INLINE T& operator[](int i);
+        SCHNEK_INLINE T& operator[](ptrdiff_t i);
         /** index operator, for 1D grids, reading */
-        SCHNEK_INLINE T operator[](int i) const;
+        SCHNEK_INLINE T operator[](ptrdiff_t i) const;
 
         /** index operator forwarding to the checking policy, writing */
         template<typename... Indices>
@@ -229,8 +229,8 @@ namespace schnek {
   class Grid : public internal::GridBase<T, rank, Policies...> {
     public:
       typedef T value_type;
-      typedef Array<int, rank> IndexType;
-      typedef Range<int, rank> RangeType;
+      typedef Array<ptrdiff_t, rank> IndexType;
+      typedef Range<ptrdiff_t, rank> RangeType;
       typedef Grid<T, rank, Policies...> GridType;
       typedef internal::GridBase<T, rank, Policies...> BaseType;
       enum { Rank = rank };
@@ -256,7 +256,8 @@ namespace schnek {
        *
        *  The ranges then extend from 0 to size[i]-1
        */
-      Grid(const IndexType& size);
+      template<template<size_t> class ArrayCheckingPolicy>
+      Grid(const Array<size_t, rank, ArrayCheckingPolicy>& size);
 
       /** constructor, which builds Grid with lower indices low[0],...,low[rank-1]
        *  and upper indices high[0],...,high[rank-1]

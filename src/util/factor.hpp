@@ -31,7 +31,7 @@
 
 namespace schnek {
 
-  void equalFactors(int number, int nfact, std::vector<int> &factors, std::vector<int> &weights);
+  void equalFactors(size_t number, size_t nfact, std::vector<size_t> &factors, std::vector<size_t> &weights);
 
 }  // namespace schnek
 

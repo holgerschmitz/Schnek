@@ -35,7 +35,7 @@ namespace schnek {
   SerialSubdivision<GridType>::~SerialSubdivision() {}
 
   template<class GridType>
-  void SerialSubdivision<GridType>::init(const LimitType &low, const LimitType &high, int delta) {
+  void SerialSubdivision<GridType>::init(const LimitType &low, const LimitType &high, size_t delta) {
     this->bounds = std::make_shared<BoundaryType>(low, high, delta);
   }
 

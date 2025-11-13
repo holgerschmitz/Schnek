@@ -32,10 +32,10 @@
 
 namespace schnek {
 
-  template<typename T, int rank, class BaseGrid, typename Transformation>
+  template<typename T, size_t rank, class BaseGrid, typename Transformation>
   class GridTransformStorage {
     public:
-      typedef Array<int, rank> IndexType;
+      typedef Array<ptrdiff_t, rank> IndexType;
       typedef BaseGrid BaseGridType;
       typedef Transformation TransformationType;
 
@@ -85,11 +85,11 @@ namespace schnek {
       SCHNEK_INLINE const IndexType &getDims() const { return baseGrid->getDims(); }
 
       /** */
-      SCHNEK_INLINE int getLo(int k) const { return baseGrid->getLo(k); }
+      SCHNEK_INLINE ptrdiff_t getLo(size_t k) const { return baseGrid->getLo(k); }
       /** */
-      SCHNEK_INLINE int getHi(int k) const { return baseGrid->getHi(k); }
+      SCHNEK_INLINE ptrdiff_t getHi(size_t k) const { return baseGrid->getHi(k); }
       /** */
-      SCHNEK_INLINE int getDims(int k) const { return baseGrid->getDims(k); }
+      SCHNEK_INLINE ptrdiff_t getDims(size_t k) const { return baseGrid->getDims(k); }
 
       SCHNEK_INLINE const_storage_iterator begin() { return const_storage_iterator(baseGrid->begin(), *this); }
       SCHNEK_INLINE const_storage_iterator end() { return const_storage_iterator(baseGrid->end(), *this); }
@@ -104,7 +104,7 @@ namespace schnek {
       void setTransformation(const Transformation &transformation) { this->transformation = transformation; }
   };
 
-  template<class BaseGrid, typename Transformation, template<int> class CheckingPolicy = GridNoArgCheck>
+  template<class BaseGrid, typename Transformation, template<size_t> class CheckingPolicy = GridNoArgCheck>
   class GridTransform
       : public internal::GridBase<
             typename Transformation::value_type,

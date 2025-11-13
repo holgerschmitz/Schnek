@@ -57,7 +57,7 @@ namespace schnek {
           pVariable v;
           DependencySet dependsOn;
           DependencySet modifies;
-          int counter;
+          ptrdiff_t counter;
           VarInfo() {}
           VarInfo(pVariable v_, DependencySet dependsOn_, DependencySet modifies_)
               : v(v_), dependsOn(dependsOn_), modifies(modifies_), counter(0) {

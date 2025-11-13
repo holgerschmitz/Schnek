@@ -41,7 +41,7 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 1, Policies...
 
   if (!(low <= high)) return out;
   out << M(low[0]);
-  for (int i = low[0] + 1; i <= high[0]; ++i) out << " " << M(i);
+  for (ptrdiff_t i = low[0] + 1; i <= high[0]; ++i) out << " " << M(i);
   return out;
 }
 
@@ -53,9 +53,9 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 2, Policies...
   const IndexType &high = M.getHi();
 
   if (!(low <= high)) return out;
-  for (int j = low[1]; j <= high[1]; ++j) {
+  for (ptrdiff_t j = low[1]; j <= high[1]; ++j) {
     out << M(low[0], j);
-    for (int i = low[0] + 1; i <= high[0]; ++i) out << " " << M(i, j);
+    for (ptrdiff_t i = low[0] + 1; i <= high[0]; ++i) out << " " << M(i, j);
     out << std::endl;
   }
 
@@ -70,10 +70,10 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 3, Policies...
   const IndexType &high = M.getHi();
 
   if (!(low <= high)) return out;
-  for (int k = low[2]; k <= high[2]; ++k) {
-    for (int j = low[1]; j <= high[1]; ++j) {
+  for (ptrdiff_t k = low[2]; k <= high[2]; ++k) {
+    for (ptrdiff_t j = low[1]; j <= high[1]; ++j) {
       out << M(low[0], j, k);
-      for (int i = low[0] + 1; i <= high[0]; ++i) out << " " << M(i, j, k);
+      for (ptrdiff_t i = low[0] + 1; i <= high[0]; ++i) out << " " << M(i, j, k);
       out << std::endl;
     }
     out << std::endl;
@@ -90,11 +90,11 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 4, Policies...
   const IndexType &high = M.getHi();
 
   if (!(low <= high)) return out;
-  for (int l = low[3]; l <= high[3]; ++l) {
-    for (int k = low[2]; k <= high[2]; ++k) {
-      for (int j = low[1]; j <= high[1]; ++j) {
+  for (ptrdiff_t l = low[3]; l <= high[3]; ++l) {
+    for (ptrdiff_t k = low[2]; k <= high[2]; ++k) {
+      for (ptrdiff_t j = low[1]; j <= high[1]; ++j) {
         out << M(low[0], j, k, l);
-        for (int i = low[0] + 1; i <= high[0]; ++i) out << " " << M(i, j, k, l);
+        for (ptrdiff_t i = low[0] + 1; i <= high[0]; ++i) out << " " << M(i, j, k, l);
         out << std::endl;
       }
       out << std::endl;
@@ -112,12 +112,12 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 5, Policies...
   const IndexType &high = M.getHi();
 
   if (!(low <= high)) return out;
-  for (int m = low[4]; m <= high[4]; ++m) {
-    for (int l = low[3]; l <= high[3]; ++l) {
-      for (int k = low[2]; k <= high[2]; ++k) {
-        for (int j = low[1]; j <= high[1]; ++j) {
+  for (ptrdiff_t m = low[4]; m <= high[4]; ++m) {
+    for (ptrdiff_t l = low[3]; l <= high[3]; ++l) {
+      for (ptrdiff_t k = low[2]; k <= high[2]; ++k) {
+        for (ptrdiff_t j = low[1]; j <= high[1]; ++j) {
           out << M(low[0], j, k, l, m);
-          for (int i = low[0] + 1; i <= high[0]; ++i) out << " " << M(i, j, k, l, m);
+          for (ptrdiff_t i = low[0] + 1; i <= high[0]; ++i) out << " " << M(i, j, k, l, m);
           out << std::endl;
         }
         out << std::endl;

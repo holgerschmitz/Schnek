@@ -42,24 +42,24 @@ namespace schnek {
    *  traverses the domain and returns the positions.
    *
   template<
-    int rank,
-    template<int> class CheckingPolicy = ArrayNoArgCheck
+    size_t rank,
+    template<size_t> class CheckingPolicy = ArrayNoArgCheck
   >
-  class RecDomain : public Range<int, rank, CheckingPolicy>
+  class RecDomain : public Range<ptrdiff_t, rank, CheckingPolicy>
   {
     public:
-      typedef typename Range<int, rank, CheckingPolicy>::LimitType LimitType;
+      typedef typename Range<ptrdiff_t, rank, CheckingPolicy>::LimitType LimitType;
       /// Construct with rectangle minimum and maximum
       RecDomain(const LimitType &min, const LimitType &max)
-      : Range<int, rank, CheckingPolicy>(min, max) {}
+      : Range<ptrdiff_t, rank, CheckingPolicy>(min, max) {}
 
       /// Copy constructor
-      RecDomain(const RecDomain &domain) : Range<int, rank, CheckingPolicy>(domain) {}
+      RecDomain(const RecDomain &domain) : Range<ptrdiff_t, rank, CheckingPolicy>(domain) {}
 
       /// Assignment operator
       RecDomain &operator=(const RecDomain &domain)
       {
-        Range<int, rank, CheckingPolicy>::operator=(domain);
+        Range<ptrdiff_t, rank, CheckingPolicy>::operator=(domain);
         return *this;
       }
 
@@ -85,7 +85,7 @@ namespace schnek {
           /// Increments the iterator by one position.
           void increment()
           {
-            int d = rank;
+            size_t d = rank;
             while (d>0)
             {
               --d;
@@ -150,7 +150,7 @@ namespace schnek {
   //  *
   //  *  New domains can be added by supplying the rectangular domain bounds.
   //  */
-  // template<int rank>
+  // template<size_t rank>
   // class MultiRecDomain {
   //   private:
   //     /// The list of rectangular domains

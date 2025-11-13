@@ -46,7 +46,7 @@ namespace schnek {
     private:
       pBlock root;
       pBlock cursor;
-      std::stack<int> depth;
+      std::stack<size_t> depth;
 
     public:
       BlockTree();
@@ -135,7 +135,7 @@ namespace schnek {
     if (!dot.empty()) {
       std::string head = std::string(key.begin(), dot.begin());
       std::string tail = std::string(dot.end(), key.end());
-      int count = 0;
+      size_t count = 0;
       for (pBlock child : children) {
         if ((child->getName() == head) && child->getData(tail, data, false)) ++count;
       }
@@ -148,7 +148,7 @@ namespace schnek {
 
     if (upward && parent) return parent->getData(key, data, true);
 
-    int count = 0;
+    size_t count = 0;
     for (pBlock child : children) {
       if (child->getData(key, data, false)) ++count;
     }

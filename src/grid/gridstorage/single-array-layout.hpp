@@ -46,10 +46,10 @@ namespace schnek {
       T *data_fast;
     public:
       /// The grid index type
-      typedef Array<int, Rank> IndexType;
+      typedef Array<ptrdiff_t, Rank> IndexType;
 
       /// The grid range type
-      typedef Range<int, Rank> RangeType;
+      typedef Range<ptrdiff_t, Rank> RangeType;
 
       /// Default constructor
       SingleArrayGridCOrderLayout() = default;

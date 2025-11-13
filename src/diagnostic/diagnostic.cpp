@@ -48,13 +48,13 @@ bool DiagnosticInterface::appending() {
   return bool(append);
 }
 
-std::string DiagnosticInterface::parsedFileName(int rank, int timeCounter) {
+std::string DiagnosticInterface::parsedFileName(int mpiRank, ptrdiff_t timeCounter) {
   std::string parsed = fname;
-  std::string comrank = boost::lexical_cast<std::string>(rank);
+  std::string comrank = boost::lexical_cast<std::string>(mpiRank);
   std::string tstep = boost::lexical_cast<std::string>(timeCounter);
   if (timeCounter < 0) tstep = "final";
 
-  SCHNEK_TRACE_LOG(2, "DiagnosticInterface::parsedFileName " << rank << " " << comrank << " " << timeCounter)
+  SCHNEK_TRACE_LOG(2, "DiagnosticInterface::parsedFileName " << mpiRank << " " << comrank << " " << timeCounter)
   size_t pos;
 
 #if !defined(H5_HAVE_PARALLEL) || !defined(SCHNEK_USE_HDF_PARALLEL)
@@ -68,12 +68,12 @@ std::string DiagnosticInterface::parsedFileName(int rank, int timeCounter) {
   return parsed;
 }
 
-std::string DiagnosticInterface::parsedFileName(int rank, double physicalTime) {
+std::string DiagnosticInterface::parsedFileName(int mpiRank, double physicalTime) {
   std::string parsed = fname;
-  std::string comrank = boost::lexical_cast<std::string>(rank);
+  std::string comrank = boost::lexical_cast<std::string>(mpiRank);
   std::string time = boost::lexical_cast<std::string>(physicalTime);
 
-  SCHNEK_TRACE_LOG(2, "DiagnosticInterface::parsedFileName " << rank << " " << comrank << " " << timeCounter)
+  SCHNEK_TRACE_LOG(2, "DiagnosticInterface::parsedFileName " << mpiRank << " " << comrank << " " << timeCounter)
   size_t pos;
 
 #if !defined(H5_HAVE_PARALLEL) || !defined(SCHNEK_USE_HDF_PARALLEL)
@@ -91,13 +91,13 @@ IntervalDiagnostic::IntervalDiagnostic() : interval(100) {
   DiagnosticManager::instance().addIntervalDiagnostic(this);
 }
 
-void IntervalDiagnostic::execute(bool master, int rank, int timeCounter) {
-  SCHNEK_TRACE_LOG(2, "IntervalDiagnostic::execute" << fname << " " << rank)
+void IntervalDiagnostic::execute(bool master, int mpiRank, ptrdiff_t timeCounter) {
+  SCHNEK_TRACE_LOG(2, "IntervalDiagnostic::execute" << fname << " " << mpiRank)
   if (singleOut() && !master) return;
 
   if ((0 == timeCounter) && appending()) open(fname);
   if ((timeCounter < 0) || ((timeCounter % interval) == 0)) {
-    if (!appending()) open(parsedFileName(rank, timeCounter));
+    if (!appending()) open(parsedFileName(mpiRank, timeCounter));
     write();
     if (!appending()) close();
   }
@@ -116,14 +116,14 @@ DeltaTimeDiagnostic::DeltaTimeDiagnostic() : deltaTime(1.0), nextOutput(0.0), co
   DiagnosticManager::instance().addDeltaTimeDiagnostic(this);
 }
 
-void DeltaTimeDiagnostic::execute(bool master, int rank, double physicalTime) {
-  SCHNEK_TRACE_LOG(2, "DeltaTimeDiagnostic::execute" << fname << " " << rank)
+void DeltaTimeDiagnostic::execute(bool master, int mpiRank, double physicalTime) {
+  SCHNEK_TRACE_LOG(2, "DeltaTimeDiagnostic::execute" << fname << " " << mpiRank)
   if (singleOut() && !master) return;
 
   if ((0.0 == physicalTime) && appending()) open(fname);
 
   if (physicalTime >= nextOutput) {
-    if (!appending()) open(parsedFileName(rank, count));
+    if (!appending()) open(parsedFileName(mpiRank, count));
     write();
     if (!appending()) close();
     nextOutput += deltaTime;
@@ -146,9 +146,9 @@ void DeltaTimeDiagnostic::initParameters(BlockParameters &blockPars) {
 }
 
 DiagnosticManager::DiagnosticManager()
-    : timecounter(0), physicalTime(0), usePhysicalTime(false), master(true), rank(0) {}
+    : timecounter(0), physicalTime(0), usePhysicalTime(false), master(true), mpiRank(0) {}
 
-void DiagnosticManager::setTimeCounter(int *timecounter_) {
+void DiagnosticManager::setTimeCounter(size_t *timecounter_) {
   timecounter = timecounter_;
   usePhysicalTime = false;
 }
@@ -162,8 +162,8 @@ void DiagnosticManager::setMaster(bool master_) {
   master = master_;
 }
 
-void DiagnosticManager::setRank(int rank_) {
-  rank = rank_;
+void DiagnosticManager::setRank(int mpiRank_) {
+  mpiRank = mpiRank_;
 }
 
 void DiagnosticManager::addIntervalDiagnostic(IntervalDiagnostic *diag) {
@@ -176,7 +176,7 @@ void DiagnosticManager::addDeltaTimeDiagnostic(DeltaTimeDiagnostic *diag) {
 
 void DiagnosticManager::execute() {
   SCHNEK_TRACE_LOG(
-      2, "DiagnosticManager::execute " << rank << " " << usePhysicalTime
+      2, "DiagnosticManager::execute " << mpiRank << " " << usePhysicalTime
              ? boost::lexical_cast<std::string>(*physicalTime)
              : boost::lexical_cast<std::string>(*timecounter)
   );
@@ -187,11 +187,11 @@ void DiagnosticManager::execute() {
     );
 
   for (IntervalDiagnostic *diag : intervalDiags) {
-    diag->execute(master, rank, *timecounter);
+    diag->execute(master, mpiRank, *timecounter);
   }
 
   for (DeltaTimeDiagnostic *diag : deltaTimeDiags) {
-    diag->execute(master, rank, *physicalTime);
+    diag->execute(master, mpiRank, *physicalTime);
   }
 }
 

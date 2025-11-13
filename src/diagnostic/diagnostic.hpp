@@ -69,8 +69,8 @@ namespace schnek {
       void initParameters(BlockParameters &);
 
       bool appending();
-      std::string parsedFileName(int rank, int timeCounter);
-      std::string parsedFileName(int rank, double physicalTime);
+      std::string parsedFileName(int mpiRank, ptrdiff_t timeCounter);
+      std::string parsedFileName(int mpiRank, double physicalTime);
   };
 
   class IntervalDiagnostic : public DiagnosticInterface {
@@ -81,7 +81,7 @@ namespace schnek {
     public:
       IntervalDiagnostic();
       virtual ~IntervalDiagnostic() {}
-      virtual void execute(bool master, int rank, int timeCounter);
+      virtual void execute(bool master, int mpiRank, ptrdiff_t timeCounter);
       int getInterval();
 
     protected:
@@ -93,12 +93,12 @@ namespace schnek {
       /// The physical time interval at which to write
       double deltaTime;
       double nextOutput;
-      int count;
+      ptrdiff_t count;
 
     public:
       DeltaTimeDiagnostic();
       virtual ~DeltaTimeDiagnostic() {}
-      virtual void execute(bool master, int rank, double physicalTime);
+      virtual void execute(bool master, int mpiRank, double physicalTime);
       double getNextOutput();
       double getDeltaTime();
 
@@ -115,11 +115,11 @@ namespace schnek {
       std::list<DeltaTimeDiagnostic *> deltaTimeDiags;
 
       /// The current time step
-      int *timecounter;
+      size_t *timecounter;
       double *physicalTime;
       bool usePhysicalTime;
       bool master;
-      int rank;
+      int mpiRank;
 
       friend class Singleton<DiagnosticManager>;
       friend class CreateUsingNew<DiagnosticManager>;
@@ -129,10 +129,10 @@ namespace schnek {
       void addDeltaTimeDiagnostic(DeltaTimeDiagnostic *);
       void execute();
 
-      void setTimeCounter(int *timecounter);
+      void setTimeCounter(size_t *timecounter);
       void setPhysicalTime(double *physicalTime);
       void setMaster(bool master);
-      void setRank(int rank);
+      void setRank(int mpiRank);
 
       double adjustDeltaT(double deltaT);
 

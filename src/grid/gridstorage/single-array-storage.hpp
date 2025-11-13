@@ -47,10 +47,10 @@ namespace schnek {
       static constexpr size_t rank = Rank;
 
       /// The grid index type
-      typedef Array<int, rank> IndexType;
+      typedef Array<ptrdiff_t, rank> IndexType;
 
       /// The grid range type
-      typedef Range<int, rank> RangeType;
+      typedef Range<ptrdiff_t, rank> RangeType;
 
       /// The length of the allocated array
       size_t size;
@@ -59,7 +59,7 @@ namespace schnek {
       RangeType range;
 
       /// The dimensions of the grid `dims = high - low + 1`
-      IndexType dims;
+      Array<size_t, rank> dims;
     private:
       using PolicyList = generic::TypeList<Policies<T, rank>...>;
       using AllocationPolicy = typename PolicyList::template getWithDefault<
@@ -107,13 +107,13 @@ namespace schnek {
       SCHNEK_INLINE const IndexType &getDims() const { return this->dims; }
 
       /// Get k-th component of the lowest coordinate in the grid (inclusive)
-      SCHNEK_INLINE int getLo(int k) const { return this->range.getLo(k); }
+      SCHNEK_INLINE ptrdiff_t getLo(size_t k) const { return this->range.getLo(k); }
 
       /// Get k-th component of the highest coordinate in the grid (inclusive)
-      SCHNEK_INLINE int getHi(int k) const { return this->range.getHi(k); }
+      SCHNEK_INLINE ptrdiff_t getHi(size_t k) const { return this->range.getHi(k); }
 
       /// Get k-th component of the dimensions of the grid `dims = high - low + 1`
-      SCHNEK_INLINE int getDims(int k) const { return this->dims[k]; }
+      SCHNEK_INLINE size_t getDims(size_t k) const { return this->dims[k]; }
 
       /// Get the length of the allocated array
       SCHNEK_INLINE size_t getSize() const { return this->size; }

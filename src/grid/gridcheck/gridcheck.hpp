@@ -38,21 +38,21 @@ namespace schnek {
   template<typename T, size_t rank>
   class GridNoArgCheck {
     public:
-      typedef Array<int, rank, ArrayNoArgCheck> IndexType;
+      typedef Array<ptrdiff_t, rank, ArrayNoArgCheck> IndexType;
       SCHNEK_INLINE static const IndexType &check(const IndexType &pos, const IndexType &low, const IndexType &high);
   };
 
   template<typename T, size_t rank>
   class GridAssertCheck {
     public:
-      typedef Array<int, rank, ArrayAssertArgCheck> IndexType;
+      typedef Array<ptrdiff_t, rank, ArrayAssertArgCheck> IndexType;
       SCHNEK_INLINE static const IndexType &check(const IndexType &pos, const IndexType &low, const IndexType &high);
   };
 
   template<typename T, size_t rank>
   class GridDebugCheck {
     public:
-      typedef Array<int, rank, ArrayAssertArgCheck> IndexType;
+      typedef Array<ptrdiff_t, rank, ArrayAssertArgCheck> IndexType;
 
     private:
       static bool errorFlag;

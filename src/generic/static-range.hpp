@@ -40,7 +40,7 @@ namespace schnek {
 
     template<typename... /* StaticRange */ Types>
     struct StaticGhostCells {
-        static constexpr int rank = sizeof...(Types);
+        static constexpr size_t rank = sizeof...(Types);
 
         template<ptrdiff_t lo, ptrdiff_t hi>
         using put = StaticGhostCells<Types..., StaticRange<lo, hi>>;

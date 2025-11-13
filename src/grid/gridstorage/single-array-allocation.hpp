@@ -95,10 +95,10 @@ namespace schnek {
       static constexpr size_t rank = Rank;
 
       /// The grid index type
-      typedef Array<int, Rank> IndexType;
+      typedef Array<ptrdiff_t, Rank> IndexType;
 
       /// The grid range type
-      typedef Range<int, Rank> RangeType;
+      typedef Range<ptrdiff_t, Rank> RangeType;
     private:
       struct SizeInfo {
           IndexType lo;
@@ -184,10 +184,10 @@ namespace schnek {
       static constexpr size_t rank = Rank;
 
       /// The grid index type
-      typedef Array<int, Rank> IndexType;
+      typedef Array<ptrdiff_t, Rank> IndexType;
 
       /// The grid range type
-      typedef Range<int, Rank> RangeType;
+      typedef Range<ptrdiff_t, Rank> RangeType;
 
     private:
       struct SizeInfo {
