@@ -28,12 +28,12 @@ namespace schnek {
   template<class T>
   template<class ContainerType>
   void DataBuffer<T>::makeBuffer(ContainerType &container) {
-    static const int dsize = sizeof(T);
+    static const size_t dsize = sizeof(T);
     BufferType::IndexType sz(container.size());
-    for (int i = 0; i < BufferType::Rank; ++i) sz[i] *= dsize;
+    for (size_t i = 0; i < BufferType::Rank; ++i) sz[i] *= dsize;
     buffer.resize(sz);
 
-    int pos = 0;
+    size_t pos = 0;
 
     for (typename ContainerType::iterator it = container.begin(); it != container.end(); ++it) {
       // Dereference twice and then take address of because container could

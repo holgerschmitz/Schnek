@@ -249,7 +249,7 @@ BOOST_FIXTURE_TEST_CASE( stride_1d, GridTest )
     random_extent<1>(lo, hi);
 
     GridType g(lo, hi);
-    hi = hi - 1;
+    hi = hi - (ptrdiff_t)1;
     for (int m=0; m<10; ++m)
     {
       GridType::IndexType index = random_index(lo, hi);
@@ -269,7 +269,7 @@ BOOST_FIXTURE_TEST_CASE( stride_2d, GridTest )
     random_extent(lo, hi);
 
     GridType g(lo, hi);
-    hi = hi - 1;
+    hi = hi - (ptrdiff_t)1;
     for (int m=0; m<10; ++m)
     {
       GridType::IndexType index = random_index(lo, hi);
@@ -289,7 +289,7 @@ BOOST_FIXTURE_TEST_CASE( stride_3d, GridTest )
     random_extent(lo, hi);
 
     GridType g(lo, hi);
-    hi = hi - 1;
+    hi = hi - (ptrdiff_t)1;
     for (int m=0; m<10; ++m)
     {
       GridType::IndexType index = random_index(lo, hi);
@@ -309,7 +309,7 @@ BOOST_FIXTURE_TEST_CASE( stride_4d, GridTest )
     random_extent(lo, hi);
 
     GridType g(lo, hi);
-    hi = hi - 1;
+    hi = hi - (ptrdiff_t)1;
     for (int m=0; m<10; ++m)
     {
       GridType::IndexType index = random_index(lo, hi);
@@ -329,7 +329,7 @@ BOOST_FIXTURE_TEST_CASE( stride_5d, GridTest )
     random_extent(lo, hi);
 
     GridType g(lo, hi);
-    hi = hi - 1;
+    hi = hi - (ptrdiff_t)1;
     for (int m=0; m<10; ++m)
     {
       GridType::IndexType index = random_index(lo, hi);
@@ -349,7 +349,7 @@ BOOST_FIXTURE_TEST_CASE( stride_6d, GridTest )
     random_extent(lo, hi);
 
     GridType g(lo, hi);
-    hi = hi - 1;
+    hi = hi - (ptrdiff_t)1;
     for (int m=0; m<10; ++m)
     {
       GridType::IndexType index = random_index(lo, hi);
@@ -369,7 +369,7 @@ BOOST_FIXTURE_TEST_CASE( stride_7d, GridTest )
     random_extent(lo, hi);
 
     GridType g(lo, hi);
-    hi = hi - 1;
+    hi = hi - (ptrdiff_t)1;
     for (int m=0; m<10; ++m)
     {
       GridType::IndexType index = random_index(lo, hi);
@@ -389,7 +389,7 @@ BOOST_FIXTURE_TEST_CASE( stride_8d, GridTest )
     random_extent(lo, hi);
 
     GridType g(lo, hi);
-    hi = hi - 1;
+    hi = hi - (ptrdiff_t)1;
     for (int m=0; m<10; ++m)
     {
       GridType::IndexType index = random_index(lo, hi);

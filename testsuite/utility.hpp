@@ -51,7 +51,7 @@ class ArrayBoostTestArgCheck
 template<typename T, size_t rank>
 class GridBoostTestCheck {
   public:
-    typedef schnek::Array<int,rank,ArrayBoostTestArgCheck> IndexType;
+    typedef schnek::Array<ptrdiff_t, rank, ArrayBoostTestArgCheck> IndexType;
   private:
     static const IndexType &checkImpl(
         const IndexType &pos,

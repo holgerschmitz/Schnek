@@ -69,7 +69,7 @@ namespace schnek::computation {
           const typename FieldType::type<Architecture::template GridStorageType>::RangeType &size,
           const typename FieldType::type<Architecture::template GridStorageType>::DomainType &domain,
           const typename FieldType::type<Architecture::template GridStorageType>::StaggerType &stagger,
-          int ghostCells
+          size_t ghostCells
       );
   };
 
@@ -83,7 +83,7 @@ namespace schnek::computation {
               Architecture::template GridStorageType>::DomainType &domain,
           const typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<
               Architecture::template GridStorageType>::StaggerType &stagger,
-          int ghostCells
+          size_t ghostCells
       ) {
         typedef typename FieldTypeWrapper<T, rank, CheckingPolicy>::type<Architecture::template GridStorageType>
             FieldType;
@@ -102,7 +102,7 @@ namespace schnek::computation {
   //         const typename FieldType::RangeType &size,
   //         const typename FieldType::DomainType &domain,
   //         const typename FieldType::StaggerType &stagger,
-  //         int ghostCells
+  //         size_t ghostCells
   //     );
   // };
 

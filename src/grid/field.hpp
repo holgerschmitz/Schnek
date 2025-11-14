@@ -47,7 +47,7 @@ namespace schnek {
     private:
       DomainType domain;
       StaggerType stagger;
-      int ghostCells;
+      size_t ghostCells;
 
     public:
       /** default constructor creates an empty grid */
@@ -64,10 +64,10 @@ namespace schnek {
           template<size_t>
           class StaggerCheckingPolicy>
       Field(
-          const Array<int, rank, ArrayCheckingPolicy> &size,
+          const Array<size_t, rank, ArrayCheckingPolicy> &size,
           const Range<double, rank, RangeCheckingPolicy> &domain,
           const Array<bool, rank, StaggerCheckingPolicy> &stagger,
-          int ghostCells
+          size_t ghostCells
       );
 
       template<
@@ -78,11 +78,11 @@ namespace schnek {
           template<size_t>
           class StaggerCheckingPolicy>
       Field(
-          const Array<int, rank, ArrayCheckingPolicy> &low,
-          const Array<int, rank, ArrayCheckingPolicy> &high,
+          const Array<ptrdiff_t, rank, ArrayCheckingPolicy> &low,
+          const Array<ptrdiff_t, rank, ArrayCheckingPolicy> &high,
           const Range<double, rank, RangeCheckingPolicy> &domain,
           const Array<bool, rank, StaggerCheckingPolicy> &stagger,
-          int ghostCells
+          size_t ghostCells
       );
 
       template<
@@ -93,44 +93,44 @@ namespace schnek {
           template<size_t>
           class StaggerCheckingPolicy>
       Field(
-          const Range<int, rank, ArrayCheckingPolicy> &range,
+          const Range<ptrdiff_t, rank, ArrayCheckingPolicy> &range,
           const Range<double, rank, RangeCheckingPolicy> &domain,
           const Array<bool, rank, StaggerCheckingPolicy> &stagger,
-          int ghostCells
+          size_t ghostCells
       );
 
       /** copy constructor */
       Field(const FieldType &);
 
       /** Get the lo of the inner grid range */
-      IndexType getInnerLo() { return this->getLo() + ghostCells; }
+      IndexType getInnerLo() { return this->getLo() + ptrdiff_t(ghostCells); }
 
       /** Get the hi of the inner grid range */
-      IndexType getInnerHi() { return this->getHi() - ghostCells; }
+      IndexType getInnerHi() { return this->getHi() - ptrdiff_t(ghostCells); }
 
       /** Get the range the inner grid range */
-      RangeType getInnerRange() { return RangeType{this->getLo() + ghostCells, this->getHi() - ghostCells}; }
+      RangeType getInnerRange() { return RangeType{this->getLo() + ptrdiff_t(ghostCells), this->getHi() - ptrdiff_t(ghostCells)}; }
 
       /** Calculates index and offset from a position on the field
        *
        * The index returned is the index of the grid point left of the position.
        */
-      void positionToIndex(int dim, double pos, int &index, double &offset);
+      void positionToIndex(size_t dim, double pos, ptrdiff_t &index, double &offset);
 
       /** Calculates index from a position on the field
        *
        * The index returned is the index of the grid point left of the position.
        */
-      int positionToIndex(int dim, double pos);
+      ptrdiff_t positionToIndex(size_t dim, double pos);
 
       /// Calculates the position of a grid point
-      double indexToPosition(int dim, int index);
+      double indexToPosition(size_t dim, ptrdiff_t index);
 
       /// Get all three components of the grid stagger
       StaggerType &getStagger() { return stagger; }
 
       /// Get a single component of the grid stagger
-      bool getStagger(int i) { return stagger[i]; }
+      bool getStagger(size_t i) { return stagger[i]; }
 
       /**
        * @brief Get the physical domain of the field
@@ -159,10 +159,10 @@ namespace schnek {
           template<size_t>
           class StaggerCheckingPolicy>
       void resize(
-          const Array<int, rank, ArrayCheckingPolicy> &size,
+          const Array<size_t, rank, ArrayCheckingPolicy> &size,
           const Range<double, rank, RangeCheckingPolicy> &domain,
           const Array<bool, rank, StaggerCheckingPolicy> &stagger,
-          int ghostCells
+          size_t ghostCells
       );
 
       template<
@@ -173,11 +173,11 @@ namespace schnek {
           template<size_t>
           class StaggerCheckingPolicy>
       void resize(
-          const Array<int, rank, ArrayCheckingPolicy> &low,
-          const Array<int, rank, ArrayCheckingPolicy> &high,
+          const Array<ptrdiff_t, rank, ArrayCheckingPolicy> &low,
+          const Array<ptrdiff_t, rank, ArrayCheckingPolicy> &high,
           const Range<double, rank, RangeCheckingPolicy> &domain,
           const Array<bool, rank, StaggerCheckingPolicy> &stagger,
-          int ghostCells
+          size_t ghostCells
       );
 
       template<
@@ -188,10 +188,10 @@ namespace schnek {
           template<size_t>
           class StaggerCheckingPolicy>
       void resize(
-          const Range<int, rank, ArrayCheckingPolicy> &range,
+          const Range<ptrdiff_t, rank, ArrayCheckingPolicy> &range,
           const Range<double, rank, RangeCheckingPolicy> &domain,
           const Array<bool, rank, StaggerCheckingPolicy> &stagger,
-          int ghostCells
+          size_t ghostCells
       );
   };
 

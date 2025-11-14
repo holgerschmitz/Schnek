@@ -71,9 +71,9 @@ namespace schnek {
     hsize_t locstart[FieldType::Rank];
     hsize_t memstart[FieldType::Rank];
 
-    for (int i = 0; i < FieldType::Rank; ++i) {
+    for (size_t i = 0; i < FieldType::Rank; ++i) {
       // maybe use [FieldType::Rank-1-i] as index on the LHS
-      int gmin = g.global_min[i];
+      ptrdiff_t gmin = g.global_min[i];
       dims[i] = 1 + g.global_max[i] - gmin;
       locdims[i] = lhi[i] - llo[i] + 1;
       locstart[i] = llo[i] - gmin;
@@ -160,9 +160,9 @@ namespace schnek {
     hsize_t locstart[FieldType::Rank];
     hsize_t memstart[FieldType::Rank];
 
-    for (int i = 0; i < FieldType::Rank; ++i) {
+    for (size_t i = 0; i < FieldType::Rank; ++i) {
       // maybe use [FieldType::Rank-1-i] as index on the LHS
-      int gmin = g.global_min[i];
+      ptrdiff_t gmin = g.global_min[i];
       dims[i] = 1 + g.global_max[i] - gmin;
       locdims[i] = lhi[i] - llo[i] + 1;
       locstart[i] = llo[i] - gmin;

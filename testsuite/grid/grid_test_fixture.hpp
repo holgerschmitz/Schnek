@@ -57,7 +57,7 @@ struct GridTest
       typename GridType::IndexType hi = grid.getHi();
 
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
       {
         double val = dist(rGen);
         grid(i) = val;
@@ -67,7 +67,7 @@ struct GridTest
       double sum_grid = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
       {
         sum_grid += grid(i);
       }
@@ -84,8 +84,8 @@ struct GridTest
       typename GridType::IndexType hi = grid.getHi();
 
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
         {
           double val = dist(rGen);
           grid(i,j) = val;
@@ -95,8 +95,8 @@ struct GridTest
       double sum_grid = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
         {
           sum_grid += grid(i,j);
         }
@@ -113,9 +113,9 @@ struct GridTest
       typename GridType::IndexType hi = grid.getHi();
 
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
           {
             double val = dist(rGen);
             grid(i,j,k) = val;
@@ -125,9 +125,9 @@ struct GridTest
       double sum_grid = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
           {
             sum_grid += grid(i,j,k);
           }
@@ -144,10 +144,10 @@ struct GridTest
       typename GridType::IndexType hi = grid.getHi();
 
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
             {
               double val = dist(rGen);
               grid(i,j,k,l) = val;
@@ -157,10 +157,10 @@ struct GridTest
       double sum_grid = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-          for (int l=lo[3]; l<=hi[3]; ++l)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+          for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
             {
               sum_grid += grid(i,j,k,l);
             }
@@ -177,11 +177,11 @@ struct GridTest
       typename GridType::IndexType hi = grid.getHi();
 
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
               {
                 double val = dist(rGen);
                 grid(i,j,k,l,m) = val;
@@ -191,11 +191,11 @@ struct GridTest
       double sum_grid = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
               {
                 sum_grid += grid(i,j,k,l,m);
               }
@@ -212,12 +212,12 @@ struct GridTest
       typename GridType::IndexType hi = grid.getHi();
 
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
-                for (int n=lo[5]; n<=hi[5]; ++n)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
+                for (ptrdiff_t n=lo[5]; n<=hi[5]; ++n)
                 {
                   double val = dist(rGen);
                   grid(i,j,k,l,m,n) = val;
@@ -227,12 +227,12 @@ struct GridTest
       double sum_grid = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
-                for (int n=lo[5]; n<=hi[5]; ++n)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
+                for (ptrdiff_t n=lo[5]; n<=hi[5]; ++n)
                 {
                   sum_grid += grid(i,j,k,l,m,n);
                 }
@@ -249,13 +249,13 @@ struct GridTest
       typename GridType::IndexType hi = grid.getHi();
 
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
-                for (int n=lo[5]; n<=hi[5]; ++n)
-                  for (int o=lo[6]; o<=hi[6]; ++o)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
+                for (ptrdiff_t n=lo[5]; n<=hi[5]; ++n)
+                  for (ptrdiff_t o=lo[6]; o<=hi[6]; ++o)
                   {
                     double val = dist(rGen);
                     grid(i,j,k,l,m,n,o) = val;
@@ -265,13 +265,13 @@ struct GridTest
       double sum_grid = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
-                for (int n=lo[5]; n<=hi[5]; ++n)
-                  for (int o=lo[6]; o<=hi[6]; ++o)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
+                for (ptrdiff_t n=lo[5]; n<=hi[5]; ++n)
+                  for (ptrdiff_t o=lo[6]; o<=hi[6]; ++o)
                   {
                     sum_grid += grid(i,j,k,l,m,n,o);
                   }
@@ -288,14 +288,14 @@ struct GridTest
       typename GridType::IndexType hi = grid.getHi();
 
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
-                for (int n=lo[5]; n<=hi[5]; ++n)
-                  for (int o=lo[6]; o<=hi[6]; ++o)
-                    for (int p=lo[7]; p<=hi[7]; ++p)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
+                for (ptrdiff_t n=lo[5]; n<=hi[5]; ++n)
+                  for (ptrdiff_t o=lo[6]; o<=hi[6]; ++o)
+                    for (ptrdiff_t p=lo[7]; p<=hi[7]; ++p)
                     {
                       double val = dist(rGen);
                       grid(i,j,k,l,m,n,o,p) = val;
@@ -305,14 +305,14 @@ struct GridTest
       double sum_grid = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
-                for (int n=lo[5]; n<=hi[5]; ++n)
-                  for (int o=lo[6]; o<=hi[6]; ++o)
-                    for (int p=lo[7]; p<=hi[7]; ++p)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
+                for (ptrdiff_t n=lo[5]; n<=hi[5]; ++n)
+                  for (ptrdiff_t o=lo[6]; o<=hi[6]; ++o)
+                    for (ptrdiff_t p=lo[7]; p<=hi[7]; ++p)
                     {
                       sum_grid += grid(i,j,k,l,m,n,o,p);
                     }
@@ -329,15 +329,15 @@ struct GridTest
       typename GridType::IndexType hi = grid.getHi();
 
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
-                for (int n=lo[5]; n<=hi[5]; ++n)
-                  for (int o=lo[6]; o<=hi[6]; ++o)
-                    for (int p=lo[7]; p<=hi[7]; ++p)
-                      for (int q=lo[8]; q<=hi[8]; ++q)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
+                for (ptrdiff_t n=lo[5]; n<=hi[5]; ++n)
+                  for (ptrdiff_t o=lo[6]; o<=hi[6]; ++o)
+                    for (ptrdiff_t p=lo[7]; p<=hi[7]; ++p)
+                      for (ptrdiff_t q=lo[8]; q<=hi[8]; ++q)
                       {
                         double val = dist(rGen);
                         grid(i,j,k,l,m,n,o,p,q) = val;
@@ -347,15 +347,15 @@ struct GridTest
       double sum_grid = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
-                for (int n=lo[5]; n<=hi[5]; ++n)
-                  for (int o=lo[6]; o<=hi[6]; ++o)
-                    for (int p=lo[7]; p<=hi[7]; ++p)
-                      for (int q=lo[8]; q<=hi[8]; ++q)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
+                for (ptrdiff_t n=lo[5]; n<=hi[5]; ++n)
+                  for (ptrdiff_t o=lo[6]; o<=hi[6]; ++o)
+                    for (ptrdiff_t p=lo[7]; p<=hi[7]; ++p)
+                      for (ptrdiff_t q=lo[8]; q<=hi[8]; ++q)
                       {
                         sum_grid += grid(i,j,k,l,m,n,o,p,q);
                       }
@@ -372,16 +372,16 @@ struct GridTest
       typename GridType::IndexType hi = grid.getHi();
 
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
-                for (int n=lo[5]; n<=hi[5]; ++n)
-                  for (int o=lo[6]; o<=hi[6]; ++o)
-                    for (int p=lo[7]; p<=hi[7]; ++p)
-                      for (int q=lo[8]; q<=hi[8]; ++q)
-                        for (int r=lo[9]; r<=hi[9]; ++r)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
+                for (ptrdiff_t n=lo[5]; n<=hi[5]; ++n)
+                  for (ptrdiff_t o=lo[6]; o<=hi[6]; ++o)
+                    for (ptrdiff_t p=lo[7]; p<=hi[7]; ++p)
+                      for (ptrdiff_t q=lo[8]; q<=hi[8]; ++q)
+                        for (ptrdiff_t r=lo[9]; r<=hi[9]; ++r)
                         {
                           double val = dist(rGen);
                           grid(i,j,k,l,m,n,o,p,q,r) = val;
@@ -391,16 +391,16 @@ struct GridTest
       double sum_grid = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
-            for (int l=lo[3]; l<=hi[3]; ++l)
-              for (int m=lo[4]; m<=hi[4]; ++m)
-                for (int n=lo[5]; n<=hi[5]; ++n)
-                  for (int o=lo[6]; o<=hi[6]; ++o)
-                    for (int p=lo[7]; p<=hi[7]; ++p)
-                      for (int q=lo[8]; q<=hi[8]; ++q)
-                        for (int r=lo[9]; r<=hi[9]; ++r)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
+            for (ptrdiff_t l=lo[3]; l<=hi[3]; ++l)
+              for (ptrdiff_t m=lo[4]; m<=hi[4]; ++m)
+                for (ptrdiff_t n=lo[5]; n<=hi[5]; ++n)
+                  for (ptrdiff_t o=lo[6]; o<=hi[6]; ++o)
+                    for (ptrdiff_t p=lo[7]; p<=hi[7]; ++p)
+                      for (ptrdiff_t q=lo[8]; q<=hi[8]; ++q)
+                        for (ptrdiff_t r=lo[9]; r<=hi[9]; ++r)
                         {
                           sum_grid += grid(i,j,k,l,m,n,o,p,q,r);
                         }
@@ -473,9 +473,9 @@ struct GridTest
       typename GridType::IndexType hi = grid.getHi();
 
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
           {
             double val = dist(rGen);
             grid(i,j,k) = val;
@@ -487,9 +487,9 @@ struct GridTest
       double sumGridAfter = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
           {
             sumGridBefore += copiedBefore(i,j,k);
             sumGridAfter += copiedAfter(i,j,k);
@@ -512,9 +512,9 @@ struct GridTest
 
       copiedBefore = grid;
       // write random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
           {
             double val = dist(rGen);
             grid(i,j,k) = val;
@@ -526,9 +526,9 @@ struct GridTest
       double sumGridAfter = 0.0;
 
       // read back random numbers
-      for (int i=lo[0]; i<=hi[0]; ++i)
-        for (int j=lo[1]; j<=hi[1]; ++j)
-          for (int k=lo[2]; k<=hi[2]; ++k)
+      for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
+        for (ptrdiff_t j=lo[1]; j<=hi[1]; ++j)
+          for (ptrdiff_t k=lo[2]; k<=hi[2]; ++k)
           {
             sumGridBefore += copiedBefore(i,j,k);
             sumGridAfter += copiedAfter(i,j,k);
@@ -606,7 +606,7 @@ struct GridTest
     };
 
     template<size_t rank>
-    void random_extent(schnek::Array<int,rank> &lo, schnek::Array<int,rank> &hi)
+    void random_extent(schnek::Array<ptrdiff_t, rank> &lo, schnek::Array<ptrdiff_t,rank> &hi)
     {
       const int maxExtent = (int)pow(20000,(1.0/(double)rank));
       boost::random::uniform_int_distribution<> orig(-maxExtent/2, maxExtent/2);
@@ -621,12 +621,12 @@ struct GridTest
     }
 
     template<size_t rank>
-    schnek::Array<int,rank> random_index(const schnek::Array<int,rank> &lo, const schnek::Array<int,rank> &hi)
+    schnek::Array<ptrdiff_t, rank> random_index(const schnek::Array<ptrdiff_t, rank> &lo, const schnek::Array<ptrdiff_t, rank> &hi)
     {
-      schnek::Array<int,rank> index;
+      schnek::Array<ptrdiff_t,rank> index;
       for (size_t i=0; i<rank; ++i)
       {
-        boost::random::uniform_int_distribution<> indexDist(lo[i], hi[i]);
+        boost::random::uniform_int_distribution<ptrdiff_t> indexDist(lo[i], hi[i]);
         index[i] = indexDist(rGen);
       }
       return index;

@@ -39,12 +39,12 @@ namespace schnek {
       T &value,
       DependencyUpdater &updater
   ) {
-    Range<int, rank> domain(field.getLo(), field.getHi());
+    Range<ptrdiff_t, rank> domain(field.getLo(), field.getHi());
 
-    typename Range<int, rank>::iterator it = domain.begin();
-    typename Range<int, rank>::iterator end = domain.end();
+    typename Range<ptrdiff_t, rank>::iterator it = domain.begin();
+    typename Range<ptrdiff_t, rank>::iterator end = domain.end();
     while (it != end) {
-      const typename Range<int, rank>::LimitType &pos = *it;
+      const typename Range<ptrdiff_t, rank>::LimitType &pos = *it;
       //    std::cerr << " fill_field (";
       //    for (size_t i=0; i<rank; ++i)
       //      std::cerr << " " << pos[i];

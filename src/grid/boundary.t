@@ -30,11 +30,11 @@ namespace schnek {
   Boundary<rank, CheckingPolicy>::Boundary() : size(), delta(0) {}
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  Boundary<rank, CheckingPolicy>::Boundary(const LimitType &low, const LimitType &high, int delta_)
+  Boundary<rank, CheckingPolicy>::Boundary(const LimitType &low, const LimitType &high, size_t delta_)
       : size(low, high), delta(delta_) {}
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  Boundary<rank, CheckingPolicy>::Boundary(DomainType &size_, int delta_) : size(size_), delta(delta_) {}
+  Boundary<rank, CheckingPolicy>::Boundary(DomainType &size_, size_t delta_) : size(size_), delta(delta_) {}
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   typename Boundary<rank, CheckingPolicy>::DomainType Boundary<rank, CheckingPolicy>::getGhostDomain(

@@ -71,7 +71,7 @@ namespace schnek::generic {
       /**
        * The number of types in the list
        */
-      static constexpr int size = sizeof...(Types);
+      static constexpr size_t size = sizeof...(Types);
 
       /**
        * Get the type at index n
@@ -157,7 +157,7 @@ namespace schnek::generic {
         typedef typename TypeListType::push_back<DefaultType>::get<0>::type type;
     };
 
-    template<typename SourceTuple, typename DestTuple, int index>
+    template<typename SourceTuple, typename DestTuple, size_t index>
     struct TupleAssignImpl {
         static void assign(const SourceTuple &source, DestTuple &dest) {
           TupleAssignImpl<SourceTuple, DestTuple, index - 1>::assign(source, dest);

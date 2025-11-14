@@ -28,10 +28,11 @@
 #define SCHNEK_FACTOR_HPP_
 
 #include <vector>
+#include <cstddef>
 
 namespace schnek {
 
-  void equalFactors(int number, int nfact, std::vector<int> &factors, std::vector<int> &weights);
+  void equalFactors(std::size_t number, size_t nfact, std::vector<std::size_t> &factors, std::vector<std::size_t> &weights);
 
 }  // namespace schnek
 

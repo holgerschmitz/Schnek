@@ -70,9 +70,9 @@ BOOST_AUTO_TEST_CASE(get_storage_concept) {
     typedef TypeListB::filter<schnek::concepts::GridStorageConceptCondition> StorageListB;
     typedef TypeListC::filter<schnek::concepts::GridStorageConceptCondition> StorageListC;
 
-    BOOST_CHECK_EQUAL(StorageListA::size, 1);
-    BOOST_CHECK_EQUAL(StorageListB::size, 2);
-    BOOST_CHECK_EQUAL(StorageListC::size, 0);
+    BOOST_CHECK_EQUAL(StorageListA::size, (size_t)1);
+    BOOST_CHECK_EQUAL(StorageListB::size, (size_t)2);
+    BOOST_CHECK_EQUAL(StorageListC::size, (size_t)0);
 
     typedef TypeListA::getWithDefault<schnek::concepts::GridStorageConceptCondition, StorageC> StorageSelectA;
     // MANUAL_TEST: This should not compile because StorageC contains more than one GridStorageConcept

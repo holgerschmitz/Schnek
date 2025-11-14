@@ -130,7 +130,7 @@ bool BlockVariables::exists(std::list<std::string> path, bool upward) {
   } else {
     if (vars.count(name) > 0) return true;
   }
-  if (upward && (parent.get() == 0)) return parent->exists(path, true);
+  if (upward && (parent.get() != 0)) return parent->exists(path, true);
 
   return false;
 }

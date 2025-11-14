@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE( MultiArchitectureFieldFactory )
     ::MultiArchitectureFieldFactory< schnek::computation::FieldTypeWrapper<int, 2> > factory;
 
   auto field = factory.create<TestArchitecture>(
-    schnek::Range<int, 2>(schnek::Array<int, 2>(0, 10), schnek::Array<int, 2>(100, 150)), 
+    schnek::Range<ptrdiff_t, 2>(schnek::Array<ptrdiff_t, 2>(0, 10), schnek::Array<ptrdiff_t, 2>(100, 150)), 
     schnek::Range<double, 2>(schnek::Array<double, 2>(0, 0.5), schnek::Array<double, 2>(1, 1.25)), 
     schnek::Array<bool, 2>(false, false), 
     2

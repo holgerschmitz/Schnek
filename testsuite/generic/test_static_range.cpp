@@ -46,10 +46,10 @@ BOOST_AUTO_TEST_CASE(static_range) {
     typedef SGC0::put<4, 6> SGC1;
     typedef SGC0::put<1, 2>::put<3, 4>::put<5, 6> SGC2;
 
-    BOOST_CHECK_EQUAL(SGC1::rank, 1);
+    BOOST_CHECK_EQUAL(SGC1::rank, size_t(1));
     BOOST_CHECK_EQUAL(SGC1::get<0>::lo, 4);
     BOOST_CHECK_EQUAL(SGC1::get<0>::hi, 6);
-    BOOST_CHECK_EQUAL(SGC2::rank, 3);
+    BOOST_CHECK_EQUAL(SGC2::rank, size_t(3));
     BOOST_CHECK_EQUAL(SGC2::get<0>::lo, 1);
     BOOST_CHECK_EQUAL(SGC2::get<0>::hi, 2);
     BOOST_CHECK_EQUAL(SGC2::get<1>::lo, 3);
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(static_range) {
 
     typedef SGC0::repeat<3, 4, 6>::type SGC3;
 
-    BOOST_CHECK_EQUAL(SGC3::rank, 3);
+    BOOST_CHECK_EQUAL(SGC3::rank, size_t(3));
     BOOST_CHECK_EQUAL(SGC3::get<0>::lo, 4);
     BOOST_CHECK_EQUAL(SGC3::get<0>::hi, 6);
     BOOST_CHECK_EQUAL(SGC3::get<1>::lo, 4);

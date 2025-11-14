@@ -60,7 +60,7 @@ namespace schnek {
       // typedef Grid<unsigned char, 1, GridAssertCheck, LazyArrayGridStorage> BufferType;
       typedef Grid<unsigned char, 1, GridAssertCheck> BufferType;
 
-      typedef Range<int, Rank> DomainType;
+      typedef Range<ptrdiff_t, Rank> DomainType;
       typedef Boundary<Rank> BoundaryType;
       typedef std::shared_ptr<BoundaryType> pBoundaryType;
 
@@ -77,7 +77,7 @@ namespace schnek {
        */
       virtual ~DomainSubdivision() {}
 
-      int getDelta() { return bounds->getDelta(); }
+      size_t getDelta() { return bounds->getDelta(); }
 
       /** Initialize the domain subdivision.
        *
@@ -85,22 +85,22 @@ namespace schnek {
        *  the different processes. The size of the local domain will be returned
        *  by the getDomain, getHi, and getLo methods.
        */
-      virtual void init(const LimitType &low, const LimitType &high, int delta) = 0;
+      virtual void init(const LimitType &low, const LimitType &high, size_t delta) = 0;
 
       /** Convenience method.
        *  Initialise the boundary with the extent of a grid.
        */
-      void init(const DomainType &domain, int delta) { init(domain.getLo(), domain.getHi(), delta); }
+      void init(const DomainType &domain, size_t delta) { init(domain.getLo(), domain.getHi(), delta); }
 
       /** Convenience method.
        *  Initialise the boundary with the extent of the grid.
        */
-      void init(const GridType &grid, int delta) { init(grid.getLo(), grid.getHi(), delta); }
+      void init(const GridType &grid, size_t delta) { init(grid.getLo(), grid.getHi(), delta); }
 
       /** Convenience method.
        *  Initialise the boundary with the extent of the grid.
        */
-      void init(const LimitType &size, int delta) {
+      void init(const LimitType &size, size_t delta) {
         LimitType sizem(size);
         for (size_t i = 0; i < Rank; ++i) --sizem[i];
         init(LimitType(0), sizem, delta);
@@ -192,7 +192,7 @@ namespace schnek {
       virtual int procCount() const = 0;
 
       /// get a unique Id
-      virtual int getUniqueId() const = 0;
+      virtual size_t getUniqueId() const = 0;
 
       /** Returns true if this process is on the lower bound of the
        * global domain
@@ -251,7 +251,7 @@ namespace schnek {
        *  The size of the global domain will be returned
        *  by the getDomain, getHi, and getLo methods.
        */
-      void init(const LimitType &low, const LimitType &high, int delta);
+      void init(const LimitType &low, const LimitType &high, size_t delta);
 
       /// Return the global domain size excluding ghost cells
       const DomainType &getGlobalDomain() const { return this->bounds->getDomain(); }
@@ -304,7 +304,7 @@ namespace schnek {
       int procCount() const { return 1; }
 
       /// returns an ID, which consists of the Dimensions and coordinates
-      int getUniqueId() const { return 0; }
+      size_t getUniqueId() const { return 0; }
 
       /** Returns true if this process is on the lower bound of the
        * global domain
