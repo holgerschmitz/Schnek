@@ -48,6 +48,9 @@ namespace schnek {
       /// The grid index type
       typedef Array<ptrdiff_t, Rank> IndexType;
 
+      /// The grid size type
+      typedef Array<size_t, Rank> SizeType;
+
       /// The grid range type
       typedef Range<ptrdiff_t, Rank> RangeType;
 
@@ -66,7 +69,7 @@ namespace schnek {
        * @param index The grid index
        * @return the lvalue at the grid index
        */
-      SCHNEK_INLINE T &get(const IndexType &index, const IndexType &dims);
+      SCHNEK_INLINE T &get(const IndexType &index, const SizeType &dims);
 
       /**
        * @brief Get the rvalue at a given grid index
@@ -74,12 +77,12 @@ namespace schnek {
        * @param index The grid index
        * @return the rvalue at the grid index
        */
-      SCHNEK_INLINE const T &get(const IndexType &index, const IndexType &dims) const;
+      SCHNEK_INLINE const T &get(const IndexType &index, const SizeType &dims) const;
 
       /**
        * @brief returns the stride of the specified dimension
        */
-      SCHNEK_INLINE ptrdiff_t stride(size_t dim, const IndexType &dims) const;
+      SCHNEK_INLINE ptrdiff_t stride(size_t dim, const SizeType &dims) const;
 
       /**
        * @brief Update the data_fast pointer offset to the origin for faster access
@@ -108,10 +111,13 @@ namespace schnek {
       T *data_fast;
     public:
       /// The grid index type
-      typedef Array<size_t, Rank> IndexType;
+      typedef Array<ptrdiff_t, Rank> IndexType;
+
+      /// The grid size type
+      typedef Array<size_t, Rank> SizeType;
 
       /// The grid range type
-      typedef Range<size_t, Rank> RangeType;
+      typedef Range<ptrdiff_t, Rank> RangeType;
 
       /// Default constructor
       SingleArrayGridFortranOrderLayout() = default;
@@ -128,7 +134,7 @@ namespace schnek {
        * @param index The grid index
        * @return the lvalue at the grid index
        */
-      SCHNEK_INLINE T &get(const IndexType &index, const IndexType &dims);
+      SCHNEK_INLINE T &get(const IndexType &index, const SizeType &dims);
 
       /**
        * @brief Get the rvalue at a given grid index
@@ -136,12 +142,12 @@ namespace schnek {
        * @param index The grid index
        * @return the rvalue at the grid index
        */
-      SCHNEK_INLINE const T &get(const IndexType &index, const IndexType &dims) const;
+      SCHNEK_INLINE const T &get(const IndexType &index, const SizeType &dims) const;
 
       /**
        * @brief returns the stride of the specified dimension
        */
-      SCHNEK_INLINE ptrdiff_t stride(size_t dim, const IndexType &dims) const;
+      SCHNEK_INLINE ptrdiff_t stride(size_t dim, const SizeType &dims) const;
 
       /**
        * @brief Update the data_fast pointer offset to the origin for faster access
@@ -161,7 +167,7 @@ namespace schnek {
   //=================================================================
 
   template<typename T, size_t Rank>
-  SCHNEK_INLINE T &SingleArrayGridCOrderLayout<T, Rank>::get(const IndexType &index, const IndexType &dims) {
+  SCHNEK_INLINE T &SingleArrayGridCOrderLayout<T, Rank>::get(const IndexType &index, const SizeType &dims) {
     size_t pos = index[0];
     for (size_t i = 1; i < Rank; ++i) {
       pos = index[i] + dims[i] * pos;
@@ -170,7 +176,7 @@ namespace schnek {
   }
 
   template<typename T, size_t Rank>
-  SCHNEK_INLINE const T &SingleArrayGridCOrderLayout<T, Rank>::get(const IndexType &index, const IndexType &dims) const {
+  SCHNEK_INLINE const T &SingleArrayGridCOrderLayout<T, Rank>::get(const IndexType &index, const SizeType &dims) const {
     size_t pos = index[0];
     for (size_t i = 1; i < Rank; ++i) {
       pos = index[i] + dims[i] * pos;
@@ -179,7 +185,7 @@ namespace schnek {
   }
 
   template<typename T, size_t Rank>
-  SCHNEK_INLINE ptrdiff_t SingleArrayGridCOrderLayout<T, Rank>::stride(size_t dim, const IndexType &dims) const {
+  SCHNEK_INLINE ptrdiff_t SingleArrayGridCOrderLayout<T, Rank>::stride(size_t dim, const SizeType &dims) const {
     size_t stride = 1;
     for (size_t i = Rank - 1; i > dim; --i) {
       stride *= dims[i];
@@ -202,7 +208,7 @@ namespace schnek {
   //=================================================================
 
   template<typename T, size_t Rank>
-  SCHNEK_INLINE T &SingleArrayGridFortranOrderLayout<T, Rank>::get(const IndexType &index, const IndexType &dims) {
+  SCHNEK_INLINE T &SingleArrayGridFortranOrderLayout<T, Rank>::get(const IndexType &index, const SizeType &dims) {
     size_t pos = index[Rank - 1];
     for (ptrdiff_t i = ptrdiff_t(Rank) - 2; i >= 0; --i) {
       pos = index[i] + dims[i] * pos;
@@ -211,7 +217,7 @@ namespace schnek {
   }
 
   template<typename T, size_t Rank>
-  SCHNEK_INLINE const T &SingleArrayGridFortranOrderLayout<T, Rank>::get(const IndexType &index, const IndexType &dims) const {
+  SCHNEK_INLINE const T &SingleArrayGridFortranOrderLayout<T, Rank>::get(const IndexType &index, const SizeType &dims) const {
     size_t pos = index[Rank - 1];
     for (ptrdiff_t i = ptrdiff_t(Rank) - 2; i >= 0; --i) {
       pos = index[i] + dims[i] * pos;
@@ -220,7 +226,7 @@ namespace schnek {
   }
 
   template<typename T, size_t Rank>
-  SCHNEK_INLINE ptrdiff_t SingleArrayGridFortranOrderLayout<T, Rank>::stride(size_t dim, const IndexType &dims) const {
+  SCHNEK_INLINE ptrdiff_t SingleArrayGridFortranOrderLayout<T, Rank>::stride(size_t dim, const SizeType &dims) const {
     ptrdiff_t stride = 1;
     for (size_t i = 0; i < dim; ++i) {
       stride *= dims[i];

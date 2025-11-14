@@ -70,6 +70,7 @@ namespace schnek {
       public:
         typedef T value_type;
         typedef typename CheckingPolicy::IndexType IndexType;
+        typedef typename StoragePolicy::SizeType SizeType;
         typedef typename StoragePolicy::RangeType RangeType;
         enum { Rank = rank };
       public:
@@ -103,7 +104,7 @@ namespace schnek {
         SCHNEK_INLINE const RangeType getRange() const { return this->storage.getRange(); }
   
         /// Get the dimensions of the grid `dims = high - low + 1`
-        SCHNEK_INLINE const IndexType getDims() const { return this->storage.getDims(); }
+        SCHNEK_INLINE const SizeType getDims() const { return this->storage.getDims(); }
   
         /// Get k-th component of the lowest coordinate in the grid (inclusive)
         SCHNEK_INLINE ptrdiff_t getLo(size_t k) const { return this->storage.getLo(k); }
@@ -230,6 +231,7 @@ namespace schnek {
     public:
       typedef T value_type;
       typedef Array<ptrdiff_t, rank> IndexType;
+      typedef Array<size_t, rank> SizeType;
       typedef Range<ptrdiff_t, rank> RangeType;
       typedef Grid<T, rank, Policies...> GridType;
       typedef internal::GridBase<T, rank, Policies...> BaseType;
@@ -256,8 +258,7 @@ namespace schnek {
        *
        *  The ranges then extend from 0 to size[i]-1
        */
-      template<template<size_t> class ArrayCheckingPolicy>
-      Grid(const Array<size_t, rank, ArrayCheckingPolicy>& size);
+      Grid(const SizeType& size);
 
       /** constructor, which builds Grid with lower indices low[0],...,low[rank-1]
        *  and upper indices high[0],...,high[rank-1]

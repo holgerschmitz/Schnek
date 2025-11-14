@@ -41,7 +41,7 @@ namespace schnek {
     template<typename T, size_t rank, template<typename, size_t> class ...Policies>
     template<template<size_t> class ArrayCheckingPolicy>
     GridBase<T, rank, Policies...>::GridBase(const Array<size_t, rank, ArrayCheckingPolicy>& size)
-        : storage(IndexType::Zero(), size - IndexType::Ones()) {}
+        : storage(IndexType::Zero(), size - SizeType::Ones()) {}
 
     template<typename T, size_t rank, template<typename, size_t> class ...Policies>
     template<template<size_t> class ArrayCheckingPolicy>
@@ -206,8 +206,7 @@ namespace schnek {
       : internal::GridBase<T, rank, Policies...>() {}
 
   template<typename T, size_t rank, template<typename, size_t> class ...Policies>
-  template<template<size_t> class ArrayCheckingPolicy>
-  Grid<T, rank, Policies...>::Grid(const Array<size_t, rank, ArrayCheckingPolicy>& size)
+  Grid<T, rank, Policies...>::Grid(const SizeType& size)
       : internal::GridBase<T, rank, Policies...>(size) {}
 
   template<typename T, size_t rank, template<typename, size_t> class ...Policies>

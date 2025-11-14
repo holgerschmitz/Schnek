@@ -49,6 +49,9 @@ namespace schnek {
       /// The grid index type
       typedef Array<ptrdiff_t, rank> IndexType;
 
+      /// The grid size type
+      typedef Array<size_t, rank> SizeType;
+
       /// The grid range type
       typedef Range<ptrdiff_t, rank> RangeType;
 
@@ -104,7 +107,7 @@ namespace schnek {
       SCHNEK_INLINE const RangeType &getRange() const { return this->range; }
 
       /// Get the dimensions of the grid `dims = high - low + 1`
-      SCHNEK_INLINE const IndexType &getDims() const { return this->dims; }
+      SCHNEK_INLINE const SizeType &getDims() const { return this->dims; }
 
       /// Get k-th component of the lowest coordinate in the grid (inclusive)
       SCHNEK_INLINE ptrdiff_t getLo(size_t k) const { return this->range.getLo(k); }
@@ -184,7 +187,7 @@ namespace schnek {
 
   template<typename T, size_t Rank, template<typename, size_t> class ...Policies>
   SingleArrayGridStorage<T, Rank, Policies...>::SingleArrayGridStorage()
-      : size{0}, range{IndexType{0}, IndexType{0}}, dims{IndexType{0}} {
+      : size{0}, range{IndexType{0}, IndexType{0}}, dims{SizeType{0}} {
     this->allocation.onUpdate([this](const RangeType &range) { updateSize(range); });
   }
 
@@ -198,14 +201,14 @@ namespace schnek {
   template<typename T, size_t Rank, template<typename, size_t> class ...Policies>
   SingleArrayGridStorage<T, Rank, Policies...>::SingleArrayGridStorage(
       const IndexType &lo, const IndexType &hi
-  ) : size{0}, range{IndexType{0}, IndexType{0}}, dims{IndexType{0}} {
+  ) : size{0}, range{IndexType{0}, IndexType{0}}, dims{SizeType{0}} {
     this->allocation.onUpdate([this](const RangeType &range) { updateSize(range); });
     resize(lo, hi);
   }
 
   template<typename T, size_t Rank, template<typename, size_t> class ...Policies>
   SingleArrayGridStorage<T, Rank, Policies...>::SingleArrayGridStorage(const RangeType &range)
-      : size{0}, range{IndexType{0}, IndexType{0}}, dims{IndexType{0}} {
+      : size{0}, range{IndexType{0}, IndexType{0}}, dims{SizeType{0}} {
     this->allocation.onUpdate([this](const RangeType &range) { updateSize(range); });
     resize(range.getLo(), range.getHi());
   }

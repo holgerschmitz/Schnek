@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_SUITE( fortran_order )
 
 BOOST_FIXTURE_TEST_CASE( iterate_1d, RangeIterationTest )
 {
-    typedef Grid<int, 1, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
+    typedef Grid<size_t, 1, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
 
     GridType::IndexType lo, hi;
 
@@ -35,14 +35,14 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d, RangeIterationTest )
         Range<ptrdiff_t, 1, ArrayBoostTestArgCheck> range(lo, hi);
         GridType grid(lo, hi);
 
-        int count = 0;
+        size_t count = 0;
         RangeFortranIterationPolicy<1>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
 
         for (ptrdiff_t i=lo[0]; i<=hi[0]; ++i)
         {
-            BOOST_CHECK_EQUAL(grid(i), i - lo[0]);
+            BOOST_CHECK_EQUAL(grid(i), size_t(i - lo[0]));
         }
         ++show_progress;
     }
@@ -50,7 +50,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d, RangeIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
 {
-    typedef Grid<int, 2, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
+    typedef Grid<size_t, 2, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
 
     GridType::IndexType lo, hi;
 
@@ -63,7 +63,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
         GridType grid(lo, hi);
         auto dims = grid.getDims();
 
-        int count = 0;
+        size_t count = 0;
         RangeFortranIterationPolicy<2>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
@@ -81,7 +81,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
 {
-    typedef Grid<int, 3, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
+    typedef Grid<size_t, 3, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
 
     GridType::IndexType lo, hi;
 
@@ -94,7 +94,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
         GridType grid(lo, hi);
         auto dims = grid.getDims();
 
-        int count = 0;
+        size_t count = 0;
         RangeFortranIterationPolicy<3>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
@@ -115,7 +115,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
 {
-    typedef Grid<int, 4, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
+    typedef Grid<size_t, 4, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
 
     GridType::IndexType lo, hi;
 
@@ -128,7 +128,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
         GridType grid(lo, hi);
         auto dims = grid.getDims();
 
-        int count = 0;
+        size_t count = 0;
         RangeFortranIterationPolicy<4>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
@@ -155,7 +155,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
 {
-    typedef Grid<int, 5, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
+    typedef Grid<size_t, 5, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
 
     GridType::IndexType lo, hi;
 
@@ -168,7 +168,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
         GridType grid(lo, hi);
         auto dims = grid.getDims();
 
-        int count = 0;
+        size_t count = 0;
         RangeFortranIterationPolicy<5>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
@@ -200,7 +200,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
 {
-    typedef Grid<int, 6, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
+    typedef Grid<size_t, 6, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
 
     GridType::IndexType lo, hi;
 
@@ -213,7 +213,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
         GridType grid(lo, hi);
         auto dims = grid.getDims();
 
-        int count = 0;
+        size_t count = 0;
         RangeFortranIterationPolicy<6>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
@@ -247,7 +247,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_7d, RangeIterationTest )
 {
-    typedef Grid<int, 7, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
+    typedef Grid<size_t, 7, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
 
     GridType::IndexType lo, hi;
 
@@ -260,7 +260,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_7d, RangeIterationTest )
         GridType grid(lo, hi);
         auto dims = grid.getDims();
 
-        int count = 0;
+        size_t count = 0;
         RangeFortranIterationPolicy<7>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
@@ -298,7 +298,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_7d, RangeIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_8d, RangeIterationTest )
 {
-    typedef Grid<int, 8, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
+    typedef Grid<size_t, 8, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
 
     GridType::IndexType lo, hi;
 
@@ -311,7 +311,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_8d, RangeIterationTest )
         GridType grid(lo, hi);
         auto dims = grid.getDims();
 
-        int count = 0;
+        size_t count = 0;
         RangeFortranIterationPolicy<8>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
@@ -352,7 +352,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_8d, RangeIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_9d, RangeIterationTest )
 {
-    typedef Grid<int, 9, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
+    typedef Grid<size_t, 9, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
 
     GridType::IndexType lo, hi;
 
@@ -365,7 +365,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_9d, RangeIterationTest )
         GridType grid(lo, hi);
         auto dims = grid.getDims();
 
-        int count = 0;
+        size_t count = 0;
         RangeFortranIterationPolicy<9>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });
@@ -408,7 +408,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_9d, RangeIterationTest )
 
 BOOST_FIXTURE_TEST_CASE( iterate_10d, RangeIterationTest )
 {
-    typedef Grid<int, 10, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
+    typedef Grid<size_t, 10, GridBoostTestCheck, schnek::SingleArrayGridStorage> GridType;
 
     GridType::IndexType lo, hi;
 
@@ -421,7 +421,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_10d, RangeIterationTest )
         GridType grid(lo, hi);
         auto dims = grid.getDims();
 
-        int count = 0;
+        size_t count = 0;
         RangeFortranIterationPolicy<10>::forEach(range, [&](const GridType::IndexType& pos){
             grid[pos] = count++;
         });

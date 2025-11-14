@@ -30,7 +30,7 @@ struct RangeIterationTest
     {}
 
     template<size_t rank>
-    void random_extent(schnek::Array<int,rank> &lo, schnek::Array<int,rank> &hi)
+    void random_extent(schnek::Array<ptrdiff_t,rank> &lo, schnek::Array<ptrdiff_t,rank> &hi)
     {
       const int maxExtent = (int)pow(20000,(1.0/(double)rank));
       boost::random::uniform_int_distribution<> orig(-maxExtent/2, maxExtent/2);

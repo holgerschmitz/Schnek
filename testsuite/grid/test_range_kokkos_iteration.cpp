@@ -40,7 +40,7 @@ using namespace schnek;
 #endif
 
 struct Assign1d {
-    typedef Grid<int, 1, GridNoArgCheck, GridStorage> GridType;
+    typedef Grid<ptrdiff_t, 1, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
@@ -49,7 +49,7 @@ struct Assign1d {
 };
 
 struct Assign2d {
-    typedef Grid<int, 2, GridNoArgCheck, GridStorage> GridType;
+    typedef Grid<ptrdiff_t, 2, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
@@ -58,7 +58,7 @@ struct Assign2d {
 };
 
 struct Assign3d {
-    typedef Grid<int, 3, GridNoArgCheck, GridStorage> GridType;
+    typedef Grid<ptrdiff_t, 3, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
@@ -67,7 +67,7 @@ struct Assign3d {
 };
 
 struct Assign4d {
-    typedef Grid<int, 4, GridNoArgCheck, GridStorage> GridType;
+    typedef Grid<ptrdiff_t, 4, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
@@ -76,7 +76,7 @@ struct Assign4d {
 };
 
 struct Assign5d {
-    typedef Grid<int, 5, GridNoArgCheck, GridStorage> GridType;
+    typedef Grid<ptrdiff_t, 5, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
@@ -85,7 +85,7 @@ struct Assign5d {
 };
 
 struct Assign6d {
-    typedef Grid<int, 6, GridNoArgCheck, GridStorage> GridType;
+    typedef Grid<ptrdiff_t, 6, GridNoArgCheck, GridStorage> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {

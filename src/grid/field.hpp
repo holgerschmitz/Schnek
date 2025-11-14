@@ -103,13 +103,13 @@ namespace schnek {
       Field(const FieldType &);
 
       /** Get the lo of the inner grid range */
-      IndexType getInnerLo() { return this->getLo() + ghostCells; }
+      IndexType getInnerLo() { return this->getLo() + ptrdiff_t(ghostCells); }
 
       /** Get the hi of the inner grid range */
-      IndexType getInnerHi() { return this->getHi() - ghostCells; }
+      IndexType getInnerHi() { return this->getHi() - ptrdiff_t(ghostCells); }
 
       /** Get the range the inner grid range */
-      RangeType getInnerRange() { return RangeType{this->getLo() + ghostCells, this->getHi() - ghostCells}; }
+      RangeType getInnerRange() { return RangeType{this->getLo() + ptrdiff_t(ghostCells), this->getHi() - ptrdiff_t(ghostCells)}; }
 
       /** Calculates index and offset from a position on the field
        *

@@ -72,6 +72,9 @@ namespace schnek {
       /// The grid index type
       typedef Array<ptrdiff_t, rank_t> IndexType;
 
+      /// The grid size type
+      typedef Array<size_t, rank> SizeType;
+
       /// The grid range type
       typedef Range<ptrdiff_t, rank_t> RangeType;
 
@@ -143,7 +146,7 @@ namespace schnek {
       SCHNEK_INLINE const RangeType &getRange() const { return this->range; }
 
       /// Get the dimensions of the grid `dims = high - low + 1`
-      SCHNEK_INLINE const IndexType &getDims() const { return this->dims; }
+      SCHNEK_INLINE const SizeType &getDims() const { return this->dims; }
 
       /// Get k-th component of the lowest coordinate in the grid (inclusive)
       SCHNEK_INLINE ptrdiff_t getLo(size_t k) const { return this->range.getLo(k); }
