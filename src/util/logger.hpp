@@ -85,15 +85,11 @@ namespace schnek {
  *
  * To redefine to eg level 5 use the following commands:
  *
- * #undef SCHNEK_LOGLEVEL
- * #define SCHNEK_LOGLEVEL 5
+ * #undef LOGLEVEL
+ * #define LOGLEVEL 5
  */
-#ifndef SCHNEK_LOGLEVEL
-#define SCHNEK_LOGLEVEL 0
-#endif
-
-#ifndef SCHNEK_GLOBAL_LOGLEVEL
-#define SCHNEK_GLOBAL_LOGLEVEL 0
+#ifndef LOGLEVEL
+#define LOGLEVEL 0
 #endif
 
 #include "singleton.hpp"

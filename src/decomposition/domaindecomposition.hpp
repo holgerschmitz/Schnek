@@ -61,19 +61,19 @@ namespace schnek {
  *
  * Each process can have multiple local domains.
  */
-template<int rank, template<int> class CheckingPolicy = ArrayNoArgCheck>
+template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
 class LocalDomain
 {
   public:
     /**
      * The index type
      */
-    typedef Array<int,rank,ArrayNoArgCheck> IndexType;
+    typedef Array<ptrdiff_t,rank,ArrayNoArgCheck> IndexType;
 
     /**
      * The range type
      */
-    typedef Range<int,rank,ArrayNoArgCheck> RangeType;
+    typedef Range<ptrdiff_t,rank,ArrayNoArgCheck> RangeType;
   private:
     /**
      * The range of the local domain including ghost cells
@@ -107,7 +107,7 @@ class LocalDomain
  * An application can contain multiple instances of LocalDomainIterator iterating over different
  * grid types and also grids that are logically different.
  */
-template<int rank, class GridType, template<int> class CheckingPolicy = ArrayNoArgCheck>
+template<size_t rank, class GridType, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
 class LocalDomainIterator
 {
   public:
@@ -168,11 +168,11 @@ class LocalDomainIterator
  *
  * A simulation block can obtain a local context, register local references to the grids
  */
-template<int rank, template<int> class CheckingPolicy = ArrayNoArgCheck>
+template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
 class LocalDomainContext
 {
   public:
-    typedef Range<int,rank,ArrayNoArgCheck> RangeType;
+    typedef Range<ptrdiff_t,rank,ArrayNoArgCheck> RangeType;
     typedef Range<double,rank,ArrayNoArgCheck> DomainType;
 
     template<class GridType>
@@ -181,7 +181,7 @@ class LocalDomainContext
       public:
 
         virtual ~GridFactory() {}
-        virtual boost::shared_ptr<GridType> newGrid(RangeType range, DomainType domain, int ghostCells) = 0;
+        virtual boost::shared_ptr<GridType> newGrid(RangeType range, DomainType domain, size_t ghostCells) = 0;
     };
 
     virtual ~LocalDomainContext();
@@ -200,17 +200,17 @@ class LocalDomainContext
  *  and boundaries used by the domain composition. The checking policies for the grids and fields
  *  managed by the domain decomposition can be chosen independently.
  */
-template<int rank, template<int> class CheckingPolicy = ArrayNoArgCheck>
+template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
 class DomainDecomposition
 {
   public:
     typedef boost::shared_ptr<LocalDomainContext<rank, CheckingPolicy>> pLocalDomainContext;
 
-    typedef Range<int, rank, CheckingPolicy> RangeType;
+    typedef Range<ptrdiff_t, rank, CheckingPolicy> RangeType;
     typedef Range<double, rank, CheckingPolicy> DomainType;
     typedef Boundary<rank, CheckingPolicy> BoundaryType;
     typedef boost::shared_ptr<BoundaryType> pBoundaryType;
-    typedef Array<int, rank> LimitType;
+    typedef Array<ptrdiff_t, rank> LimitType;
 
     DomainDecomposition();
 
@@ -325,27 +325,27 @@ class DomainDecomposition
     void checkLocalWeights();
 };
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 DomainDecomposition<rank, CheckingPolicy>::DomainDecomposition() :
   globalRange(LimitType(-1), LimitType(0))
 {
 }
 
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 inline void DomainDecomposition<rank, CheckingPolicy>::setGlobalRange(const RangeType& range)
 {
   globalRange = range;
   checkGlobalWeights();
 }
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 inline void schnek::DomainDecomposition<rank, CheckingPolicy>::setGlobalDomain(const DomainType& domain)
 {
   globalDomain = domain;
 }
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 template<class GridType>
 inline void schnek::DomainDecomposition<rank, CheckingPolicy>::setGlobalWeights(const GridType& weights)
 {
@@ -353,7 +353,7 @@ inline void schnek::DomainDecomposition<rank, CheckingPolicy>::setGlobalWeights(
   checkGlobalWeights();
 }
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 template<class GridType>
 inline void schnek::DomainDecomposition<rank, CheckingPolicy>::setLocalWeights(const GridType& weights)
 {
@@ -361,7 +361,7 @@ inline void schnek::DomainDecomposition<rank, CheckingPolicy>::setLocalWeights(c
 //  checkLocalWeights();
 }
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 inline void DomainDecomposition<rank, CheckingPolicy>::checkGlobalWeights()
 {
   LimitType globalSize = globalRange.getHi() - globalRange.getLo() + 1;
@@ -372,7 +372,7 @@ inline void DomainDecomposition<rank, CheckingPolicy>::checkGlobalWeights()
     return;
   }
 
-  for (int d=0; d<rank; ++d)
+  for (size_t d=0; d<rank; ++d)
   {
     if (globalSize[d] % weightsSize[d] != 0)
     {

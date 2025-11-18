@@ -18,46 +18,46 @@
 
 namespace schnek {
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 MpiCartesianDomainDecomposition<rank, CheckingPolicy>::MpiCartesianDomainDecomposition(MpiContext &mpi) : mpi(mpi)
 {}
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 bool MpiCartesianDomainDecomposition<rank, CheckingPolicy>::master() const
 {
   return ComRank == 0;
 }
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::numProcs() const
 {
   return ComSize;
 }
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 const Array<Grid<Range<int, 1>, 1>, rank>& MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getProcRanges()
 {
   return procRanges;
 }
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::balanceLoad()
 {
   SCHNECK_FAIL("MpiCartesianDomainDecomposition::balanceLoad() not implemented");
 }
 
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getUniqueId() const
 {
   int id = myCoord[0];
-  for (int i=1; i<rank; ++i) id = dims[i]*id + myCoord[i];
+  for (size_t i=1; i<rank; ++i) id = dims[i]*id + myCoord[i];
 
   SCHNEK_TRACE_LOG(2,"MpiCartesianDomainDecomposition::getUniqueId() " << id);
   return id;
 }
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::init()
 {
   int errorCode;
@@ -79,7 +79,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::init()
 
   std::vector<int> box(rank);
 
-  for (int i=0; i<rank; ++i)
+  for (size_t i=0; i<rank; ++i)
   {
     box[i] = hi[i] - lo[i] + 1;
     periodic[i] = true;
@@ -102,7 +102,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::init()
   errorCode = this->mpi.MPI_Cart_coords(comm, ComRank, rank, myCoordRaw);
   SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "Could not determine MPI Cartesian coordinates ("+boost::lexical_cast<std::string>(errorCode)+")");
 
-  for (int i=0; i<rank; ++i)
+  for (size_t i=0; i<rank; ++i)
   {
     dims[i] = dimsRaw[i];
     myCoord[i] = myCoordRaw[i];
@@ -112,7 +112,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::init()
   calcGridDistributon(procRanges);
 }
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributon(ProcRanges &ranges)
 {
   if (this->localWeights.getDims().product() > 0)
@@ -130,19 +130,19 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributon(
 }
 
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
     ::calcGridDistributonUniform(ProcRanges &ranges)
 {
   typedef Grid<double, 1> Weights;
   typedef Weights::IndexType Index;
-  typedef Range<int, rank-1> Orth;
+  typedef Range<size_t, rank-1> Orth;
 
   const LimitType lo = this->globalRange.getLo();
   const LimitType hi = this->globalRange.getHi();
   const LimitType dm = hi - lo + 1;
 
-  for (int d=0; d<rank; ++d)
+  for (size_t d=0; d<rank; ++d)
   {
     // finding cut points in the cumulative weights
     Grid<Range<int, 1>, 1> &dimRanges = ranges[d];
@@ -151,7 +151,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
     dimRanges(0).getLo()[0] = lo[d];
     dimRanges(dims[d]-1).getHi()[0] = hi[d];
 
-    for (int i=1; i<dims[d]; ++i)
+    for (size_t i=1; i<dims[d]; ++i)
     {
       int cut = lo[d] + (long(i)*long(dm[d]))/dims[d];
       dimRanges(i-1).getHi()[0] = cut - 1;
@@ -164,18 +164,18 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
  * Sum up the global weights over the perpendicular directions and store
  * them in the 1d `weights` grid
  */
-template<template<int> class CheckingPolicy>
+template<template<size_t> class CheckingPolicy>
 void sumGlobalWeights(const Grid<double, 1, CheckingPolicy> &globalWeights,
                       typename DomainDecomposition<1, CheckingPolicy>::LimitType &lo,
                       typename DomainDecomposition<1, CheckingPolicy>::LimitType &hi,
-                      int d,
+                      size_t d,
                       Grid<double, 1> &weights,
                       double &sumTotal)
 {
   SCHNEK_TRACE_ENTER_FUNCTION(2);
   double sum = 0;
   weights(lo[d]-1) = 0.0;
-  for (int i=lo[d]; i<=hi[d]; ++i)
+  for (size_t i=lo[d]; i<=hi[d]; ++i)
   {
     sum += globalWeights(i);
 
@@ -189,21 +189,21 @@ void sumGlobalWeights(const Grid<double, 1, CheckingPolicy> &globalWeights,
  * Sum up the global weights over the perpendicular directions and store
  * them in the 1d `weights` grid
  */
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 void sumGlobalWeights(const Grid<double, rank, CheckingPolicy> &globalWeights,
                       typename DomainDecomposition<rank, CheckingPolicy>::LimitType &lo,
                       typename DomainDecomposition<rank, CheckingPolicy>::LimitType &hi,
-                      int d,
+                      size_t d,
                       Grid<double, 1> &weights,
                       double &sumTotal)
 {
-  typedef Range<int, rank-1> Orth;
+  typedef Range<size_t, rank-1> Orth;
   Orth orth;
-  Array<int, rank-1> orthInd;
+  Array<size_t, rank-1> orthInd;
 
   // calculating orthogonal directions
-  int oi = 0;
-  for (int o=0; o<rank; ++o)
+  size_t oi = 0;
+  for (size_t o=0; o<rank; ++o)
   {
     if (o != d)
     {
@@ -219,14 +219,14 @@ void sumGlobalWeights(const Grid<double, rank, CheckingPolicy> &globalWeights,
 
   typename DomainDecomposition<rank, CheckingPolicy>::LimitType pos;
   weights(lo[d]-1) = 0.0;
-  for (int i=lo[d]; i<=hi[d]; ++i)
+  for (size_t i=lo[d]; i<=hi[d]; ++i)
   {
     pos[d] = i;
     typename Orth::iterator e = orth.end();
     for (typename Orth::iterator pi=orth.begin(); pi!=e; ++pi)
     {
-      const Array<int, rank-1> &p = *pi;
-      for (int oi=0; oi<rank-1; ++oi)
+      const Array<size_t, rank-1> &p = *pi;
+      for (size_t oi=0; oi<rank-1; ++oi)
       {
         pos[orthInd[oi]] = p[oi];
       }
@@ -240,7 +240,7 @@ void sumGlobalWeights(const Grid<double, rank, CheckingPolicy> &globalWeights,
   }
 }
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
     ::calcGridDistributonGlobalWeights(ProcRanges &ranges)
 {
@@ -254,7 +254,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
     LimitType glo = this->globalRange.getLo();
     LimitType ghi = this->globalRange.getHi();
 
-    for (int d=0; d<rank; ++d)
+    for (size_t d=0; d<rank; ++d)
     {
       int resolution = (ghi[d] - glo[d] + 1) / (hi[d] - lo[d] + 1);
       Weights weights(Index(lo[d]-1), hi[d]);
@@ -274,7 +274,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
       dimRanges(dims[d]-1).getHi()[0] = ghi[d];
 
       double delta = 1.0/double(dims[d]);
-      for (int i=1; i<dims[d]; ++i)
+      for (size_t i=1; i<dims[d]; ++i)
       {
         int ins = findInsertIndex(weights, i*delta);
         if ((ins <= lo[d]) || (ins+1 >= hi[d]))
@@ -297,7 +297,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
 
       // broadcasting the layout in dimRanges to other processes
       Grid<int, 1> transfer(2*dims[d]);
-      for (int i=0; i<dims[d]; ++i)
+      for (size_t i=0; i<dims[d]; ++i)
       {
         transfer(2*i) = dimRanges(i).getLo()[0];
         transfer(2*i + 1) = dimRanges(i).getHi()[0];
@@ -308,14 +308,14 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
   else
   {
     // receiving dim ranges for each dimension from the master process
-    for (int d=0; d<rank; ++d)
+    for (size_t d=0; d<rank; ++d)
     {
       Grid<Range<int, 1>, 1> &dimRanges = ranges[d];
       dimRanges.resize(0, dims[d]-1);
 
       Grid<int, 1> transfer(2*dims[d]);
       mpi.MPI_Bcast(transfer.getRawData(), 2*dims[d], MPI_INT, 0, comm);
-      for (int i=0; i<dims[d]; ++i)
+      for (size_t i=0; i<dims[d]; ++i)
       {
         dimRanges(i).getLo()[0] = transfer(2*i);
         dimRanges(i).getHi()[0] = transfer(2*i + 1);
@@ -324,7 +324,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
   }
 }
 
-template<int rank, template<int> class CheckingPolicy>
+template<size_t rank, template<size_t> class CheckingPolicy>
 void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
     ::calcGridDistributonLocalWeights(ProcRanges &ranges)
 {

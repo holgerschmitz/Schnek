@@ -18,7 +18,7 @@
 
 namespace schnek {
 
-template<int rank, template<int> class CheckingPolicy = ArrayNoArgCheck>
+template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
 class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, CheckingPolicy>
 {
   public:
