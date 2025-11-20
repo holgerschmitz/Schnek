@@ -29,26 +29,27 @@
 
 namespace schnek {
     namespace internal {
-        class FieldRegistrationInterface {
-          public:
-            virtual ~FieldRegistrationInterface() {}
+        struct GridRegistrationInterface: public Unique<GridRegistrationInterface> {
+            virtual ~GridRegistrationInterface() {}
         };
     }
 
-    class FieldRegistration {
-      private:
-        std::shared_ptr<internal::FieldRegistrationInterface> regsitration;
-      
+    template<class GridType>
+    class GridFactory
+    {
+      public:
+        virtual ~GridFactory() {}
+        virtual std::shared_ptr<GridType> newGrid(RangeType range, DomainType domain, size_t ghostCells) = 0;
+    };
+
+    struct GridRegistration {
+      long id;
     };
 
     namespace internal {
-        template<typename FieldType>
-        class FieldRegistrationImpl : public FieldRegistrationInterface {
-          private:
-            FieldRegistration *owner;
-          public:
-            FieldRegistrationImpl(const FieldRegistrationImpl &other) default;
-            FieldRegistrationImpl &operator=(const FieldRegistrationImpl &other) default;
+        template<typename GridType>
+        struct GridRegistrationImpl : public GridRegistrationInterface {
+            GridFactory<GridType> &factory;
         };
     } // namespace internal
 

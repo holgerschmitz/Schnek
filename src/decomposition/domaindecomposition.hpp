@@ -44,6 +44,8 @@
 
 #include "../util/exceptions.hpp"
 
+#include "detail/registration.hpp"
+
 #include <iostream>
 #include <string>
 #include <iterator>
@@ -105,9 +107,11 @@ class LocalDomain
  *
  * An application can contain multiple instances of LocalDomainIterator iterating over different
  * grid types and also grids that are logically different.
+ * 
+ * @deprecated
  */
 template<size_t rank, class GridType, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
-class LocalDomainIterator
+[[deprecated]] class LocalDomainIterator
 {
   public:
 
@@ -182,15 +186,16 @@ class [[deprecated]] LocalDomainContext
     virtual LocalDomainIterator<rank, GridType, CheckingPolicy> getGridIterator(GridFactory<GridType> &factory);
 };
 
-/** @brief Interface for wrapping and exchanging boundaries .
+/** 
+ * @brief Interface for wrapping and exchanging boundaries .
  *
- *  This interface is used to exchange the boundaries of grids
- *  between processes. Any implementation should treat the fields as periodic.
- *  The boundary conditions can be applied afterwards.
+ * This interface is used to exchange the boundaries of grids
+ * between processes. Any implementation should treat the fields as periodic.
+ * The boundary conditions can be applied afterwards.
  *
- *  The `CheckingPolicy` template argument defines the checking policy of the indices, ranges
- *  and boundaries used by the domain composition. The checking policies for the grids and fields
- *  managed by the domain decomposition can be chosen independently.
+ * The `CheckingPolicy` template argument defines the checking policy of the indices, ranges
+ * and boundaries used by the domain composition. The checking policies for the grids and fields
+ * managed by the domain decomposition can be chosen independently.
  */
 template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
 class DomainDecomposition
@@ -203,14 +208,6 @@ class DomainDecomposition
     typedef Boundary<rank, CheckingPolicy> BoundaryType;
     typedef boost::shared_ptr<BoundaryType> pBoundaryType;
     typedef Array<ptrdiff_t, rank> LimitType;
-
-    template<class GridType>
-    class GridFactory
-    {
-      public:
-        virtual ~GridFactory() {}
-        virtual std::shared_ptr<GridType> newGrid(RangeType range, DomainType domain, size_t ghostCells) = 0;
-    };
 
     DomainDecomposition();
 
@@ -305,7 +302,7 @@ class DomainDecomposition
     virtual pLocalDomainContext getLocalDomainContext() = 0;
 
     template<class GridType>
-    virtual FieldRegistration registerField(GridFactory<GridType> &factory);
+    GridRegistration registerField(GridFactory<GridType> &factory);
   protected:
     typedef Grid<double, rank> InternalGridType;
     /// The global grid size
@@ -324,6 +321,8 @@ class DomainDecomposition
      */
     void addLocalRange(RangeType range);
   private:
+    std::map<long, std::shared_ptr<internal::GridRegistrationInterface>> registeredFields;
+
     void checkGlobalWeights();
     void checkLocalWeights();
 };
@@ -362,6 +361,17 @@ inline void schnek::DomainDecomposition<rank, CheckingPolicy>::setLocalWeights(c
 {
   localWeights = weights;
 //  checkLocalWeights();
+}
+
+template<size_t rank, template<size_t> class CheckingPolicy>
+template<class GridType>
+inline void schnek::DomainDecomposition<rank, CheckingPolicy>::registerField(GridFactory<GridType>& factory)
+{
+  auto registration = std::make_shared<internal::GridRegistrationImpl<GridType>>(factory);
+  long id = registration->getId()
+  registeredFields[id] = registration;
+
+  return GridRegistration{id};
 }
 
 template<size_t rank, template<size_t> class CheckingPolicy>
