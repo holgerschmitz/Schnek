@@ -14,6 +14,7 @@
 
 #include <list>
 #include <vector>
+#include <memory>
 
 namespace schnek {
 
@@ -24,7 +25,7 @@ class LocalDomainIteratorImpl : public schnek::LocalDomainIterator
 {
   public:
     typedef schnek::LocalDomain<rank, CheckingPolicy> LocalDomain;
-    typedef boost::shared_ptr<LocalDomain> pLocalDomain;
+    typedef std::shared_ptr<LocalDomain> pLocalDomain;
     typedef typename schnek::LocalDomainContext<rank, CheckingPolicy>::GridFactory<GridType> GridFactory;
   private:
     typedef boost::scoped_ptr<GridType> pGridType;
@@ -110,7 +111,7 @@ class LocalDomainContextImpl : public schnek::LocalDomainContext
 {
   public:
     typedef schnek::LocalDomain<rank, CheckingPolicy> LocalDomain;
-    typedef boost::shared_ptr<LocalDomain> pLocalDomain;
+    typedef std::shared_ptr<LocalDomain> pLocalDomain;
   private:
     std::vector<pLocalDomain> domains;
 

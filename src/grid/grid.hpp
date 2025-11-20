@@ -1,5 +1,5 @@
 /*
- * grid.h
+ * grid.hpp
  *
  * Created on: 23 Jan 2007
  * Author: Holger Schmitz

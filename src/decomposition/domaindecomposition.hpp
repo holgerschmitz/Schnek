@@ -44,12 +44,11 @@
 
 #include "../util/exceptions.hpp"
 
-#include <boost/shared_ptr.hpp>
-
 #include <iostream>
 #include <string>
 #include <iterator>
 #include <vector>
+#include <memory>
 
 
 namespace schnek {
@@ -152,12 +151,12 @@ class LocalDomainIterator
     /**
      * Register a pointer to a grid to be managed by the domain iterator
      */
-    virtual void registerGrid(GridType*& grid) = 0;
+    [[deprecated]] virtual void registerGrid(GridType*& grid) = 0;
 
     /**
      * Register multiple pointers to a grid to be managed by the domain iterator
      */
-    virtual void registerGrid(std::vector<GridType*>& grids) = 0;
+    [[deprecated]] virtual void registerGrid(std::vector<GridType*>& grids) = 0;
 };
 
 
@@ -167,22 +166,15 @@ class LocalDomainIterator
  * The data is created by a factory function
  *
  * A simulation block can obtain a local context, register local references to the grids
+ * @deprecated
  */
 template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
-class LocalDomainContext
+class [[deprecated]] LocalDomainContext
 {
   public:
     typedef Range<ptrdiff_t,rank,ArrayNoArgCheck> RangeType;
     typedef Range<double,rank,ArrayNoArgCheck> DomainType;
 
-    template<class GridType>
-    class GridFactory
-    {
-      public:
-
-        virtual ~GridFactory() {}
-        virtual boost::shared_ptr<GridType> newGrid(RangeType range, DomainType domain, size_t ghostCells) = 0;
-    };
 
     virtual ~LocalDomainContext();
 
@@ -204,13 +196,21 @@ template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
 class DomainDecomposition
 {
   public:
-    typedef boost::shared_ptr<LocalDomainContext<rank, CheckingPolicy>> pLocalDomainContext;
+    typedef std::shared_ptr<LocalDomainContext<rank, CheckingPolicy>> pLocalDomainContext;
 
     typedef Range<ptrdiff_t, rank, CheckingPolicy> RangeType;
     typedef Range<double, rank, CheckingPolicy> DomainType;
     typedef Boundary<rank, CheckingPolicy> BoundaryType;
     typedef boost::shared_ptr<BoundaryType> pBoundaryType;
     typedef Array<ptrdiff_t, rank> LimitType;
+
+    template<class GridType>
+    class GridFactory
+    {
+      public:
+        virtual ~GridFactory() {}
+        virtual std::shared_ptr<GridType> newGrid(RangeType range, DomainType domain, size_t ghostCells) = 0;
+    };
 
     DomainDecomposition();
 
@@ -303,6 +303,9 @@ class DomainDecomposition
      * multiple contexts can be created
      */
     virtual pLocalDomainContext getLocalDomainContext() = 0;
+
+    template<class GridType>
+    virtual FieldRegistration registerField(GridFactory<GridType> &factory);
   protected:
     typedef Grid<double, rank> InternalGridType;
     /// The global grid size
