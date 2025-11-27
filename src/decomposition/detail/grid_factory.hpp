@@ -1,6 +1,6 @@
 
 /*
- * registration.hpp
+ * grid_factory.hpp
  *
  * Created on: 20 Nov 2025
  * Author: Holger Schmitz
@@ -25,13 +25,29 @@
  *
  */
 
+#include "../../grid/array.hpp"
+#include "../../grid/arraycheck.hpp"
+
 #include <memory>
 
 namespace schnek {
     namespace internal {
-        struct GridRegistrationInterface: public Unique<GridRegistrationInterface> {
-            virtual ~GridRegistrationInterface() {}
+        struct GridWrapper {
+          virtual ~GridWrapper() {}
         };
+
+        typedef std::shared_ptr<GridWrapper> pGridWrapper;
+
+        template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
+        struct GridRegistrationInterface: public Unique<GridRegistrationInterface> {
+            typedef Range<ptrdiff_t, rank, CheckingPolicy> RangeType;
+            typedef Range<double, rank, CheckingPolicy> DomainType;
+
+            virtual ~GridRegistrationInterface() {}
+            virtual pGridWrapper makeGrid(const RangeType& range,  DomainType domain, size_t ghostCells) = 0;
+        };
+
+        std::shared_ptr<GridRegistrationInterface> pGridRegistrationInterface;
     }
 
     template<class GridType>
@@ -39,7 +55,7 @@ namespace schnek {
     {
       public:
         virtual ~GridFactory() {}
-        virtual std::shared_ptr<GridType> newGrid(RangeType range, DomainType domain, size_t ghostCells) = 0;
+        virtual GridType newGrid(RangeType range, DomainType domain, size_t ghostCells) = 0;
     };
 
     struct GridRegistration {
@@ -48,8 +64,16 @@ namespace schnek {
 
     namespace internal {
         template<typename GridType>
-        struct GridRegistrationImpl : public GridRegistrationInterface {
+        struct GridWrapperImpl {
+          GridType grid;
+        };
+
+        template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck, typename GridType>
+        struct GridRegistrationImpl : public GridRegistrationInterface<rank, CheckingPolicy> {
             GridFactory<GridType> &factory;
+            pGridWrapper makeGrid(const RangeType& range,  DomainType domain, size_t ghostCells) override {
+              return std::make_shared<GridWrapper>(factory.newGrid(range, domain, ghostCells));
+            }
         };
     } // namespace internal
 

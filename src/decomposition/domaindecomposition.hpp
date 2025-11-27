@@ -44,13 +44,14 @@
 
 #include "../util/exceptions.hpp"
 
-#include "detail/registration.hpp"
+#include "detail/grid_factory.hpp"
 
 #include <iostream>
 #include <string>
 #include <iterator>
 #include <vector>
 #include <memory>
+#include <list>
 
 
 namespace schnek {
@@ -186,6 +187,10 @@ class [[deprecated]] LocalDomainContext
     virtual LocalDomainIterator<rank, GridType, CheckingPolicy> getGridIterator(GridFactory<GridType> &factory);
 };
 
+namespace internal {
+
+} // namespace internal
+
 /** 
  * @brief Interface for wrapping and exchanging boundaries .
  *
@@ -208,6 +213,33 @@ class DomainDecomposition
     typedef Boundary<rank, CheckingPolicy> BoundaryType;
     typedef boost::shared_ptr<BoundaryType> pBoundaryType;
     typedef Array<ptrdiff_t, rank> LimitType;
+
+    class GridContext {
+      private:
+        friend class DomainDecomposition;
+        std::list<internal::GridRegistrationInterface> grids;
+        GridContext(
+          std::initializer_list<internal::GridRegistrationInterface> registrations
+        ) : grids(registrations) {}
+      public:
+        
+        /**
+         * @brief Calls the function for each local domain. The arguments to the function are the local
+         * grids corresponding to the registrations.
+         * 
+         * Implementation notes:
+         * Uses boost::function_types and mpl to deduce the parameter types of the function.
+         * This allows the creation of a tuple containing local fields.
+         * 
+         * However, the DomainDecomposition somehow must still be involved to determine the grid instances 
+         * and the local domains to iterate over.
+         * 
+         * @tparam Func the function type
+         * @param func a function taking the grids corrsponding to the registrations
+         */
+        template<typename Func>
+        void forEach(Func func);
+    };
 
     DomainDecomposition();
 
@@ -316,12 +348,40 @@ class DomainDecomposition
 
     /// The local weights
     InternalGridType localWeights;
+
     /**
-     * This allows implementations to add a local range
+     * This allows implementations to add a local range for grid allocation
      */
-    void addLocalRange(RangeType range);
+    void addLocalRange(RangeType range, DomainType domain, size_t ghostCells);
+
+    /**
+     * This allows implementations to add a local range for iteration
+     */
+    void addLocalIterationRange(RangeType range);
   private:
-    std::map<long, std::shared_ptr<internal::GridRegistrationInterface>> registeredFields;
+    struct LocalRangeInfo {
+      RangeType range;
+      DomainType domain;
+      size_t ghostCells;
+    };
+    
+    std::map<long, internal::pGridRegistrationInterface> registeredFields;
+
+    /**
+     * @brief For each grid registration ID, this stores the local
+     * list of grids for each allocation range
+     */
+    std::map<long, std::list<internal::pGridWrapper>> grids;
+
+    /**
+     * @brief Contains the local ranges for the grids.
+     */
+    std::list<LocalRangeInfo> ranges;
+
+    /**
+     * @brief Contains the local iteration ranges.
+     */
+    std::list<RangeType> iterationRanges;
 
     void checkGlobalWeights();
     void checkLocalWeights();
@@ -371,7 +431,29 @@ inline void schnek::DomainDecomposition<rank, CheckingPolicy>::registerField(Gri
   long id = registration->getId()
   registeredFields[id] = registration;
 
+  // create the grids for this registration
+  std::list<internal::GridWrapper> gridList;
+  for (LocalRangeInfo localRange: ranges) {
+    gridList.push_back(registration.makeGrid(localRange.range, localRange.domain, localRange.ghostCells));
+  }
+
+  grids[id] = gridList;
+
   return GridRegistration{id};
+}
+
+template<size_t rank, template<size_t> class CheckingPolicy>
+void DomainDecomposition<rank, CheckingPolicy>::addLocalRange(RangeType range, DomainType domain, size_t ghostCells) {
+  ranges.push_back(LocalRangeInfo{range, domain, ghostCells});
+  for (auto reg: registeredFields) {
+    long id = reg.first;
+    grids[id].push_back(reg.second.makeGrid(range, domain, ghostCells));
+  }
+}
+
+template<size_t rank, template<size_t> class CheckingPolicy>
+void DomainDecomposition<rank, CheckingPolicy>::addLocalIterationRange(RangeType range) {
+  iterationRanges.push_back(range);
 }
 
 template<size_t rank, template<size_t> class CheckingPolicy>
