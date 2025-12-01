@@ -27,6 +27,8 @@
 
 #include "../../grid/array.hpp"
 #include "../../grid/arraycheck.hpp"
+#include "../../grid/grid.hpp"
+#include "../../grid/field.hpp"
 
 #include <memory>
 
@@ -38,41 +40,60 @@ namespace schnek {
 
         typedef std::shared_ptr<GridWrapper> pGridWrapper;
 
+        template<typename GridType>
+        struct GridWrapperImpl {
+          GridType grid;
+        };
+
         template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
         struct GridRegistrationInterface: public Unique<GridRegistrationInterface> {
             typedef Range<ptrdiff_t, rank, CheckingPolicy> RangeType;
             typedef Range<double, rank, CheckingPolicy> DomainType;
 
             virtual ~GridRegistrationInterface() {}
-            virtual pGridWrapper makeGrid(const RangeType& range,  DomainType domain, size_t ghostCells) = 0;
+            virtual pGridWrapper makeGrid(const RangeType& range,  DomainType domain) = 0;
         };
 
         std::shared_ptr<GridRegistrationInterface> pGridRegistrationInterface;
     }
 
     template<class GridType>
-    class GridFactory
-    {
-      public:
-        virtual ~GridFactory() {}
-        virtual GridType newGrid(RangeType range, DomainType domain, size_t ghostCells) = 0;
+    struct GridFactory {};
+
+    template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+    struct GridFactory<Grid<T, rank, Policies...> > {
+        typedef Grid<T, rank, Policies...> GridType;
+        pGridWrapper newGrid(const RangeType& range,  DomainType domain) {
+            GridType grid(range);
+            return std::make_shared<GridWrapperImpl<GridType>>(grid);
+        }
     };
+
+    template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+    struct GridFactory<Field<T, rank, Policies...> > {
+        typedef Field<T, rank, Policies...> GridType;
+        
+        Array<bool::rank> stagger;
+        size_t ghostCells;
+
+        pGridWrapper newGrid(const RangeType& range,  DomainType domain) {
+            GridType grid(range, domain, stagger, ghostCells);
+            return std::make_shared<GridWrapperImpl<GridType>>(grid);
+        }
+    };
+  
 
     struct GridRegistration {
       long id;
     };
 
     namespace internal {
-        template<typename GridType>
-        struct GridWrapperImpl {
-          GridType grid;
-        };
 
         template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck, typename GridType>
         struct GridRegistrationImpl : public GridRegistrationInterface<rank, CheckingPolicy> {
             GridFactory<GridType> &factory;
-            pGridWrapper makeGrid(const RangeType& range,  DomainType domain, size_t ghostCells) override {
-              return std::make_shared<GridWrapper>(factory.newGrid(range, domain, ghostCells));
+            pGridWrapper makeGrid(const RangeType& range,  DomainType domain) override {
+              return std::make_shared<GridWrapper>(factory.newGrid(range, domain));
             }
         };
     } // namespace internal

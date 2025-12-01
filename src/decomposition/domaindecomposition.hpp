@@ -435,7 +435,7 @@ class DomainDecomposition
     /**
      * This allows implementations to add a local range for grid allocation
      */
-    void addLocalRange(RangeType range, DomainType domain, size_t ghostCells);
+    void addLocalRange(RangeType range, DomainType domain);
 
     /**
      * This allows implementations to add a local range for iteration
@@ -445,7 +445,6 @@ class DomainDecomposition
     struct LocalRangeInfo {
       RangeType range;
       DomainType domain;
-      size_t ghostCells;
     };
     
     std::map<long, internal::pGridRegistrationInterface> registeredFields;
@@ -570,7 +569,7 @@ inline void schnek::DomainDecomposition<rank, CheckingPolicy>::registerField(Gri
   // create the grids for this registration
   std::list<internal::GridWrapper> gridList;
   for (LocalRangeInfo localRange: ranges) {
-    gridList.push_back(registration.makeGrid(localRange.range, localRange.domain, localRange.ghostCells));
+    gridList.push_back(registration.makeGrid(localRange.range, localRange.domain));
   }
 
   grids[id] = gridList;
@@ -588,11 +587,11 @@ GridContext DomainDecomposition<rank, CheckingPolicy>::getGridContext(std::initi
 }
 
 template<size_t rank, template<size_t> class CheckingPolicy>
-void DomainDecomposition<rank, CheckingPolicy>::addLocalRange(RangeType range, DomainType domain, size_t ghostCells) {
-    ranges.push_back(LocalRangeInfo{range, domain, ghostCells});
+void DomainDecomposition<rank, CheckingPolicy>::addLocalRange(RangeType range, DomainType domain) {
+    ranges.push_back(LocalRangeInfo{range, domain});
     for (auto& reg : registeredFields) {
         long id = reg.first;
-        grids[id].push_back(reg.second->makeGrid(range, domain, ghostCells));
+        grids[id].push_back(reg.second->makeGrid(range, domain));
     }
 }
 
