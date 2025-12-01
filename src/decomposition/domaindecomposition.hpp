@@ -61,7 +61,6 @@
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/size.hpp>
 
-
 namespace schnek {
 
 /**
@@ -105,160 +104,71 @@ class LocalDomain
     const IndexType &getInnerHi() { return innerRange.getHi(); }
 };
 
-/**
- * Iterate over all local domains
- *
- * Pointers to grids can be registered with the iterator. The iterator will then automatically
- * create grids for each local domain using the GridFactory that was passed to
- * LocalDomainContext::getGridIterator() when the iterator was created.
- *
- * Calling #next() will update all registered grid pointers to the current local grids.
- *
- * An application can contain multiple instances of LocalDomainIterator iterating over different
- * grid types and also grids that are logically different.
- * 
- * @deprecated
- */
-template<size_t rank, class GridType, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
-[[deprecated]] class LocalDomainIterator
-{
-  public:
-
-    virtual ~LocalDomainIterator() {}
-
-    /**
-     * Reset the iterator to the first local domain.
-     */
-    virtual void reset() = 0;
-
-    /**
-     * Move to the next local domain.
-     *
-     * This has to be called before any grids can be accessed
-     *
-     * Modifies all grid pointers that have been registered with the iterator
-     *
-     * @example
-     * ```
-     * iterator.reset();
-     *
-     * while(iterator.next()) {
-     *   doSomething();
-     * }
-     * ```
-     *
-     * @return true if the iterator points to a valid local domain
-     */
-    virtual bool next() = 0;
-
-    /**
-     * Perform a boundary exchange on the registered grids
-     */
-    virtual void exchange() = 0;
-
-    /**
-     * Get the current local domain
-     */
-    virtual const LocalDomain<rank, CheckingPolicy> &getDomain() const = 0;
-
-    /**
-     * Register a pointer to a grid to be managed by the domain iterator
-     */
-    [[deprecated]] virtual void registerGrid(GridType*& grid) = 0;
-
-    /**
-     * Register multiple pointers to a grid to be managed by the domain iterator
-     */
-    [[deprecated]] virtual void registerGrid(std::vector<GridType*>& grids) = 0;
-};
-
-
-/**
- * A container holding local domains and data for each local domain
- *
- * The data is created by a factory function
- *
- * A simulation block can obtain a local context, register local references to the grids
- * @deprecated
- */
-template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
-class [[deprecated]] LocalDomainContext
-{
-  public:
-    typedef Range<ptrdiff_t,rank,ArrayNoArgCheck> RangeType;
-    typedef Range<double,rank,ArrayNoArgCheck> DomainType;
-
-
-    virtual ~LocalDomainContext();
-
-    template<class GridType>
-    virtual LocalDomainIterator<rank, GridType, CheckingPolicy> getGridIterator(GridFactory<GridType> &factory);
-};
 
 namespace internal {
-template<typename Callable, typename Enable = void>
-struct FunctionParameterTypesImpl;
+    template<typename Callable, typename Enable = void>
+    struct FunctionParameterTypesImpl;
 
-template<typename Callable>
-struct FunctionParameterTypesImpl<Callable, typename std::enable_if<!std::is_class<Callable>::value>::type>
-{
-  using type = typename boost::function_types::parameter_types<Callable>::type;
-};
-
-template<typename Callable>
-struct FunctionParameterTypesImpl<Callable, typename std::enable_if<std::is_class<Callable>::value>::type>
-{
-  using type = typename FunctionParameterTypesImpl<decltype(&Callable::operator())>::type;
-};
-
-template<typename Callable>
-struct FunctionParameterTypes
-{
-  using type = typename FunctionParameterTypesImpl<typename std::decay<Callable>::type>::type;
-};
-
-template<typename Callable>
-using FunctionParameterTypesT = typename FunctionParameterTypes<Callable>::type;
-
-template<typename Param>
-struct GridReferenceExtractor
-{
-  static_assert(std::is_lvalue_reference<Param>::value, "Function parameters must be lvalue references");
-  using Reference = Param;
-  using ValueType = typename std::remove_reference<Reference>::type;
-  using GridType = typename std::remove_const<ValueType>::type;
-
-  static Reference extract(const pGridWrapper &wrapper)
-  {
-    auto typedWrapper = std::dynamic_pointer_cast<GridWrapperImpl<GridType>>(wrapper);
-    if (!typedWrapper)
+    template<typename Callable>
+    struct FunctionParameterTypesImpl<Callable, typename std::enable_if<!std::is_class<Callable>::value>::type>
     {
-      SCHNECK_FAIL("Grid type mismatch for registered field");
+    using type = typename boost::function_types::parameter_types<Callable>::type;
+    };
+
+    template<typename Callable>
+    struct FunctionParameterTypesImpl<Callable, typename std::enable_if<std::is_class<Callable>::value>::type>
+    {
+    using type = typename FunctionParameterTypesImpl<decltype(&Callable::operator())>::type;
+    };
+
+    template<typename Callable>
+    struct FunctionParameterTypes
+    {
+    using type = typename FunctionParameterTypesImpl<typename std::decay<Callable>::type>::type;
+    };
+
+    template<typename Callable>
+    using FunctionParameterTypesT = typename FunctionParameterTypes<Callable>::type;
+
+    template<typename Param>
+    struct GridReferenceExtractor
+    {
+        static_assert(std::is_lvalue_reference<Param>::value, "Function parameters must be lvalue references");
+        using Reference = Param;
+        using ValueType = typename std::remove_reference<Reference>::type;
+        using GridType = typename std::remove_const<ValueType>::type;
+
+        static Reference extract(const pGridWrapper &wrapper)
+        {
+            auto typedWrapper = std::dynamic_pointer_cast<GridWrapperImpl<GridType>>(wrapper);
+            if (!typedWrapper)
+            {
+                SCHNECK_FAIL("Grid type mismatch for registered field");
+            }
+            return typedWrapper->grid;
+        }
+    };
+
+    template<typename ParameterSeq>
+    struct GridArgumentBuilder
+    {
+    template<typename IteratorVec, std::size_t... Is>
+    static auto buildImpl(const IteratorVec &iterators, std::index_sequence<Is...>)
+    {
+        return std::tuple<typename boost::mpl::at_c<ParameterSeq, Is>::type...>(
+        GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(*iterators[Is])...
+        );
     }
-    return typedWrapper->grid;
-  }
-};
 
-template<typename ParameterSeq>
-struct GridArgumentBuilder
-{
-  template<typename IteratorVec, std::size_t... Is>
-  static auto buildImpl(const IteratorVec &iterators, std::index_sequence<Is...>)
-  {
-    return std::tuple<typename boost::mpl::at_c<ParameterSeq, Is>::type...>(
-      GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(*iterators[Is])...
-    );
-  }
-
-  template<typename IteratorVec>
-  static auto build(const IteratorVec &iterators)
-  {
-    return buildImpl(
-      iterators,
-      std::make_index_sequence<boost::mpl::size<ParameterSeq>::value>{}
-    );
-  }
-};
+    template<typename IteratorVec>
+    static auto build(const IteratorVec &iterators)
+    {
+        return buildImpl(
+        iterators,
+        std::make_index_sequence<boost::mpl::size<ParameterSeq>::value>{}
+        );
+    }
+    };
 } // namespace internal
 
 /** 
@@ -466,6 +376,7 @@ class DomainDecomposition
     std::list<RangeType> iterationRanges;
 
     void checkGlobalWeights();
+
     void checkLocalWeights();
 };
 
@@ -555,7 +466,7 @@ template<class GridType>
 inline void schnek::DomainDecomposition<rank, CheckingPolicy>::setLocalWeights(const GridType& weights)
 {
   localWeights = weights;
-//  checkLocalWeights();
+  checkLocalWeights();
 }
 
 template<size_t rank, template<size_t> class CheckingPolicy>
@@ -619,6 +530,9 @@ inline void DomainDecomposition<rank, CheckingPolicy>::checkGlobalWeights()
     }
   }
 }
+
+template<size_t rank, template<size_t> class CheckingPolicy>
+inline void DomainDecomposition<rank, CheckingPolicy>::checkLocalWeights() {}
 
 }
 #endif //SCHNEK_DOMAINDECOMPOSITION_HPP
