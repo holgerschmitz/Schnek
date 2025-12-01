@@ -52,6 +52,14 @@
 #include <vector>
 #include <memory>
 #include <list>
+#include <map>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
+#include <boost/function_types/parameter_types.hpp>
+#include <boost/mpl/at.hpp>
+#include <boost/mpl/size.hpp>
 
 
 namespace schnek {
@@ -188,7 +196,69 @@ class [[deprecated]] LocalDomainContext
 };
 
 namespace internal {
+template<typename Callable, typename Enable = void>
+struct FunctionParameterTypesImpl;
 
+template<typename Callable>
+struct FunctionParameterTypesImpl<Callable, typename std::enable_if<!std::is_class<Callable>::value>::type>
+{
+  using type = typename boost::function_types::parameter_types<Callable>::type;
+};
+
+template<typename Callable>
+struct FunctionParameterTypesImpl<Callable, typename std::enable_if<std::is_class<Callable>::value>::type>
+{
+  using type = typename FunctionParameterTypesImpl<decltype(&Callable::operator())>::type;
+};
+
+template<typename Callable>
+struct FunctionParameterTypes
+{
+  using type = typename FunctionParameterTypesImpl<typename std::decay<Callable>::type>::type;
+};
+
+template<typename Callable>
+using FunctionParameterTypesT = typename FunctionParameterTypes<Callable>::type;
+
+template<typename Param>
+struct GridReferenceExtractor
+{
+  static_assert(std::is_lvalue_reference<Param>::value, "Function parameters must be lvalue references");
+  using Reference = Param;
+  using ValueType = typename std::remove_reference<Reference>::type;
+  using GridType = typename std::remove_const<ValueType>::type;
+
+  static Reference extract(const pGridWrapper &wrapper)
+  {
+    auto typedWrapper = std::dynamic_pointer_cast<GridWrapperImpl<GridType>>(wrapper);
+    if (!typedWrapper)
+    {
+      SCHNECK_FAIL("Grid type mismatch for registered field");
+    }
+    return typedWrapper->grid;
+  }
+};
+
+template<typename ParameterSeq>
+struct GridArgumentBuilder
+{
+  template<typename IteratorVec, std::size_t... Is>
+  static auto buildImpl(const IteratorVec &iterators, std::index_sequence<Is...>)
+  {
+    return std::tuple<typename boost::mpl::at_c<ParameterSeq, Is>::type...>(
+      GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(*iterators[Is])...
+    );
+  }
+
+  template<typename IteratorVec>
+  static auto build(const IteratorVec &iterators)
+  {
+    return buildImpl(
+      iterators,
+      std::make_index_sequence<boost::mpl::size<ParameterSeq>::value>{}
+    );
+  }
+};
 } // namespace internal
 
 /** 
@@ -217,10 +287,12 @@ class DomainDecomposition
     class GridContext {
       private:
         friend class DomainDecomposition;
-        std::list<internal::GridRegistrationInterface> grids;
+        std::vector<long> ids;
+        const std::map<long, std::list<internal::pGridWrapper>> &grids;
         GridContext(
-          std::initializer_list<internal::GridRegistrationInterface> registrations
-        ) : grids(registrations) {}
+          std::initializer_list<long> ids,
+          const std::map<long, std::list<internal::pGridWrapper>> &grids
+        ): ids(ids), grids(grids) {}
       public:
         
         /**
@@ -391,6 +463,59 @@ template<size_t rank, template<size_t> class CheckingPolicy>
 DomainDecomposition<rank, CheckingPolicy>::DomainDecomposition() :
   globalRange(LimitType(-1), LimitType(0))
 {
+}
+
+
+template<size_t rank, template<size_t> class CheckingPolicy>
+template<typename Func>
+void DomainDecomposition<rank, CheckingPolicy>::GridContext::forEach(Func func)
+{
+  using ParameterSeq = internal::FunctionParameterTypesT<Func>;
+  constexpr std::size_t paramCount = boost::mpl::size<ParameterSeq>::value;
+
+  if (ids.size() != paramCount)
+  {
+    SCHNECK_FAIL("Grid registration count (" << ids.size() << ") does not match function arity (" << paramCount << ")");
+  }
+
+  std::vector<const std::list<internal::pGridWrapper>*> selectedLists;
+  selectedLists.reserve(ids.size());
+  for (auto id : ids)
+  {
+    auto gridIt = grids.find(id);
+    if (gridIt == grids.end())
+    {
+      SCHNECK_FAIL("Unknown grid registration id: " << id);
+    }
+    selectedLists.push_back(&gridIt->second);
+  }
+
+  std::size_t gridCount = selectedLists.empty() ? 0 : selectedLists.front()->size();
+  for (std::size_t i = 1; i < selectedLists.size(); ++i)
+  {
+    if (selectedLists[i]->size() != gridCount)
+    {
+      SCHNECK_FAIL("Grid list size mismatch for registration index " << i);
+    }
+  }
+
+  using ListIterator = typename std::list<internal::pGridWrapper>::const_iterator;
+  std::vector<ListIterator> iterators;
+  iterators.reserve(selectedLists.size());
+  for (auto listPtr : selectedLists)
+  {
+    iterators.push_back(listPtr->begin());
+  }
+
+  for (std::size_t entry = 0; entry < gridCount; ++entry)
+  {
+    auto args = internal::GridArgumentBuilder<ParameterSeq>::build(iterators);
+    std::apply(func, args);
+    for (auto &it : iterators)
+    {
+      ++it;
+    }
+  }
 }
 
 
