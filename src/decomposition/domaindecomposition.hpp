@@ -294,7 +294,10 @@ class DomainDecomposition
           const std::map<long, std::list<internal::pGridWrapper>> &grids
         ): ids(ids), grids(grids) {}
       public:
-        
+        GridContext() = delete;
+        GridContext(const GridContext &) = default;
+
+
         /**
          * @brief Calls the function for each local domain. The arguments to the function are the local
          * grids corresponding to the registrations.
@@ -399,14 +402,22 @@ class DomainDecomposition
     virtual int numProcs() const = 0;
 
     /**
-     * Get a local domain context
+     * Register a grid or field by passing a factory.
+     * 
+     * The domain decomposition will create instances of the grid for each local domain.
+     * 
+     * A grid registration is passed back for future reference to the field. The registrations
+     * are typically used in conjunction with the `getGridContext` method.
+     */
+    template<class GridType>
+    GridRegistration registerField(GridFactory<GridType> &factory);
+
+    /**
+     * Get a grid context for calling a function over all local domains
      *
      * multiple contexts can be created
      */
-    virtual pLocalDomainContext getLocalDomainContext() = 0;
-
-    template<class GridType>
-    GridRegistration registerField(GridFactory<GridType> &factory);
+    GridContext getGridContext(std::initializer_list<GridRegistration> registrations);
   protected:
     typedef Grid<double, rank> InternalGridType;
     /// The global grid size
@@ -568,12 +579,21 @@ inline void schnek::DomainDecomposition<rank, CheckingPolicy>::registerField(Gri
 }
 
 template<size_t rank, template<size_t> class CheckingPolicy>
+GridContext DomainDecomposition<rank, CheckingPolicy>::getGridContext(std::initializer_list<GridRegistration> registrations) {
+    std::vector<long> ids;
+    ids.reserve(registrations.size());
+    std::transform(registrations.begin(), registrations.end(), std::back_inserter(ids),
+                                    [](const GridRegistration& r) { return r.id; });
+    return GridContext{ids, grids};
+}
+
+template<size_t rank, template<size_t> class CheckingPolicy>
 void DomainDecomposition<rank, CheckingPolicy>::addLocalRange(RangeType range, DomainType domain, size_t ghostCells) {
-  ranges.push_back(LocalRangeInfo{range, domain, ghostCells});
-  for (auto reg: registeredFields) {
-    long id = reg.first;
-    grids[id].push_back(reg.second.makeGrid(range, domain, ghostCells));
-  }
+    ranges.push_back(LocalRangeInfo{range, domain, ghostCells});
+    for (auto& reg : registeredFields) {
+        long id = reg.first;
+        grids[id].push_back(reg.second->makeGrid(range, domain, ghostCells));
+    }
 }
 
 template<size_t rank, template<size_t> class CheckingPolicy>
