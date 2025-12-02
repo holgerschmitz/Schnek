@@ -56,10 +56,13 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <algorithm>
 
 #include <boost/function_types/parameter_types.hpp>
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/size.hpp>
+#include <boost/mpl/front.hpp>
+#include <boost/mpl/pop_front.hpp>
 
 namespace schnek {
 
@@ -118,7 +121,9 @@ namespace internal {
     template<typename Callable>
     struct FunctionParameterTypesImpl<Callable, typename std::enable_if<std::is_class<Callable>::value>::type>
     {
-    using type = typename FunctionParameterTypesImpl<decltype(&Callable::operator())>::type;
+        using RawTypes = typename FunctionParameterTypesImpl<decltype(&Callable::operator())>::type;
+        static_assert(boost::mpl::size<RawTypes>::value > 0, "Callable must have operator() parameters");
+        using type = typename boost::mpl::pop_front<RawTypes>::type;
     };
 
     template<typename Callable>
@@ -199,25 +204,21 @@ class DomainDecomposition
         friend class DomainDecomposition;
         std::vector<long> ids;
         const std::map<long, std::list<internal::pGridWrapper>> &grids;
+        std::vector<RangeType> ranges;
         GridContext(
-          std::initializer_list<long> ids,
-          const std::map<long, std::list<internal::pGridWrapper>> &grids
-        ): ids(ids), grids(grids) {}
+          std::vector<long> ids,
+          const std::map<long, std::list<internal::pGridWrapper>> &grids,
+          std::vector<RangeType> ranges
+        ): ids(std::move(ids)), grids(grids), ranges(std::move(ranges)) {}
       public:
         GridContext() = delete;
         GridContext(const GridContext &) = default;
 
 
         /**
-         * @brief Calls the function for each local domain. The arguments to the function are the local
-         * grids corresponding to the registrations.
+         * @brief Calls the function for each local domain. 
          * 
-         * Implementation notes:
-         * Uses boost::function_types and mpl to deduce the parameter types of the function.
-         * This allows the creation of a tuple containing local fields.
-         * 
-         * However, the DomainDecomposition somehow must still be involved to determine the grid instances 
-         * and the local domains to iterate over.
+         * The arguments to the function are the local grids corresponding to the registrations.
          * 
          * @tparam Func the function type
          * @param func a function taking the grids corrsponding to the registrations
@@ -391,7 +392,17 @@ template<size_t rank, template<size_t> class CheckingPolicy>
 template<typename Func>
 void DomainDecomposition<rank, CheckingPolicy>::GridContext::forEach(Func func)
 {
-  using ParameterSeq = internal::FunctionParameterTypesT<Func>;
+  using AllParameters = internal::FunctionParameterTypesT<Func>;
+  constexpr std::size_t totalParams = boost::mpl::size<AllParameters>::value;
+  static_assert(totalParams >= 1, "Function must take at least a RangeType argument");
+
+  using RangeParam = typename boost::mpl::front<AllParameters>::type;
+  using RangeDecay = typename std::remove_reference<RangeParam>::type;
+  using RangeBase = typename std::remove_const<RangeDecay>::type;
+  static_assert(std::is_same<RangeBase, RangeType>::value,
+    "First function argument must be DomainDecomposition::RangeType (by reference)");
+
+  using ParameterSeq = typename boost::mpl::pop_front<AllParameters>::type;
   constexpr std::size_t paramCount = boost::mpl::size<ParameterSeq>::value;
 
   if (ids.size() != paramCount)
@@ -411,12 +422,20 @@ void DomainDecomposition<rank, CheckingPolicy>::GridContext::forEach(Func func)
     selectedLists.push_back(&gridIt->second);
   }
 
-  std::size_t gridCount = selectedLists.empty() ? 0 : selectedLists.front()->size();
-  for (std::size_t i = 1; i < selectedLists.size(); ++i)
+  std::size_t entryCount = ranges.size();
+  if (!selectedLists.empty())
   {
-    if (selectedLists[i]->size() != gridCount)
+    entryCount = selectedLists.front()->size();
+    for (std::size_t i = 1; i < selectedLists.size(); ++i)
     {
-      SCHNECK_FAIL("Grid list size mismatch for registration index " << i);
+      if (selectedLists[i]->size() != entryCount)
+      {
+        SCHNECK_FAIL("Grid list size mismatch for registration index " << i);
+      }
+    }
+    if (ranges.size() != entryCount)
+    {
+      SCHNECK_FAIL("Range list size mismatch with registered grids");
     }
   }
 
@@ -428,10 +447,17 @@ void DomainDecomposition<rank, CheckingPolicy>::GridContext::forEach(Func func)
     iterators.push_back(listPtr->begin());
   }
 
-  for (std::size_t entry = 0; entry < gridCount; ++entry)
+  for (std::size_t entry = 0; entry < entryCount; ++entry)
   {
+    const RangeType &rangeRef = ranges[entry];
     auto args = internal::GridArgumentBuilder<ParameterSeq>::build(iterators);
-    std::apply(func, args);
+    std::apply(
+      [&](auto&&... gridArgs)
+      {
+        func(rangeRef, std::forward<decltype(gridArgs)>(gridArgs)...);
+      },
+      args
+    );
     for (auto &it : iterators)
     {
       ++it;
@@ -494,7 +520,12 @@ GridContext DomainDecomposition<rank, CheckingPolicy>::getGridContext(std::initi
     ids.reserve(registrations.size());
     std::transform(registrations.begin(), registrations.end(), std::back_inserter(ids),
                                     [](const GridRegistration& r) { return r.id; });
-    return GridContext{ids, grids};
+  std::vector<RangeType> rangeCopies;
+  rangeCopies.reserve(ranges.size());
+  for (const auto &localRange : ranges) {
+    rangeCopies.push_back(localRange.range);
+  }
+  return GridContext{std::move(ids), grids, std::move(rangeCopies)};
 }
 
 template<size_t rank, template<size_t> class CheckingPolicy>
