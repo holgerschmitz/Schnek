@@ -198,6 +198,7 @@ class DomainDecomposition
     typedef Boundary<rank, CheckingPolicy> BoundaryType;
     typedef boost::shared_ptr<BoundaryType> pBoundaryType;
     typedef Array<ptrdiff_t, rank> LimitType;
+    using GridRegistrationInterfacePtr = internal::pGridRegistrationInterface<rank, CheckingPolicy>;
 
     class GridContext {
       private:
@@ -358,7 +359,7 @@ class DomainDecomposition
       DomainType domain;
     };
     
-    std::map<long, internal::pGridRegistrationInterface> registeredFields;
+    std::map<long, GridRegistrationInterfacePtr> registeredFields;
 
     /**
      * @brief For each grid registration ID, this stores the local
@@ -497,19 +498,20 @@ inline void schnek::DomainDecomposition<rank, CheckingPolicy>::setLocalWeights(c
 
 template<size_t rank, template<size_t> class CheckingPolicy>
 template<class GridType>
-inline void schnek::DomainDecomposition<rank, CheckingPolicy>::registerField(GridFactory<GridType>& factory)
+inline GridRegistration schnek::DomainDecomposition<rank, CheckingPolicy>::registerField(GridFactory<GridType> &factory)
 {
-  auto registration = std::make_shared<internal::GridRegistrationImpl<GridType>>(factory);
-  long id = registration->getId()
+  using Registration = internal::GridRegistrationImpl<rank, CheckingPolicy, GridType>;
+  auto registration = std::make_shared<Registration>(factory);
+  long id = registration->getId();
   registeredFields[id] = registration;
 
-  // create the grids for this registration
-  std::list<internal::GridWrapper> gridList;
-  for (LocalRangeInfo localRange: ranges) {
-    gridList.push_back(registration.makeGrid(localRange.range, localRange.domain));
+  std::list<internal::pGridWrapper> gridList;
+  for (const auto &localRange : ranges)
+  {
+    gridList.push_back(registration->makeGrid(localRange.range, localRange.domain));
   }
 
-  grids[id] = gridList;
+  grids[id] = std::move(gridList);
 
   return GridRegistration{id};
 }
