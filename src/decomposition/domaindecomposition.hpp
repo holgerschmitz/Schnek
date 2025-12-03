@@ -191,14 +191,11 @@ template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
 class DomainDecomposition
 {
   public:
-    typedef std::shared_ptr<LocalDomainContext<rank, CheckingPolicy>> pLocalDomainContext;
-
     typedef Range<ptrdiff_t, rank, CheckingPolicy> RangeType;
     typedef Range<double, rank, CheckingPolicy> DomainType;
     typedef Boundary<rank, CheckingPolicy> BoundaryType;
     typedef boost::shared_ptr<BoundaryType> pBoundaryType;
     typedef Array<ptrdiff_t, rank> LimitType;
-    using GridRegistrationInterfacePtr = internal::pGridRegistrationInterface<rank, CheckingPolicy>;
 
     class GridContext {
       private:
@@ -359,7 +356,8 @@ class DomainDecomposition
       DomainType domain;
     };
     
-    std::map<long, GridRegistrationInterfacePtr> registeredFields;
+    using pGridRegistrationInterface = internal::pGridRegistrationInterface<rank, CheckingPolicy>;
+    std::map<long, pGridRegistrationInterface> registeredFields;
 
     /**
      * @brief For each grid registration ID, this stores the local
@@ -517,7 +515,7 @@ inline GridRegistration schnek::DomainDecomposition<rank, CheckingPolicy>::regis
 }
 
 template<size_t rank, template<size_t> class CheckingPolicy>
-GridContext DomainDecomposition<rank, CheckingPolicy>::getGridContext(std::initializer_list<GridRegistration> registrations) {
+typename DomainDecomposition<rank, CheckingPolicy>::GridContext DomainDecomposition<rank, CheckingPolicy>::getGridContext(std::initializer_list<GridRegistration> registrations) {
     std::vector<long> ids;
     ids.reserve(registrations.size());
     std::transform(registrations.begin(), registrations.end(), std::back_inserter(ids),

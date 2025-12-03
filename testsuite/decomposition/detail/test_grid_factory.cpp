@@ -22,7 +22,7 @@ schnek::Range<ptrdiff_t, rank> makeRange(
 
 }  // namespace
 
-BOOST_AUTO_TEST_SUITE(decomposition)
+BOOST_AUTO_TEST_SUITE(domain_decomposition)
 BOOST_AUTO_TEST_SUITE(detail)
 
 BOOST_AUTO_TEST_CASE(grid_factory_creates_grid_with_converted_range)
