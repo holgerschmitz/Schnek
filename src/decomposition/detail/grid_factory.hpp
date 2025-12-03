@@ -64,22 +64,6 @@ struct GridRegistrationInterface : public Unique<GridRegistrationInterface<rank,
     virtual pGridWrapper makeGrid(const RangeType &range, const DomainType &domain) = 0;
 };
 
-namespace grid_factory_detail {
-
-template<typename TargetRangeType, typename SourceRangeType>
-TargetRangeType convertRange(const SourceRangeType &source) {
-    using TargetLimit = typename TargetRangeType::LimitType;
-    TargetLimit lo;
-    TargetLimit hi;
-    for (std::size_t i = 0; i < TargetLimit::length; ++i) {
-        lo[i] = static_cast<typename TargetLimit::value_type>(source.getLo(i));
-        hi[i] = static_cast<typename TargetLimit::value_type>(source.getHi(i));
-    }
-    return TargetRangeType(lo, hi);
-}
-
-}  // namespace grid_factory_detail
-
 template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
 using pGridRegistrationInterface = std::shared_ptr<GridRegistrationInterface<rank, CheckingPolicy>>;
 
@@ -93,11 +77,12 @@ class GridFactory<Grid<T, rank, Policies...>> {
     public:
         using GridType = Grid<T, rank, Policies...>;
 
+        GridFactory() = default;
+
         template<typename RangeType, typename DomainType>
         internal::pGridWrapper newGrid(const RangeType &range, const DomainType &domain) const {
             using TargetRange = typename GridType::RangeType;
-            auto converted = internal::grid_factory_detail::convertRange<TargetRange>(range);
-            GridType grid(converted);
+            GridType grid(TargetRange{range});
             (void)domain;
             return std::make_shared<internal::GridWrapperImpl<GridType>>(std::move(grid));
         }
@@ -109,24 +94,16 @@ class GridFactory<Field<T, rank, Policies...>> {
         using GridType = Field<T, rank, Policies...>;
         using StaggerType = typename GridType::StaggerType;
 
-        GridFactory() : stagger(), ghostCells(0) {}
+        GridFactory() = delete;
 
         template<template<size_t> class CheckingPolicy>
         GridFactory(const Array<bool, rank, CheckingPolicy> &staggerConfig, int ghostCellCount)
                 : stagger(staggerConfig), ghostCells(ghostCellCount) {}
 
-        template<template<size_t> class CheckingPolicy>
-        void setStagger(const Array<bool, rank, CheckingPolicy> &value) {
-            stagger = value;
-        }
-
-        void setGhostCells(int value) { ghostCells = value; }
-
         template<typename RangeType, typename DomainType>
         internal::pGridWrapper newGrid(const RangeType &range, const DomainType &domain) const {
             using TargetRange = typename GridType::RangeType;
-            auto converted = internal::grid_factory_detail::convertRange<TargetRange>(range);
-            GridType grid(converted, domain, stagger, ghostCells);
+            GridType grid(TargetRange{range}, domain, stagger, ghostCells);
             return std::make_shared<internal::GridWrapperImpl<GridType>>(std::move(grid));
         }
 

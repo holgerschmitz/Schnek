@@ -39,6 +39,12 @@ namespace schnek {
   }
 
   template<class T, size_t Length, template<size_t> class CheckingPolicy>
+  template<typename T2, template<size_t> class CheckingPolicy2>
+  SCHNEK_INLINE Array<T, Length, CheckingPolicy>::Array(const Array<T2, Length, CheckingPolicy2>& arr) {
+    for (size_t i = 0; i < Length; ++i) data[i] = (T)(arr[i]);
+  }
+
+  template<class T, size_t Length, template<size_t> class CheckingPolicy>
   SCHNEK_INLINE Array<T, Length, CheckingPolicy>::Array(const T& v0) {
     for (size_t i = 0; i < Length; ++i) data[i] = v0;
   }

@@ -39,14 +39,16 @@ namespace schnek {
   template<class Operator, size_t Length>
   class ArrayExpression;
 
-  /**A Fixed size array.
-   * The three template parameters are:<br>
-   * T: the type of data stored<br>
-   * length: the length of the array<br>
-   * CheckingPolicy: A policy class defining how to check the index passed to
+  /**
+   * A Fixed size array.
+   * The three template parameters are:
+   * 
+   * @tparam T the type of data stored
+   * @tparam length the length of the array
+   * @tparam CheckingPolicy A policy class defining how to check the index passed to
    * the accessor method
    */
-  template<class T, size_t Length, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
+  template<typename T, size_t Length, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
   class Array : public CheckingPolicy<Length> {
     private:
       /// The data stored in a C array
@@ -64,6 +66,10 @@ namespace schnek {
       /// Copy constructor copies the values
       template<template<size_t> class CheckingPolicy2>
       SCHNEK_INLINE Array(const Array<T, Length, CheckingPolicy2> &);
+
+      /// Copy constructor copies the values
+      template<typename T2, template<size_t> class CheckingPolicy2>
+      explicit SCHNEK_INLINE Array(const Array<T2, Length, CheckingPolicy2> &);
 
       /// Construct using an array expression
       template<class Operator>

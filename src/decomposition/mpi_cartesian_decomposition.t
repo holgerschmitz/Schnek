@@ -35,7 +35,7 @@ int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::numProcs() const
 }
 
 template<size_t rank, template<size_t> class CheckingPolicy>
-const Array<Grid<Range<int, 1>, 1>, rank>& MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getProcRanges()
+const Array<Grid<Range<ptrdiff_t, 1>, 1>, rank>& MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getProcRanges()
 {
   return procRanges;
 }
@@ -145,7 +145,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
   for (size_t d=0; d<rank; ++d)
   {
     // finding cut points in the cumulative weights
-    Grid<Range<int, 1>, 1> &dimRanges = ranges[d];
+    Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
 
     dimRanges.resize(0, dims[d]-1);
     dimRanges(0).getLo()[0] = lo[d];
@@ -268,7 +268,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
       }
 
       // finding cut points in the cumulative weights
-      Grid<Range<int, 1>, 1> &dimRanges = ranges[d];
+      Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
       dimRanges.resize(0, dims[d]-1);
       dimRanges(0).getLo()[0] = glo[d];
       dimRanges(dims[d]-1).getHi()[0] = ghi[d];
@@ -310,7 +310,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>
     // receiving dim ranges for each dimension from the master process
     for (size_t d=0; d<rank; ++d)
     {
-      Grid<Range<int, 1>, 1> &dimRanges = ranges[d];
+      Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
       dimRanges.resize(0, dims[d]-1);
 
       Grid<int, 1> transfer(2*dims[d]);

@@ -53,9 +53,7 @@ BOOST_AUTO_TEST_CASE(field_factory_respects_domain_stagger_and_ghost_cells)
   stagger[0] = true;
   stagger[1] = false;
 
-  schnek::GridFactory<schnek::Field<double, 2>> factory;
-  factory.setStagger(stagger);
-  factory.setGhostCells(2);
+  schnek::GridFactory<schnek::Field<double, 2>> factory{stagger, 2};
 
   auto wrapper = factory.newGrid(range, domain);
   auto typed = std::dynamic_pointer_cast<schnek::internal::GridWrapperImpl<schnek::Field<double, 2>>>(wrapper);

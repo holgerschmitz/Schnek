@@ -30,6 +30,8 @@
 #include "grid.hpp"
 #include "range.hpp"
 
+#include <cstddef>
+
 namespace schnek {
 
   template<typename T, size_t rank, template<typename, size_t> class ...Policies>

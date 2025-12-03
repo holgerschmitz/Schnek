@@ -22,7 +22,7 @@ template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
 class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, CheckingPolicy>
 {
   public:
-    typedef Array<Grid<Range<int, 1>, 1>, rank> ProcRanges;
+    typedef Array<Grid<Range<ptrdiff_t, 1>, 1>, rank> ProcRanges;
     /**
      * Constructor creating the domain decomposition object
      *
