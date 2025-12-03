@@ -30,177 +30,156 @@
 
 namespace schnek {
 
-/** @brief Transform in-place between index on a Hilbert curve and geometrical axes
- *
- * The index is first converted to a Hilbert Transpose.
- *
- * Example: b=5 bits for each of n=3 coordinates.
- * 15-bit Hilbert integer = A B C D E F G H I J K L M N O is stored as its Transpose
- * X[0] = A D G J M
- * X[1] = B E H K N
- * X[2] = C F I L O
- *        high    low
- *
- * Based on public domain code by John Skilling.
- * Skilling, J., 2004, April. Programming the Hilbert curve.
- *   In AIP Conference Proceedings (Vol. 707, No. 1, pp. 381-387)
- */
-class HilbertCurve
-{
-  public:
-
-  /** @brief Convert a Hilbert Transpose to axes coordinates
+  /** @brief Transform in-place between index on a Hilbert curve and geometrical axes
    *
-   * The conversion is done in-place. The input @X is replaced
+   * The index is first converted to a Hilbert Transpose.
    *
-   * @param X Input the Hilbert transpose and output the axes coordinates
-   * @param b The bit depth, i.e. the level of the curve
+   * Example: b=5 bits for each of n=3 coordinates.
+   * 15-bit Hilbert integer = A B C D E F G H I J K L M N O is stored as its Transpose
+   * X[0] = A D G J M
+   * X[1] = B E H K N
+   * X[2] = C F I L O
+   *        high    low
+   *
+   * Based on public domain code by John Skilling.
+   * Skilling, J., 2004, April. Programming the Hilbert curve.
+   *   In AIP Conference Proceedings (Vol. 707, No. 1, pp. 381-387)
    */
-  template<int dim, template<int> class CheckingPolicy>
-  static void transposeToAxes(Array<unsigned long, dim, CheckingPolicy> &X, int b)
-  {
-    unsigned long N = 2 << (b-1), P, Q, t;
-    int i;
+  class HilbertCurve {
+    public:
+      /** @brief Convert a Hilbert Transpose to axes coordinates
+       *
+       * The conversion is done in-place. The input @X is replaced
+       *
+       * @param X Input the Hilbert transpose and output the axes coordinates
+       * @param b The bit depth, i.e. the level of the curve
+       */
+      template<int dim, template<int> class CheckingPolicy>
+      static void transposeToAxes(Array<unsigned long, dim, CheckingPolicy> &X, int b) {
+        unsigned long N = 2 << (b - 1), P, Q, t;
+        int i;
 
-    // Gray decode by H ^ (H/2)
-    t = X[dim-1] >> 1;
-    for( i = dim-1; i > 0; i-- ) X[i] ^= X[i-1];
-    X[0] ^= t;
-
-    // Undo excess work
-    for( Q = 2; Q != N; Q <<= 1 )
-    {
-      P = Q - 1;
-      for( i = dim-1; i >= 0 ; i-- )
-        if( X[i] & Q )
-        {
-          X[0] ^= P; // invert
-        }
-        else
-        {
-          t = (X[0]^X[i]) & P;
-          X[0] ^= t;
-          X[i] ^= t;
-        }
-    } // exchange
-  }
-
-  /** @brief Convert axes coordinates to a Hilbert Transpose
-   *
-   * The conversion is done in-place. The input @X is replaced
-   *
-   * @param X Input the axes coordinates and output the Hilbert transpose
-   * @param b The bit depth, i.e. the level of the curve
-   */
-  template<int dim, template<int> class CheckingPolicy>
-  static void axesToTranspose(Array<unsigned long, dim, CheckingPolicy> &X, int b)
-  {
-    unsigned long M = 1 << (b-1), P, Q, t;
-    int i;
-
-    // Inverse undo
-    for( Q = M; Q > 1; Q >>= 1 )
-    {
-      P = Q - 1;
-      for( i = 0; i < dim; i++ )
-      if( X[i] & Q )
-      {
-        X[0] ^= P; // invert
-      }
-      else
-      {
-        t = (X[0]^X[i]) & P;
+        // Gray decode by H ^ (H/2)
+        t = X[dim - 1] >> 1;
+        for (i = dim - 1; i > 0; i--) X[i] ^= X[i - 1];
         X[0] ^= t;
-        X[i] ^= t;
+
+        // Undo excess work
+        for (Q = 2; Q != N; Q <<= 1) {
+          P = Q - 1;
+          for (i = dim - 1; i >= 0; i--)
+            if (X[i] & Q) {
+              X[0] ^= P;  // invert
+            } else {
+              t = (X[0] ^ X[i]) & P;
+              X[0] ^= t;
+              X[i] ^= t;
+            }
+        }  // exchange
       }
-    } // exchange
 
-    // Gray encode
-    for( i = 1; i < dim; i++ ) X[i] ^= X[i-1];
+      /** @brief Convert axes coordinates to a Hilbert Transpose
+       *
+       * The conversion is done in-place. The input @X is replaced
+       *
+       * @param X Input the axes coordinates and output the Hilbert transpose
+       * @param b The bit depth, i.e. the level of the curve
+       */
+      template<int dim, template<int> class CheckingPolicy>
+      static void axesToTranspose(Array<unsigned long, dim, CheckingPolicy> &X, int b) {
+        unsigned long M = 1 << (b - 1), P, Q, t;
+        int i;
 
-    t = 0;
-    for( Q = M; Q > 1; Q >>= 1 )
-      if( X[dim-1] & Q ) t ^= Q-1;
+        // Inverse undo
+        for (Q = M; Q > 1; Q >>= 1) {
+          P = Q - 1;
+          for (i = 0; i < dim; i++)
+            if (X[i] & Q) {
+              X[0] ^= P;  // invert
+            } else {
+              t = (X[0] ^ X[i]) & P;
+              X[0] ^= t;
+              X[i] ^= t;
+            }
+        }  // exchange
 
-    for( i = 0; i < dim; i++ ) X[i] ^= t;
-  }
+        // Gray encode
+        for (i = 1; i < dim; i++) X[i] ^= X[i - 1];
 
-  /** @brief Convert Hilbert curve index to a Hilbert Transpose
-   *
-   * The parameter @X is filled with the result.
-   *
-   * @param X Outputs the Hilbert transpose
-   * @param index The Hilbert curve index
-   * @param b The bit depth, i.e. the level of the curve
-   */
-  template<int dim, template<int> class CheckingPolicy>
-  static void indexToTranspose(Array<unsigned long, dim, CheckingPolicy> &X, unsigned long index, int b)
-  {
-    X = 0;
-    unsigned long v = index;
-    for (int bi=0; bi<b; ++bi)
-    {
-      for (int d=dim-1; d>=0; --d)
-      {
-        X[d] |= (v & 1) << bi;
-        v = v>>1;
+        t = 0;
+        for (Q = M; Q > 1; Q >>= 1)
+          if (X[dim - 1] & Q) t ^= Q - 1;
+
+        for (i = 0; i < dim; i++) X[i] ^= t;
       }
-    }
-  }
 
-  /** @brief Convert Hilbert Transpose to a Hilbert curve index
-   *
-   * @param X The Hilbert transpose
-   * @param b The bit depth, i.e. the level of the curve
-   * @return The Hilbert curve index
-   */
-  template<int dim, template<int> class CheckingPolicy>
-  static unsigned long transposeToIndex(const Array<unsigned long, dim, CheckingPolicy> &X, int b)
-  {
-    unsigned long v = 0;
-    for (int bi=b-1; bi>=0; --bi)
-    {
-      for (int d=0; d<dim; ++d)
-      {
-        v = v<<1;
-        v |= (X[d] & (1<<bi)) >> bi;
+      /** @brief Convert Hilbert curve index to a Hilbert Transpose
+       *
+       * The parameter @X is filled with the result.
+       *
+       * @param X Outputs the Hilbert transpose
+       * @param index The Hilbert curve index
+       * @param b The bit depth, i.e. the level of the curve
+       */
+      template<int dim, template<int> class CheckingPolicy>
+      static void indexToTranspose(Array<unsigned long, dim, CheckingPolicy> &X, unsigned long index, int b) {
+        X = 0;
+        unsigned long v = index;
+        for (int bi = 0; bi < b; ++bi) {
+          for (int d = dim - 1; d >= 0; --d) {
+            X[d] |= (v & 1) << bi;
+            v = v >> 1;
+          }
+        }
       }
-    }
-    return v;
-  }
 
-  /** @brief Convert Hilbert curve index to axes coordinates
-   *
-   * The parameter @X is filled with the result.
-   *
-   * @param X Outputs the axes coordinates
-   * @param index The Hilbert curve index
-   * @param b The bit depth, i.e. the level of the curve
-   */
-  template<int dim, template<int> class CheckingPolicy>
-  static void indexToAxes(Array<unsigned long, dim, CheckingPolicy> &X, unsigned long index, int b)
-  {
-    indexToTranspose(X, index, b);
-    transposeToAxes(X, b);
-  }
+      /** @brief Convert Hilbert Transpose to a Hilbert curve index
+       *
+       * @param X The Hilbert transpose
+       * @param b The bit depth, i.e. the level of the curve
+       * @return The Hilbert curve index
+       */
+      template<int dim, template<int> class CheckingPolicy>
+      static unsigned long transposeToIndex(const Array<unsigned long, dim, CheckingPolicy> &X, int b) {
+        unsigned long v = 0;
+        for (int bi = b - 1; bi >= 0; --bi) {
+          for (int d = 0; d < dim; ++d) {
+            v = v << 1;
+            v |= (X[d] & (1 << bi)) >> bi;
+          }
+        }
+        return v;
+      }
 
-  /** @brief Convert Hilbert axes coordinates to curve index
-   *
-   * The parameter @X, passed by reference, is destroyed.
-   *
-   * @param X Input the axes coordinates
-   * @param b The bit depth, i.e. the level of the curve
-   * @return The Hilbert curve index
-   */
-  template<int dim, template<int> class CheckingPolicy>
-  static unsigned long axesToIndex(Array<unsigned long, dim, CheckingPolicy> &X, int b)
-  {
-    axesToTranspose(X, b);
-    return transposeToIndex(X, b);
-  }
-};
+      /** @brief Convert Hilbert curve index to axes coordinates
+       *
+       * The parameter @X is filled with the result.
+       *
+       * @param X Outputs the axes coordinates
+       * @param index The Hilbert curve index
+       * @param b The bit depth, i.e. the level of the curve
+       */
+      template<int dim, template<int> class CheckingPolicy>
+      static void indexToAxes(Array<unsigned long, dim, CheckingPolicy> &X, unsigned long index, int b) {
+        indexToTranspose(X, index, b);
+        transposeToAxes(X, b);
+      }
 
+      /** @brief Convert Hilbert axes coordinates to curve index
+       *
+       * The parameter @X, passed by reference, is destroyed.
+       *
+       * @param X Input the axes coordinates
+       * @param b The bit depth, i.e. the level of the curve
+       * @return The Hilbert curve index
+       */
+      template<int dim, template<int> class CheckingPolicy>
+      static unsigned long axesToIndex(Array<unsigned long, dim, CheckingPolicy> &X, int b) {
+        axesToTranspose(X, b);
+        return transposeToIndex(X, b);
+      }
+  };
 
-} // namespace schnek
+}  // namespace schnek
 
 #endif /* SCHNEK_UTIL_HILBERT_HPP_ */

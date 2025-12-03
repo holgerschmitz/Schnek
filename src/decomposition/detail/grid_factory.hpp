@@ -27,6 +27,10 @@
 #ifndef SCHNEK_DECOMPOSITION_DETAIL_GRID_FACTORY_HPP_
 #define SCHNEK_DECOMPOSITION_DETAIL_GRID_FACTORY_HPP_
 
+#include <cstddef>
+#include <memory>
+#include <utility>
+
 #include "../../grid/array.hpp"
 #include "../../grid/arraycheck.hpp"
 #include "../../grid/field.hpp"
@@ -34,106 +38,102 @@
 #include "../../grid/range.hpp"
 #include "../../util/unique.hpp"
 
-#include <cstddef>
-#include <memory>
-#include <utility>
-
 namespace schnek {
 
-namespace internal {
+  namespace internal {
 
-struct GridWrapper {
-    virtual ~GridWrapper() = default;
-};
+    struct GridWrapper {
+        virtual ~GridWrapper() = default;
+    };
 
-using pGridWrapper = std::shared_ptr<GridWrapper>;
+    using pGridWrapper = std::shared_ptr<GridWrapper>;
 
-template<typename GridType>
-struct GridWrapperImpl : GridWrapper {
-    explicit GridWrapperImpl(GridType gridIn) : grid(std::move(gridIn)) {}
+    template<typename GridType>
+    struct GridWrapperImpl : GridWrapper {
+        explicit GridWrapperImpl(GridType gridIn) : grid(std::move(gridIn)) {}
 
-    GridType grid;
-};
+        GridType grid;
+    };
 
-template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
-struct GridRegistrationInterface : public Unique<GridRegistrationInterface<rank, CheckingPolicy>> {
-    using RangeType = Range<ptrdiff_t, rank, CheckingPolicy>;
-    using DomainType = Range<double, rank, CheckingPolicy>;
+    template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
+    struct GridRegistrationInterface : public Unique<GridRegistrationInterface<rank, CheckingPolicy>> {
+        using RangeType = Range<ptrdiff_t, rank, CheckingPolicy>;
+        using DomainType = Range<double, rank, CheckingPolicy>;
 
-    virtual ~GridRegistrationInterface() = default;
-    virtual pGridWrapper makeGrid(const RangeType &range, const DomainType &domain) = 0;
-};
+        virtual ~GridRegistrationInterface() = default;
+        virtual pGridWrapper makeGrid(const RangeType &range, const DomainType &domain) = 0;
+    };
 
-template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
-using pGridRegistrationInterface = std::shared_ptr<GridRegistrationInterface<rank, CheckingPolicy>>;
+    template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
+    using pGridRegistrationInterface = std::shared_ptr<GridRegistrationInterface<rank, CheckingPolicy>>;
 
-}  // namespace internal
+  }  // namespace internal
 
-template<class GridType>
-class GridFactory;
+  template<class GridType>
+  class GridFactory;
 
-template<typename T, size_t rank, template<typename, size_t> class... Policies>
-class GridFactory<Grid<T, rank, Policies...>> {
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
+  class GridFactory<Grid<T, rank, Policies...>> {
     public:
-        using GridType = Grid<T, rank, Policies...>;
+      using GridType = Grid<T, rank, Policies...>;
 
-        GridFactory() = default;
+      GridFactory() = default;
 
-        template<typename RangeType, typename DomainType>
-        internal::pGridWrapper newGrid(const RangeType &range, const DomainType &domain) const {
-            using TargetRange = typename GridType::RangeType;
-            GridType grid(TargetRange{range});
-            (void)domain;
-            return std::make_shared<internal::GridWrapperImpl<GridType>>(std::move(grid));
-        }
-};
+      template<typename RangeType, typename DomainType>
+      internal::pGridWrapper newGrid(const RangeType &range, const DomainType &domain) const {
+        using TargetRange = typename GridType::RangeType;
+        GridType grid(TargetRange{range});
+        (void)domain;
+        return std::make_shared<internal::GridWrapperImpl<GridType>>(std::move(grid));
+      }
+  };
 
-template<typename T, size_t rank, template<typename, size_t> class... Policies>
-class GridFactory<Field<T, rank, Policies...>> {
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
+  class GridFactory<Field<T, rank, Policies...>> {
     public:
-        using GridType = Field<T, rank, Policies...>;
-        using StaggerType = typename GridType::StaggerType;
+      using GridType = Field<T, rank, Policies...>;
+      using StaggerType = typename GridType::StaggerType;
 
-        GridFactory() = delete;
+      GridFactory() = delete;
 
-        template<template<size_t> class CheckingPolicy>
-        GridFactory(const Array<bool, rank, CheckingPolicy> &staggerConfig, int ghostCellCount)
-                : stagger(staggerConfig), ghostCells(ghostCellCount) {}
+      template<template<size_t> class CheckingPolicy>
+      GridFactory(const Array<bool, rank, CheckingPolicy> &staggerConfig, int ghostCellCount)
+          : stagger(staggerConfig), ghostCells(ghostCellCount) {}
 
-        template<typename RangeType, typename DomainType>
-        internal::pGridWrapper newGrid(const RangeType &range, const DomainType &domain) const {
-            using TargetRange = typename GridType::RangeType;
-            GridType grid(TargetRange{range}, domain, stagger, ghostCells);
-            return std::make_shared<internal::GridWrapperImpl<GridType>>(std::move(grid));
-        }
+      template<typename RangeType, typename DomainType>
+      internal::pGridWrapper newGrid(const RangeType &range, const DomainType &domain) const {
+        using TargetRange = typename GridType::RangeType;
+        GridType grid(TargetRange{range}, domain, stagger, ghostCells);
+        return std::make_shared<internal::GridWrapperImpl<GridType>>(std::move(grid));
+      }
 
     private:
-        StaggerType stagger;
-        int ghostCells;
-};
+      StaggerType stagger;
+      int ghostCells;
+  };
 
-struct GridRegistration {
-    long id = -1;
-};
+  struct GridRegistration {
+      long id = -1;
+  };
 
-namespace internal {
+  namespace internal {
 
-template<size_t rank, template<size_t> class CheckingPolicy, typename GridType>
-struct GridRegistrationImpl : public GridRegistrationInterface<rank, CheckingPolicy> {
-    using Base = GridRegistrationInterface<rank, CheckingPolicy>;
-    using RangeType = typename Base::RangeType;
-    using DomainType = typename Base::DomainType;
+    template<size_t rank, template<size_t> class CheckingPolicy, typename GridType>
+    struct GridRegistrationImpl : public GridRegistrationInterface<rank, CheckingPolicy> {
+        using Base = GridRegistrationInterface<rank, CheckingPolicy>;
+        using RangeType = typename Base::RangeType;
+        using DomainType = typename Base::DomainType;
 
-    explicit GridRegistrationImpl(GridFactory<GridType> &factoryIn) : factory(factoryIn) {}
+        explicit GridRegistrationImpl(GridFactory<GridType> &factoryIn) : factory(factoryIn) {}
 
-    pGridWrapper makeGrid(const RangeType &range, const DomainType &domain) override {
-        return factory.newGrid(range, domain);
-    }
+        pGridWrapper makeGrid(const RangeType &range, const DomainType &domain) override {
+          return factory.newGrid(range, domain);
+        }
 
-    GridFactory<GridType> &factory;
-};
+        GridFactory<GridType> &factory;
+    };
 
-}  // namespace internal
+  }  // namespace internal
 
 }  // namespace schnek
 

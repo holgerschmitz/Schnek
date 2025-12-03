@@ -42,7 +42,7 @@ namespace schnek {
   /**
    * A Fixed size array.
    * The three template parameters are:
-   * 
+   *
    * @tparam T the type of data stored
    * @tparam length the length of the array
    * @tparam CheckingPolicy A policy class defining how to check the index passed to

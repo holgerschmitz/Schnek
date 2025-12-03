@@ -99,6 +99,7 @@ namespace schnek {
 
       /// The grid range type
       typedef Range<ptrdiff_t, Rank> RangeType;
+
     private:
       struct SizeInfo {
           IndexType lo;
@@ -107,6 +108,7 @@ namespace schnek {
 
       /// The pointer to the data
       std::shared_ptr<internal::SingleArrayAllocationData<T, SizeInfo> > data;
+
     public:
       typedef std::function<void(const RangeType &)> UpdaterType;
 
@@ -148,7 +150,7 @@ namespace schnek {
       /**
        * @brief Get the pointer to the data
        */
-      T* getData();
+      T *getData();
 
     private:
       UpdaterType updater;
@@ -201,8 +203,10 @@ namespace schnek {
 
       /// The pointer to the data
       std::shared_ptr<internal::SingleArrayAllocationData<T, SizeInfo> > data;
+
     public:
       typedef std::function<void(const RangeType &)> UpdaterType;
+
     private:
       /// The size allocated memory
       size_t bufSize;
@@ -250,7 +254,7 @@ namespace schnek {
       /**
        * @brief Get the pointer to the data
        */
-      T* getData();
+      T *getData();
 
     private:
       UpdaterType updater;
@@ -291,7 +295,7 @@ namespace schnek {
       const SingleArrayInstantAllocation<T, Rank> &other
   ) {
     this->data->removeUpdater(this);
-    
+
     this->data = other.data;
     this->data->addUpdater(this, [this](const SizeInfo &sizeInfo) { this->updateSizeInfo(sizeInfo); });
     return *this;
@@ -308,7 +312,7 @@ namespace schnek {
   }
 
   template<typename T, size_t Rank>
-  T* SingleArrayInstantAllocation<T, Rank>::getData() {
+  T *SingleArrayInstantAllocation<T, Rank>::getData() {
     return this->data->ptr;
   }
 
@@ -341,7 +345,7 @@ namespace schnek {
     for (size_t d = 0; d < Rank; ++d) {
       size *= hi[d] - lo[d] + 1;
     }
-    
+
     data->ptr = new T[size];
   }
 
@@ -351,21 +355,13 @@ namespace schnek {
 
   template<typename T, size_t Rank>
   SingleArrayLazyAllocation<T, Rank>::SingleArrayLazyAllocation()
-      : data(new internal::SingleArrayAllocationData<T, SizeInfo>()),
-        bufSize(0),
-        avgSize(0.0),
-        avgVar(0.0),
-        r(0.05) {
+      : data(new internal::SingleArrayAllocationData<T, SizeInfo>()), bufSize(0), avgSize(0.0), avgVar(0.0), r(0.05) {
     this->data->addUpdater(this, [this](const SizeInfo &sizeInfo) { this->updateSizeInfo(sizeInfo); });
   }
 
   template<typename T, size_t Rank>
   SingleArrayLazyAllocation<T, Rank>::SingleArrayLazyAllocation(const SingleArrayLazyAllocation<T, Rank> &other)
-      : data(other.data),
-        bufSize(other.bufSize),
-        avgSize(other.avgSize),
-        avgVar(other.avgVar),
-        r(other.r) {
+      : data(other.data), bufSize(other.bufSize), avgSize(other.avgSize), avgVar(other.avgVar), r(other.r) {
     this->data->addUpdater(this, [this](const SizeInfo &sizeInfo) { this->updateSizeInfo(sizeInfo); });
   };
 
@@ -391,7 +387,7 @@ namespace schnek {
   }
 
   template<typename T, size_t Rank>
-  SCHNEK_INLINE T* SingleArrayLazyAllocation<T, Rank>::getData() {
+  SCHNEK_INLINE T *SingleArrayLazyAllocation<T, Rank>::getData() {
     return this->data->ptr;
   }
 
@@ -422,7 +418,7 @@ namespace schnek {
       this->deleteData();
       this->newData(newSize);
     }
-    
+
     this->data->update(SizeInfo{lo, hi, newSize, bufSize, avgSize, avgVar});
   }
 

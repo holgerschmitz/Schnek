@@ -32,8 +32,8 @@
 #include <type_traits>
 #include <utility>
 
-#include "../../generic/is-detected.hpp"
 #include "../../generic/concepts.hpp"
+#include "../../generic/is-detected.hpp"
 
 namespace schnek::concepts {
   namespace internal::grid_layout {
@@ -41,19 +41,16 @@ namespace schnek::concepts {
     using updater_type_t = typename T::UpdaterType;
 
     template<typename T>
-    using get_method_t = decltype(std::declval<T>().get(
-        std::declval<typename T::IndexType>(), std::declval<typename T::IndexType>()
-    ));
+    using get_method_t =
+        decltype(std::declval<T>().get(std::declval<typename T::IndexType>(), std::declval<typename T::IndexType>()));
 
     template<typename T>
-    using stride_method_t = decltype(std::declval<T>().stride(
-        std::declval<size_t>(), std::declval<typename T::IndexType>()
-    ));
+    using stride_method_t =
+        decltype(std::declval<T>().stride(std::declval<size_t>(), std::declval<typename T::IndexType>()));
 
     template<typename T>
-    using update_size_method_t = decltype(std::declval<T>().updateSize(
-        std::declval<typename T::RangeType>(), std::declval<T*>()
-    ));
+    using update_size_method_t =
+        decltype(std::declval<T>().updateSize(std::declval<typename T::RangeType>(), std::declval<T*>()));
   }  // namespace internal::grid_layout
 
   // Reusable template class to check GridLayout requirements
@@ -63,10 +60,11 @@ namespace schnek::concepts {
       static constexpr bool has_range_type = is_detected<range_type_t, GridLayout>::value;
       static constexpr bool has_get_method = is_detected<internal::grid_layout::get_method_t, GridLayout>::value;
       static constexpr bool has_stride_method = is_detected<internal::grid_layout::stride_method_t, GridLayout>::value;
-      static constexpr bool has_update_size_method = is_detected<internal::grid_layout::update_size_method_t, GridLayout>::value;
+      static constexpr bool has_update_size_method =
+          is_detected<internal::grid_layout::update_size_method_t, GridLayout>::value;
 
-      static constexpr bool value = has_index_type && has_range_type && has_get_method &&
-                                    has_stride_method && has_update_size_method;
+      static constexpr bool value =
+          has_index_type && has_range_type && has_get_method && has_stride_method && has_update_size_method;
   };
 
   template<class GridLayout>

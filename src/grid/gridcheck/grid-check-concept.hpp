@@ -32,14 +32,16 @@
 #include <type_traits>
 #include <utility>
 
-#include "../../generic/is-detected.hpp"
 #include "../../generic/concepts.hpp"
+#include "../../generic/is-detected.hpp"
 
 namespace schnek::concepts {
   namespace internal::grid_check {
     template<typename T>
     using check_method_t = decltype(T::check(
-        std::declval<typename T::IndexType>(), std::declval<typename T::IndexType>(), std::declval<typename T::IndexType>()
+        std::declval<typename T::IndexType>(),
+        std::declval<typename T::IndexType>(),
+        std::declval<typename T::IndexType>()
     ));
   }  // namespace internal::grid_check
 
@@ -47,8 +49,7 @@ namespace schnek::concepts {
   template<class GridCheck>
   struct GridCheckConceptCondition {
       static constexpr bool has_index_type = is_detected<index_type_t, GridCheck>::value;
-      static constexpr bool has_check_method =
-          is_detected<internal::grid_check::check_method_t, GridCheck>::value;
+      static constexpr bool has_check_method = is_detected<internal::grid_check::check_method_t, GridCheck>::value;
 
       static constexpr bool value = has_index_type && has_check_method;
   };

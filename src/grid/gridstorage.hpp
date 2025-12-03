@@ -27,10 +27,10 @@
 #ifndef SCHNEK_GRID_GRIDSTORAGE_HPP_
 #define SCHNEK_GRID_GRIDSTORAGE_HPP_
 
+#include "gridstorage/grid-storage-concept.hpp"
 #include "gridstorage/single-array-allocation.hpp"
 #include "gridstorage/single-array-layout.hpp"
 #include "gridstorage/single-array-storage.hpp"
-#include "gridstorage/grid-storage-concept.hpp"
 
 namespace schnek {
   template<typename T, size_t rank>

@@ -140,10 +140,8 @@ namespace schnek {
        *        domain and Max will return the upper ghost domain
        * @return A sub-grid containing boundary cells
        */
-      template<typename T, template<typename, size_t> class ...Policies>
-      SubGrid<Field<T, rank, Policies...>> getGhostBoundary(
-          size_t dim, bound b, Field<T, rank, Policies...> &field
-      );
+      template<typename T, template<typename, size_t> class... Policies>
+      SubGrid<Field<T, rank, Policies...>> getGhostBoundary(size_t dim, bound b, Field<T, rank, Policies...> &field);
   };
 
 }  // namespace schnek

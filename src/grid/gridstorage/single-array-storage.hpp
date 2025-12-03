@@ -27,8 +27,8 @@
 #ifndef SCHNEK_GRID_GRIDSTORAGE_SINGLESTORAGEBASE_HPP_
 #define SCHNEK_GRID_GRIDSTORAGE_SINGLESTORAGEBASE_HPP_
 
-#include "../array.hpp"
 #include "../../generic/typelist.hpp"
+#include "../array.hpp"
 #include "grid-allocation-concept.hpp"
 #include "grid-layout-concept.hpp"
 
@@ -40,8 +40,8 @@ namespace schnek {
    * @tparam rank The rank of the grid
    * @tparam AllocationPolicy The allocation policy
    */
-  template<typename T, size_t Rank, template<typename, size_t> class ...Policies>
-  class SingleArrayGridStorage  {
+  template<typename T, size_t Rank, template<typename, size_t> class... Policies>
+  class SingleArrayGridStorage {
     public:
       typedef T value_type;
       static constexpr size_t rank = Rank;
@@ -66,13 +66,14 @@ namespace schnek {
     private:
       using PolicyList = generic::TypeList<Policies<T, rank>...>;
       using AllocationPolicy = typename PolicyList::template getWithDefault<
-        schnek::concepts::GridAllocationConceptCondition, 
-        schnek::SingleArrayInstantAllocation<T, rank>>;
+          schnek::concepts::GridAllocationConceptCondition,
+          schnek::SingleArrayInstantAllocation<T, rank>>;
       using LayoutPolicy = typename PolicyList::template getWithDefault<
-        schnek::concepts::GridLayoutConceptCondition, 
-        schnek::SingleArrayGridCOrderLayout<T, rank>>;
+          schnek::concepts::GridLayoutConceptCondition,
+          schnek::SingleArrayGridCOrderLayout<T, rank>>;
 
       concepts::GridAllocationConcept<AllocationPolicy> concept_check;
+
     protected:
       AllocationPolicy allocation;
       LayoutPolicy layout;
@@ -91,8 +92,7 @@ namespace schnek {
       /**
        * @brief Assignment operator
        */
-      SingleArrayGridStorage<T, Rank, Policies...> &
-      operator=(const SingleArrayGridStorage<T, Rank, Policies...> &);
+      SingleArrayGridStorage<T, Rank, Policies...> &operator=(const SingleArrayGridStorage<T, Rank, Policies...> &);
 
       /// Access to the underlying raw data
       T *getRawData() const { return this->allocation.getData(); }
@@ -120,7 +120,7 @@ namespace schnek {
 
       /// Get the length of the allocated array
       SCHNEK_INLINE size_t getSize() const { return this->size; }
-      
+
       /**
        * @brief Get the lvalue at a given grid index
        *
@@ -141,24 +141,18 @@ namespace schnek {
        * @brief resizes to grid with lower indices lo[0],...,lo[rank-1]
        * and upper indices hi[0],...,hi[rank-1]
        */
-      void resize(const IndexType &low, const IndexType &high) {
-        this->allocation.resizeImpl(low, high);
-      }
+      void resize(const IndexType &low, const IndexType &high) { this->allocation.resizeImpl(low, high); }
 
       /**
        * @brief resizes to grid with the range.
        * The endponts of the range are inclusive
        */
-      void resize(const RangeType range) {
-        this->resize(range.getLo(), range.getHi());
-      }
+      void resize(const RangeType range) { this->resize(range.getLo(), range.getHi()); }
 
       /**
        * @brief returns the stride of the specified dimension
        */
-      SCHNEK_INLINE ptrdiff_t stride(size_t dim) const {
-        return this->layout.stride(dim, this->dims);
-      }
+      SCHNEK_INLINE ptrdiff_t stride(size_t dim) const { return this->layout.stride(dim, this->dims); }
 
       typedef T *storage_iterator;
       typedef const T *const_storage_iterator;
@@ -185,16 +179,15 @@ namespace schnek {
   //==================== SingleArrayGridStorage =====================
   //=================================================================
 
-  template<typename T, size_t Rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t Rank, template<typename, size_t> class... Policies>
   SingleArrayGridStorage<T, Rank, Policies...>::SingleArrayGridStorage()
       : size{0}, range{IndexType{0}, IndexType{0}}, dims{SizeType{0}} {
     this->allocation.onUpdate([this](const RangeType &range) { updateSize(range); });
   }
 
-  template<typename T, size_t Rank, template<typename, size_t> class ...Policies>
-  SingleArrayGridStorage<T, Rank, Policies...>::SingleArrayGridStorage(
-      const SingleArrayGridStorage &other
-  ) : size{other.size}, range{other.range}, dims{other.dims}, allocation{other.allocation}, layout{other.layout} {
+  template<typename T, size_t Rank, template<typename, size_t> class... Policies>
+  SingleArrayGridStorage<T, Rank, Policies...>::SingleArrayGridStorage(const SingleArrayGridStorage &other)
+      : size{other.size}, range{other.range}, dims{other.dims}, allocation{other.allocation}, layout{other.layout} {
     this->allocation.onUpdate([this](const RangeType &range) { updateSize(range); });
   }
 
@@ -206,16 +199,17 @@ namespace schnek {
     resize(lo, hi);
   }
 
-  template<typename T, size_t Rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t Rank, template<typename, size_t> class... Policies>
   SingleArrayGridStorage<T, Rank, Policies...>::SingleArrayGridStorage(const RangeType &range)
       : size{0}, range{IndexType{0}, IndexType{0}}, dims{SizeType{0}} {
     this->allocation.onUpdate([this](const RangeType &range) { updateSize(range); });
     resize(range.getLo(), range.getHi());
   }
 
-  template<typename T, size_t Rank, template<typename, size_t> class ...Policies>
-  SingleArrayGridStorage<T, Rank, Policies...> &
-  SingleArrayGridStorage<T, Rank, Policies...>::operator=(const SingleArrayGridStorage<T, Rank, Policies...> &other) {
+  template<typename T, size_t Rank, template<typename, size_t> class... Policies>
+  SingleArrayGridStorage<T, Rank, Policies...> &SingleArrayGridStorage<T, Rank, Policies...>::operator=(
+      const SingleArrayGridStorage<T, Rank, Policies...> &other
+  ) {
     if (this != &other) {
       this->size = other.size;
       this->range = other.range;

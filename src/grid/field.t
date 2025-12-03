@@ -28,10 +28,10 @@
 
 namespace schnek {
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   Field<T, rank, Policies...>::Field() {}
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,
@@ -55,7 +55,7 @@ namespace schnek {
     this->Grid<T, rank, Policies...>::resize(low, high);
   }
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,
@@ -81,7 +81,7 @@ namespace schnek {
     this->Grid<T, rank, Policies...>::resize(lo, hi);
   }
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,
@@ -106,12 +106,9 @@ namespace schnek {
     this->Grid<T, rank, Policies...>::resize(lo, hi);
   }
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   Field<T, rank, Policies...>::Field(const Field<T, rank, Policies...> &field)
-      : Grid<T, rank, Policies...>(field),
-        domain(field.domain),
-        stagger(field.stagger),
-        ghostCells(field.ghostCells) {}
+      : Grid<T, rank, Policies...>(field), domain(field.domain), stagger(field.stagger), ghostCells(field.ghostCells) {}
 
   template<typename T, size_t rank, template<typename, size_t> class ...Policies>
   inline void Field<T, rank, Policies...>::positionToIndex(
@@ -126,7 +123,7 @@ namespace schnek {
     offset = xnorm - index;
   }
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,
@@ -152,7 +149,7 @@ namespace schnek {
     this->Grid<T, rank, Policies...>::resize(low, high);
   }
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,
@@ -180,7 +177,7 @@ namespace schnek {
     this->Grid<T, rank, Policies...>::resize(low, high);
   }
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   template<
       template<size_t>
       class ArrayCheckingPolicy,

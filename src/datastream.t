@@ -32,7 +32,7 @@ std::ostream &operator<<(std::ostream &out, const schnek::Array<T, length, Check
   return out;
 }
 
-template<typename T, template<typename, size_t> class ...Policies>
+template<typename T, template<typename, size_t> class... Policies>
 std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 1, Policies...> &M) {
   typedef typename schnek::Grid<T, 1, Policies...>::IndexType IndexType;
 
@@ -45,7 +45,7 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 1, Policies...
   return out;
 }
 
-template<typename T, template<typename, size_t> class ...Policies>
+template<typename T, template<typename, size_t> class... Policies>
 std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 2, Policies...> &M) {
   typedef typename schnek::Grid<T, 2, Policies...>::IndexType IndexType;
 
@@ -62,7 +62,7 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 2, Policies...
   return out;
 }
 
-template<typename T, template<typename, size_t> class ...Policies>
+template<typename T, template<typename, size_t> class... Policies>
 std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 3, Policies...> &M) {
   typedef typename schnek::Grid<T, 3, Policies...>::IndexType IndexType;
 
@@ -82,7 +82,7 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 3, Policies...
   return out;
 }
 
-template<typename T, template<typename, size_t> class ...Policies>
+template<typename T, template<typename, size_t> class... Policies>
 std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 4, Policies...> &M) {
   typedef typename schnek::Grid<T, 4, Policies...>::IndexType IndexType;
 
@@ -104,7 +104,7 @@ std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 4, Policies...
   return out;
 }
 
-template<typename T, template<typename, size_t> class ...Policies>
+template<typename T, template<typename, size_t> class... Policies>
 std::ostream &operator<<(std::ostream &out, const schnek::Grid<T, 5, Policies...> &M) {
   typedef typename schnek::Grid<T, 5, Policies...>::IndexType IndexType;
 

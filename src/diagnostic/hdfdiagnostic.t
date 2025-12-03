@@ -24,10 +24,10 @@
  *
  */
 
+#include <mpi.h>
+
 #include "../grid/field.hpp"
 #include "../util/logger.hpp"
-
-#include <mpi.h>
 
 namespace schnek {
 
@@ -280,18 +280,14 @@ namespace schnek {
       static void copy(InnerType field, GridContainer<InnerType> &container);
   };
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   struct CopyToContainer<Field<T, rank, Policies...> > {
-      static void copy(
-          Field<T, rank, Policies...> field,
-          GridContainer<Field<T, rank, Policies...> > &container
-      );
+      static void copy(Field<T, rank, Policies...> field, GridContainer<Field<T, rank, Policies...> > &container);
   };
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   inline void CopyToContainer<Field<T, rank, Policies...> >::copy(
-      Field<T, rank, Policies...> field,
-      GridContainer<Field<T, rank, Policies...> > &container
+      Field<T, rank, Policies...> field, GridContainer<Field<T, rank, Policies...> > &container
   ) {
     container.grid = field;
     container.local_min = field.getInnerLo();
@@ -392,6 +388,5 @@ namespace schnek {
     blockPars.addParameter("file", &fileName);
     blockPars.addParameter("field", &fieldName);
   }
-
 
 }  // namespace schnek

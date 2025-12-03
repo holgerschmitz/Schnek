@@ -27,17 +27,16 @@
 #ifndef SCHNEK_GRID_H_
 #define SCHNEK_GRID_H_
 
+#include <cstddef>
 #include <type_traits>
 
 #include "../macros.hpp"
 #include "../typetools.hpp"
 #include "array.hpp"
-#include "gridcheck/gridcheck.hpp"
 #include "gridcheck/grid-check-concept.hpp"
+#include "gridcheck/gridcheck.hpp"
 #include "gridstorage.hpp"
 #include "range.hpp"
-
-#include <cstddef>
 
 namespace schnek {
 
@@ -56,27 +55,27 @@ namespace schnek {
      *
      * GridBase implements all the overloaded index
      */
-    template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+    template<typename T, size_t rank, template<typename, size_t> class... Policies>
     class GridBase {
       private:
         using PolicyList = generic::TypeList<Policies<T, rank>...>;
         using StoragePolicy = typename PolicyList::template getWithDefault<
-          schnek::concepts::GridStorageConceptCondition, 
-          schnek::SingleArrayGridStorage<T, rank>>;
-        using CheckingPolicy = typename PolicyList::template getWithDefault<
-          schnek::concepts::GridCheckConceptCondition, 
-          schnek::GridNoArgCheck<T, rank>>;
+            schnek::concepts::GridStorageConceptCondition,
+            schnek::SingleArrayGridStorage<T, rank>>;
+        using CheckingPolicy = typename PolicyList::
+            template getWithDefault<schnek::concepts::GridCheckConceptCondition, schnek::GridNoArgCheck<T, rank>>;
         concepts::GridCheckConcept<CheckingPolicy> concept_check;
         concepts::GridStorageConcept<StoragePolicy> concept_storage;
         StoragePolicy storage;
+
       public:
         typedef T value_type;
         typedef typename CheckingPolicy::IndexType IndexType;
         typedef typename StoragePolicy::SizeType SizeType;
         typedef typename StoragePolicy::RangeType RangeType;
         enum { Rank = rank };
-      public:
 
+      public:
         /**
          * @brief Default constructor
          */
@@ -91,20 +90,23 @@ namespace schnek {
         GridBase(const Array<size_t, rank, ArrayCheckingPolicy>& size);
 
         template<template<size_t> class ArrayCheckingPolicy>
-        GridBase(const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& low, const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& high);
+        GridBase(
+            const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& low,
+            const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& high
+        );
 
         template<template<size_t> class ArrayCheckingPolicy>
         GridBase(const Range<ptrdiff_t, rank, ArrayCheckingPolicy>& range);
 
         /// Get the lowest coordinate in the grid (inclusive)
         SCHNEK_INLINE const IndexType getLo() const { return this->storage.getLo(); }
-  
+
         /// Get the highest coordinate in the grid (inclusive)
         SCHNEK_INLINE const IndexType getHi() const { return this->storage.getHi(); }
-  
+
         /// Get the lowest coordinate in the grid (inclusive)
         SCHNEK_INLINE const RangeType getRange() const { return this->storage.getRange(); }
-  
+
         /// Get the dimensions of the grid `dims = high - low + 1`
         SCHNEK_INLINE const SizeType getDims() const { return this->storage.getDims(); }
   
@@ -157,17 +159,13 @@ namespace schnek {
         SCHNEK_INLINE GridBase<T, rank, Policies...>& operator=(const T& val);
 
         /** copy constructor */
-        SCHNEK_INLINE GridBase<T, rank, Policies...>& operator=(
-            const GridBase<T, rank, Policies...>& val
-        ) = default;
+        SCHNEK_INLINE GridBase<T, rank, Policies...>& operator=(const GridBase<T, rank, Policies...>& val) = default;
 
-        template<typename T2, template<typename, size_t> class ...Policies2>
-        SCHNEK_INLINE GridBase<T, rank, Policies...>&
-        operator-=(GridBase<T2, rank, Policies2...>&);
+        template<typename T2, template<typename, size_t> class... Policies2>
+        SCHNEK_INLINE GridBase<T, rank, Policies...>& operator-=(GridBase<T2, rank, Policies2...>&);
 
-        template<typename T2, template<typename, size_t> class ...Policies2>
-        SCHNEK_INLINE GridBase<T, rank, Policies...>&
-        operator+=(GridBase<T2, rank, Policies2...>&);
+        template<typename T2, template<typename, size_t> class... Policies2>
+        SCHNEK_INLINE GridBase<T, rank, Policies...>& operator+=(GridBase<T2, rank, Policies2...>&);
 
         /**
          * @brief Resize to size[0] x ... x size[rank-1]
@@ -215,7 +213,12 @@ namespace schnek {
         void resize(const RangeType& range);
 
         /** Resize to match the size of another matrix */
-        template<typename T2, template<typename, size_t> class CheckingPolicy2, template<typename, size_t> class StoragePolicy2>
+        template<
+            typename T2,
+            template<typename, size_t>
+            class CheckingPolicy2,
+            template<typename, size_t>
+            class StoragePolicy2>
         void resize(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid);
     };
   }  // namespace internal
@@ -228,7 +231,7 @@ namespace schnek {
    * @tparam CheckingPolicy a policy for checking index access operations
    * @tparam StoragePolicy a policy that defines how the data is stored in memory
    */
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   class Grid : public internal::GridBase<T, rank, Policies...> {
     public:
       typedef T value_type;
@@ -303,7 +306,12 @@ namespace schnek {
       }
 
       /** assign another grid */
-      template<typename T2, template<typename, size_t> class CheckingPolicy2, template<typename, size_t> class StoragePolicy2>
+      template<
+          typename T2,
+          template<typename, size_t>
+          class CheckingPolicy2,
+          template<typename, size_t>
+          class StoragePolicy2>
       GridType& operator=(const internal::GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid) {
         BaseType::operator=(grid);
         return *this;

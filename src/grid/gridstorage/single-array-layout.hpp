@@ -44,6 +44,7 @@ namespace schnek {
     private:
       /// A pointer offset to the origin for faster access
       T *data_fast;
+
     public:
       /// The grid index type
       typedef Array<ptrdiff_t, Rank> IndexType;
@@ -94,10 +95,10 @@ namespace schnek {
        * This ensures that the data_fast pointer is always up to date between all copies of the
        * grid.
        */
-      void updateSize(const RangeType &range, T* data);
+      void updateSize(const RangeType &range, T *data);
   };
 
-    /**
+  /**
    * @brief A layout policy for SingleArrayStorage to provide Fortran-order indexing over the
    * 1-dimensional data array for a multidimensional grid.
    *
@@ -109,6 +110,7 @@ namespace schnek {
     private:
       /// A pointer offset to the origin for faster access
       T *data_fast;
+
     public:
       /// The grid index type
       typedef Array<ptrdiff_t, Rank> IndexType;
@@ -126,7 +128,8 @@ namespace schnek {
       SingleArrayGridFortranOrderLayout(const SingleArrayGridFortranOrderLayout &) = default;
 
       /// Assignment operator
-      SingleArrayGridFortranOrderLayout<T, Rank> &operator=(const SingleArrayGridFortranOrderLayout<T, Rank> &) = default;
+      SingleArrayGridFortranOrderLayout<T, Rank> &operator=(const SingleArrayGridFortranOrderLayout<T, Rank> &) =
+          default;
 
       /**
        * @brief Get the lvalue at a given grid index
@@ -159,7 +162,7 @@ namespace schnek {
        * This ensures that the data_fast pointer is always up to date between all copies of the
        * grid.
        */
-      void updateSize(const RangeType &range, T* data);
+      void updateSize(const RangeType &range, T *data);
   };
 
   //=================================================================
@@ -194,7 +197,7 @@ namespace schnek {
   }
 
   template<typename T, size_t Rank>
-  void SingleArrayGridCOrderLayout<T, Rank>::updateSize(const RangeType &range, T* data) {
+  void SingleArrayGridCOrderLayout<T, Rank>::updateSize(const RangeType &range, T *data) {
     ptrdiff_t p = -range.getLo(0);
 
     for (size_t d = 1; d < Rank; ++d) {
@@ -235,7 +238,7 @@ namespace schnek {
   }
 
   template<typename T, size_t Rank>
-  void SingleArrayGridFortranOrderLayout<T, Rank>::updateSize(const RangeType &range, T* data) {
+  void SingleArrayGridFortranOrderLayout<T, Rank>::updateSize(const RangeType &range, T *data) {
     size_t p = -range.getLo(Rank - 1);
 
     for (ptrdiff_t d = ptrdiff_t(Rank) - 2; d >= 0; --d) {
@@ -243,6 +246,6 @@ namespace schnek {
     }
     data_fast = data + p;
   }
-} // namespace schnek
+}  // namespace schnek
 
-#endif // SCHNEK_GRID_GRIDSTORAGE_SINGLEARRAYLAYOUT_HPP_
+#endif  // SCHNEK_GRID_GRIDSTORAGE_SINGLEARRAYLAYOUT_HPP_

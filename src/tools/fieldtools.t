@@ -31,8 +31,10 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t> class ArrayCheckingPolicy,
-      template<typename, size_t> class ...GridPolicies>
+      template<size_t>
+      class ArrayCheckingPolicy,
+      template<typename, size_t>
+      class... GridPolicies>
   void fill_field(
       Field<T, rank, GridPolicies...> &field,
       Array<double, rank, ArrayCheckingPolicy> &coords,
@@ -63,8 +65,10 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t> class ArrayCheckingPolicy,
-      template<typename, size_t> class ...GridPolicies>
+      template<size_t>
+      class ArrayCheckingPolicy,
+      template<typename, size_t>
+      class... GridPolicies>
   void fill_field(
       Field<T, rank, GridPolicies...> &field,
       Array<double, rank, ArrayCheckingPolicy> &coords,
