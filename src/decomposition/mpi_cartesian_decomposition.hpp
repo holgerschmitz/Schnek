@@ -8,7 +8,7 @@
 #ifndef SCHNEK_DECOMPOSITION_MPI_CARTESIAN_DECOMPOSITION_HPP_
 #define SCHNEK_DECOMPOSITION_MPI_CARTESIAN_DECOMPOSITION_HPP_
 
-#include "../schnek_config.hpp"
+#include "../config.hpp"
 #include "domaindecomposition.hpp"
 #include "mpi_context.hpp"
 
@@ -35,7 +35,7 @@ namespace schnek {
        * The processor layout is determined by the global grid size or, if specified, by the
        * global weights.
        */
-      void init();
+      void init() override;
 
       /**
        * Perform load balancing based on local weights if present, otherwise based
@@ -44,28 +44,28 @@ namespace schnek {
        * Should automatically redistribute all grids added on any local domain
        * context obtained from this decomposition.
        */
-      void balanceLoad();
+      void balanceLoad() override;
 
       /**
        * Return a unique reproducible ID of the current process
        *
        * @return the unique ID
        */
-      int getUniqueId() const;
+      int getUniqueId() const override;
 
       /**
        * Check if the current process is the master
        *
        * @return `true` if this is the master process
        */
-      bool master() const;
+      bool master() const override;
 
       /**
        * Get the number of processes
        *
        * @return the number of processes in the MPI communicator
        */
-      int numProcs() const;
+      int numProcs() const override;
 
       /**
        * Return the grid index ranges of each process coordinates in each direction
@@ -78,6 +78,7 @@ namespace schnek {
     private:
       typedef typename DomainDecomposition<rank, CheckingPolicy>::LimitType LimitType;
       typedef typename DomainDecomposition<rank, CheckingPolicy>::RangeType RangeType;
+      typedef typename DomainDecomposition<rank, CheckingPolicy>::DomainType DomainType;
 
       /// The MPI context
       MpiContext &mpi;

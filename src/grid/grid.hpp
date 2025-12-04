@@ -98,6 +98,15 @@ namespace schnek {
         template<template<size_t> class ArrayCheckingPolicy>
         GridBase(const Range<ptrdiff_t, rank, ArrayCheckingPolicy>& range);
 
+    template<typename T2, template<size_t> class ArrayCheckingPolicy>
+    GridBase(
+      const Array<T2, rank, ArrayCheckingPolicy>& low,
+      const Array<T2, rank, ArrayCheckingPolicy>& high
+    );
+
+    template<typename T2, template<size_t> class ArrayCheckingPolicy>
+    GridBase(const Range<T2, rank, ArrayCheckingPolicy>& range);
+
         /// Get the lowest coordinate in the grid (inclusive)
         SCHNEK_INLINE const IndexType getLo() const { return this->storage.getLo(); }
 
@@ -279,6 +288,9 @@ namespace schnek {
        */
       Grid(const IndexType& low, const IndexType& high);
 
+  template<typename T2, template<size_t> class ArrayCheckingPolicy>
+  Grid(const Array<T2, rank, ArrayCheckingPolicy>& low, const Array<T2, rank, ArrayCheckingPolicy>& high);
+
       /** constructor, which builds Grid with range given by range
        *
        *  Example:
@@ -292,6 +304,9 @@ namespace schnek {
        *  The ranges then extend from low[i] to high[i]
        */
       Grid(const RangeType& range);
+
+  template<typename T2, template<size_t> class ArrayCheckingPolicy>
+  Grid(const Range<T2, rank, ArrayCheckingPolicy>& range);
 
       /** assign another grid */
       GridType& operator=(const T& val) {

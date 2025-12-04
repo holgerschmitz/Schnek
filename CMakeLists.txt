@@ -106,6 +106,8 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/test_range.cpp
     testsuite/utility.cpp
     testsuite/decomposition/test_domaindecomposition.cpp
+    testsuite/decomposition/mpi_test_context.cpp
+    testsuite/decomposition/test_mpi_cartesian_decomposition.cpp
     testsuite/decomposition/detail/test_grid_factory.cpp
     testsuite/computation/test_algorithm.cpp
     testsuite/generic/test_typelist.cpp

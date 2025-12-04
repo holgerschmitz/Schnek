@@ -50,19 +50,36 @@ namespace schnek {
       Range() : lo(0), hi(0) {}
       Range(const Range &domain) : lo(domain.lo), hi(domain.hi) {}
 
-      /// Construct with rectangle minimum and maximum
-      template<template<size_t> class ArrayCheckingPolicy>
-      Range(const Array<T, rank, ArrayCheckingPolicy> &lo_, const Array<T, rank, ArrayCheckingPolicy> &hi_)
-          : lo(lo_), hi(hi_) {}
+    /// Construct with rectangle minimum and maximum
+    template<template<size_t> class ArrayCheckingPolicy>
+    Range(const Array<T, rank, ArrayCheckingPolicy> &lo_, const Array<T, rank, ArrayCheckingPolicy> &hi_)
+      : lo(lo_), hi(hi_) {}
 
-      /// Copy constructor
-      template<template<size_t> class ArrayCheckingPolicy>
-      Range(const Range<T, rank, ArrayCheckingPolicy> &domain) : lo(domain.getLo()), hi(domain.getHi()) {}
+    /// Construct with rectangle minimum and maximum from different numeric type
+    template<typename T2, template<size_t> class ArrayCheckingPolicy>
+    Range(const Array<T2, rank, ArrayCheckingPolicy> &lo_, const Array<T2, rank, ArrayCheckingPolicy> &hi_)
+      : lo(lo_), hi(hi_) {}
+
+    /// Copy constructor
+    template<template<size_t> class ArrayCheckingPolicy>
+    Range(const Range<T, rank, ArrayCheckingPolicy> &domain) : lo(domain.getLo()), hi(domain.getHi()) {}
+
+    /// Copy constructor from different numeric type
+    template<typename T2, template<size_t> class ArrayCheckingPolicy>
+    Range(const Range<T2, rank, ArrayCheckingPolicy> &domain) : lo(domain.getLo()), hi(domain.getHi()) {}
 
       /// Assignment operator
       Range &operator=(const Range &domain) {
         lo = domain.lo;
         hi = domain.hi;
+        return *this;
+      }
+
+      /// Assignment operator from different numeric type
+      template<typename T2, template<size_t> class ArrayCheckingPolicy>
+      Range &operator=(const Range<T2, rank, ArrayCheckingPolicy> &domain) {
+        lo = domain.getLo();
+        hi = domain.getHi();
         return *this;
       }
 
@@ -360,6 +377,28 @@ namespace schnek {
       /// Creates an iterator pointing to a position after the end of the rectangle
       iterator end() { return iterator(*this, this->getLo(), true); }
   };
+
+      template<class T1, class T2, size_t rank, template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2>
+      inline bool operator==(
+          const Range<T1, rank, CheckingPolicy1> &lhs,
+          const Range<T2, rank, CheckingPolicy2> &rhs
+      ) {
+        for (size_t i = 0; i < rank; ++i) {
+          if (lhs.getLo()[i] != rhs.getLo()[i] || lhs.getHi()[i] != rhs.getHi()[i]) {
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+      template<class T1, class T2, size_t rank, template<size_t> class CheckingPolicy1, template<size_t> class CheckingPolicy2>
+      inline bool operator!=(
+          const Range<T1, rank, CheckingPolicy1> &lhs,
+          const Range<T2, rank, CheckingPolicy2> &rhs
+      ) {
+        return !(lhs == rhs);
+      }
 
 }  // namespace schnek
 

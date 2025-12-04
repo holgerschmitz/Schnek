@@ -8,12 +8,13 @@
 #ifndef SCHNEK_UTIL_ARRAY_IO_HPP_
 #define SCHNEK_UTIL_ARRAY_IO_HPP_
 
+#include <cstddef>
 #include <ostream>
 
 #include "../grid/array.hpp"
 #include "../grid/range.hpp"
 
-template<class T, int rank, template<int> class CheckingPolicy>
+template<class T, size_t rank, template<size_t> class CheckingPolicy>
 inline std::ostream &operator<<(std::ostream &out, const schnek::Array<T, rank, CheckingPolicy> a) {
   out << "(";
   std::string sep = "";
@@ -25,7 +26,7 @@ inline std::ostream &operator<<(std::ostream &out, const schnek::Array<T, rank, 
   return out;
 }
 
-template<class T, int rank, template<int> class CheckingPolicy>
+template<class T, size_t rank, template<size_t> class CheckingPolicy>
 inline std::ostream &operator<<(std::ostream &out, const schnek::Range<T, rank, CheckingPolicy> r) {
   return out << r.getLo() << "--" << r.getHi();
 }

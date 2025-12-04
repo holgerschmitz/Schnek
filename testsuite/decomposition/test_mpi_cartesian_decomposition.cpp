@@ -17,6 +17,7 @@
 #include <boost/progress.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/assign/std/vector.hpp>
+#include <boost/foreach.hpp>
 using namespace boost::assign; // bring 'operator+=()' into scope
 
 #include <sstream>

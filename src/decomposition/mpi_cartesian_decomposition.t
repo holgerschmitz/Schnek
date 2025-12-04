@@ -10,6 +10,7 @@
 #include "../util/factor.hpp"
 #include "../util/interpolate1d.hpp"
 #include "../util/logger.hpp"
+#include "mpi_cartesian_decomposition.hpp"
 
 #undef SCHNEK_LOGLEVEL
 #define SCHNEK_LOGLEVEL 0
@@ -108,6 +109,28 @@ namespace schnek {
 
     // Determine the sizes of the local grids
     calcGridDistributon(procRanges);
+
+    RangeType localRange(this->globalRange);
+    DomainType localDomain(this->globalDomain);
+    const LimitType &globalLo = this->globalRange.getLo();
+    const LimitType &globalHi = this->globalRange.getHi();
+
+    for (size_t d = 0; d < rank; ++d) {
+      const Range<ptrdiff_t, 1> &dimRange = procRanges[d](myCoord[d]);
+      localRange.getLo()[d] = dimRange.getLo()[0];
+      localRange.getHi()[d] = dimRange.getHi()[0];
+
+      const ptrdiff_t globalCells = globalHi[d] - globalLo[d] + 1;
+      const ptrdiff_t localCells = localRange.getHi()[d] - localRange.getLo()[d] + 1;
+      const double cellSize =
+          globalCells > 0 ? (this->globalDomain.getHi()[d] - this->globalDomain.getLo()[d]) / double(globalCells) : 0.0;
+      const ptrdiff_t startOffset = localRange.getLo()[d] - globalLo[d];
+
+      localDomain.getLo()[d] = this->globalDomain.getLo()[d] + cellSize * double(startOffset);
+      localDomain.getHi()[d] = localDomain.getLo()[d] + cellSize * double(localCells);
+    }
+
+    this->addLocalRange(localRange, localDomain);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -153,7 +176,7 @@ namespace schnek {
    */
   template<template<size_t> class CheckingPolicy>
   void sumGlobalWeights(
-      const Grid<double, 1, CheckingPolicy> &globalWeights,
+    const Grid<double, 1> &globalWeights,
       typename DomainDecomposition<1, CheckingPolicy>::LimitType &lo,
       typename DomainDecomposition<1, CheckingPolicy>::LimitType &hi,
       size_t d,
@@ -178,7 +201,7 @@ namespace schnek {
    */
   template<size_t rank, template<size_t> class CheckingPolicy>
   void sumGlobalWeights(
-      const Grid<double, rank, CheckingPolicy> &globalWeights,
+    const Grid<double, rank> &globalWeights,
       typename DomainDecomposition<rank, CheckingPolicy>::LimitType &lo,
       typename DomainDecomposition<rank, CheckingPolicy>::LimitType &hi,
       size_t d,
@@ -238,7 +261,11 @@ namespace schnek {
         int resolution = (ghi[d] - glo[d] + 1) / (hi[d] - lo[d] + 1);
         Weights weights(Index(lo[d] - 1), hi[d]);
         double sumTotal;
-        sumGlobalWeights(this->globalWeights, lo, hi, d, weights, sumTotal);
+        if constexpr (rank == 1) {
+          sumGlobalWeights<CheckingPolicy>(this->globalWeights, lo, hi, d, weights, sumTotal);
+        } else {
+          sumGlobalWeights<rank, CheckingPolicy>(this->globalWeights, lo, hi, d, weights, sumTotal);
+        }
 
         // normalised cumulative sum
         for (int i = lo[d]; i <= hi[d]; ++i) {
@@ -271,12 +298,12 @@ namespace schnek {
         }
 
         // broadcasting the layout in dimRanges to other processes
-        Grid<int, 1> transfer(2 * dims[d]);
+        std::vector<int> transfer(2 * dims[d]);
         for (size_t i = 0; i < dims[d]; ++i) {
-          transfer(2 * i) = dimRanges(i).getLo()[0];
-          transfer(2 * i + 1) = dimRanges(i).getHi()[0];
+          transfer[2 * i] = dimRanges(i).getLo()[0];
+          transfer[2 * i + 1] = dimRanges(i).getHi()[0];
         }
-        mpi.MPI_Bcast(transfer.getRawData(), 2 * dims[d], MPI_INT, 0, comm);
+        mpi.MPI_Bcast(transfer.data(), 2 * dims[d], MPI_INT, 0, comm);
       }
     } else {
       // receiving dim ranges for each dimension from the master process
@@ -284,11 +311,11 @@ namespace schnek {
         Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
         dimRanges.resize(0, dims[d] - 1);
 
-        Grid<int, 1> transfer(2 * dims[d]);
-        mpi.MPI_Bcast(transfer.getRawData(), 2 * dims[d], MPI_INT, 0, comm);
+        std::vector<int> transfer(2 * dims[d]);
+        mpi.MPI_Bcast(transfer.data(), 2 * dims[d], MPI_INT, 0, comm);
         for (size_t i = 0; i < dims[d]; ++i) {
-          dimRanges(i).getLo()[0] = transfer(2 * i);
-          dimRanges(i).getHi()[0] = transfer(2 * i + 1);
+          dimRanges(i).getLo()[0] = transfer[2 * i];
+          dimRanges(i).getHi()[0] = transfer[2 * i + 1];
         }
       }
     }
