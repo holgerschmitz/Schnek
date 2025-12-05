@@ -86,6 +86,7 @@ class GridBoostTestCheck {
     std::stringstream out; \
     out << a << " not equal to " << b; \
     BOOST_TEST(false, out.str()); \
+    throw "ERROR"; \
   } \
 }
 

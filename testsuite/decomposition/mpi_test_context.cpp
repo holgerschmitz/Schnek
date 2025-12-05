@@ -65,7 +65,7 @@ int MpiTestContextImpl::MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, in
 
   auto retVal =  ret_MPI_Cart_coords[std::min(argsCount, ret_MPI_Cart_coords.size() - 1)];
   std::vector<int> retCoords = retVal.get<1>();
-  for (int i=0; i<= retCoords.size(); ++i)
+  for (size_t i=0; i<retCoords.size(); ++i)
   {
     coords[i] = retCoords[i];
   }

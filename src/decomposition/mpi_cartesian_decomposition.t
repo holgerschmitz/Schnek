@@ -83,7 +83,10 @@ namespace schnek {
 
     int dimsRaw[rank];
     int myCoordRaw[rank];
-    std::copy(eqDims.begin(), eqDims.end(), dimsRaw);
+
+    for (size_t i = 0; i < rank; ++i) {
+        dimsRaw[i] = eqDims[i];
+    }
 
     errorCode = this->mpi.MPI_Cart_create(this->mpi.getCommWorld(), rank, dimsRaw, periodic, true, &comm);
     SCHNEK_ASSERT(
@@ -146,9 +149,9 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonUniform(ProcRanges &ranges) {
-    typedef Grid<double, 1> Weights;
-    typedef Weights::IndexType Index;
-    typedef Range<size_t, rank - 1> Orth;
+    // typedef Grid<double, 1> Weights;
+    // typedef Weights::IndexType Index;
+    // typedef Range<size_t, rank - 1> Orth;
 
     const LimitType lo = this->globalRange.getLo();
     const LimitType hi = this->globalRange.getHi();
@@ -162,7 +165,7 @@ namespace schnek {
       dimRanges(0).getLo()[0] = lo[d];
       dimRanges(dims[d] - 1).getHi()[0] = hi[d];
 
-      for (size_t i = 1; i < dims[d]; ++i) {
+      for (ptrdiff_t i = 1; i < dims[d]; ++i) {
         int cut = lo[d] + (long(i) * long(dm[d])) / dims[d];
         dimRanges(i - 1).getHi()[0] = cut - 1;
         dimRanges(i).getLo()[0] = cut;
@@ -186,7 +189,7 @@ namespace schnek {
     SCHNEK_TRACE_ENTER_FUNCTION(2);
     double sum = 0;
     weights(lo[d] - 1) = 0.0;
-    for (size_t i = lo[d]; i <= hi[d]; ++i) {
+    for (ptrdiff_t i = lo[d]; i <= hi[d]; ++i) {
       sum += globalWeights(i);
 
       weights(i) = sum;
@@ -228,7 +231,7 @@ namespace schnek {
 
     typename DomainDecomposition<rank, CheckingPolicy>::LimitType pos;
     weights(lo[d] - 1) = 0.0;
-    for (size_t i = lo[d]; i <= hi[d]; ++i) {
+    for (ptrdiff_t i = lo[d]; i <= hi[d]; ++i) {
       pos[d] = i;
       typename Orth::iterator e = orth.end();
       for (typename Orth::iterator pi = orth.begin(); pi != e; ++pi) {
@@ -279,7 +282,7 @@ namespace schnek {
         dimRanges(dims[d] - 1).getHi()[0] = ghi[d];
 
         double delta = 1.0 / double(dims[d]);
-        for (size_t i = 1; i < dims[d]; ++i) {
+        for (ptrdiff_t i = 1; i < dims[d]; ++i) {
           int ins = findInsertIndex(weights, i * delta);
           if ((ins <= lo[d]) || (ins + 1 >= hi[d])) {
             for (int k = lo[d] - 1; k <= hi[d]; ++k) {
@@ -299,7 +302,7 @@ namespace schnek {
 
         // broadcasting the layout in dimRanges to other processes
         std::vector<int> transfer(2 * dims[d]);
-        for (size_t i = 0; i < dims[d]; ++i) {
+        for (ptrdiff_t i = 0; i < dims[d]; ++i) {
           transfer[2 * i] = dimRanges(i).getLo()[0];
           transfer[2 * i + 1] = dimRanges(i).getHi()[0];
         }
@@ -313,7 +316,7 @@ namespace schnek {
 
         std::vector<int> transfer(2 * dims[d]);
         mpi.MPI_Bcast(transfer.data(), 2 * dims[d], MPI_INT, 0, comm);
-        for (size_t i = 0; i < dims[d]; ++i) {
+        for (ptrdiff_t i = 0; i < dims[d]; ++i) {
           dimRanges(i).getLo()[0] = transfer[2 * i];
           dimRanges(i).getHi()[0] = transfer[2 * i + 1];
         }
@@ -322,7 +325,7 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonLocalWeights(ProcRanges &ranges) {}
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonLocalWeights(ProcRanges& /* ranges */) {}
 
 #undef SCHNEK_LOGLEVEL
 #define SCHNEK_LOGLEVEL 0

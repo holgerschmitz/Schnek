@@ -18,7 +18,7 @@ template<class T, size_t rank, template<size_t> class CheckingPolicy>
 inline std::ostream &operator<<(std::ostream &out, const schnek::Array<T, rank, CheckingPolicy> a) {
   out << "(";
   std::string sep = "";
-  for (int i = 0; i < rank; ++i) {
+  for (size_t i = 0; i < rank; ++i) {
     out << sep << a[i];
     sep = ", ";
   }

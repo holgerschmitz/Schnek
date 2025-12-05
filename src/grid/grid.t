@@ -55,18 +55,6 @@ namespace schnek {
     GridBase<T, rank, Policies...>::GridBase(const Range<ptrdiff_t, rank, ArrayCheckingPolicy>& range)
         : storage(range) {}
 
-  template<typename T, size_t rank, template<typename, size_t> class... Policies>
-  template<typename T2, template<size_t> class ArrayCheckingPolicy>
-  GridBase<T, rank, Policies...>::GridBase(
-    const Array<T2, rank, ArrayCheckingPolicy>& low, const Array<T2, rank, ArrayCheckingPolicy>& high
-  )
-    : storage(IndexType(low), IndexType(high)) {}
-
-  template<typename T, size_t rank, template<typename, size_t> class... Policies>
-  template<typename T2, template<size_t> class ArrayCheckingPolicy>
-  GridBase<T, rank, Policies...>::GridBase(const Range<T2, rank, ArrayCheckingPolicy>& range)
-    : storage(RangeType(range)) {}
-
     // -------------------------------------------------------------
     // inline functions
 

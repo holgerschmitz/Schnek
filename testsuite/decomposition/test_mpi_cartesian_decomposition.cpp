@@ -14,17 +14,17 @@
 
 #include <util/array_io.hpp>
 
-#include <boost/progress.hpp>
+#include <boost/timer/progress_display.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/assign/std/vector.hpp>
-#include <boost/foreach.hpp>
 using namespace boost::assign; // bring 'operator+=()' into scope
 
 #include <sstream>
+#include <cstddef>
 
 //
 // run only these tests:
-// ./schnek_test --log_level=test_suite --run_test=mpi_cartesian_domain_decomposition
+// ./schnek_tests --log_level=test_suite --run_test=mpi_cartesian_domain_decomposition
 
 struct MpiCartesianDomainDecompositionTestFixture
 {
@@ -61,7 +61,7 @@ BOOST_FIXTURE_TEST_CASE( single_process_1d, MpiCartesianDomainDecompositionTestF
   context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
   context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
 
-  schnek::Range<int, 1> globalRange(schnek::Array<int,1>(0), schnek::Array<int,1>(100));
+  schnek::Range<ptrdiff_t, 1> globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(100));
   schnek::Range<double, 1> globalDomain(schnek::Array<double,1>(0), schnek::Array<double,1>(12.5));
 
   schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
@@ -71,30 +71,30 @@ BOOST_FIXTURE_TEST_CASE( single_process_1d, MpiCartesianDomainDecompositionTestF
   decomposition.init();
 
   // Checking calls
-  BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-  BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 1);
   const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
   const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-  BOOST_CHECK_EQUAL(cc_dims.size(), 1);
+  BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)1);
   BOOST_CHECK_EQUAL(cc_dims[0], 1);
 
-  BOOST_CHECK_EQUAL(cc_periods.size(), 1);
+  BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)1);
   BOOST_CHECK_EQUAL(cc_periods[0], 1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), 0);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 1);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 0);
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)0);
 
 
   BOOST_CHECK_EQUAL(decomposition.master(), true);
@@ -105,7 +105,7 @@ BOOST_FIXTURE_TEST_CASE( single_process_1d, MpiCartesianDomainDecompositionTestF
   BOOST_CHECK_EQUAL(ranges[0].getLo(0), 0);
   BOOST_CHECK_EQUAL(ranges[0].getHi(0), 0);
 
-  schnek::Range<int, 1> expectedRange(schnek::Array<int,1>(0), schnek::Array<int,1>(100));
+  schnek::Range<ptrdiff_t, 1> expectedRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(100));
   SCHNEK_CHECK_EQUAL(ranges[0](0), expectedRange);
 }
 
@@ -117,11 +117,11 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d, MpiCartesianDomainDecompositionTestFi
   rankArray += 1, 2, 4, 120, 126, 500, 1022, 3999, 24999, 127999, 879483;
   int globalRangeMin =  -5000;
   int globalRangeMax =  10000000;
-  boost::progress_display show_progress(numProcsArray.size() * rankArray.size());
+  boost::timer::progress_display show_progress(numProcsArray.size() * rankArray.size());
 
-  BOOST_FOREACH(int numProcs, numProcsArray)
+  for (int numProcs: numProcsArray)
   {
-    BOOST_FOREACH(int rank, rankArray)
+    for (int rank: rankArray)
     {
       ++show_progress;
       if (rank >= numProcs) continue;
@@ -136,7 +136,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d, MpiCartesianDomainDecompositionTestFi
       context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
       context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
 
-      schnek::Range<int, 1> globalRange = schnek::Range<int, 1>(schnek::Array<int,1>(globalRangeMin), schnek::Array<int,1>(globalRangeMax));
+      schnek::Range<ptrdiff_t, 1> globalRange = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(globalRangeMin), schnek::Array<ptrdiff_t,1>(globalRangeMax));
       schnek::Range<double, 1> globalDomain(schnek::Array<double,1>(0), schnek::Array<double,1>(12.5));
 
       schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
@@ -146,30 +146,30 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d, MpiCartesianDomainDecompositionTestFi
       decomposition.init();
 
       // Checking calls
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 1);
       const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
       const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-      BOOST_CHECK_EQUAL(cc_dims.size(), 1);
+      BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)1);
       BOOST_CHECK_EQUAL(cc_dims[0], numProcs);
 
-      BOOST_CHECK_EQUAL(cc_periods.size(), 1);
+      BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)1);
       BOOST_CHECK_EQUAL(cc_periods[0], 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), rank);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 0);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)0);
 
 
       BOOST_CHECK_EQUAL(decomposition.master(), false);
@@ -185,7 +185,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d, MpiCartesianDomainDecompositionTestFi
         int lo = globalRangeMin + ((globalRangeMax - globalRangeMin + 1)*long(r))/numProcs;
         int hi = globalRangeMin + ((globalRangeMax - globalRangeMin + 1)*long(r + 1))/numProcs - 1;
 
-        schnek::Range<int, 1> expectedRange = schnek::Range<int, 1>(schnek::Array<int,1>(lo), schnek::Array<int,1>(hi));
+        schnek::Range<ptrdiff_t, 1> expectedRange = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(lo), schnek::Array<ptrdiff_t,1>(hi));
         SCHNEK_CHECK_EQUAL(ranges[0](r), expectedRange);
       }
     }
@@ -204,10 +204,10 @@ BOOST_FIXTURE_TEST_CASE( single_process_1d_global, MpiCartesianDomainDecompositi
   context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
   context.ret_MPI_Bcast.push_back(boost::tuple<int, void*, size_t>(MPI_SUCCESS, dims, 2));
 
-  schnek::Range<int, 1> globalRange(schnek::Array<int,1>(0), schnek::Array<int,1>(99));
+  schnek::Range<ptrdiff_t, 1> globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(99));
   schnek::Range<double, 1> globalDomain(schnek::Array<double,1>(0), schnek::Array<double,1>(12.5));
 
-  schnek::Grid<double, 1> weights(schnek::Array<int,1>(0), schnek::Array<int,1>(49));
+  schnek::Grid<double, 1> weights(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(49));
   for (int i=0; i<=50; ++i)
   {
     double x = M_PI * i / 50.;
@@ -223,30 +223,30 @@ BOOST_FIXTURE_TEST_CASE( single_process_1d_global, MpiCartesianDomainDecompositi
   decomposition.init();
 
   // Checking calls
-  BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-  BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 1);
   const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
   const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-  BOOST_CHECK_EQUAL(cc_dims.size(), 1);
+  BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)1);
   BOOST_CHECK_EQUAL(cc_dims[0], 1);
 
-  BOOST_CHECK_EQUAL(cc_periods.size(), 1);
+  BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)1);
   BOOST_CHECK_EQUAL(cc_periods[0], 1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), 0);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 1);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2);
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
@@ -260,7 +260,7 @@ BOOST_FIXTURE_TEST_CASE( single_process_1d_global, MpiCartesianDomainDecompositi
   BOOST_CHECK_EQUAL(ranges[0].getLo(0), 0);
   BOOST_CHECK_EQUAL(ranges[0].getHi(0), 0);
 
-  schnek::Range<int, 1> expectedRange(schnek::Array<int,1>(0), schnek::Array<int,1>(99));
+  schnek::Range<ptrdiff_t, 1> expectedRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(99));
   SCHNEK_CHECK_EQUAL(ranges[0](0), expectedRange);
 }
 
@@ -273,7 +273,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d_global_master, MpiCartesianDomainDecom
   int globalRangeMax =  3999;
 
 
-  BOOST_FOREACH(int numProcs, numProcsArray)
+  for (int numProcs: numProcsArray)
   {
     for (int resolution = 1; resolution <= 16; resolution *= 2)
     {
@@ -291,10 +291,10 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d_global_master, MpiCartesianDomainDecom
       context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
       context.ret_MPI_Bcast.push_back(boost::tuple<int, void*, size_t>(MPI_SUCCESS, dims, 2));
 
-      schnek::Range<int, 1> globalRange = schnek::Range<int, 1>(schnek::Array<int,1>(globalRangeMin), schnek::Array<int,1>(globalRangeMax));
+      schnek::Range<ptrdiff_t, 1> globalRange = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(globalRangeMin), schnek::Array<ptrdiff_t,1>(globalRangeMax));
       schnek::Range<double, 1> globalDomain = schnek::Range<double, 1>(schnek::Array<double,1>(0), schnek::Array<double,1>(12.5));
 
-      schnek::Grid<double, 1> weights(schnek::Array<int,1>(0), schnek::Array<int,1>(weightMax));
+      schnek::Grid<double, 1> weights(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(weightMax));
       for (int i=0; i<=weightMax; ++i)
       {
         double x = M_PI * i / double(weightMax+1);
@@ -310,30 +310,30 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d_global_master, MpiCartesianDomainDecom
       decomposition.init();
 
       // Checking calls
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 1);
       const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
       const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-      BOOST_CHECK_EQUAL(cc_dims.size(), 1);
+      BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)1);
       BOOST_CHECK_EQUAL(cc_dims[0], numProcs);
 
-      BOOST_CHECK_EQUAL(cc_periods.size(), 1);
+      BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)1);
       BOOST_CHECK_EQUAL(cc_periods[0], 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*numProcs);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
@@ -362,9 +362,9 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d_global_master, MpiCartesianDomainDecom
         int hi = globalRangeMin + resolution*whi - 1;
 
         // checking multiple possible ranges because we are allowing for rounding errors here
-        schnek::Range<int, 1> expectedRangeA = schnek::Range<int, 1>(schnek::Array<int,1>(lo), schnek::Array<int,1>(hi));
-        schnek::Range<int, 1> expectedRangeB = schnek::Range<int, 1>(schnek::Array<int,1>(lo + resolution), schnek::Array<int,1>(hi + resolution));
-        schnek::Range<int, 1> foundRange = ranges[0](i);
+        schnek::Range<ptrdiff_t, 1> expectedRangeA = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(lo), schnek::Array<ptrdiff_t,1>(hi));
+        schnek::Range<ptrdiff_t, 1> expectedRangeB = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(lo + resolution), schnek::Array<ptrdiff_t,1>(hi + resolution));
+        schnek::Range<ptrdiff_t, 1> foundRange = ranges[0](i);
         bool check = ranges[0](i) == expectedRangeA;
 
         if (lo + resolution < globalRangeMax)
@@ -395,9 +395,9 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d_global_child, MpiCartesianDomainDecomp
   int globalRangeMin =  -4000;
   int globalRangeMax =  3999;
 
-  BOOST_FOREACH(int numProcs, numProcsArray)
+  for (int numProcs: numProcsArray)
   {
-    BOOST_FOREACH(int rank, rankArray)
+    for (int rank: rankArray)
     {
       if (rank >= numProcs) continue;
       resetContext();
@@ -421,10 +421,10 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d_global_child, MpiCartesianDomainDecomp
       context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
       context.ret_MPI_Bcast.push_back(boost::tuple<int, void*, size_t>(MPI_SUCCESS, dims, 2*numProcs*sizeof(int)));
 
-      schnek::Range<int, 1> globalRange = schnek::Range<int, 1>(schnek::Array<int,1>(globalRangeMin), schnek::Array<int,1>(globalRangeMax));
+      schnek::Range<ptrdiff_t, 1> globalRange = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(globalRangeMin), schnek::Array<ptrdiff_t,1>(globalRangeMax));
       schnek::Range<double, 1> globalDomain = schnek::Range<double, 1>(schnek::Array<double,1>(0), schnek::Array<double,1>(12.5));
 
-      schnek::Grid<double, 1> weights(schnek::Array<int,1>(0), schnek::Array<int,1>(weightMax));
+      schnek::Grid<double, 1> weights(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(weightMax));
       weights = 1.0;
 
       schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
@@ -436,30 +436,30 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d_global_child, MpiCartesianDomainDecomp
       decomposition.init();
 
       // Checking calls
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 1);
       const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
       const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-      BOOST_CHECK_EQUAL(cc_dims.size(), 1);
+      BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)1);
       BOOST_CHECK_EQUAL(cc_dims[0], numProcs);
 
-      BOOST_CHECK_EQUAL(cc_periods.size(), 1);
+      BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)1);
       BOOST_CHECK_EQUAL(cc_periods[0], 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), rank);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*numProcs);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
@@ -499,7 +499,7 @@ BOOST_FIXTURE_TEST_CASE( single_process_2d, MpiCartesianDomainDecompositionTestF
   context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
   context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
 
-  schnek::Range<int, 2> globalRange(schnek::Array<int,2>(0, -10), schnek::Array<int,2>(100, 200));
+  schnek::Range<ptrdiff_t, 2> globalRange(schnek::Array<ptrdiff_t,2>(0, -10), schnek::Array<ptrdiff_t,2>(100, 200));
   schnek::Range<double, 2> globalDomain(schnek::Array<double,2>(0, 0), schnek::Array<double,2>(12.5, 42.2));
 
   schnek::MpiCartesianDomainDecomposition<2> decomposition(context);
@@ -509,32 +509,32 @@ BOOST_FIXTURE_TEST_CASE( single_process_2d, MpiCartesianDomainDecompositionTestF
   decomposition.init();
 
   // Checking calls
-  BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-  BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 2);
   const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
   const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-  BOOST_CHECK_EQUAL(cc_dims.size(), 2);
+  BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)2);
   BOOST_CHECK_EQUAL(cc_dims[0], 1);
   BOOST_CHECK_EQUAL(cc_dims[1], 1);
 
-  BOOST_CHECK_EQUAL(cc_periods.size(), 2);
+  BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)2);
   BOOST_CHECK_EQUAL(cc_periods[0], 1);
   BOOST_CHECK_EQUAL(cc_periods[1], 1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), 0);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 2);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 0);
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)0);
 
   BOOST_CHECK_EQUAL(decomposition.master(), true);
   BOOST_CHECK_EQUAL(decomposition.numProcs(), 1);
@@ -546,8 +546,8 @@ BOOST_FIXTURE_TEST_CASE( single_process_2d, MpiCartesianDomainDecompositionTestF
   BOOST_CHECK_EQUAL(ranges[1].getLo(0), 0);
   BOOST_CHECK_EQUAL(ranges[1].getHi(0), 0);
 
-  schnek::Range<int, 1> expectedRange0(schnek::Array<int,1>(0), schnek::Array<int,1>(100));
-  schnek::Range<int, 1> expectedRange1(schnek::Array<int,1>(-10), schnek::Array<int,1>(200));
+  schnek::Range<ptrdiff_t, 1> expectedRange0(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(100));
+  schnek::Range<ptrdiff_t, 1> expectedRange1(schnek::Array<ptrdiff_t,1>(-10), schnek::Array<ptrdiff_t,1>(200));
   SCHNEK_CHECK_EQUAL(ranges[0](0), expectedRange0);
   SCHNEK_CHECK_EQUAL(ranges[1](0), expectedRange1);
 }
@@ -562,16 +562,16 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d, MpiCartesianDomainDecompositionTestFi
   std::vector<int> globalRangeMin(2, -5000);
   std::vector<int> globalRangeMax(2,  5000);
 
-  boost::progress_display show_progress(numProcsArray.size() * rankArray.size());
+  boost::timer::progress_display show_progress(numProcsArray.size() * rankArray.size());
 
-  BOOST_FOREACH(int numProcs, numProcsArray)
+  for (int numProcs: numProcsArray)
   {
-    BOOST_FOREACH(int rank, rankArray)
+    for (int rank: rankArray)
     {
       ++show_progress;
       if (rank >= numProcs) continue;
       std::vector<int> factors;
-      std::vector<int> weights(2,1);
+      std::vector<int> weights(2, 10001);
       schnek::equalFactors(numProcs, 2, factors, weights);
 
       resetContext();
@@ -587,10 +587,10 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d, MpiCartesianDomainDecompositionTestFi
       context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
       context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
 
-      schnek::Range<int, 2> globalRange
-        = schnek::Range<int, 2>(
-                schnek::Array<int,2>(globalRangeMin[0], globalRangeMin[1]),
-                schnek::Array<int,2>(globalRangeMax[0], globalRangeMax[1]));
+      schnek::Range<ptrdiff_t, 2> globalRange
+        = schnek::Range<ptrdiff_t, 2>(
+                schnek::Array<ptrdiff_t,2>(globalRangeMin[0], globalRangeMin[1]),
+                schnek::Array<ptrdiff_t,2>(globalRangeMax[0], globalRangeMax[1]));
       schnek::Range<double, 2> globalDomain(schnek::Array<double,2>(0, -1.5), schnek::Array<double,2>(12.5, 42.2));
 
       schnek::MpiCartesianDomainDecomposition<2> decomposition(context);
@@ -600,32 +600,32 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d, MpiCartesianDomainDecompositionTestFi
       decomposition.init();
 
       // Checking calls
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 2);
       const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
       const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-      BOOST_CHECK_EQUAL(cc_dims.size(), 2);
+      BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)2);
       BOOST_CHECK_EQUAL(cc_dims[0], factors[0]);
       BOOST_CHECK_EQUAL(cc_dims[1], factors[1]);
 
-      BOOST_CHECK_EQUAL(cc_periods.size(), 2);
+      BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)2);
       BOOST_CHECK_EQUAL(cc_periods[0], 1);
       BOOST_CHECK_EQUAL(cc_periods[1], 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), rank);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 2);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 0);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)0);
 
 
       BOOST_CHECK_EQUAL(decomposition.master(), false);
@@ -643,7 +643,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d, MpiCartesianDomainDecompositionTestFi
           int lo = globalRangeMin[d] + ((globalRangeMax[d] - globalRangeMin[d] + 1)*long(r))/factors[d];
           int hi = globalRangeMin[d] + ((globalRangeMax[d] - globalRangeMin[d] + 1)*long(r + 1))/factors[d] - 1;
 
-          schnek::Range<int, 1> expectedRange = schnek::Range<int, 1>(schnek::Array<int,1>(lo), schnek::Array<int,1>(hi));
+          schnek::Range<ptrdiff_t, 1> expectedRange = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(lo), schnek::Array<ptrdiff_t,1>(hi));
           SCHNEK_CHECK_EQUAL(ranges[d](r), expectedRange);
         }
       }
@@ -658,15 +658,15 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_master, MpiCartesianDomainDecom
 
   int globalRangeMin =  -4000;
   int globalRangeMax =  3999;
-  boost::progress_display show_progress(numProcsArray.size() * 5);
+  boost::timer::progress_display show_progress(numProcsArray.size() * 5);
 
-  BOOST_FOREACH(int numProcs, numProcsArray)
+  for (int numProcs: numProcsArray)
   {
     for (int resolution = 1; resolution <= 16; resolution *= 2)
     {
       ++show_progress;
       std::vector<int> factors;
-      std::vector<int> box(2,1);
+      std::vector<int> box(2, 8000);
       schnek::equalFactors(numProcs, 2, factors, box);
 
       resetContext();
@@ -683,13 +683,13 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_master, MpiCartesianDomainDecom
       context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
       context.ret_MPI_Bcast.push_back(boost::tuple<int, void*, size_t>(MPI_SUCCESS, dims, 4));
 
-      schnek::Range<int, 2> globalRange
-        = schnek::Range<int, 2>(
-                schnek::Array<int,2>(globalRangeMin, globalRangeMin),
-                schnek::Array<int,2>(globalRangeMax, globalRangeMax));
+      schnek::Range<ptrdiff_t, 2> globalRange
+        = schnek::Range<ptrdiff_t, 2>(
+                schnek::Array<ptrdiff_t,2>(globalRangeMin, globalRangeMin),
+                schnek::Array<ptrdiff_t,2>(globalRangeMax, globalRangeMax));
       schnek::Range<double, 2> globalDomain(schnek::Array<double,2>(0, -1.5), schnek::Array<double,2>(12.5, 42.2));
 
-      schnek::Grid<double, 2> weights(schnek::Array<int,2>(0, 0), schnek::Array<int,2>(weightMax, weightMax));
+      schnek::Grid<double, 2> weights(schnek::Array<ptrdiff_t,2>(0, 0), schnek::Array<ptrdiff_t,2>(weightMax, weightMax));
       for (int i=0; i<=weightMax; ++i)
       {
         double x = M_PI * i / double(weightMax+1);
@@ -709,32 +709,32 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_master, MpiCartesianDomainDecom
       decomposition.init();
 
       // Checking calls
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 2);
       const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
       const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-      BOOST_CHECK_EQUAL(cc_dims.size(), 2);
+      BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)2);
       BOOST_CHECK_EQUAL(cc_dims[0], factors[0]);
       BOOST_CHECK_EQUAL(cc_dims[1], factors[1]);
 
-      BOOST_CHECK_EQUAL(cc_periods.size(), 2);
+      BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)2);
       BOOST_CHECK_EQUAL(cc_periods[0], 1);
       BOOST_CHECK_EQUAL(cc_periods[1], 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 2);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 2);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)2);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*factors[0]);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
@@ -772,9 +772,9 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_master, MpiCartesianDomainDecom
           int hi = globalRangeMin + resolution*whi - 1;
 
           // checking multiple possible ranges because we are allowing for rounding errors here
-          schnek::Range<int, 1> expectedRangeA = schnek::Range<int, 1>(schnek::Array<int,1>(lo), schnek::Array<int,1>(hi));
-          schnek::Range<int, 1> expectedRangeB = schnek::Range<int, 1>(schnek::Array<int,1>(lo + resolution), schnek::Array<int,1>(hi + resolution));
-          schnek::Range<int, 1> foundRange = ranges[r](i);
+          schnek::Range<ptrdiff_t, 1> expectedRangeA = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(lo), schnek::Array<ptrdiff_t,1>(hi));
+          schnek::Range<ptrdiff_t, 1> expectedRangeB = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(lo + resolution), schnek::Array<ptrdiff_t,1>(hi + resolution));
+          schnek::Range<ptrdiff_t, 1> foundRange = ranges[r](i);
           bool check = foundRange == expectedRangeA;
 
           if (lo + resolution < globalRangeMax)
@@ -804,17 +804,17 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_child, MpiCartesianDomainDecomp
 
   int globalRangeMin =  -4000;
   int globalRangeMax =  3999;
-  boost::progress_display show_progress(numProcsArray.size() * rankArray.size());
+  boost::timer::progress_display show_progress(numProcsArray.size() * rankArray.size());
 
-  BOOST_FOREACH(int numProcs, numProcsArray)
+  for (int numProcs: numProcsArray)
   {
-    BOOST_FOREACH(int rank, rankArray)
+    for (int rank: rankArray)
     {
       ++show_progress;
       if (rank >= numProcs) continue;
 
       std::vector<int> factors;
-      std::vector<int> box(2,1);
+      std::vector<int> box(2, 8000);
       schnek::equalFactors(numProcs, 2, factors, box);
 
       resetContext();
@@ -849,13 +849,13 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_child, MpiCartesianDomainDecomp
       context.ret_MPI_Bcast.push_back(boost::tuple<int, void*, size_t>(MPI_SUCCESS, dims0, 2*factors[0]*sizeof(int)));
       context.ret_MPI_Bcast.push_back(boost::tuple<int, void*, size_t>(MPI_SUCCESS, dims1, 2*factors[1]*sizeof(int)));
 
-      schnek::Range<int, 2> globalRange
-        = schnek::Range<int, 2>(
-                schnek::Array<int,2>(globalRangeMin, globalRangeMin),
-                schnek::Array<int,2>(globalRangeMax, globalRangeMax));
+      schnek::Range<ptrdiff_t, 2> globalRange
+        = schnek::Range<ptrdiff_t, 2>(
+                schnek::Array<ptrdiff_t,2>(globalRangeMin, globalRangeMin),
+                schnek::Array<ptrdiff_t,2>(globalRangeMax, globalRangeMax));
       schnek::Range<double, 2> globalDomain(schnek::Array<double,2>(0, -1.5), schnek::Array<double,2>(12.5, 42.2));
 
-      schnek::Grid<double, 2> weights(schnek::Array<int,2>(0, 0), schnek::Array<int,2>(weightMax, weightMax));
+      schnek::Grid<double, 2> weights(schnek::Array<ptrdiff_t,2>(0, 0), schnek::Array<ptrdiff_t,2>(weightMax, weightMax));
       weights = 1.0;
 
       schnek::MpiCartesianDomainDecomposition<2> decomposition(context);
@@ -867,32 +867,32 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_child, MpiCartesianDomainDecomp
       decomposition.init();
 
       // Checking calls
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 2);
       const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
       const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-      BOOST_CHECK_EQUAL(cc_dims.size(), 2);
+      BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)2);
       BOOST_CHECK_EQUAL(cc_dims[0], factors[0]);
       BOOST_CHECK_EQUAL(cc_dims[1], factors[1]);
 
-      BOOST_CHECK_EQUAL(cc_periods.size(), 2);
+      BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)2);
       BOOST_CHECK_EQUAL(cc_periods[0], 1);
       BOOST_CHECK_EQUAL(cc_periods[1], 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), rank);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 2);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 2);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)2);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*factors[0]);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
@@ -947,7 +947,7 @@ BOOST_FIXTURE_TEST_CASE( single_process_3d, MpiCartesianDomainDecompositionTestF
   context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
   context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
 
-  schnek::Range<int, 3> globalRange(schnek::Array<int,3>(0, -10, -123), schnek::Array<int,3>(100, 200, -2));
+  schnek::Range<ptrdiff_t, 3> globalRange(schnek::Array<ptrdiff_t,3>(0, -10, -123), schnek::Array<ptrdiff_t,3>(100, 200, -2));
   schnek::Range<double, 3> globalDomain(schnek::Array<double,3>(0, 0, -5.2), schnek::Array<double,3>(12.5, 42.2, 10.1));
 
   schnek::MpiCartesianDomainDecomposition<3> decomposition(context);
@@ -957,34 +957,34 @@ BOOST_FIXTURE_TEST_CASE( single_process_3d, MpiCartesianDomainDecompositionTestF
   decomposition.init();
 
   // Checking calls
-  BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-  BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 3);
   const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
   const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-  BOOST_CHECK_EQUAL(cc_dims.size(), 3);
+  BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)3);
   BOOST_CHECK_EQUAL(cc_dims[0], 1);
   BOOST_CHECK_EQUAL(cc_dims[1], 1);
   BOOST_CHECK_EQUAL(cc_dims[2], 1);
 
-  BOOST_CHECK_EQUAL(cc_periods.size(), 3);
+  BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)3);
   BOOST_CHECK_EQUAL(cc_periods[0], 1);
   BOOST_CHECK_EQUAL(cc_periods[1], 1);
   BOOST_CHECK_EQUAL(cc_periods[2], 1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), 0);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 3);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 0);
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)0);
 
   BOOST_CHECK_EQUAL(decomposition.master(), true);
   BOOST_CHECK_EQUAL(decomposition.numProcs(), 1);
@@ -998,9 +998,9 @@ BOOST_FIXTURE_TEST_CASE( single_process_3d, MpiCartesianDomainDecompositionTestF
   BOOST_CHECK_EQUAL(ranges[2].getLo(0), 0);
   BOOST_CHECK_EQUAL(ranges[2].getHi(0), 0);
 
-  schnek::Range<int, 1> expectedRange0(schnek::Array<int,1>(0), schnek::Array<int,1>(100));
-  schnek::Range<int, 1> expectedRange1(schnek::Array<int,1>(-10), schnek::Array<int,1>(200));
-  schnek::Range<int, 1> expectedRange2(schnek::Array<int,1>(-123), schnek::Array<int,1>(-2));
+  schnek::Range<ptrdiff_t, 1> expectedRange0(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(100));
+  schnek::Range<ptrdiff_t, 1> expectedRange1(schnek::Array<ptrdiff_t,1>(-10), schnek::Array<ptrdiff_t,1>(200));
+  schnek::Range<ptrdiff_t, 1> expectedRange2(schnek::Array<ptrdiff_t,1>(-123), schnek::Array<ptrdiff_t,1>(-2));
   SCHNEK_CHECK_EQUAL(ranges[0](0), expectedRange0);
   SCHNEK_CHECK_EQUAL(ranges[1](0), expectedRange1);
   SCHNEK_CHECK_EQUAL(ranges[2](0), expectedRange2);
@@ -1008,28 +1008,25 @@ BOOST_FIXTURE_TEST_CASE( single_process_3d, MpiCartesianDomainDecompositionTestF
 
 BOOST_FIXTURE_TEST_CASE( multi_process_3d, MpiCartesianDomainDecompositionTestFixture )
 {
-  std::vector<int> numProcsArray;
-  numProcsArray += 2, 5, 7, 127, 128, 129, 1023, 4000, 25000, 128000, 879484;
-  std::vector<int> rankArray;
-  rankArray += 1, 2, 4, 120, 126, 500, 1022, 3999, 24999, 127999, 879483;
+  std::vector<int> numProcsArray{2, 5, 7, 127, 128, 129, 1023, 4000, 25000, 128000, 879484};
+  std::vector<int> rankArray{1, 2, 4, 120, 126, 500, 1022, 3999, 24999, 127999, 879483};
 
   std::vector<int> globalRangeMin(3, -5000);
   std::vector<int> globalRangeMax(3,  5000);
 
-  boost::progress_display show_progress(numProcsArray.size() * rankArray.size());
+  boost::timer::progress_display show_progress(numProcsArray.size() * rankArray.size());
 
-  BOOST_FOREACH(int numProcs, numProcsArray)
+  for (int numProcs: numProcsArray)
   {
-    BOOST_FOREACH(int rank, rankArray)
+    for (int rank: rankArray)
     {
       ++show_progress;
       if (rank >= numProcs) continue;
       std::vector<int> factors;
-      std::vector<int> weights(3,1);
+      std::vector<int> weights(3, 10001);
       schnek::equalFactors(numProcs, 3, factors, weights);
 
       resetContext();
-
       MPI_Comm testComm = (MPI_Comm)(void*)123;
       std::vector<int> coords(3);
       coords[0] = rank / (factors[1]*factors[2]);
@@ -1042,10 +1039,10 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d, MpiCartesianDomainDecompositionTestFi
       context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
       context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
 
-      schnek::Range<int, 3> globalRange
-        = schnek::Range<int, 3>(
-                schnek::Array<int,3>(globalRangeMin[0], globalRangeMin[1], globalRangeMin[2]),
-                schnek::Array<int,3>(globalRangeMax[0], globalRangeMax[1], globalRangeMax[2]));
+      schnek::Range<ptrdiff_t, 3> globalRange
+        = schnek::Range<ptrdiff_t, 3>(
+                schnek::Array<ptrdiff_t,3>(globalRangeMin[0], globalRangeMin[1], globalRangeMin[2]),
+                schnek::Array<ptrdiff_t,3>(globalRangeMax[0], globalRangeMax[1], globalRangeMax[2]));
       schnek::Range<double, 3> globalDomain(schnek::Array<double,3>(0, 0, -5.2), schnek::Array<double,3>(12.5, 42.2, 10.1));
 
       schnek::MpiCartesianDomainDecomposition<3> decomposition(context);
@@ -1055,34 +1052,34 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d, MpiCartesianDomainDecompositionTestFi
       decomposition.init();
 
       // Checking calls
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 3);
       const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
       const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-      BOOST_CHECK_EQUAL(cc_dims.size(), 3);
+      BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)3);
       BOOST_CHECK_EQUAL(cc_dims[0], factors[0]);
       BOOST_CHECK_EQUAL(cc_dims[1], factors[1]);
       BOOST_CHECK_EQUAL(cc_dims[2], factors[2]);
 
-      BOOST_CHECK_EQUAL(cc_periods.size(), 3);
+      BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)3);
       BOOST_CHECK_EQUAL(cc_periods[0], 1);
       BOOST_CHECK_EQUAL(cc_periods[1], 1);
       BOOST_CHECK_EQUAL(cc_periods[2], 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), rank);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 3);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 0);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)0);
 
       BOOST_CHECK_EQUAL(decomposition.master(), false);
       BOOST_CHECK_EQUAL(decomposition.numProcs(), numProcs);
@@ -1096,10 +1093,10 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d, MpiCartesianDomainDecompositionTestFi
 
         for (int r=0; r<factors[d]; ++r)
         {
-          int lo = globalRangeMin[d] + ((globalRangeMax[d] - globalRangeMin[d] + 1)*long(r))/factors[d];
-          int hi = globalRangeMin[d] + ((globalRangeMax[d] - globalRangeMin[d] + 1)*long(r + 1))/factors[d] - 1;
+          ptrdiff_t lo = globalRangeMin[d] + ((globalRangeMax[d] - globalRangeMin[d] + 1)*long(r))/factors[d];
+          ptrdiff_t hi = globalRangeMin[d] + ((globalRangeMax[d] - globalRangeMin[d] + 1)*long(r + 1))/factors[d] - 1;
 
-          schnek::Range<int, 1> expectedRange = schnek::Range<int, 1>(schnek::Array<int,1>(lo), schnek::Array<int,1>(hi));
+          schnek::Range<ptrdiff_t, 1> expectedRange = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(lo), schnek::Array<ptrdiff_t,1>(hi));
           SCHNEK_CHECK_EQUAL(ranges[d](r), expectedRange);
         }
       }
@@ -1114,9 +1111,9 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_master, MpiCartesianDomainDecom
 
   int globalRangeMin =  -3200;
   int globalRangeMax =  3199;
-  boost::progress_display show_progress(numProcsArray.size() * 5);
+  boost::timer::progress_display show_progress(numProcsArray.size() * 5);
 
-  BOOST_FOREACH(int numProcs, numProcsArray)
+  for (int numProcs: numProcsArray)
   {
     for (int resolution = 16; resolution <= 256; resolution *= 2)
     {
@@ -1141,13 +1138,13 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_master, MpiCartesianDomainDecom
       context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
       context.ret_MPI_Bcast.push_back(boost::tuple<int, void*, size_t>(MPI_SUCCESS, dims, 6));
 
-      schnek::Range<int, 3> globalRange
-        = schnek::Range<int, 3>(
-                schnek::Array<int,3>(globalRangeMin, globalRangeMin, globalRangeMin),
-                schnek::Array<int,3>(globalRangeMax, globalRangeMax, globalRangeMax));
+      schnek::Range<ptrdiff_t, 3> globalRange
+        = schnek::Range<ptrdiff_t, 3>(
+                schnek::Array<ptrdiff_t,3>(globalRangeMin, globalRangeMin, globalRangeMin),
+                schnek::Array<ptrdiff_t,3>(globalRangeMax, globalRangeMax, globalRangeMax));
       schnek::Range<double, 3> globalDomain(schnek::Array<double,3>(0, 0, -5.2), schnek::Array<double,3>(12.5, 42.2, 10.1));
 
-      schnek::Grid<double, 3> weights(schnek::Array<int,3>(0, 0, 0), schnek::Array<int,3>(weightMax, weightMax, weightMax));
+      schnek::Grid<double, 3> weights(schnek::Array<ptrdiff_t,3>(0, 0, 0), schnek::Array<ptrdiff_t,3>(weightMax, weightMax, weightMax));
       for (int i=0; i<=weightMax; ++i)
       {
         double x = M_PI * i / double(weightMax+1);
@@ -1171,34 +1168,34 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_master, MpiCartesianDomainDecom
       decomposition.init();
 
       // Checking calls
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 3);
       const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
       const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-      BOOST_CHECK_EQUAL(cc_dims.size(), 3);
+      BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)3);
       BOOST_CHECK_EQUAL(cc_dims[0], factors[0]);
       BOOST_CHECK_EQUAL(cc_dims[1], factors[1]);
       BOOST_CHECK_EQUAL(cc_dims[2], factors[2]);
 
-      BOOST_CHECK_EQUAL(cc_periods.size(), 3);
+      BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)3);
       BOOST_CHECK_EQUAL(cc_periods[0], 1);
       BOOST_CHECK_EQUAL(cc_periods[1], 1);
       BOOST_CHECK_EQUAL(cc_periods[2], 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 3);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 3);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)3);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*factors[0]);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
@@ -1243,9 +1240,9 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_master, MpiCartesianDomainDecom
           int hi = globalRangeMin + resolution*whi - 1;
 
           // checking multiple possible ranges because we are allowing for rounding errors here
-          schnek::Range<int, 1> expectedRangeA = schnek::Range<int, 1>(schnek::Array<int,1>(lo), schnek::Array<int,1>(hi));
-          schnek::Range<int, 1> expectedRangeB = schnek::Range<int, 1>(schnek::Array<int,1>(lo + resolution), schnek::Array<int,1>(hi + resolution));
-          schnek::Range<int, 1> foundRange = ranges[r](i);
+          schnek::Range<ptrdiff_t, 1> expectedRangeA = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(lo), schnek::Array<ptrdiff_t,1>(hi));
+          schnek::Range<ptrdiff_t, 1> expectedRangeB = schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t,1>(lo + resolution), schnek::Array<ptrdiff_t,1>(hi + resolution));
+          schnek::Range<ptrdiff_t, 1> foundRange = ranges[r](i);
           bool check = foundRange == expectedRangeA;
 
           if (lo + resolution < globalRangeMax)
@@ -1275,11 +1272,11 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_child, MpiCartesianDomainDecomp
 
   int globalRangeMin =  -4000;
   int globalRangeMax =  3999;
-  boost::progress_display show_progress(numProcsArray.size() * rankArray.size());
+  boost::timer::progress_display show_progress(numProcsArray.size() * rankArray.size());
 
-  BOOST_FOREACH(int numProcs, numProcsArray)
+  for (int numProcs: numProcsArray)
   {
-    BOOST_FOREACH(int rank, rankArray)
+    for (int rank: rankArray)
     {
       ++show_progress;
       if (rank >= numProcs) continue;
@@ -1329,13 +1326,13 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_child, MpiCartesianDomainDecomp
       context.ret_MPI_Bcast.push_back(boost::tuple<int, void*, size_t>(MPI_SUCCESS, dims1, 2*factors[1]*sizeof(int)));
       context.ret_MPI_Bcast.push_back(boost::tuple<int, void*, size_t>(MPI_SUCCESS, dims2, 2*factors[2]*sizeof(int)));
 
-      schnek::Range<int, 3> globalRange
-        = schnek::Range<int, 3>(
-                schnek::Array<int,3>(globalRangeMin, globalRangeMin, globalRangeMin),
-                schnek::Array<int,3>(globalRangeMax, globalRangeMax, globalRangeMax));
+      schnek::Range<ptrdiff_t, 3> globalRange
+        = schnek::Range<ptrdiff_t, 3>(
+                schnek::Array<ptrdiff_t,3>(globalRangeMin, globalRangeMin, globalRangeMin),
+                schnek::Array<ptrdiff_t,3>(globalRangeMax, globalRangeMax, globalRangeMax));
       schnek::Range<double, 3> globalDomain(schnek::Array<double,3>(0, 0, -5.2), schnek::Array<double,3>(12.5, 42.2, 10.1));
 
-      schnek::Grid<double, 3> weights(schnek::Array<int,3>(0, 0, 0), schnek::Array<int,3>(weightMax, weightMax, weightMax));
+      schnek::Grid<double, 3> weights(schnek::Array<ptrdiff_t,3>(0, 0, 0), schnek::Array<ptrdiff_t,3>(weightMax, weightMax, weightMax));
       weights = 1.0;
 
       schnek::MpiCartesianDomainDecomposition<3> decomposition(context);
@@ -1347,34 +1344,34 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_child, MpiCartesianDomainDecomp
       decomposition.init();
 
       // Checking calls
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_size.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_size[0], context.commWorld);
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<0>(), context.commWorld);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<1>(), 3);
       const std::vector<int> cc_dims = context.args_MPI_Cart_create[0].get<2>();
       const std::vector<int> cc_periods = context.args_MPI_Cart_create[0].get<3>();
 
-      BOOST_CHECK_EQUAL(cc_dims.size(), 3);
+      BOOST_CHECK_EQUAL(cc_dims.size(), (size_t)3);
       BOOST_CHECK_EQUAL(cc_dims[0], factors[0]);
       BOOST_CHECK_EQUAL(cc_dims[1], factors[1]);
       BOOST_CHECK_EQUAL(cc_dims[2], factors[2]);
 
-      BOOST_CHECK_EQUAL(cc_periods.size(), 3);
+      BOOST_CHECK_EQUAL(cc_periods.size(), (size_t)3);
       BOOST_CHECK_EQUAL(cc_periods[0], 1);
       BOOST_CHECK_EQUAL(cc_periods[1], 1);
       BOOST_CHECK_EQUAL(cc_periods[2], 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<4>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Comm_rank[0], testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), 1);
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords.size(), (size_t)1);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<0>(), testComm);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), rank);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 3);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), 3);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)3);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*factors[0]);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
