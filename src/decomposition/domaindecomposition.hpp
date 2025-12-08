@@ -313,6 +313,24 @@ namespace schnek {
        */
       GridContext getGridContext(std::initializer_list<GridRegistration> registrations);
 
+      /**
+       * Exchange halo cells between processes.
+       *
+       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined 
+       * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
+       * it is taken from `ghostCells` parameter of the field.
+       */
+      virtual void exchange(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true) = 0;
+
+      /**
+       * Exchange halo cells between processes. Function overload accepting a single grid registration.
+       *
+       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined 
+       * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
+       * it is taken from `ghostCells` parameter of the field.
+       */
+      void exchange(GridRegistration registration, bool useFieldInfo = true) { exchange({registration}, useFieldInfo); }
+
     protected:
       typedef Grid<double, rank> InternalGridType;
       /// The global grid size
