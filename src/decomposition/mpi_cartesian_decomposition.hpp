@@ -74,7 +74,7 @@ namespace schnek {
        * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
        * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
        */
-      void exchange(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true) override;
+    //   void exchange(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true) override;
 
       /**
        * Return the grid index ranges of each process coordinates in each direction
