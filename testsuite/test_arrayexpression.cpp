@@ -245,8 +245,8 @@ BOOST_FIXTURE_TEST_CASE( grid_constructor, ArrayExpressionTest )
   }
 
   for (int i=0; i<N; i++) {
-    Array<ptrdiff_t,2, ArrayBoostTestArgCheck> s1(idist_small(rGen), idist_small(rGen));
-    Array<ptrdiff_t,2, ArrayBoostTestArgCheck> s2(idist_small(rGen), idist_small(rGen));
+    Array<size_t,2, ArrayBoostTestArgCheck> s1(idist_small(rGen), idist_small(rGen));
+    Array<size_t,2, ArrayBoostTestArgCheck> s2(idist_small(rGen), idist_small(rGen));
     Grid<int,2> grid(s1+s2);
 
     BOOST_CHECK_EQUAL(grid.getLo()[0], 0);

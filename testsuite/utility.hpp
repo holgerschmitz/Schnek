@@ -80,4 +80,16 @@ class GridBoostTestCheck {
     }
 };
 
+#define SCHNEK_CHECK_EQUAL(a, b)  \
+{ if (! (a == b)) \
+  { \
+    std::stringstream out; \
+    out << a << " not equal to " << b; \
+    BOOST_TEST(false, out.str()); \
+    throw "ERROR"; \
+  } \
+}
+
+
+
 #endif /* TESTSUITE_UTILITY_HPP_ */

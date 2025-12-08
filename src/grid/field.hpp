@@ -27,12 +27,14 @@
 #ifndef SCHNEK_FIELD_HPP_
 #define SCHNEK_FIELD_HPP_
 
+#include <cstddef>
+
 #include "grid.hpp"
 #include "range.hpp"
 
 namespace schnek {
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   class Field : public Grid<T, rank, Policies...> {
     public:
       typedef T value_type;

@@ -61,7 +61,6 @@ namespace schnek {
 
       /// The Comm object referring to the cartesian process grid
       MPI_Comm comm;
-
       LimitType prevcoord;  ///< The ranks of the neighbour processes towards the lower boundary
       LimitType nextcoord;  ///< The ranks of the neighbour processes towards the higher boundary
 
@@ -80,8 +79,8 @@ namespace schnek {
 
       /// The size of the scalar fields when reducing
       int scalarSize;
-
       DomainType globalDomain;
+      Grid<DomainType, Rank> localDomains;
 
     public:
       using DomainSubdivision<GridType>::init;

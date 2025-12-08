@@ -35,8 +35,10 @@ namespace schnek {
   template<
       typename T,
       size_t rank,
-      template<size_t> class ArrayCheckingPolicy,
-      template<typename, size_t> class ...GridPolicies>
+      template<size_t>
+      class ArrayCheckingPolicy,
+      template<typename, size_t>
+      class... GridPolicies>
   void fill_field(
       Field<T, rank, GridPolicies...> &field,
       Array<double, rank, ArrayCheckingPolicy> &coords,
@@ -49,7 +51,8 @@ namespace schnek {
       size_t rank,
       template<size_t>
       class ArrayCheckingPolicy,
-      template<typename, size_t> class ...GridPolicies>
+      template<typename, size_t>
+      class... GridPolicies>
   void fill_field(
       Field<T, rank, GridPolicies...> &field,
       Array<double, rank, ArrayCheckingPolicy> &coords,
@@ -70,7 +73,8 @@ namespace schnek {
           size_t rank,
           template<size_t>
           class ArrayCheckingPolicy,
-          template<typename, size_t> class ...GridPolicies>
+          template<typename, size_t>
+          class... GridPolicies>
       class impl : public implBase {
         private:
           Field<T, rank, GridPolicies...> &field;
@@ -110,11 +114,9 @@ namespace schnek {
               : coords(coords_), updater(updater_), implementations(implementations_) {}
 
         public:
-          template<typename T, template<typename, size_t> ...Policies>
+          template<typename T, template<typename, size_t>... Policies>
           fieldAdder &operator()(Field<T, rank, Policies...> &field, T &value) {
-            pImplBase i(
-                new impl<T, rank, ArrayCheckingPolicy, Policies...>(field, coords, value, updater)
-            );
+            pImplBase i(new impl<T, rank, ArrayCheckingPolicy, Policies...>(field, coords, value, updater));
             implementations.push_back(i);
             return *this;
           }

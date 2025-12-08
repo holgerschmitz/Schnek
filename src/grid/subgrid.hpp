@@ -128,12 +128,12 @@ namespace schnek {
   };
 
   namespace internal {
-      template<class BaseGrid>
-      struct SubGridStorageBindBaseGrid {
+    template<class BaseGrid>
+    struct SubGridStorageBindBaseGrid {
         template<typename T, size_t Rank>
         using StorageType = SubGridStorage<T, Rank, BaseGrid>;
-      };
-  }
+    };
+  }  // namespace internal
 
   template<class BaseGrid, template<typename, size_t> class CheckingPolicy = GridNoArgCheck>
   class SubGrid : public internal::GridBase<

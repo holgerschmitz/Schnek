@@ -32,8 +32,8 @@
 #include <type_traits>
 #include <utility>
 
-#include "../../generic/is-detected.hpp"
 #include "../../generic/concepts.hpp"
+#include "../../generic/is-detected.hpp"
 
 namespace schnek::concepts {
   namespace internal::grid_allocation {
@@ -59,7 +59,8 @@ namespace schnek::concepts {
       static constexpr bool has_rank = has_rank<GridAllocation>::value;
       static constexpr bool has_index_type = is_detected<index_type_t, GridAllocation>::value;
       static constexpr bool has_range_type = is_detected<range_type_t, GridAllocation>::value;
-      static constexpr bool has_data_method = is_detected<internal::grid_allocation::get_data_method_t, GridAllocation>::value;
+      static constexpr bool has_data_method =
+          is_detected<internal::grid_allocation::get_data_method_t, GridAllocation>::value;
       static constexpr bool has_updater_type =
           is_detected<internal::grid_allocation::updater_type_t, GridAllocation>::value;
       static constexpr bool has_resize_method =
@@ -67,9 +68,8 @@ namespace schnek::concepts {
       static constexpr bool has_on_update_method =
           is_detected<internal::grid_allocation::on_update_method_t, GridAllocation>::value;
 
-      static constexpr bool value = has_value_type && has_rank && has_index_type && has_range_type &&
-                                    has_data_method && has_updater_type &&
-                                    has_resize_method && has_on_update_method;
+      static constexpr bool value = has_value_type && has_rank && has_index_type && has_range_type && has_data_method &&
+                                    has_updater_type && has_resize_method && has_on_update_method;
   };
 
   template<class GridAllocation>
