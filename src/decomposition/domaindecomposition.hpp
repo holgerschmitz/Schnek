@@ -179,6 +179,7 @@ namespace schnek {
       typedef Boundary<rank, CheckingPolicy> BoundaryType;
       typedef boost::shared_ptr<BoundaryType> pBoundaryType;
       typedef Array<ptrdiff_t, rank> LimitType;
+      typedef Array<size_t, rank> SizeType;
 
       class GridContext {
         private:
@@ -511,7 +512,7 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   inline void DomainDecomposition<rank, CheckingPolicy>::checkGlobalWeights() {
     LimitType globalSize = globalRange.getHi() - globalRange.getLo() + 1;
-    LimitType weightsSize = globalWeights.getDims();
+    SizeType weightsSize = globalWeights.getDims();
 
     if (globalSize.product() == 0 || weightsSize.product() == 0) {
       return;

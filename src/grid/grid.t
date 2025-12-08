@@ -85,22 +85,6 @@ namespace schnek {
     }
 
     template<typename T, size_t rank, template<typename, size_t> class ...Policies>
-    template<template<size_t> class ArrayCheckingPolicy>
-    SCHNEK_INLINE T& GridBase<T, rank, Policies...>::operator[](
-        const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos
-    ) {
-      return this->storage.get(CheckingPolicy::check(pos, this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class ...Policies>
-    template<template<size_t> class ArrayCheckingPolicy>
-    SCHNEK_INLINE T
-    GridBase<T, rank, Policies...>::operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos
-    ) const {
-      return this->storage.get(CheckingPolicy::check(pos, this->getLo(), this->getHi()));
-    }
-
-    template<typename T, size_t rank, template<typename, size_t> class ...Policies>
     template<class Operator, size_t Length>
     SCHNEK_INLINE T& GridBase<T, rank, Policies...>::operator[](
         const ArrayExpression<Operator, Length>& pos

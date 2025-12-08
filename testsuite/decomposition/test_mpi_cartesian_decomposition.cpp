@@ -689,8 +689,8 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d, MpiCartesianDomainDecompositionTestFi
     {
       ++show_progress;
       if (rank >= numProcs) continue;
-      std::vector<int> factors;
-      std::vector<int> weights(2, 10001);
+      std::vector<size_t> factors;
+      std::vector<size_t> weights(2, 10001);
       schnek::equalFactors(numProcs, 2, factors, weights);
 
       resetContext();
@@ -775,8 +775,8 @@ BOOST_FIXTURE_TEST_CASE( foreach_multi_process_2d, MpiCartesianDomainDecompositi
   const int numProcs = 6;
   const int rank = 4;
 
-  std::vector<int> factors;
-  std::vector<int> weights;
+  std::vector<size_t> factors;
+  std::vector<size_t> weights;
   weights += 12, 6;
   schnek::equalFactors(numProcs, 2, factors, weights);
 
@@ -840,8 +840,8 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_master, MpiCartesianDomainDecom
     for (int resolution = 1; resolution <= 16; resolution *= 2)
     {
       ++show_progress;
-      std::vector<int> factors;
-      std::vector<int> box(2, 8000);
+      std::vector<size_t> factors;
+      std::vector<size_t> box(2, 8000);
       schnek::equalFactors(numProcs, 2, factors, box);
 
       resetContext();
@@ -988,8 +988,8 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_child, MpiCartesianDomainDecomp
       ++show_progress;
       if (rank >= numProcs) continue;
 
-      std::vector<int> factors;
-      std::vector<int> box(2, 8000);
+      std::vector<size_t> factors;
+      std::vector<size_t> box(2, 8000);
       schnek::equalFactors(numProcs, 2, factors, box);
 
       resetContext();
@@ -1234,8 +1234,8 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d, MpiCartesianDomainDecompositionTestFi
     {
       ++show_progress;
       if (rank >= numProcs) continue;
-      std::vector<int> factors;
-      std::vector<int> weights(3, 10001);
+      std::vector<size_t> factors;
+      std::vector<size_t> weights(3, 10001);
       schnek::equalFactors(numProcs, 3, factors, weights);
 
       resetContext();
@@ -1321,8 +1321,8 @@ BOOST_FIXTURE_TEST_CASE( foreach_multi_process_3d, MpiCartesianDomainDecompositi
   const int numProcs = 8;
   const int rank = 5;
 
-  std::vector<int> factors;
-  std::vector<int> weights;
+  std::vector<size_t> factors;
+  std::vector<size_t> weights;
   weights += 6, 4, 2;
   schnek::equalFactors(numProcs, 3, factors, weights);
 
@@ -1391,8 +1391,8 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_master, MpiCartesianDomainDecom
     for (int resolution = 16; resolution <= 256; resolution *= 2)
     {
       ++show_progress;
-      std::vector<int> factors;
-      std::vector<int> box(3, (globalRangeMax - globalRangeMin + 1)/resolution);
+      std::vector<size_t> factors;
+      std::vector<size_t> box(3, (globalRangeMax - globalRangeMin + 1)/resolution);
 
       schnek::equalFactors(numProcs, 3, factors, box);
 
@@ -1554,8 +1554,8 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_child, MpiCartesianDomainDecomp
       ++show_progress;
       if (rank >= numProcs) continue;
 
-      std::vector<int> factors;
-      std::vector<int> box(3, (globalRangeMax - globalRangeMin + 1)/16);
+      std::vector<size_t> factors;
+      std::vector<size_t> box(3, (globalRangeMax - globalRangeMin + 1)/16);
       schnek::equalFactors(numProcs, 3, factors, box);
 
       resetContext();

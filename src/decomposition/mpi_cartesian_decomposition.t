@@ -70,14 +70,14 @@ namespace schnek {
 
     int periodic[rank];
 
-    std::vector<int> box(rank);
+    std::vector<size_t> box(rank);
 
     for (size_t i = 0; i < rank; ++i) {
       box[i] = hi[i] - lo[i] + 1;
       periodic[i] = true;
     }
 
-    std::vector<int> eqDims;
+    std::vector<size_t> eqDims;
 
     equalFactors(ComSize, rank, eqDims, box);
 
