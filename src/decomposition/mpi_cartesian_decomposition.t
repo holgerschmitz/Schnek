@@ -12,6 +12,8 @@
 #include "../util/logger.hpp"
 #include "mpi_cartesian_decomposition.hpp"
 
+#include <type_traits>
+
 #undef SCHNEK_LOGLEVEL
 #define SCHNEK_LOGLEVEL 0
 
@@ -326,6 +328,73 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonLocalWeights(ProcRanges& /* ranges */) {}
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::ExchangeVisitor
+      : public internal::GridVisitor<
+            typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::ExchangeVisitor> {
+    public:
+      explicit ExchangeVisitor(MpiCartesianDomainDecomposition &parentIn) : parent(parentIn) {}
+
+      template<typename GridType>
+      void handle(GridType &grid, bool flag) {
+        parent.template exchangeTyped<GridType>(grid, flag);
+      }
+
+    private:
+      MpiCartesianDomainDecomposition &parent;
+  };
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<class GridType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerExchangeHandler() {
+    exchangeInitializers.emplace_back([](ExchangeVisitor &visitor) { visitor.template registerHandler<GridType>(); });
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchange(
+      const internal::pGridWrapper &wrapper,
+      bool useFieldInfo
+  ) {
+    if (exchangeInitializers.empty()) {
+      SCHNECK_FAIL("No registered grids available for exchange");
+    }
+
+  ExchangeVisitor visitor(*this);
+    for (auto &initializer : exchangeInitializers) {
+      initializer(visitor);
+    }
+
+    wrapper->accept(visitor, useFieldInfo);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename GridType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchangeTyped(GridType &grid, bool useFieldInfo) {
+    if constexpr (internal::is_field_v<GridType>) {
+      handleFieldExchange(grid, useFieldInfo);
+    } else {
+      handleGridExchange(grid, useFieldInfo);
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename GridType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleGridExchange(
+      GridType & /*grid*/,
+      bool /*useFieldInfo*/
+  ) {
+    SCHNECK_FAIL("Grid halo exchange not implemented for MPI Cartesian decomposition");
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename FieldType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleFieldExchange(
+      FieldType & /*field*/,
+      bool /*useFieldInfo*/
+  ) {
+    SCHNECK_FAIL("Field halo exchange not implemented for MPI Cartesian decomposition");
+  }
 
 #undef SCHNEK_LOGLEVEL
 #define SCHNEK_LOGLEVEL 0

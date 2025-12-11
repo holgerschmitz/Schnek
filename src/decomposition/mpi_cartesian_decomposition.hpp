@@ -14,6 +14,8 @@
 
 #ifdef SCHNEK_HAVE_MPI
 
+#include <functional>
+
 #include <mpi.h>
 
 namespace schnek {
@@ -84,6 +86,23 @@ namespace schnek {
        */
       const ProcRanges &getProcRanges();
 
+      /**
+       * Register a grid or field by passing a factory.
+       *
+       * The domain decomposition will create instances of the grid for each local domain.
+       *
+       * A grid registration is passed back for future reference to the field. The registrations
+       * are typically used in conjunction with the `getGridContext` method.
+       */
+      template<class GridType>
+      GridRegistration registerField(GridFactory<GridType> &factory) {
+        auto registration = this->registerFieldImpl(factory);
+        registerExchangeHandler<GridType>();
+        return registration;
+      }
+
+      void exchange(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
+
     private:
       typedef typename DomainDecomposition<rank, CheckingPolicy>::LimitType LimitType;
       typedef typename DomainDecomposition<rank, CheckingPolicy>::RangeType RangeType;
@@ -131,6 +150,17 @@ namespace schnek {
        * Determine the new grid layout based on the local weights
        */
       void calcGridDistributonLocalWeights(ProcRanges &ranges);
+
+    class ExchangeVisitor;
+    template<class GridType>
+    void registerExchangeHandler();
+    template<typename GridType>
+    void exchangeTyped(GridType &grid, bool useFieldInfo);
+    template<typename GridType>
+    void handleGridExchange(GridType &grid, bool useFieldInfo);
+    template<typename FieldType>
+    void handleFieldExchange(FieldType &field, bool useFieldInfo);
+    std::vector<std::function<void(ExchangeVisitor &)>> exchangeInitializers;
   };
 
 }  // namespace schnek

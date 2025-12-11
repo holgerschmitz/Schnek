@@ -296,40 +296,26 @@ namespace schnek {
       virtual int numProcs() const = 0;
 
       /**
-       * Register a grid or field by passing a factory.
-       *
-       * The domain decomposition will create instances of the grid for each local domain.
-       *
-       * A grid registration is passed back for future reference to the field. The registrations
-       * are typically used in conjunction with the `getGridContext` method.
-       */
-      template<class GridType>
-      GridRegistration registerField(GridFactory<GridType> &factory);
-
-      /**
        * Get a grid context for calling a function over all local domains
        *
        * multiple contexts can be created
        */
-      GridContext getGridContext(std::initializer_list<GridRegistration> registrations);
+    GridContext getGridContext(std::initializer_list<GridRegistration> registrations);
 
-      /**
-       * Exchange halo cells between processes.
-       *
-       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined 
-       * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
-       * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
-       */
-    //   virtual void exchange(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true) = 0;
+    /**
+     * Exchange halo cells between processes by visiting a single grid wrapper.
+     */
+    virtual void exchange(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) = 0;
 
-      /**
-       * Exchange halo cells between processes. Function overload accepting a single grid registration.
-       *
-       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined 
-       * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
-       * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
-       */
-    //   void exchange(GridRegistration registration, bool useFieldInfo = true) { exchange({registration}, useFieldInfo); }
+    /**
+     * Exchange halo cells between processes using a single registration.
+     */
+    void exchange(GridRegistration registration, bool useFieldInfo = true);
+
+    /**
+     * Exchange halo cells between processes for multiple registrations.
+     */
+    void exchange(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true);
 
     protected:
       typedef Grid<double, rank> InternalGridType;
@@ -354,6 +340,17 @@ namespace schnek {
        * This allows implementations to add a local range for iteration
        */
       void addLocalIterationRange(RangeType range);
+
+      /**
+       * Register a grid or field by passing a factory.
+       *
+       * The domain decomposition will create instances of the grid for each local domain.
+       *
+       * A grid registration is passed back for future reference to the field. The registrations
+       * are typically used in conjunction with the `getGridContext` method.
+       */
+      template<class GridType>
+      GridRegistration registerFieldImpl(GridFactory<GridType> &factory);
 
     private:
       struct LocalRangeInfo {
@@ -479,7 +476,7 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<class GridType>
-  inline GridRegistration schnek::DomainDecomposition<rank, CheckingPolicy>::registerField(
+  inline GridRegistration schnek::DomainDecomposition<rank, CheckingPolicy>::registerFieldImpl(
       GridFactory<GridType> &factory
   ) {
     using Registration = internal::GridRegistrationImpl<rank, CheckingPolicy, GridType>;
@@ -495,6 +492,28 @@ namespace schnek {
     grids[id] = std::move(gridList);
 
     return GridRegistration{id};
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void DomainDecomposition<rank, CheckingPolicy>::exchange(GridRegistration registration, bool useFieldInfo) {
+    auto gridIt = grids.find(registration.id);
+    if (gridIt == grids.end()) {
+      SCHNECK_FAIL("Unknown grid registration id: " << registration.id);
+    }
+
+    for (const auto &wrapper : gridIt->second) {
+      this->exchange(wrapper, useFieldInfo);
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void DomainDecomposition<rank, CheckingPolicy>::exchange(
+      std::initializer_list<GridRegistration> registrations,
+      bool useFieldInfo
+  ) {
+    for (const auto &registration : registrations) {
+      exchange(registration, useFieldInfo);
+    }
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>

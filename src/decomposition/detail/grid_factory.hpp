@@ -29,6 +29,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <typeinfo>
 #include <utility>
 
 #include "../../grid/array.hpp"
@@ -37,13 +38,15 @@
 #include "../../grid/grid.hpp"
 #include "../../grid/range.hpp"
 #include "../../util/unique.hpp"
+#include "grid_visitor.hpp"
 
 namespace schnek {
 
   namespace internal {
 
     struct GridWrapper {
-        virtual ~GridWrapper() = default;
+    virtual ~GridWrapper() = default;
+    virtual void accept(GridVisitorBase &visitor, bool useFieldInfo) = 0;
     };
 
     using pGridWrapper = std::shared_ptr<GridWrapper>;
@@ -51,6 +54,10 @@ namespace schnek {
     template<typename GridType>
     struct GridWrapperImpl : GridWrapper {
         explicit GridWrapperImpl(GridType gridIn) : grid(std::move(gridIn)) {}
+
+        void accept(GridVisitorBase &visitor, bool useFieldInfo) override {
+          visitor.visit(typeid(GridType), &grid, useFieldInfo);
+        }
 
         GridType grid;
     };
