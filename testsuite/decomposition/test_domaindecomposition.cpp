@@ -39,6 +39,10 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
     int getUniqueId() const override { return 0; }
     bool master() const override { return true; }
     int numProcs() const override { return 1; }
+    void exchange(const schnek::internal::pGridWrapper &wrapper, bool useFieldInfo) override {
+      (void)wrapper;
+      (void)useFieldInfo;
+    }
 
     // Expose the protected addLocalRange method for testing
     void testAddLocalRange(RangeType range, DomainType domain)
@@ -50,6 +54,11 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
     void testAddLocalIterationRange(RangeType range)
     {
       this->addLocalIterationRange(range);
+    }
+
+    template<class GridType>
+    schnek::GridRegistration registerField(schnek::GridFactory<GridType> &factory) {
+      return this->registerFieldImpl(factory);
     }
 };
 

@@ -84,18 +84,15 @@ namespace schnek {
       return this->storage.get(CheckingPolicy::check(pos, this->getLo(), this->getHi()));
     }
 
-    template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+    template<typename T, size_t rank, template<typename, size_t> class... Policies>
     template<class Operator, size_t Length>
-    SCHNEK_INLINE T& GridBase<T, rank, Policies...>::operator[](
-        const ArrayExpression<Operator, Length>& pos
-    ) {
+    SCHNEK_INLINE T& GridBase<T, rank, Policies...>::operator[](const ArrayExpression<Operator, Length>& pos) {
       return this->operator[](IndexType(pos));
     }
 
-    template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+    template<typename T, size_t rank, template<typename, size_t> class... Policies>
     template<class Operator, size_t Length>
-    SCHNEK_INLINE T
-    GridBase<T, rank, Policies...>::operator[](const ArrayExpression<Operator, Length>& pos) const {
+    SCHNEK_INLINE T GridBase<T, rank, Policies...>::operator[](const ArrayExpression<Operator, Length>& pos) const {
       return this->operator[](IndexType(pos));
     }
 
@@ -103,7 +100,10 @@ namespace schnek {
     template<typename... Indices>
     SCHNEK_INLINE T& GridBase<T, rank, Policies...>::operator()(Indices... indices) {
       static_assert(sizeof...(Indices) == rank, "GridBase::operator() expects exactly rank indices");
-      static_assert((std::is_convertible_v<Indices, ptrdiff_t> && ...), "GridBase::operator() indices must be convertible to ptrdiff_t");
+      static_assert(
+          (std::is_convertible_v<Indices, ptrdiff_t> && ...),
+          "GridBase::operator() indices must be convertible to ptrdiff_t"
+      );
 
       IndexType pos{static_cast<ptrdiff_t>(indices)...};
       return this->storage.get(CheckingPolicy::check(pos, this->getLo(), this->getHi()));
@@ -113,7 +113,10 @@ namespace schnek {
     template<typename... Indices>
     SCHNEK_INLINE T GridBase<T, rank, Policies...>::operator()(Indices... indices) const {
       static_assert(sizeof...(Indices) == rank, "GridBase::operator() expects exactly rank indices");
-      static_assert((std::is_convertible_v<Indices, ptrdiff_t> && ...), "GridBase::operator() indices must be convertible to ptrdiff_t");
+      static_assert(
+          (std::is_convertible_v<Indices, ptrdiff_t> && ...),
+          "GridBase::operator() indices must be convertible to ptrdiff_t"
+      );
 
       IndexType pos{static_cast<ptrdiff_t>(indices)...};
       return this->storage.get(CheckingPolicy::check(pos, this->getLo(), this->getHi()));
@@ -202,9 +205,8 @@ namespace schnek {
   template<typename T, size_t rank, template<typename, size_t> class... Policies>
   Grid<T, rank, Policies...>::Grid() : internal::GridBase<T, rank, Policies...>() {}
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
-  Grid<T, rank, Policies...>::Grid(const SizeType& size)
-      : internal::GridBase<T, rank, Policies...>(size) {}
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
+  Grid<T, rank, Policies...>::Grid(const SizeType& size) : internal::GridBase<T, rank, Policies...>(size) {}
 
   template<typename T, size_t rank, template<typename, size_t> class... Policies>
   Grid<T, rank, Policies...>::Grid(const IndexType& low, const IndexType& high)
@@ -216,13 +218,13 @@ namespace schnek {
   template<typename T, size_t rank, template<typename, size_t> class... Policies>
   template<typename T2, template<size_t> class ArrayCheckingPolicy>
   Grid<T, rank, Policies...>::Grid(
-    const Array<T2, rank, ArrayCheckingPolicy>& low, const Array<T2, rank, ArrayCheckingPolicy>& high
+      const Array<T2, rank, ArrayCheckingPolicy>& low, const Array<T2, rank, ArrayCheckingPolicy>& high
   )
-    : internal::GridBase<T, rank, Policies...>(low, high) {}
+      : internal::GridBase<T, rank, Policies...>(low, high) {}
 
   template<typename T, size_t rank, template<typename, size_t> class... Policies>
   template<typename T2, template<size_t> class ArrayCheckingPolicy>
   Grid<T, rank, Policies...>::Grid(const Range<T2, rank, ArrayCheckingPolicy>& range)
-    : internal::GridBase<T, rank, Policies...>(range) {}
+      : internal::GridBase<T, rank, Policies...>(range) {}
 
 }  // namespace schnek

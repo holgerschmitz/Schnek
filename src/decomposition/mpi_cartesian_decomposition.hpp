@@ -16,6 +16,9 @@
 
 #include <mpi.h>
 
+#include <functional>
+#include <vector>
+
 namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
@@ -68,12 +71,38 @@ namespace schnek {
       int numProcs() const override;
 
       /**
+       * Exchange halo cells between processes. Function overload accepting a single grid registration.
+       *
+       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined
+       * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
+       * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
+       */
+      //   void exchange(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true) override;
+
+      /**
        * Return the grid index ranges of each process coordinates in each direction
        *
        * @return An array with an entry for each dimension. For each dimension multiple ranges
        *         are stored inside a 1d Grid
        */
       const ProcRanges &getProcRanges();
+
+      /**
+       * Register a grid or field by passing a factory.
+       *
+       * The domain decomposition will create instances of the grid for each local domain.
+       *
+       * A grid registration is passed back for future reference to the field. The registrations
+       * are typically used in conjunction with the `getGridContext` method.
+       */
+      template<class GridType>
+      GridRegistration registerField(GridFactory<GridType> &factory) {
+        auto registration = this->registerFieldImpl(factory);
+        registerExchangeHandler<GridType>();
+        return registration;
+      }
+
+      void exchange(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
 
     private:
       typedef typename DomainDecomposition<rank, CheckingPolicy>::LimitType LimitType;
@@ -122,6 +151,22 @@ namespace schnek {
        * Determine the new grid layout based on the local weights
        */
       void calcGridDistributonLocalWeights(ProcRanges &ranges);
+
+      class ExchangeVisitor;
+      template<class GridType>
+      void registerExchangeHandler();
+      template<typename GridType>
+      void exchangeTyped(GridType &grid, bool useFieldInfo);
+      template<typename GridType>
+      void handleGridExchange(GridType &grid, bool useFieldInfo);
+      template<typename FieldType>
+      void handleFieldExchange(FieldType &field, bool useFieldInfo);
+      RangeType getLocalInnerRange() const;
+      template<typename GridType>
+      void exchangeWithInteriorBounds(
+          GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
+      );
+      std::vector<std::function<void(ExchangeVisitor &)>> exchangeInitializers;
   };
 
 }  // namespace schnek

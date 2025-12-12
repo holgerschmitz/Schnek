@@ -31,6 +31,21 @@ namespace schnek {
           MPI_Comm comm_old, int ndims, const int dims[], const int periods[], int reorder, MPI_Comm *comm_cart
       ) = 0;
       virtual int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int coords[]) = 0;
+      virtual int MPI_Cart_shift(MPI_Comm comm, int direction, int disp, int *rank_source, int *rank_dest) = 0;
+      virtual int MPI_Sendrecv(
+          const void *sendbuf,
+          int sendcount,
+          MPI_Datatype sendtype,
+          int dest,
+          int sendtag,
+          void *recvbuf,
+          int recvcount,
+          MPI_Datatype recvtype,
+          int source,
+          int recvtag,
+          MPI_Comm comm,
+          MPI_Status *status
+      ) = 0;
       virtual int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) = 0;
   };
 
@@ -50,6 +65,21 @@ namespace schnek {
           MPI_Comm comm_old, int ndims, const int dims[], const int periods[], int reorder, MPI_Comm *comm_cart
       );
       int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int coords[]);
+      int MPI_Cart_shift(MPI_Comm comm, int direction, int disp, int *rank_source, int *rank_dest);
+      int MPI_Sendrecv(
+          const void *sendbuf,
+          int sendcount,
+          MPI_Datatype sendtype,
+          int dest,
+          int sendtag,
+          void *recvbuf,
+          int recvcount,
+          MPI_Datatype recvtype,
+          int source,
+          int recvtag,
+          MPI_Comm comm,
+          MPI_Status *status
+      );
       int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
   };
 

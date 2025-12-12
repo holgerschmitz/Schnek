@@ -111,7 +111,13 @@ namespace schnek {
       IndexType getInnerHi() { return this->getHi() - ptrdiff_t(ghostCells); }
 
       /** Get the range the inner grid range */
-      RangeType getInnerRange() { return RangeType{this->getLo() + ptrdiff_t(ghostCells), this->getHi() - ptrdiff_t(ghostCells)}; }
+      RangeType getInnerRange() {
+        IndexType lo = this->getLo();
+        IndexType hi = this->getHi();
+        lo += ptrdiff_t(ghostCells);
+        hi -= ptrdiff_t(ghostCells);
+        return RangeType(lo, hi);
+      }
 
       /** Calculates index and offset from a position on the field
        *

@@ -220,7 +220,8 @@ namespace schnek {
   }
 
   template<typename T, size_t Rank>
-  SCHNEK_INLINE const T &SingleArrayGridFortranOrderLayout<T, Rank>::get(const IndexType &index, const SizeType &dims) const {
+  SCHNEK_INLINE const T &SingleArrayGridFortranOrderLayout<T, Rank>::get(const IndexType &index, const SizeType &dims)
+      const {
     size_t pos = index[Rank - 1];
     for (ptrdiff_t i = ptrdiff_t(Rank) - 2; i >= 0; --i) {
       pos = index[i] + dims[i] * pos;

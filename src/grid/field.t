@@ -110,10 +110,8 @@ namespace schnek {
   Field<T, rank, Policies...>::Field(const Field<T, rank, Policies...> &field)
       : Grid<T, rank, Policies...>(field), domain(field.domain), stagger(field.stagger), ghostCells(field.ghostCells) {}
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
-  inline void Field<T, rank, Policies...>::positionToIndex(
-      size_t dim, double pos, ptrdiff_t &index, double &offset
-  ) {
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
+  inline void Field<T, rank, Policies...>::positionToIndex(size_t dim, double pos, ptrdiff_t &index, double &offset) {
     ptrdiff_t lo = this->getLo()[dim];
     ptrdiff_t hi = this->getHi()[dim];
     double xnorm =
@@ -204,7 +202,7 @@ namespace schnek {
     this->Grid<T, rank, Policies...>::resize(low, high);
   }
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   inline ptrdiff_t Field<T, rank, Policies...>::positionToIndex(size_t dim, double pos) {
     ptrdiff_t lo = this->getLo()[dim];
     ptrdiff_t hi = this->getHi()[dim];
@@ -214,7 +212,7 @@ namespace schnek {
     ));
   }
 
-  template<typename T, size_t rank, template<typename, size_t> class ...Policies>
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   inline double Field<T, rank, Policies...>::indexToPosition(size_t dim, ptrdiff_t index) {
     ptrdiff_t lo = this->getLo()[dim];
     ptrdiff_t hi = this->getHi()[dim];

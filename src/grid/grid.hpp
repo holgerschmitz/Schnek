@@ -109,13 +109,13 @@ namespace schnek {
 
         /// Get the dimensions of the grid `dims = high - low + 1`
         SCHNEK_INLINE const SizeType getDims() const { return this->storage.getDims(); }
-  
+
         /// Get k-th component of the lowest coordinate in the grid (inclusive)
         SCHNEK_INLINE ptrdiff_t getLo(size_t k) const { return this->storage.getLo(k); }
-  
+
         /// Get k-th component of the highest coordinate in the grid (inclusive)
         SCHNEK_INLINE ptrdiff_t getHi(size_t k) const { return this->storage.getHi(k); }
-  
+
         /// Get k-th component of the dimensions of the grid `dims = high - low + 1`
         SCHNEK_INLINE ptrdiff_t getDims(size_t k) const { return this->storage.getDims(k); }
 
@@ -279,8 +279,8 @@ namespace schnek {
        */
       Grid(const IndexType& low, const IndexType& high);
 
-  template<typename T2, template<size_t> class ArrayCheckingPolicy>
-  Grid(const Array<T2, rank, ArrayCheckingPolicy>& low, const Array<T2, rank, ArrayCheckingPolicy>& high);
+      template<typename T2, template<size_t> class ArrayCheckingPolicy>
+      Grid(const Array<T2, rank, ArrayCheckingPolicy>& low, const Array<T2, rank, ArrayCheckingPolicy>& high);
 
       /** constructor, which builds Grid with range given by range
        *
@@ -296,8 +296,8 @@ namespace schnek {
        */
       Grid(const RangeType& range);
 
-  template<typename T2, template<size_t> class ArrayCheckingPolicy>
-  Grid(const Range<T2, rank, ArrayCheckingPolicy>& range);
+      template<typename T2, template<size_t> class ArrayCheckingPolicy>
+      Grid(const Range<T2, rank, ArrayCheckingPolicy>& range);
 
       /** assign another grid */
       GridType& operator=(const T& val) {
