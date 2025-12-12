@@ -14,10 +14,10 @@
 
 #ifdef SCHNEK_HAVE_MPI
 
+#include <mpi.h>
+
 #include <functional>
 #include <vector>
-
-#include <mpi.h>
 
 namespace schnek {
 
@@ -73,11 +73,11 @@ namespace schnek {
       /**
        * Exchange halo cells between processes. Function overload accepting a single grid registration.
        *
-       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined 
+       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined
        * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
        * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
        */
-    //   void exchange(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true) override;
+      //   void exchange(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true) override;
 
       /**
        * Return the grid index ranges of each process coordinates in each direction
@@ -152,23 +152,21 @@ namespace schnek {
        */
       void calcGridDistributonLocalWeights(ProcRanges &ranges);
 
-    class ExchangeVisitor;
-    template<class GridType>
-    void registerExchangeHandler();
-    template<typename GridType>
-    void exchangeTyped(GridType &grid, bool useFieldInfo);
-    template<typename GridType>
-    void handleGridExchange(GridType &grid, bool useFieldInfo);
-    template<typename FieldType>
-    void handleFieldExchange(FieldType &field, bool useFieldInfo);
-  RangeType getLocalInnerRange() const;
-  template<typename GridType>
-  void exchangeWithInteriorBounds(
-    GridType &grid,
-    const typename GridType::IndexType &innerLo,
-    const typename GridType::IndexType &innerHi
-  );
-    std::vector<std::function<void(ExchangeVisitor &)>> exchangeInitializers;
+      class ExchangeVisitor;
+      template<class GridType>
+      void registerExchangeHandler();
+      template<typename GridType>
+      void exchangeTyped(GridType &grid, bool useFieldInfo);
+      template<typename GridType>
+      void handleGridExchange(GridType &grid, bool useFieldInfo);
+      template<typename FieldType>
+      void handleFieldExchange(FieldType &field, bool useFieldInfo);
+      RangeType getLocalInnerRange() const;
+      template<typename GridType>
+      void exchangeWithInteriorBounds(
+          GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
+      );
+      std::vector<std::function<void(ExchangeVisitor &)>> exchangeInitializers;
   };
 
 }  // namespace schnek

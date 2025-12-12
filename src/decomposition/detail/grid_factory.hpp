@@ -45,8 +45,8 @@ namespace schnek {
   namespace internal {
 
     struct GridWrapper {
-    virtual ~GridWrapper() = default;
-    virtual void accept(GridVisitorBase &visitor, bool useFieldInfo) = 0;
+        virtual ~GridWrapper() = default;
+        virtual void accept(GridVisitorBase &visitor, bool useFieldInfo) = 0;
     };
 
     using pGridWrapper = std::shared_ptr<GridWrapper>;

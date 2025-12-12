@@ -63,6 +63,7 @@ namespace schnek {
 
       /// The dimensions of the grid `dims = high - low + 1`
       Array<size_t, rank> dims;
+
     private:
       using PolicyList = generic::TypeList<Policies<T, rank>...>;
       using AllocationPolicy = typename PolicyList::template getWithDefault<
@@ -191,10 +192,9 @@ namespace schnek {
     this->allocation.onUpdate([this](const RangeType &range) { updateSize(range); });
   }
 
-  template<typename T, size_t Rank, template<typename, size_t> class ...Policies>
-  SingleArrayGridStorage<T, Rank, Policies...>::SingleArrayGridStorage(
-      const IndexType &lo, const IndexType &hi
-  ) : size{0}, range{IndexType{0}, IndexType{0}}, dims{SizeType{0}} {
+  template<typename T, size_t Rank, template<typename, size_t> class... Policies>
+  SingleArrayGridStorage<T, Rank, Policies...>::SingleArrayGridStorage(const IndexType &lo, const IndexType &hi)
+      : size{0}, range{IndexType{0}, IndexType{0}}, dims{SizeType{0}} {
     this->allocation.onUpdate([this](const RangeType &range) { updateSize(range); });
     resize(lo, hi);
   }

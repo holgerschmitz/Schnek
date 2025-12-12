@@ -104,20 +104,20 @@ namespace schnek {
       /** copy constructor */
       Field(const FieldType &);
 
-            /** Get the lo of the inner grid range */
-            IndexType getInnerLo() { return this->getLo() + ptrdiff_t(ghostCells); }
+      /** Get the lo of the inner grid range */
+      IndexType getInnerLo() { return this->getLo() + ptrdiff_t(ghostCells); }
 
-            /** Get the hi of the inner grid range */
-            IndexType getInnerHi() { return this->getHi() - ptrdiff_t(ghostCells); }
+      /** Get the hi of the inner grid range */
+      IndexType getInnerHi() { return this->getHi() - ptrdiff_t(ghostCells); }
 
-            /** Get the range the inner grid range */
-            RangeType getInnerRange() {
-                IndexType lo = this->getLo();
-                IndexType hi = this->getHi();
-                lo += ptrdiff_t(ghostCells);
-                hi -= ptrdiff_t(ghostCells);
-                return RangeType(lo, hi);
-            }
+      /** Get the range the inner grid range */
+      RangeType getInnerRange() {
+        IndexType lo = this->getLo();
+        IndexType hi = this->getHi();
+        lo += ptrdiff_t(ghostCells);
+        hi -= ptrdiff_t(ghostCells);
+        return RangeType(lo, hi);
+      }
 
       /** Calculates index and offset from a position on the field
        *

@@ -5,16 +5,16 @@
  *  Author: Holger Schmitz (holger@notjustphysics.com)
  */
 
+#include <limits>
+#include <optional>
+#include <type_traits>
+
 #include "../diagnostic/diagnostic.hpp"
 #include "../util/exceptions.hpp"
 #include "../util/factor.hpp"
 #include "../util/interpolate1d.hpp"
 #include "../util/logger.hpp"
 #include "mpi_cartesian_decomposition.hpp"
-
-#include <limits>
-#include <optional>
-#include <type_traits>
 
 #undef SCHNEK_LOGLEVEL
 #define SCHNEK_LOGLEVEL 0
@@ -120,7 +120,7 @@ namespace schnek {
     int myCoordRaw[rank];
 
     for (size_t i = 0; i < rank; ++i) {
-        dimsRaw[i] = eqDims[i];
+      dimsRaw[i] = eqDims[i];
     }
 
     errorCode = this->mpi.MPI_Cart_create(this->mpi.getCommWorld(), rank, dimsRaw, periodic, true, &comm);
@@ -214,7 +214,7 @@ namespace schnek {
    */
   template<template<size_t> class CheckingPolicy>
   void sumGlobalWeights(
-    const Grid<double, 1> &globalWeights,
+      const Grid<double, 1> &globalWeights,
       typename DomainDecomposition<1, CheckingPolicy>::LimitType &lo,
       typename DomainDecomposition<1, CheckingPolicy>::LimitType &hi,
       size_t d,
@@ -239,7 +239,7 @@ namespace schnek {
    */
   template<size_t rank, template<size_t> class CheckingPolicy>
   void sumGlobalWeights(
-    const Grid<double, rank> &globalWeights,
+      const Grid<double, rank> &globalWeights,
       typename DomainDecomposition<rank, CheckingPolicy>::LimitType &lo,
       typename DomainDecomposition<rank, CheckingPolicy>::LimitType &hi,
       size_t d,
@@ -360,12 +360,12 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonLocalWeights(ProcRanges& /* ranges */) {}
+  void
+  MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonLocalWeights(ProcRanges & /* ranges */) {}
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::ExchangeVisitor
-      : public internal::GridVisitor<
-            typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::ExchangeVisitor> {
+      : public internal::GridVisitor<typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::ExchangeVisitor> {
     public:
       explicit ExchangeVisitor(MpiCartesianDomainDecomposition &parentIn) : parent(parentIn) {}
 
@@ -386,14 +386,13 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchange(
-      const internal::pGridWrapper &wrapper,
-      bool useFieldInfo
+      const internal::pGridWrapper &wrapper, bool useFieldInfo
   ) {
     if (exchangeInitializers.empty()) {
       SCHNECK_FAIL("No registered grids available for exchange");
     }
 
-  ExchangeVisitor visitor(*this);
+    ExchangeVisitor visitor(*this);
     for (auto &initializer : exchangeInitializers) {
       initializer(visitor);
     }
@@ -417,7 +416,7 @@ namespace schnek {
     typename RangeType::LimitType lo = this->globalRange.getLo();
     typename RangeType::LimitType hi = this->globalRange.getHi();
     for (size_t d = 0; d < rank; ++d) {
-  const auto dimRange = procRanges[d](myCoord[d]);
+      const auto dimRange = procRanges[d](myCoord[d]);
       lo[d] = dimRange.getLo()[0];
       hi[d] = dimRange.getHi()[0];
     }
@@ -426,7 +425,8 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleGridExchange(GridType &grid, bool /*useFieldInfo*/) {
+  void
+  MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleGridExchange(GridType &grid, bool /*useFieldInfo*/) {
     const auto localRange = getLocalInnerRange();
     typename GridType::IndexType innerLo(localRange.getLo());
     typename GridType::IndexType innerHi(localRange.getHi());
@@ -435,10 +435,7 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename FieldType>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleFieldExchange(
-      FieldType &field,
-      bool useFieldInfo
-  ) {
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleFieldExchange(FieldType &field, bool useFieldInfo) {
     typename FieldType::IndexType innerLo;
     typename FieldType::IndexType innerHi;
     if (useFieldInfo) {
@@ -456,9 +453,7 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchangeWithInteriorBounds(
-      GridType &grid,
-      const typename GridType::IndexType &innerLo,
-      const typename GridType::IndexType &innerHi
+      GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
   ) {
     using IndexType = typename GridType::IndexType;
     using RangeTypeLocal = typename GridType::RangeType;
@@ -467,9 +462,7 @@ namespace schnek {
     const IndexType gridLo = grid.getLo();
     const IndexType gridHi = grid.getHi();
 
-    auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) {
-      return RangeTypeLocal(loIdx, hiIdx);
-    };
+    auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
 
     auto rangeVolume = [](const RangeTypeLocal &range) -> size_t {
       size_t volume = 1;
@@ -511,7 +504,7 @@ namespace schnek {
     for (size_t dim = 0; dim < rank; ++dim) {
       int prevRank = MPI_PROC_NULL;
       int nextRank = MPI_PROC_NULL;
-  this->mpi.MPI_Cart_shift(comm, static_cast<int>(dim), 1, &prevRank, &nextRank);
+      this->mpi.MPI_Cart_shift(comm, static_cast<int>(dim), 1, &prevRank, &nextRank);
 
       ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
       ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
@@ -559,18 +552,9 @@ namespace schnek {
         packRange(*hiSourceRange, sendLowerBuffer);
       }
       std::vector<ValueType> recvLowerBuffer(recvLowerCount);
-    this->mpi.MPI_Sendrecv(
-          sendLowerCount > 0 ? sendLowerBuffer.data() : nullptr,
-          toIntCount(sendLowerCount),
-          mpiType,
-          nextRank,
-          0,
-          recvLowerCount > 0 ? recvLowerBuffer.data() : nullptr,
-          toIntCount(recvLowerCount),
-          mpiType,
-          prevRank,
-          0,
-          comm,
+      this->mpi.MPI_Sendrecv(
+          sendLowerCount > 0 ? sendLowerBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType, nextRank, 0,
+          recvLowerCount > 0 ? recvLowerBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType, prevRank, 0, comm,
           MPI_STATUS_IGNORE
       );
       if (loGhostRange && recvLowerCount > 0) {
@@ -585,18 +569,9 @@ namespace schnek {
         packRange(*loSourceRange, sendUpperBuffer);
       }
       std::vector<ValueType> recvUpperBuffer(recvUpperCount);
-    this->mpi.MPI_Sendrecv(
-          sendUpperCount > 0 ? sendUpperBuffer.data() : nullptr,
-          toIntCount(sendUpperCount),
-          mpiType,
-          prevRank,
-          0,
-          recvUpperCount > 0 ? recvUpperBuffer.data() : nullptr,
-          toIntCount(recvUpperCount),
-      mpiType,
-          nextRank,
-          0,
-          comm,
+      this->mpi.MPI_Sendrecv(
+          sendUpperCount > 0 ? sendUpperBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType, prevRank, 0,
+          recvUpperCount > 0 ? recvUpperBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType, nextRank, 0, comm,
           MPI_STATUS_IGNORE
       );
       if (hiGhostRange && recvUpperCount > 0) {

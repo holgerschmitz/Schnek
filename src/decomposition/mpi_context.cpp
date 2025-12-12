@@ -49,7 +49,9 @@ int schnek::MpiContextImpl::MPI_Sendrecv(
     MPI_Comm comm,
     MPI_Status* status
 ) {
-  return MPI_Sendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf, recvcount, recvtype, source, recvtag, comm, status);
+  return MPI_Sendrecv(
+      sendbuf, sendcount, sendtype, dest, sendtag, recvbuf, recvcount, recvtype, source, recvtag, comm, status
+  );
 }
 
 int schnek::MpiContextImpl::MPI_Bcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {

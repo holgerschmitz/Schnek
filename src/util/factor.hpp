@@ -27,12 +27,14 @@
 #ifndef SCHNEK_FACTOR_HPP_
 #define SCHNEK_FACTOR_HPP_
 
-#include <vector>
 #include <cstddef>
+#include <vector>
 
 namespace schnek {
 
-  void equalFactors(std::size_t number, size_t nfact, std::vector<std::size_t> &factors, std::vector<std::size_t> &weights);
+  void equalFactors(
+      std::size_t number, size_t nfact, std::vector<std::size_t> &factors, std::vector<std::size_t> &weights
+  );
 
 }  // namespace schnek
 

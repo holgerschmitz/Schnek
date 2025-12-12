@@ -302,28 +302,28 @@ namespace schnek {
        */
       GridContext getGridContext(std::initializer_list<GridRegistration> registrations);
 
-  /**
-   * Exchange halo cells between processes by visiting a single grid wrapper.
-   *
-   * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined
-   * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
-   * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
-   */
-  virtual void exchange(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) = 0;
-  
-  /**
-   * Exchange halo cells between processes using a single registration.
-   *
-   * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined
-   * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
-   * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
-   */
-  void exchange(GridRegistration registration, bool useFieldInfo = true);
-  
+      /**
+       * Exchange halo cells between processes by visiting a single grid wrapper.
+       *
+       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined
+       * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
+       * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
+       */
+      virtual void exchange(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) = 0;
+
+      /**
+       * Exchange halo cells between processes using a single registration.
+       *
+       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined
+       * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
+       * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
+       */
+      void exchange(GridRegistration registration, bool useFieldInfo = true);
+
       /**
        * Exchange halo cells between processes for multiple registrations.
        *
-       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined 
+       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined
        * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
        * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
        */
@@ -520,8 +520,7 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void DomainDecomposition<rank, CheckingPolicy>::exchange(
-      std::initializer_list<GridRegistration> registrations,
-      bool useFieldInfo
+      std::initializer_list<GridRegistration> registrations, bool useFieldInfo
   ) {
     for (const auto &registration : registrations) {
       exchange(registration, useFieldInfo);
