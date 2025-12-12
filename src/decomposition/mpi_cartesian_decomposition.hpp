@@ -15,6 +15,7 @@
 #ifdef SCHNEK_HAVE_MPI
 
 #include <functional>
+#include <vector>
 
 #include <mpi.h>
 
@@ -160,6 +161,13 @@ namespace schnek {
     void handleGridExchange(GridType &grid, bool useFieldInfo);
     template<typename FieldType>
     void handleFieldExchange(FieldType &field, bool useFieldInfo);
+  RangeType getLocalInnerRange() const;
+  template<typename GridType>
+  void exchangeWithInteriorBounds(
+    GridType &grid,
+    const typename GridType::IndexType &innerLo,
+    const typename GridType::IndexType &innerHi
+  );
     std::vector<std::function<void(ExchangeVisitor &)>> exchangeInitializers;
   };
 
