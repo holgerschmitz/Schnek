@@ -37,12 +37,16 @@ struct MpiCartesianDomainDecompositionTestFixture
       context.args_MPI_Cart_create.clear();
       context.args_MPI_Cart_coords.clear();
       context.args_MPI_Bcast.clear();
+      context.args_MPI_Cart_shift.clear();
+      context.args_MPI_Sendrecv.clear();
 
       context.ret_MPI_Comm_size.clear();
       context.ret_MPI_Comm_rank.clear();
       context.ret_MPI_Cart_create.clear();
       context.ret_MPI_Cart_coords.clear();
       context.ret_MPI_Bcast.clear();
+      context.ret_MPI_Cart_shift.clear();
+      context.ret_MPI_Sendrecv.clear();
     }
 };
 

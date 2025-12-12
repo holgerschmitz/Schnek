@@ -511,7 +511,7 @@ namespace schnek {
     for (size_t dim = 0; dim < rank; ++dim) {
       int prevRank = MPI_PROC_NULL;
       int nextRank = MPI_PROC_NULL;
-      MPI_Cart_shift(comm, static_cast<int>(dim), 1, &prevRank, &nextRank);
+  this->mpi.MPI_Cart_shift(comm, static_cast<int>(dim), 1, &prevRank, &nextRank);
 
       ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
       ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
@@ -559,7 +559,7 @@ namespace schnek {
         packRange(*hiSourceRange, sendLowerBuffer);
       }
       std::vector<ValueType> recvLowerBuffer(recvLowerCount);
-      MPI_Sendrecv(
+    this->mpi.MPI_Sendrecv(
           sendLowerCount > 0 ? sendLowerBuffer.data() : nullptr,
           toIntCount(sendLowerCount),
           mpiType,
@@ -567,7 +567,7 @@ namespace schnek {
           0,
           recvLowerCount > 0 ? recvLowerBuffer.data() : nullptr,
           toIntCount(recvLowerCount),
-      mpiType,
+          mpiType,
           prevRank,
           0,
           comm,
@@ -585,7 +585,7 @@ namespace schnek {
         packRange(*loSourceRange, sendUpperBuffer);
       }
       std::vector<ValueType> recvUpperBuffer(recvUpperCount);
-      MPI_Sendrecv(
+    this->mpi.MPI_Sendrecv(
           sendUpperCount > 0 ? sendUpperBuffer.data() : nullptr,
           toIntCount(sendUpperCount),
           mpiType,

@@ -9,6 +9,36 @@
 
 #include <algorithm>
 #include <cstring>
+#include <stdexcept>
+
+namespace {
+  size_t datatypeSize(MPI_Datatype type) {
+    if (type == MPI_CHAR) {
+      return sizeof(char);
+    } else if (type == MPI_SHORT) {
+      return sizeof(short);
+    } else if (type == MPI_INT) {
+      return sizeof(int);
+    } else if (type == MPI_LONG) {
+      return sizeof(long);
+    } else if (type == MPI_UNSIGNED_CHAR) {
+      return sizeof(unsigned char);
+    } else if (type == MPI_UNSIGNED_SHORT) {
+      return sizeof(unsigned short);
+    } else if (type == MPI_UNSIGNED) {
+      return sizeof(unsigned int);
+    } else if (type == MPI_UNSIGNED_LONG) {
+      return sizeof(unsigned long);
+    } else if (type == MPI_FLOAT) {
+      return sizeof(float);
+    } else if (type == MPI_DOUBLE) {
+      return sizeof(double);
+    } else if (type == MPI_LONG_DOUBLE) {
+      return sizeof(long double);
+    }
+    throw std::runtime_error("Unsupported MPI datatype in test context");
+  }
+}
 
 MPI_Comm MpiTestContextImpl::getCommWorld()
 {
@@ -71,6 +101,74 @@ int MpiTestContextImpl::MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, in
   }
 
   return retVal.get<0>();
+}
+
+int MpiTestContextImpl::MPI_Cart_shift(MPI_Comm comm, int direction, int disp, int* rank_source, int* rank_dest)
+{
+  size_t argsCount = args_MPI_Cart_shift.size();
+  args_MPI_Cart_shift.push_back(boost::make_tuple(comm, direction, disp));
+
+  if (ret_MPI_Cart_shift.empty()) {
+    if (rank_source) {
+      *rank_source = MPI_PROC_NULL;
+    }
+    if (rank_dest) {
+      *rank_dest = MPI_PROC_NULL;
+    }
+    return MPI_SUCCESS;
+  }
+
+  auto retVal = ret_MPI_Cart_shift[std::min(argsCount, ret_MPI_Cart_shift.size() - 1)];
+  if (rank_source) {
+    *rank_source = retVal.get<1>();
+  }
+  if (rank_dest) {
+    *rank_dest = retVal.get<2>();
+  }
+  return retVal.get<0>();
+}
+
+int MpiTestContextImpl::MPI_Sendrecv(
+    const void* sendbuf,
+    int sendcount,
+    MPI_Datatype sendtype,
+    int dest,
+    int sendtag,
+    void* recvbuf,
+    int recvcount,
+    MPI_Datatype recvtype,
+    int source,
+    int recvtag,
+    MPI_Comm comm,
+    MPI_Status* status
+)
+{
+  size_t argsCount = args_MPI_Sendrecv.size();
+  args_MPI_Sendrecv.push_back({sendbuf != nullptr, sendcount, sendtype, dest, sendtag, recvbuf != nullptr, recvcount, recvtype, source, recvtag, comm});
+
+  if (!ret_MPI_Sendrecv.empty()) {
+    auto retVal = ret_MPI_Sendrecv[std::min(argsCount, ret_MPI_Sendrecv.size() - 1)];
+    const auto& payload = retVal.get<1>();
+    if (recvbuf != nullptr && !payload.empty()) {
+      std::memcpy(recvbuf, payload.data(), payload.size());
+    }
+    if (status != nullptr && status != MPI_STATUS_IGNORE) {
+      std::memset(status, 0, sizeof(MPI_Status));
+    }
+    return retVal.get<0>();
+  }
+
+  if (sendbuf != nullptr && recvbuf != nullptr && sendcount > 0 && recvcount > 0 && sendtype == recvtype) {
+    size_t sendBytes = datatypeSize(sendtype) * static_cast<size_t>(sendcount);
+    size_t recvBytes = datatypeSize(recvtype) * static_cast<size_t>(recvcount);
+    std::memcpy(recvbuf, sendbuf, std::min(sendBytes, recvBytes));
+  }
+
+  if (status != nullptr && status != MPI_STATUS_IGNORE) {
+    std::memset(status, 0, sizeof(MPI_Status));
+  }
+
+  return MPI_SUCCESS;
 }
 
 int MpiTestContextImpl::MPI_Bcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)

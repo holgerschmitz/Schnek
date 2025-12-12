@@ -31,6 +31,27 @@ int schnek::MpiContextImpl::MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims
   return MPI_Cart_coords(comm, rank, maxdims, coords);
 }
 
+int schnek::MpiContextImpl::MPI_Cart_shift(MPI_Comm comm, int direction, int disp, int* rank_source, int* rank_dest) {
+  return MPI_Cart_shift(comm, direction, disp, rank_source, rank_dest);
+}
+
+int schnek::MpiContextImpl::MPI_Sendrecv(
+    const void* sendbuf,
+    int sendcount,
+    MPI_Datatype sendtype,
+    int dest,
+    int sendtag,
+    void* recvbuf,
+    int recvcount,
+    MPI_Datatype recvtype,
+    int source,
+    int recvtag,
+    MPI_Comm comm,
+    MPI_Status* status
+) {
+  return MPI_Sendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf, recvcount, recvtype, source, recvtag, comm, status);
+}
+
 int schnek::MpiContextImpl::MPI_Bcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
   return MPI_Bcast(buffer, count, datatype, root, comm);
 }
