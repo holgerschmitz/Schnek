@@ -9,6 +9,7 @@
 #include "../utility.hpp"
 #include <grid/range.hpp>
 #include <grid/grid.hpp>
+#include <grid/field.hpp>
 #include <util/factor.hpp>
 
 #include <decomposition/mpi_cartesian_decomposition.hpp>
@@ -22,6 +23,135 @@ using namespace boost::assign; // bring 'operator+=()' into scope
 
 #include <sstream>
 #include <cstddef>
+#include <array>
+#include <cstring>
+
+namespace {
+
+  template<typename RangeType>
+  size_t rangeVolume(const RangeType &range) {
+    constexpr size_t dims = RangeType::LimitType::length;
+    size_t volume = 1;
+    for (size_t dim = 0; dim < dims; ++dim) {
+      ptrdiff_t extent = range.getHi()[dim] - range.getLo()[dim] + 1;
+      if (extent <= 0) {
+        return 0;
+      }
+      volume *= static_cast<size_t>(extent);
+    }
+    return volume;
+  }
+
+  template<typename T>
+  std::vector<char> toByteVector(const std::vector<T> &values) {
+    std::vector<char> bytes(values.size() * sizeof(T));
+    if (!values.empty()) {
+      std::memcpy(bytes.data(), values.data(), bytes.size());
+    }
+    return bytes;
+  }
+
+  template<typename FieldType>
+  struct GhostSliceExpectation {
+    using RangeType = typename FieldType::RangeType;
+    RangeType range;
+    std::vector<typename FieldType::value_type> values;
+  };
+
+  template<typename FieldType>
+  struct GhostExchangeSetupResult {
+      std::vector<boost::tuple<int, std::vector<char>>> responses;
+      std::vector<GhostSliceExpectation<FieldType>> expectations;
+  };
+
+  template<typename FieldType>
+  GhostExchangeSetupResult<FieldType> buildGhostExchangeSetup(FieldType &field) {
+    using RangeType = typename FieldType::RangeType;
+    using IndexType = typename FieldType::IndexType;
+
+    GhostExchangeSetupResult<FieldType> result;
+
+    IndexType gridLo = field.getLo();
+    IndexType gridHi = field.getHi();
+  IndexType innerLo = field.getInnerLo();
+  IndexType innerHi = field.getInnerHi();
+
+    constexpr size_t dims = RangeType::LimitType::length;
+
+    auto makeRange = [](const IndexType &lo, const IndexType &hi) { return RangeType(lo, hi); };
+
+    double seed = 1.0;
+    auto makeValues = [&](const RangeType &range) {
+      RangeType rangeCopy(range);
+      std::vector<typename FieldType::value_type> values;
+      values.reserve(rangeVolume(rangeCopy));
+      for (auto it = rangeCopy.begin(); it != rangeCopy.end(); ++it) {
+        values.push_back(static_cast<typename FieldType::value_type>(seed));
+        seed += 1.0;
+      }
+      return values;
+    };
+
+    for (size_t dim = 0; dim < dims; ++dim) {
+      ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
+      if (lowerHalo > 0) {
+        IndexType lo = gridLo;
+        IndexType hi = gridHi;
+        hi[dim] = gridLo[dim] + lowerHalo - 1;
+        RangeType ghostRange = makeRange(lo, hi);
+        auto values = makeValues(ghostRange);
+        result.responses.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(values)));
+        result.expectations.push_back({ghostRange, values});
+      }
+
+      ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
+      if (upperHalo > 0) {
+        IndexType lo = gridLo;
+        IndexType hi = gridHi;
+        lo[dim] = gridHi[dim] - upperHalo + 1;
+        RangeType ghostRange = makeRange(lo, hi);
+        auto values = makeValues(ghostRange);
+        result.responses.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(values)));
+        result.expectations.push_back({ghostRange, values});
+      }
+    }
+
+    return result;
+  }
+
+  template<typename FieldType>
+  void fillField(FieldType &field, typename FieldType::value_type value) {
+    typename FieldType::RangeType range(field.getLo(), field.getHi());
+    for (auto it = range.begin(); it != range.end(); ++it) {
+      field[*it] = value;
+    }
+  }
+
+  template<typename FieldType>
+  void applyGhostExpectations(
+      FieldType &field,
+      const GhostExchangeSetupResult<FieldType> &ghostSetup
+  ) {
+    for (const auto &expectation : ghostSetup.expectations) {
+      size_t idx = 0;
+      auto rangeCopy = expectation.range;
+      for (auto it = rangeCopy.begin(); it != rangeCopy.end(); ++it) {
+        field[*it] = expectation.values[idx++];
+      }
+    }
+  }
+
+  template<size_t Rank>
+  void exchangeRegistration(
+      schnek::MpiCartesianDomainDecomposition<Rank> &decomposition,
+      const schnek::GridRegistration &registration,
+      bool useFieldInfo = true
+  ) {
+    auto &base = static_cast<schnek::DomainDecomposition<Rank> &>(decomposition);
+    base.exchange(registration, useFieldInfo);
+  }
+
+}  // namespace
 
 //
 // run only these tests:
@@ -277,6 +407,78 @@ BOOST_FIXTURE_TEST_CASE( foreach_multi_process_1d, MpiCartesianDomainDecompositi
 
   BOOST_CHECK_EQUAL(callCount, 1);
 }
+
+  BOOST_FIXTURE_TEST_CASE( ghost_exchange_updates_ghost_cells_1d, MpiCartesianDomainDecompositionTestFixture )
+  {
+    MPI_Comm testComm = (MPI_Comm)(void*)123;
+    std::vector<int> coords(1, 0);
+    context.commWorld = (MPI_Comm)(void*)574;
+    context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+    context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+    context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+    context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+
+    using FieldType = schnek::Field<double, 1>;
+    using RangeType = schnek::Range<ptrdiff_t, 1>;
+    using DomainType = schnek::Range<double, 1>;
+    using StaggerType = typename FieldType::StaggerType;
+
+    RangeType globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(3));
+    DomainType globalDomain(schnek::Array<double,1>(0.0), schnek::Array<double,1>(1.0));
+
+    schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+    decomposition.setGlobalRange(globalRange);
+    decomposition.setGlobalDomain(globalDomain);
+    decomposition.init();
+
+    StaggerType noStagger(false);
+    constexpr int ghostCells = 1;
+    schnek::GridFactory<FieldType> factory(noStagger, ghostCells);
+    schnek::GridRegistration registration = decomposition.registerField(factory);
+
+    auto gridContext = decomposition.getGridContext({registration});
+    FieldType *field = nullptr;
+    gridContext.forEach([&](const RangeType &, FieldType &localField) { field = &localField; });
+    BOOST_REQUIRE(field != nullptr);
+
+  fillField(*field, -42.0);
+
+  FieldType expectedField(*field);
+  auto ghostSetup = buildGhostExchangeSetup(*field);
+  applyGhostExpectations(expectedField, ghostSetup);
+  context.ret_MPI_Sendrecv = ghostSetup.responses;
+
+    std::array<int, 1> prevRanks{{7}};
+    std::array<int, 1> nextRanks{{8}};
+    for (size_t dim = 0; dim < prevRanks.size(); ++dim) {
+      context.ret_MPI_Cart_shift.push_back(boost::make_tuple(MPI_SUCCESS, prevRanks[dim], nextRanks[dim]));
+    }
+
+    exchangeRegistration<1>(decomposition, registration, false);
+
+    BOOST_CHECK_EQUAL(context.args_MPI_Cart_shift.size(), prevRanks.size());
+    BOOST_CHECK_EQUAL(context.args_MPI_Cart_shift[0].get<1>(), 0);
+    BOOST_CHECK_EQUAL(context.args_MPI_Cart_shift[0].get<2>(), 1);
+
+    BOOST_REQUIRE_EQUAL(context.args_MPI_Sendrecv.size(), ghostSetup.expectations.size());
+    for (size_t i = 0; i < ghostSetup.expectations.size(); ++i) {
+      const auto &call = context.args_MPI_Sendrecv[i];
+      BOOST_CHECK(call.recvBufferPresent);
+      BOOST_CHECK_EQUAL(call.recvCount, static_cast<int>(ghostSetup.expectations[i].values.size()));
+    }
+
+    const auto &lowerCall = context.args_MPI_Sendrecv[0];
+    BOOST_CHECK_EQUAL(lowerCall.dest, nextRanks[0]);
+    BOOST_CHECK_EQUAL(lowerCall.source, prevRanks[0]);
+    const auto &upperCall = context.args_MPI_Sendrecv[1];
+    BOOST_CHECK_EQUAL(upperCall.dest, prevRanks[0]);
+    BOOST_CHECK_EQUAL(upperCall.source, nextRanks[0]);
+
+    typename FieldType::RangeType verificationRange(field->getLo(), field->getHi());
+    for (auto it = verificationRange.begin(); it != verificationRange.end(); ++it) {
+      BOOST_CHECK_EQUAL((*field)[*it], expectedField[*it]);
+    }
+  }
 
 BOOST_FIXTURE_TEST_CASE( single_process_1d_global, MpiCartesianDomainDecompositionTestFixture )
 {
@@ -674,6 +876,83 @@ BOOST_FIXTURE_TEST_CASE( foreach_single_process_2d, MpiCartesianDomainDecomposit
 
   BOOST_CHECK_EQUAL(callCount, 1);
 }
+
+  BOOST_FIXTURE_TEST_CASE( ghost_exchange_updates_ghost_cells_2d, MpiCartesianDomainDecompositionTestFixture )
+  {
+    MPI_Comm testComm = (MPI_Comm)(void*)123;
+    std::vector<int> coords(2, 0);
+    context.commWorld = (MPI_Comm)(void*)574;
+    context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+    context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+    context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+    context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+
+    using FieldType = schnek::Field<double, 2>;
+    using RangeType = schnek::Range<ptrdiff_t, 2>;
+    using DomainType = schnek::Range<double, 2>;
+    using StaggerType = typename FieldType::StaggerType;
+
+    RangeType globalRange(schnek::Array<ptrdiff_t,2>(0, 0), schnek::Array<ptrdiff_t,2>(3, 2));
+    DomainType globalDomain(schnek::Array<double,2>(0.0, 0.0), schnek::Array<double,2>(1.0, 1.0));
+
+    schnek::MpiCartesianDomainDecomposition<2> decomposition(context);
+    decomposition.setGlobalRange(globalRange);
+    decomposition.setGlobalDomain(globalDomain);
+    decomposition.init();
+
+    StaggerType noStagger(false);
+    constexpr int ghostCells = 1;
+    schnek::GridFactory<FieldType> factory(noStagger, ghostCells);
+    schnek::GridRegistration registration = decomposition.registerField(factory);
+
+    auto gridContext = decomposition.getGridContext({registration});
+    FieldType *field = nullptr;
+    gridContext.forEach([&](const RangeType &, FieldType &localField) { field = &localField; });
+    BOOST_REQUIRE(field != nullptr);
+
+  fillField(*field, -13.0);
+
+  FieldType expectedField(*field);
+  auto ghostSetup = buildGhostExchangeSetup(*field);
+  applyGhostExpectations(expectedField, ghostSetup);
+  context.ret_MPI_Sendrecv = ghostSetup.responses;
+
+    std::array<int, 2> prevRanks{{10, 20}};
+    std::array<int, 2> nextRanks{{11, 21}};
+    for (size_t dim = 0; dim < prevRanks.size(); ++dim) {
+      context.ret_MPI_Cart_shift.push_back(boost::make_tuple(MPI_SUCCESS, prevRanks[dim], nextRanks[dim]));
+    }
+
+    exchangeRegistration<2>(decomposition, registration, false);
+
+    BOOST_CHECK_EQUAL(context.args_MPI_Cart_shift.size(), prevRanks.size());
+    for (size_t dim = 0; dim < prevRanks.size(); ++dim) {
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_shift[dim].get<1>(), static_cast<int>(dim));
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_shift[dim].get<2>(), 1);
+    }
+
+    BOOST_REQUIRE_EQUAL(context.args_MPI_Sendrecv.size(), ghostSetup.expectations.size());
+    for (size_t i = 0; i < ghostSetup.expectations.size(); ++i) {
+      const auto &call = context.args_MPI_Sendrecv[i];
+      BOOST_CHECK(call.recvBufferPresent);
+      BOOST_CHECK_EQUAL(call.recvCount, static_cast<int>(ghostSetup.expectations[i].values.size()));
+    }
+
+    for (size_t dim = 0; dim < prevRanks.size(); ++dim) {
+      size_t baseIdx = 2 * dim;
+      const auto &lowerCall = context.args_MPI_Sendrecv[baseIdx];
+      BOOST_CHECK_EQUAL(lowerCall.dest, nextRanks[dim]);
+      BOOST_CHECK_EQUAL(lowerCall.source, prevRanks[dim]);
+      const auto &upperCall = context.args_MPI_Sendrecv[baseIdx + 1];
+      BOOST_CHECK_EQUAL(upperCall.dest, prevRanks[dim]);
+      BOOST_CHECK_EQUAL(upperCall.source, nextRanks[dim]);
+    }
+
+    typename FieldType::RangeType verificationRange(field->getLo(), field->getHi());
+    for (auto it = verificationRange.begin(); it != verificationRange.end(); ++it) {
+      BOOST_CHECK_EQUAL((*field)[*it], expectedField[*it]);
+    }
+  }
 
 BOOST_FIXTURE_TEST_CASE( multi_process_2d, MpiCartesianDomainDecompositionTestFixture )
 {
@@ -1221,6 +1500,83 @@ BOOST_FIXTURE_TEST_CASE( foreach_single_process_3d, MpiCartesianDomainDecomposit
 
   BOOST_CHECK_EQUAL(callCount, 1);
 }
+
+  BOOST_FIXTURE_TEST_CASE( ghost_exchange_updates_ghost_cells_3d, MpiCartesianDomainDecompositionTestFixture )
+  {
+    MPI_Comm testComm = (MPI_Comm)(void*)123;
+    std::vector<int> coords(3, 0);
+    context.commWorld = (MPI_Comm)(void*)574;
+    context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+    context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+    context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+    context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+
+    using FieldType = schnek::Field<double, 3>;
+    using RangeType = schnek::Range<ptrdiff_t, 3>;
+    using DomainType = schnek::Range<double, 3>;
+    using StaggerType = typename FieldType::StaggerType;
+
+    RangeType globalRange(schnek::Array<ptrdiff_t,3>(0, 0, 0), schnek::Array<ptrdiff_t,3>(2, 2, 1));
+    DomainType globalDomain(schnek::Array<double,3>(0.0, 0.0, 0.0), schnek::Array<double,3>(1.0, 1.0, 1.0));
+
+    schnek::MpiCartesianDomainDecomposition<3> decomposition(context);
+    decomposition.setGlobalRange(globalRange);
+    decomposition.setGlobalDomain(globalDomain);
+    decomposition.init();
+
+    StaggerType noStagger(false);
+    constexpr int ghostCells = 1;
+    schnek::GridFactory<FieldType> factory(noStagger, ghostCells);
+    schnek::GridRegistration registration = decomposition.registerField(factory);
+
+    auto gridContext = decomposition.getGridContext({registration});
+    FieldType *field = nullptr;
+    gridContext.forEach([&](const RangeType &, FieldType &localField) { field = &localField; });
+    BOOST_REQUIRE(field != nullptr);
+
+  fillField(*field, -7.0);
+
+  FieldType expectedField(*field);
+  auto ghostSetup = buildGhostExchangeSetup(*field);
+  applyGhostExpectations(expectedField, ghostSetup);
+  context.ret_MPI_Sendrecv = ghostSetup.responses;
+
+    std::array<int, 3> prevRanks{{30, 40, 50}};
+    std::array<int, 3> nextRanks{{31, 41, 51}};
+    for (size_t dim = 0; dim < prevRanks.size(); ++dim) {
+      context.ret_MPI_Cart_shift.push_back(boost::make_tuple(MPI_SUCCESS, prevRanks[dim], nextRanks[dim]));
+    }
+
+    exchangeRegistration<3>(decomposition, registration, false);
+
+    BOOST_CHECK_EQUAL(context.args_MPI_Cart_shift.size(), prevRanks.size());
+    for (size_t dim = 0; dim < prevRanks.size(); ++dim) {
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_shift[dim].get<1>(), static_cast<int>(dim));
+      BOOST_CHECK_EQUAL(context.args_MPI_Cart_shift[dim].get<2>(), 1);
+    }
+
+    BOOST_REQUIRE_EQUAL(context.args_MPI_Sendrecv.size(), ghostSetup.expectations.size());
+    for (size_t i = 0; i < ghostSetup.expectations.size(); ++i) {
+      const auto &call = context.args_MPI_Sendrecv[i];
+      BOOST_CHECK(call.recvBufferPresent);
+      BOOST_CHECK_EQUAL(call.recvCount, static_cast<int>(ghostSetup.expectations[i].values.size()));
+    }
+
+    for (size_t dim = 0; dim < prevRanks.size(); ++dim) {
+      size_t baseIdx = 2 * dim;
+      const auto &lowerCall = context.args_MPI_Sendrecv[baseIdx];
+      BOOST_CHECK_EQUAL(lowerCall.dest, nextRanks[dim]);
+      BOOST_CHECK_EQUAL(lowerCall.source, prevRanks[dim]);
+      const auto &upperCall = context.args_MPI_Sendrecv[baseIdx + 1];
+      BOOST_CHECK_EQUAL(upperCall.dest, prevRanks[dim]);
+      BOOST_CHECK_EQUAL(upperCall.source, nextRanks[dim]);
+    }
+
+    typename FieldType::RangeType verificationRange(field->getLo(), field->getHi());
+    for (auto it = verificationRange.begin(); it != verificationRange.end(); ++it) {
+      BOOST_CHECK_EQUAL((*field)[*it], expectedField[*it]);
+    }
+  }
 
 BOOST_FIXTURE_TEST_CASE( multi_process_3d, MpiCartesianDomainDecompositionTestFixture )
 {
