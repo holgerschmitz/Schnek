@@ -371,11 +371,73 @@ namespace schnek {
           const LimitType &getPos() { return pos; }
       };
 
+      /**
+       * @brief Forward iterator over the rectangular domain (const variant)
+       */
+      class const_iterator {
+        public:
+          typedef std::forward_iterator_tag iterator_category;
+          typedef LimitType value_type;
+          typedef ptrdiff_t difference_type;
+          typedef const LimitType *pointer;
+          typedef const LimitType &reference;
+
+        private:
+          BOOST_CONCEPT_ASSERT((boost::Integer<T>));
+          friend class Range;
+          LimitType pos;
+          const Range &domain;
+          bool atEnd;
+
+          const_iterator(const Range &domain_, const LimitType &pos_, bool atEnd_ = false)
+              : pos(pos_), domain(domain_), atEnd(atEnd_) {}
+          const_iterator();
+
+          void increment() {
+            size_t d = rank;
+            while (d > 0) {
+              --d;
+              if (++pos[d] > domain.getHi()[d]) {
+                pos[d] = domain.getLo()[d];
+              } else {
+                return;
+              }
+            }
+            atEnd = true;
+          }
+
+        public:
+          const_iterator(const const_iterator &it) : pos(it.pos), domain(it.domain), atEnd(it.atEnd) {}
+
+          const_iterator &operator++() {
+            increment();
+            return *this;
+          }
+          const const_iterator operator++(int) {
+            const_iterator it(*this);
+            increment();
+            return it;
+          }
+          bool operator==(const const_iterator &it) const { return (atEnd == it.atEnd) && (pos == it.pos); }
+          bool operator!=(const const_iterator &it) const { return !(operator==(it)); }
+          const LimitType &operator*() const { return pos; }
+          const LimitType &getPos() const { return pos; }
+      };
+
       /// Creates an iterator pointing to the beginning of the rectangle
       iterator begin() { return iterator(*this, this->getLo()); }
 
       /// Creates an iterator pointing to a position after the end of the rectangle
       iterator end() { return iterator(*this, this->getLo(), true); }
+
+        /// Creates a const iterator pointing to the beginning of the rectangle
+        const_iterator begin() const { return const_iterator(*this, this->getLo()); }
+        /// Creates a const iterator pointing to a position after the end of the rectangle
+        const_iterator end() const { return const_iterator(*this, this->getLo(), true); }
+        /// Explicit const begin
+        const_iterator cbegin() const { return const_iterator(*this, this->getLo()); }
+        /// Explicit const end
+        const_iterator cend() const { return const_iterator(*this, this->getLo(), true); }
   };
 
   template<
