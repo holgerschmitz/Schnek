@@ -269,6 +269,12 @@ namespace schnek {
        *
        * This function is allowed to create multiple threads and return
        */
+      /*
+       * Accumulate halo cells with neighbouring data.
+       */
+      virtual void accumulate(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) = 0;
+      void accumulate(GridRegistration registration, bool useFieldInfo = true);
+      void accumulate(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true);
       virtual void init() = 0;
 
       /**
@@ -524,6 +530,27 @@ namespace schnek {
   ) {
     for (const auto &registration : registrations) {
       exchange(registration, useFieldInfo);
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void DomainDecomposition<rank, CheckingPolicy>::accumulate(GridRegistration registration, bool useFieldInfo) {
+    auto gridIt = grids.find(registration.id);
+    if (gridIt == grids.end()) {
+      SCHNECK_FAIL("Unknown grid registration id: " << registration.id);
+    }
+
+    for (const auto &wrapper : gridIt->second) {
+      this->accumulate(wrapper, useFieldInfo);
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void DomainDecomposition<rank, CheckingPolicy>::accumulate(
+      std::initializer_list<GridRegistration> registrations, bool useFieldInfo
+  ) {
+    for (const auto &registration : registrations) {
+      accumulate(registration, useFieldInfo);
     }
   }
 

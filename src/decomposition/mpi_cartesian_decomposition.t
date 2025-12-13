@@ -379,9 +379,33 @@ namespace schnek {
   };
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::AccumulateVisitor
+      : public internal::GridVisitor<
+            typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::AccumulateVisitor> {
+    public:
+      explicit AccumulateVisitor(MpiCartesianDomainDecomposition &parentIn) : parent(parentIn) {}
+
+      template<typename GridType>
+      void handle(GridType &grid, bool flag) {
+        parent.template accumulateTyped<GridType>(grid, flag);
+      }
+
+    private:
+      MpiCartesianDomainDecomposition &parent;
+  };
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   template<class GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerExchangeHandler() {
     exchangeInitializers.emplace_back([](ExchangeVisitor &visitor) { visitor.template registerHandler<GridType>(); });
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<class GridType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerAccumulateHandler() {
+    accumulateInitializers.emplace_back(
+        [](AccumulateVisitor &visitor) { visitor.template registerHandler<GridType>(); }
+    );
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -401,12 +425,38 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::accumulate(
+      const internal::pGridWrapper &wrapper, bool useFieldInfo
+  ) {
+    if (accumulateInitializers.empty()) {
+      SCHNECK_FAIL("No registered grids available for accumulate");
+    }
+
+    AccumulateVisitor visitor(*this);
+    for (auto &initializer : accumulateInitializers) {
+      initializer(visitor);
+    }
+
+    wrapper->accept(visitor, useFieldInfo);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchangeTyped(GridType &grid, bool useFieldInfo) {
     if constexpr (internal::is_field_v<GridType>) {
       handleFieldExchange(grid, useFieldInfo);
     } else {
       handleGridExchange(grid, useFieldInfo);
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename GridType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::accumulateTyped(GridType &grid, bool useFieldInfo) {
+    if constexpr (internal::is_field_v<GridType>) {
+      handleFieldAccumulate(grid, useFieldInfo);
+    } else {
+      handleGridAccumulate(grid, useFieldInfo);
     }
   }
 
@@ -434,6 +484,17 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename GridType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleGridAccumulate(
+      GridType &grid, bool /*useFieldInfo*/
+  ) {
+    const auto localRange = getLocalInnerRange();
+    typename GridType::IndexType innerLo(localRange.getLo());
+    typename GridType::IndexType innerHi(localRange.getHi());
+    accumulateWithInteriorBounds(grid, innerLo, innerHi);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename FieldType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleFieldExchange(FieldType &field, bool useFieldInfo) {
     typename FieldType::IndexType innerLo;
@@ -448,6 +509,25 @@ namespace schnek {
       innerHi = localRange.getHi();
     }
     exchangeWithInteriorBounds(field, innerLo, innerHi);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename FieldType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleFieldAccumulate(
+      FieldType &field, bool useFieldInfo
+  ) {
+    typename FieldType::IndexType innerLo;
+    typename FieldType::IndexType innerHi;
+    if (useFieldInfo) {
+      auto innerRange = field.getInnerRange();
+      innerLo = innerRange.getLo();
+      innerHi = innerRange.getHi();
+    } else {
+      const auto localRange = getLocalInnerRange();
+      innerLo = localRange.getLo();
+      innerHi = localRange.getHi();
+    }
+    accumulateWithInteriorBounds(field, innerLo, innerHi);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -576,6 +656,174 @@ namespace schnek {
       );
       if (hiGhostRange && recvUpperCount > 0) {
         unpackRange(*hiGhostRange, recvUpperBuffer);
+      }
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename GridType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::accumulateWithInteriorBounds(
+      GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
+  ) {
+    using IndexType = typename GridType::IndexType;
+    using RangeTypeLocal = typename GridType::RangeType;
+    using ValueType = typename GridType::value_type;
+
+    const IndexType gridLo = grid.getLo();
+    const IndexType gridHi = grid.getHi();
+
+    auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
+
+    auto rangeVolume = [](const RangeTypeLocal &range) -> size_t {
+      size_t volume = 1;
+      for (size_t d = 0; d < rank; ++d) {
+        ptrdiff_t extent = range.getHi()[d] - range.getLo()[d] + 1;
+        if (extent <= 0) {
+          return 0;
+        }
+        volume *= static_cast<size_t>(extent);
+      }
+      return volume;
+    };
+
+    auto packRange = [&](RangeTypeLocal range, std::vector<ValueType> &buffer) {
+      const size_t volume = rangeVolume(range);
+      buffer.resize(volume);
+      size_t idx = 0;
+      for (auto it = range.begin(); it != range.end(); ++it) {
+        buffer[idx++] = grid[*it];
+      }
+    };
+
+    auto assignRange = [&](RangeTypeLocal range, const std::vector<ValueType> &buffer) {
+      size_t idx = 0;
+      for (auto it = range.begin(); it != range.end(); ++it) {
+        grid[*it] = buffer[idx++];
+      }
+    };
+
+    auto addIntoRange = [&](RangeTypeLocal range, const std::vector<ValueType> &buffer, std::vector<ValueType> &out) {
+      const size_t volume = rangeVolume(range);
+      out.resize(volume);
+      size_t idx = 0;
+      for (auto it = range.begin(); it != range.end(); ++it) {
+        ValueType &val = grid[*it];
+        val = val + buffer[idx];
+        out[idx] = val;
+        ++idx;
+      }
+    };
+
+    auto toIntCount = [](size_t count) -> int {
+      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
+        SCHNECK_FAIL("Halo accumulate block too large for MPI_Sendrecv count");
+      }
+      return static_cast<int>(count);
+    };
+
+    const MPI_Datatype mpiType = detail::mpiDatatypeFor<ValueType>();
+
+    for (size_t dim = 0; dim < rank; ++dim) {
+      int prevRank = MPI_PROC_NULL;
+      int nextRank = MPI_PROC_NULL;
+      this->mpi.MPI_Cart_shift(comm, static_cast<int>(dim), 1, &prevRank, &nextRank);
+
+      ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
+      ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
+
+      std::optional<RangeTypeLocal> loGhostRange;
+      if (lowerHalo > 0) {
+        IndexType lo = gridLo;
+        IndexType hi = gridHi;
+        hi[dim] = gridLo[dim] + lowerHalo - 1;
+        loGhostRange = makeRange(lo, hi);
+      }
+
+      std::optional<RangeTypeLocal> hiGhostRange;
+      if (upperHalo > 0) {
+        IndexType lo = gridLo;
+        IndexType hi = gridHi;
+        lo[dim] = gridHi[dim] - upperHalo + 1;
+        hi[dim] = gridHi[dim];
+        hiGhostRange = makeRange(lo, hi);
+      }
+
+      std::optional<RangeTypeLocal> loSourceRange;
+      if (lowerHalo > 0) {
+        IndexType lo = gridLo;
+        IndexType hi = gridHi;
+        lo[dim] = innerLo[dim];
+        hi[dim] = innerLo[dim] + lowerHalo - 1;
+        loSourceRange = makeRange(lo, hi);
+      }
+
+      std::optional<RangeTypeLocal> hiSourceRange;
+      if (upperHalo > 0) {
+        IndexType lo = gridLo;
+        IndexType hi = gridHi;
+        lo[dim] = innerHi[dim] - upperHalo + 1;
+        hi[dim] = innerHi[dim];
+        hiSourceRange = makeRange(lo, hi);
+      }
+
+      // Lower side: add incoming data to lower ghost cells, then return result to update upper inner cells in prev.
+      const size_t sendLowerCount = hiSourceRange ? rangeVolume(*hiSourceRange) : 0;
+      const size_t recvLowerCount = loGhostRange ? rangeVolume(*loGhostRange) : 0;
+
+      std::vector<ValueType> sendLowerBuffer;
+      if (hiSourceRange && sendLowerCount > 0) {
+        packRange(*hiSourceRange, sendLowerBuffer);
+      }
+      std::vector<ValueType> recvLowerBuffer(recvLowerCount);
+      this->mpi.MPI_Sendrecv(
+          sendLowerCount > 0 ? sendLowerBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType, nextRank, 0,
+          recvLowerCount > 0 ? recvLowerBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType, prevRank, 0, comm,
+          MPI_STATUS_IGNORE
+      );
+
+      std::vector<ValueType> sendBackLowerBuffer;
+      if (loGhostRange && recvLowerCount > 0) {
+        addIntoRange(*loGhostRange, recvLowerBuffer, sendBackLowerBuffer);
+      }
+
+      std::vector<ValueType> recvBackLowerBuffer(sendLowerCount);
+      this->mpi.MPI_Sendrecv(
+          sendBackLowerBuffer.empty() ? nullptr : sendBackLowerBuffer.data(), toIntCount(recvLowerCount), mpiType,
+          prevRank, 0, sendLowerCount > 0 ? recvBackLowerBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType,
+          nextRank, 0, comm, MPI_STATUS_IGNORE
+      );
+      if (hiSourceRange && sendLowerCount > 0) {
+        assignRange(*hiSourceRange, recvBackLowerBuffer);
+      }
+
+      // Upper side: add incoming data to upper ghost cells, then return result to update lower inner cells in next.
+      const size_t sendUpperCount = loSourceRange ? rangeVolume(*loSourceRange) : 0;
+      const size_t recvUpperCount = hiGhostRange ? rangeVolume(*hiGhostRange) : 0;
+
+      std::vector<ValueType> sendUpperBuffer;
+      if (loSourceRange && sendUpperCount > 0) {
+        packRange(*loSourceRange, sendUpperBuffer);
+      }
+      std::vector<ValueType> recvUpperBuffer(recvUpperCount);
+      this->mpi.MPI_Sendrecv(
+          sendUpperCount > 0 ? sendUpperBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType, prevRank, 0,
+          recvUpperCount > 0 ? recvUpperBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType, nextRank, 0, comm,
+          MPI_STATUS_IGNORE
+      );
+
+      std::vector<ValueType> sendBackUpperBuffer;
+      if (hiGhostRange && recvUpperCount > 0) {
+        addIntoRange(*hiGhostRange, recvUpperBuffer, sendBackUpperBuffer);
+      }
+
+      std::vector<ValueType> recvBackUpperBuffer(sendUpperCount);
+      this->mpi.MPI_Sendrecv(
+          sendBackUpperBuffer.empty() ? nullptr : sendBackUpperBuffer.data(), toIntCount(recvUpperCount), mpiType,
+          nextRank, 0, sendUpperCount > 0 ? recvBackUpperBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType,
+          prevRank, 0, comm, MPI_STATUS_IGNORE
+      );
+      if (loSourceRange && sendUpperCount > 0) {
+        assignRange(*loSourceRange, recvBackUpperBuffer);
       }
     }
   }
