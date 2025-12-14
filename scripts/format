@@ -1,2 +1,6 @@
 #!/usr/bin/env sh
-find src/ -type f | xargs clang-format -style=file:.clang-format -i
+for f in $(./scripts/check-format | awk '($1=="File"){print $2}')
+do 
+  echo $f; 
+  clang-format -style=file:.clang-format -i $f; 
+done

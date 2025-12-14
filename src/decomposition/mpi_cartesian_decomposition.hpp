@@ -174,34 +174,34 @@ namespace schnek {
       T allReduce(T value, MPI_Op op) const;
 
       class ExchangeVisitor;
-        class AccumulateVisitor;
+      class AccumulateVisitor;
       template<class GridType>
       void registerExchangeHandler();
-        template<class GridType>
-        void registerAccumulateHandler();
+      template<class GridType>
+      void registerAccumulateHandler();
       template<typename GridType>
       void exchangeTyped(GridType &grid, bool useFieldInfo);
-        template<typename GridType>
-        void accumulateTyped(GridType &grid, bool useFieldInfo);
+      template<typename GridType>
+      void accumulateTyped(GridType &grid, bool useFieldInfo);
       template<typename GridType>
       void handleGridExchange(GridType &grid, bool useFieldInfo);
       template<typename FieldType>
       void handleFieldExchange(FieldType &field, bool useFieldInfo);
-        template<typename GridType>
-        void handleGridAccumulate(GridType &grid, bool useFieldInfo);
-        template<typename FieldType>
-        void handleFieldAccumulate(FieldType &field, bool useFieldInfo);
+      template<typename GridType>
+      void handleGridAccumulate(GridType &grid, bool useFieldInfo);
+      template<typename FieldType>
+      void handleFieldAccumulate(FieldType &field, bool useFieldInfo);
       RangeType getLocalInnerRange() const;
       template<typename GridType>
       void exchangeWithInteriorBounds(
           GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
       );
-        template<typename GridType>
-        void accumulateWithInteriorBounds(
+      template<typename GridType>
+      void accumulateWithInteriorBounds(
           GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
-        );
+      );
       std::vector<std::function<void(ExchangeVisitor &)>> exchangeInitializers;
-        std::vector<std::function<void(AccumulateVisitor &)>> accumulateInitializers;
+      std::vector<std::function<void(AccumulateVisitor &)>> accumulateInitializers;
   };
 
 }  // namespace schnek

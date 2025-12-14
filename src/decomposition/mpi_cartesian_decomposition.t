@@ -475,8 +475,7 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<class GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerAccumulateHandler() {
-    accumulateInitializers.emplace_back(
-        [](AccumulateVisitor &visitor) { visitor.template registerHandler<GridType>(); }
+    accumulateInitializers.emplace_back([](AccumulateVisitor &visitor) { visitor.template registerHandler<GridType>(); }
     );
   }
 
