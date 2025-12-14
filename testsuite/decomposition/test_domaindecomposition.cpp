@@ -44,6 +44,11 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
       (void)useFieldInfo;
     }
 
+    void accumulate(const schnek::internal::pGridWrapper &wrapper, bool useFieldInfo) override {
+      (void)wrapper;
+      (void)useFieldInfo;
+    }
+
     // Expose the protected addLocalRange method for testing
     void testAddLocalRange(RangeType range, DomainType domain)
     {

@@ -99,10 +99,12 @@ namespace schnek {
       GridRegistration registerField(GridFactory<GridType> &factory) {
         auto registration = this->registerFieldImpl(factory);
         registerExchangeHandler<GridType>();
+        registerAccumulateHandler<GridType>();
         return registration;
       }
 
       void exchange(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
+      void accumulate(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
 
     private:
       typedef typename DomainDecomposition<rank, CheckingPolicy>::LimitType LimitType;
@@ -153,20 +155,34 @@ namespace schnek {
       void calcGridDistributonLocalWeights(ProcRanges &ranges);
 
       class ExchangeVisitor;
+        class AccumulateVisitor;
       template<class GridType>
       void registerExchangeHandler();
+        template<class GridType>
+        void registerAccumulateHandler();
       template<typename GridType>
       void exchangeTyped(GridType &grid, bool useFieldInfo);
+        template<typename GridType>
+        void accumulateTyped(GridType &grid, bool useFieldInfo);
       template<typename GridType>
       void handleGridExchange(GridType &grid, bool useFieldInfo);
       template<typename FieldType>
       void handleFieldExchange(FieldType &field, bool useFieldInfo);
+        template<typename GridType>
+        void handleGridAccumulate(GridType &grid, bool useFieldInfo);
+        template<typename FieldType>
+        void handleFieldAccumulate(FieldType &field, bool useFieldInfo);
       RangeType getLocalInnerRange() const;
       template<typename GridType>
       void exchangeWithInteriorBounds(
           GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
       );
+        template<typename GridType>
+        void accumulateWithInteriorBounds(
+          GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
+        );
       std::vector<std::function<void(ExchangeVisitor &)>> exchangeInitializers;
+        std::vector<std::function<void(AccumulateVisitor &)>> accumulateInitializers;
   };
 
 }  // namespace schnek
