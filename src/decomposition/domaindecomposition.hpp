@@ -301,6 +301,42 @@ namespace schnek {
        */
       virtual int numProcs() const = 0;
 
+      /// Return the average of a single value over all the processes
+      virtual double avgReduce(double) const = 0;
+
+      /// Return the average of a single value over all the processes
+      virtual int avgReduce(int) const = 0;
+
+      /// Return the average of a single value over all the processes
+      virtual long avgReduce(long) const = 0;
+
+      /// Return the sum of a single value over all the processes
+      virtual double sumReduce(double) const = 0;
+
+      /// Return the sum of a single value over all the processes
+      virtual int sumReduce(int) const = 0;
+
+      /// Return the sum of a single value over all the processes
+      virtual long sumReduce(long) const = 0;
+
+      /// Return the maximum of a single value over all the processes
+      virtual double maxReduce(double) const = 0;
+
+      /// Return the maximum of a single value over all the processes
+      virtual int maxReduce(int) const = 0;
+
+      /// Return the maximum of a single value over all the processes
+      virtual long maxReduce(long) const = 0;
+
+      /// Return the minimum of a single value over all the processes
+      virtual double minReduce(double) const = 0;
+
+      /// Return the minimum of a single value over all the processes
+      virtual int minReduce(int) const = 0;
+
+      /// Return the minimum of a single value over all the processes
+      virtual long minReduce(long) const = 0;
+
       /**
        * Get a grid context for calling a function over all local domains
        *

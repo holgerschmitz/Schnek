@@ -70,6 +70,22 @@ namespace schnek {
        */
       int numProcs() const override;
 
+      double avgReduce(double value) const override;
+      int avgReduce(int value) const override;
+      long avgReduce(long value) const override;
+
+      double sumReduce(double value) const override;
+      int sumReduce(int value) const override;
+      long sumReduce(long value) const override;
+
+      double maxReduce(double value) const override;
+      int maxReduce(int value) const override;
+      long maxReduce(long value) const override;
+
+      double minReduce(double value) const override;
+      int minReduce(int value) const override;
+      long minReduce(long value) const override;
+
       /**
        * Exchange halo cells between processes. Function overload accepting a single grid registration.
        *
@@ -153,6 +169,9 @@ namespace schnek {
        * Determine the new grid layout based on the local weights
        */
       void calcGridDistributonLocalWeights(ProcRanges &ranges);
+
+      template<typename T>
+      T allReduce(T value, MPI_Op op) const;
 
       class ExchangeVisitor;
         class AccumulateVisitor;

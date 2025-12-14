@@ -66,6 +66,78 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename T>
+  T MpiCartesianDomainDecomposition<rank, CheckingPolicy>::allReduce(T value, MPI_Op op) const {
+    T result{};
+    int errorCode = MPI_Allreduce(&value, &result, 1, detail::mpiDatatypeFor<T>(), op, comm);
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed");
+    return result;
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  double MpiCartesianDomainDecomposition<rank, CheckingPolicy>::avgReduce(double value) const {
+    SCHNEK_ASSERT(ComSize > 0, "MPI communicator size is zero");
+    return allReduce(value, MPI_SUM) / double(ComSize);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::avgReduce(int value) const {
+    SCHNEK_ASSERT(ComSize > 0, "MPI communicator size is zero");
+    return static_cast<int>(allReduce(value, MPI_SUM) / double(ComSize));
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  long MpiCartesianDomainDecomposition<rank, CheckingPolicy>::avgReduce(long value) const {
+    SCHNEK_ASSERT(ComSize > 0, "MPI communicator size is zero");
+    return static_cast<long>(allReduce(value, MPI_SUM) / double(ComSize));
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  double MpiCartesianDomainDecomposition<rank, CheckingPolicy>::sumReduce(double value) const {
+    return allReduce(value, MPI_SUM);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::sumReduce(int value) const {
+    return allReduce(value, MPI_SUM);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  long MpiCartesianDomainDecomposition<rank, CheckingPolicy>::sumReduce(long value) const {
+    return allReduce(value, MPI_SUM);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  double MpiCartesianDomainDecomposition<rank, CheckingPolicy>::maxReduce(double value) const {
+    return allReduce(value, MPI_MAX);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::maxReduce(int value) const {
+    return allReduce(value, MPI_MAX);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  long MpiCartesianDomainDecomposition<rank, CheckingPolicy>::maxReduce(long value) const {
+    return allReduce(value, MPI_MAX);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  double MpiCartesianDomainDecomposition<rank, CheckingPolicy>::minReduce(double value) const {
+    return allReduce(value, MPI_MIN);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::minReduce(int value) const {
+    return allReduce(value, MPI_MIN);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  long MpiCartesianDomainDecomposition<rank, CheckingPolicy>::minReduce(long value) const {
+    return allReduce(value, MPI_MIN);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   const Array<Grid<Range<ptrdiff_t, 1>, 1>, rank> &MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getProcRanges(
   ) {
     return procRanges;
