@@ -61,49 +61,6 @@
 #include "detail/grid_factory.hpp"
 
 namespace schnek {
-
-  /**
-   * A local domain for the current process
-   *
-   * The LocalDomain class contains information about the extent of a local grid domain.
-   *
-   * Each process can have multiple local domains.
-   */
-  template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
-  class LocalDomain {
-    public:
-      /**
-       * The index type
-       */
-      typedef Array<ptrdiff_t, rank, ArrayNoArgCheck> IndexType;
-
-      /**
-       * The range type
-       */
-      typedef Range<ptrdiff_t, rank, ArrayNoArgCheck> RangeType;
-
-    private:
-      /**
-       * The range of the local domain including ghost cells
-       */
-      RangeType range;
-
-      /**
-       * The inner range of the local domain, excluding ghost cells
-       */
-      RangeType innerRange;
-
-    public:
-      LocalDomain(RangeType range_, RangeType innerRange_) : range(range_), innerRange(innerRange_) {}
-      const RangeType &getRange() { return range; }
-      const IndexType &getLo() { return range.getLo(); }
-      const IndexType &getHi() { return range.getHi(); }
-
-      const RangeType &getInnerRange() { return innerRange; }
-      const IndexType &getInnerLo() { return innerRange.getLo(); }
-      const IndexType &getInnerHi() { return innerRange.getHi(); }
-  };
-
   namespace internal {
     template<typename Callable, typename Enable = void>
     struct FunctionParameterTypesImpl;
