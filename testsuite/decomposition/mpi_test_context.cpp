@@ -171,6 +171,29 @@ int MpiTestContextImpl::MPI_Sendrecv(
   return MPI_SUCCESS;
 }
 
+int MpiTestContextImpl::MPI_Allreduce(
+    const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm
+)
+{
+  size_t argsCount = args_MPI_Allreduce.size();
+  args_MPI_Allreduce.push_back({sendbuf != nullptr, count, datatype, op, comm});
+
+  if (!ret_MPI_Allreduce.empty()) {
+    auto retVal = ret_MPI_Allreduce[std::min(argsCount, ret_MPI_Allreduce.size() - 1)];
+    const auto& payload = retVal.get<1>();
+    if (recvbuf != nullptr && !payload.empty()) {
+      std::memcpy(recvbuf, payload.data(), std::min(payload.size(), datatypeSize(datatype) * static_cast<size_t>(count)));
+    }
+    return retVal.get<0>();
+  }
+
+  if (sendbuf != nullptr && recvbuf != nullptr && count > 0) {
+    std::memcpy(recvbuf, sendbuf, datatypeSize(datatype) * static_cast<size_t>(count));
+  }
+
+  return MPI_SUCCESS;
+}
+
 int MpiTestContextImpl::MPI_Bcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
 {
   size_t argsCount = args_MPI_Bcast.size();

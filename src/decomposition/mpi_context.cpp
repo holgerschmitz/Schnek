@@ -54,6 +54,12 @@ int schnek::MpiContextImpl::MPI_Sendrecv(
   );
 }
 
+int schnek::MpiContextImpl::MPI_Allreduce(
+    const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm
+) {
+  return MPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
+}
+
 int schnek::MpiContextImpl::MPI_Bcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
   return MPI_Bcast(buffer, count, datatype, root, comm);
 }

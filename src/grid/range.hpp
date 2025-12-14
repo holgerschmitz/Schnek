@@ -430,14 +430,14 @@ namespace schnek {
       /// Creates an iterator pointing to a position after the end of the rectangle
       iterator end() { return iterator(*this, this->getLo(), true); }
 
-        /// Creates a const iterator pointing to the beginning of the rectangle
-        const_iterator begin() const { return const_iterator(*this, this->getLo()); }
-        /// Creates a const iterator pointing to a position after the end of the rectangle
-        const_iterator end() const { return const_iterator(*this, this->getLo(), true); }
-        /// Explicit const begin
-        const_iterator cbegin() const { return const_iterator(*this, this->getLo()); }
-        /// Explicit const end
-        const_iterator cend() const { return const_iterator(*this, this->getLo(), true); }
+      /// Creates a const iterator pointing to the beginning of the rectangle
+      const_iterator begin() const { return const_iterator(*this, this->getLo()); }
+      /// Creates a const iterator pointing to a position after the end of the rectangle
+      const_iterator end() const { return const_iterator(*this, this->getLo(), true); }
+      /// Explicit const begin
+      const_iterator cbegin() const { return const_iterator(*this, this->getLo()); }
+      /// Explicit const end
+      const_iterator cend() const { return const_iterator(*this, this->getLo(), true); }
   };
 
   template<

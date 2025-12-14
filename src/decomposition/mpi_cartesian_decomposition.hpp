@@ -70,6 +70,22 @@ namespace schnek {
        */
       int numProcs() const override;
 
+      double avgReduce(double value) const override;
+      int avgReduce(int value) const override;
+      long avgReduce(long value) const override;
+
+      double sumReduce(double value) const override;
+      int sumReduce(int value) const override;
+      long sumReduce(long value) const override;
+
+      double maxReduce(double value) const override;
+      int maxReduce(int value) const override;
+      long maxReduce(long value) const override;
+
+      double minReduce(double value) const override;
+      int minReduce(int value) const override;
+      long minReduce(long value) const override;
+
       /**
        * Exchange halo cells between processes. Function overload accepting a single grid registration.
        *
@@ -154,35 +170,38 @@ namespace schnek {
        */
       void calcGridDistributonLocalWeights(ProcRanges &ranges);
 
+      template<typename T>
+      T allReduce(T value, MPI_Op op) const;
+
       class ExchangeVisitor;
-        class AccumulateVisitor;
+      class AccumulateVisitor;
       template<class GridType>
       void registerExchangeHandler();
-        template<class GridType>
-        void registerAccumulateHandler();
+      template<class GridType>
+      void registerAccumulateHandler();
       template<typename GridType>
       void exchangeTyped(GridType &grid, bool useFieldInfo);
-        template<typename GridType>
-        void accumulateTyped(GridType &grid, bool useFieldInfo);
+      template<typename GridType>
+      void accumulateTyped(GridType &grid, bool useFieldInfo);
       template<typename GridType>
       void handleGridExchange(GridType &grid, bool useFieldInfo);
       template<typename FieldType>
       void handleFieldExchange(FieldType &field, bool useFieldInfo);
-        template<typename GridType>
-        void handleGridAccumulate(GridType &grid, bool useFieldInfo);
-        template<typename FieldType>
-        void handleFieldAccumulate(FieldType &field, bool useFieldInfo);
+      template<typename GridType>
+      void handleGridAccumulate(GridType &grid, bool useFieldInfo);
+      template<typename FieldType>
+      void handleFieldAccumulate(FieldType &field, bool useFieldInfo);
       RangeType getLocalInnerRange() const;
       template<typename GridType>
       void exchangeWithInteriorBounds(
           GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
       );
-        template<typename GridType>
-        void accumulateWithInteriorBounds(
+      template<typename GridType>
+      void accumulateWithInteriorBounds(
           GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
-        );
+      );
       std::vector<std::function<void(ExchangeVisitor &)>> exchangeInitializers;
-        std::vector<std::function<void(AccumulateVisitor &)>> accumulateInitializers;
+      std::vector<std::function<void(AccumulateVisitor &)>> accumulateInitializers;
   };
 
 }  // namespace schnek

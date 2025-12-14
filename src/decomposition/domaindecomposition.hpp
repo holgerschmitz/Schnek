@@ -61,49 +61,6 @@
 #include "detail/grid_factory.hpp"
 
 namespace schnek {
-
-  /**
-   * A local domain for the current process
-   *
-   * The LocalDomain class contains information about the extent of a local grid domain.
-   *
-   * Each process can have multiple local domains.
-   */
-  template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
-  class LocalDomain {
-    public:
-      /**
-       * The index type
-       */
-      typedef Array<ptrdiff_t, rank, ArrayNoArgCheck> IndexType;
-
-      /**
-       * The range type
-       */
-      typedef Range<ptrdiff_t, rank, ArrayNoArgCheck> RangeType;
-
-    private:
-      /**
-       * The range of the local domain including ghost cells
-       */
-      RangeType range;
-
-      /**
-       * The inner range of the local domain, excluding ghost cells
-       */
-      RangeType innerRange;
-
-    public:
-      LocalDomain(RangeType range_, RangeType innerRange_) : range(range_), innerRange(innerRange_) {}
-      const RangeType &getRange() { return range; }
-      const IndexType &getLo() { return range.getLo(); }
-      const IndexType &getHi() { return range.getHi(); }
-
-      const RangeType &getInnerRange() { return innerRange; }
-      const IndexType &getInnerLo() { return innerRange.getLo(); }
-      const IndexType &getInnerHi() { return innerRange.getHi(); }
-  };
-
   namespace internal {
     template<typename Callable, typename Enable = void>
     struct FunctionParameterTypesImpl;
@@ -300,6 +257,42 @@ namespace schnek {
        * Get the number of processes
        */
       virtual int numProcs() const = 0;
+
+      /// Return the average of a single value over all the processes
+      virtual double avgReduce(double) const = 0;
+
+      /// Return the average of a single value over all the processes
+      virtual int avgReduce(int) const = 0;
+
+      /// Return the average of a single value over all the processes
+      virtual long avgReduce(long) const = 0;
+
+      /// Return the sum of a single value over all the processes
+      virtual double sumReduce(double) const = 0;
+
+      /// Return the sum of a single value over all the processes
+      virtual int sumReduce(int) const = 0;
+
+      /// Return the sum of a single value over all the processes
+      virtual long sumReduce(long) const = 0;
+
+      /// Return the maximum of a single value over all the processes
+      virtual double maxReduce(double) const = 0;
+
+      /// Return the maximum of a single value over all the processes
+      virtual int maxReduce(int) const = 0;
+
+      /// Return the maximum of a single value over all the processes
+      virtual long maxReduce(long) const = 0;
+
+      /// Return the minimum of a single value over all the processes
+      virtual double minReduce(double) const = 0;
+
+      /// Return the minimum of a single value over all the processes
+      virtual int minReduce(int) const = 0;
+
+      /// Return the minimum of a single value over all the processes
+      virtual long minReduce(long) const = 0;
 
       /**
        * Get a grid context for calling a function over all local domains
