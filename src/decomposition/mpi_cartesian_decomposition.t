@@ -69,7 +69,7 @@ namespace schnek {
   template<typename T>
   T MpiCartesianDomainDecomposition<rank, CheckingPolicy>::allReduce(T value, MPI_Op op) const {
     T result{};
-    int errorCode = MPI_Allreduce(&value, &result, 1, detail::mpiDatatypeFor<T>(), op, comm);
+    int errorCode = mpi.MPI_Allreduce(&value, &result, 1, detail::mpiDatatypeFor<T>(), op, comm);
     SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed");
     return result;
   }

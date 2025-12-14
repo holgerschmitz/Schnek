@@ -49,6 +49,22 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
       (void)useFieldInfo;
     }
 
+    double avgReduce(double value) const override { return value; }
+    int avgReduce(int value) const override { return value; }
+    long avgReduce(long value) const override { return value; }
+
+    double sumReduce(double value) const override { return value; }
+    int sumReduce(int value) const override { return value; }
+    long sumReduce(long value) const override { return value; }
+
+    double maxReduce(double value) const override { return value; }
+    int maxReduce(int value) const override { return value; }
+    long maxReduce(long value) const override { return value; }
+
+    double minReduce(double value) const override { return value; }
+    int minReduce(int value) const override { return value; }
+    long minReduce(long value) const override { return value; }
+
     // Expose the protected addLocalRange method for testing
     void testAddLocalRange(RangeType range, DomainType domain)
     {

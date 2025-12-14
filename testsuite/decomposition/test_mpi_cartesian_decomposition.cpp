@@ -52,6 +52,13 @@ namespace {
     return bytes;
   }
 
+  template<typename T>
+  std::vector<char> toByteVectorScalar(const T &value) {
+    std::vector<char> bytes(sizeof(T));
+    std::memcpy(bytes.data(), &value, sizeof(T));
+    return bytes;
+  }
+
   template<typename FieldType>
   struct GhostSliceExpectation {
     using RangeType = typename FieldType::RangeType;
@@ -388,6 +395,88 @@ BOOST_FIXTURE_TEST_CASE( single_process_1d, MpiCartesianDomainDecompositionTestF
 
   schnek::Range<ptrdiff_t, 1> expectedRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(100));
   SCHNEK_CHECK_EQUAL(ranges[0](0), expectedRange);
+}
+
+BOOST_FIXTURE_TEST_CASE( reductions_use_allreduce, MpiCartesianDomainDecompositionTestFixture )
+{
+  MPI_Comm testComm = (MPI_Comm)(void*)123;
+  std::vector<int> coords(1, 0);
+  context.commWorld = (MPI_Comm)(void*)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 4));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+
+  schnek::Range<ptrdiff_t, 1> globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(3));
+  schnek::Range<double, 1> globalDomain(schnek::Array<double,1>(0.0), schnek::Array<double,1>(1.0));
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(8.0)));
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(10.0)));
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(1.5)));
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(3.0)));
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(20)));
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(25)));
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(9)));
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(28l)));
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(40l)));
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(11l)));
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(6l)));
+
+  double avgDouble = decomposition.avgReduce(2.0);
+  double sumDouble = decomposition.sumReduce(2.5);
+  double maxDouble = decomposition.maxReduce(1.5);
+  double minDouble = decomposition.minReduce(3.0);
+
+  int avgInt = decomposition.avgReduce(5);
+  int sumInt = decomposition.sumReduce(5);
+  int maxInt = decomposition.maxReduce(9);
+
+  long avgLong = decomposition.avgReduce(7l);
+  long sumLong = decomposition.sumReduce(10l);
+  long maxLong = decomposition.maxReduce(11l);
+  long minLong = decomposition.minReduce(6l);
+
+  BOOST_CHECK_CLOSE(avgDouble, 2.0, 1e-12);
+  BOOST_CHECK_CLOSE(sumDouble, 10.0, 1e-12);
+  BOOST_CHECK_CLOSE(maxDouble, 1.5, 1e-12);
+  BOOST_CHECK_CLOSE(minDouble, 3.0, 1e-12);
+
+  BOOST_CHECK_EQUAL(avgInt, 5);
+  BOOST_CHECK_EQUAL(sumInt, 25);
+  BOOST_CHECK_EQUAL(maxInt, 9);
+
+  BOOST_CHECK_EQUAL(avgLong, 7l);
+  BOOST_CHECK_EQUAL(sumLong, 40l);
+  BOOST_CHECK_EQUAL(maxLong, 11l);
+  BOOST_CHECK_EQUAL(minLong, 6l);
+
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Allreduce.size(), static_cast<size_t>(11));
+
+  auto checkCall = [&](size_t index, MPI_Datatype expectedType, MPI_Op expectedOp) {
+    const auto &call = context.args_MPI_Allreduce[index];
+    BOOST_CHECK(call.sendBufferPresent);
+    BOOST_CHECK_EQUAL(call.count, 1);
+    BOOST_CHECK_EQUAL(call.datatype, expectedType);
+    BOOST_CHECK_EQUAL(call.op, expectedOp);
+    BOOST_CHECK_EQUAL(call.comm, testComm);
+  };
+
+  checkCall(0, MPI_DOUBLE, MPI_SUM);
+  checkCall(1, MPI_DOUBLE, MPI_SUM);
+  checkCall(2, MPI_DOUBLE, MPI_MAX);
+  checkCall(3, MPI_DOUBLE, MPI_MIN);
+  checkCall(4, MPI_INT, MPI_SUM);
+  checkCall(5, MPI_INT, MPI_SUM);
+  checkCall(6, MPI_INT, MPI_MAX);
+  checkCall(7, MPI_LONG, MPI_SUM);
+  checkCall(8, MPI_LONG, MPI_SUM);
+  checkCall(9, MPI_LONG, MPI_MAX);
+  checkCall(10, MPI_LONG, MPI_MIN);
 }
 
 BOOST_FIXTURE_TEST_CASE( foreach_single_process_1d, MpiCartesianDomainDecompositionTestFixture )

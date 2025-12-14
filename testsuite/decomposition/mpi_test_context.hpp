@@ -25,6 +25,14 @@ class MpiTestContextImpl : public schnek::MpiContext
     std::vector<boost::tuple<MPI_Comm, int, int>> args_MPI_Cart_coords;
     std::vector<boost::tuple<int, MPI_Datatype, int, MPI_Comm>> args_MPI_Bcast;
     std::vector<boost::tuple<MPI_Comm, int, int>> args_MPI_Cart_shift;
+    struct AllreduceCallInfo {
+      bool sendBufferPresent;
+      int count;
+      MPI_Datatype datatype;
+      MPI_Op op;
+      MPI_Comm comm;
+    };
+    std::vector<AllreduceCallInfo> args_MPI_Allreduce;
     struct SendrecvCallInfo {
       bool sendBufferPresent;
       int sendCount;
@@ -46,6 +54,7 @@ class MpiTestContextImpl : public schnek::MpiContext
     std::vector<boost::tuple<int, std::vector<int>>> ret_MPI_Cart_coords;
     std::vector<boost::tuple<int, void*, size_t>> ret_MPI_Bcast;
     std::vector<boost::tuple<int, int, int>> ret_MPI_Cart_shift;
+    std::vector<boost::tuple<int, std::vector<char>>> ret_MPI_Allreduce;
     std::vector<boost::tuple<int, std::vector<char>>> ret_MPI_Sendrecv;
 
     MPI_Comm getCommWorld();
@@ -71,5 +80,11 @@ class MpiTestContextImpl : public schnek::MpiContext
                      int recvtag,
                      MPI_Comm comm,
                      MPI_Status *status);
+            int MPI_Allreduce(const void *sendbuf,
+                      void *recvbuf,
+                      int count,
+                      MPI_Datatype datatype,
+                      MPI_Op op,
+                      MPI_Comm comm);
     int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
 };

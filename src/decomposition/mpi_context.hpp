@@ -46,6 +46,14 @@ namespace schnek {
           MPI_Comm comm,
           MPI_Status *status
       ) = 0;
+        virtual int MPI_Allreduce(
+          const void *sendbuf,
+          void *recvbuf,
+          int count,
+          MPI_Datatype datatype,
+          MPI_Op op,
+          MPI_Comm comm
+        ) = 0;
       virtual int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) = 0;
   };
 
@@ -80,6 +88,14 @@ namespace schnek {
           MPI_Comm comm,
           MPI_Status *status
       );
+          int MPI_Allreduce(
+            const void *sendbuf,
+            void *recvbuf,
+            int count,
+            MPI_Datatype datatype,
+            MPI_Op op,
+            MPI_Comm comm
+          );
       int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
   };
 
