@@ -104,20 +104,33 @@ namespace schnek {
       void setTransformation(const Transformation &transformation) { this->transformation = transformation; }
   };
 
-  template<class BaseGrid, typename Transformation, template<size_t> class CheckingPolicy = GridNoArgCheck>
+  namespace internal {
+    template<class BaseGrid, typename Transformation>
+    struct GridTransformStoragePolicy {
+        template<typename T, size_t rank>
+        class type : public GridTransformStorage<T, rank, BaseGrid, Transformation> {
+          public:
+            using GridTransformStorage<T, rank, BaseGrid, Transformation>::GridTransformStorage;
+        };
+    };
+  }
+
+
+  template<class BaseGrid, typename Transformation, template<typename, size_t> class CheckingPolicy = GridNoArgCheck>
   class GridTransform
       : public internal::GridBase<
             typename Transformation::value_type,
             BaseGrid::Rank,
-            CheckingPolicy<BaseGrid::Rank>,
-            GridTransformStorage<typename BaseGrid::value_type, BaseGrid::Rank, BaseGrid, Transformation> > {
+            CheckingPolicy,
+            internal::GridTransformStoragePolicy<BaseGrid, Transformation>::template type
+        > {
     private:
       typedef internal::GridBase<
           typename Transformation::value_type,
           BaseGrid::Rank,
-          CheckingPolicy<BaseGrid::Rank>,
-          GridTransformStorage<typename BaseGrid::value_type, BaseGrid::Rank, BaseGrid, Transformation> >
-          ParentType;
+          CheckingPolicy,
+          internal::GridTransformStoragePolicy<BaseGrid, Transformation>::template type
+      > ParentType;
 
     public:
       enum { Rank = BaseGrid::Rank };
