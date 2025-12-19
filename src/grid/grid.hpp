@@ -32,6 +32,7 @@
 
 #include "../macros.hpp"
 #include "../typetools.hpp"
+#include "../generic/is-detected.hpp"
 #include "array.hpp"
 #include "gridcheck/grid-check-concept.hpp"
 #include "gridcheck/gridcheck.hpp"
@@ -122,6 +123,46 @@ namespace schnek {
         /// Get the stride of the specified dimension
         SCHNEK_INLINE ptrdiff_t stride(size_t dim) const { return this->storage.stride(dim); }
 
+        /// Get a raw pointer to the underlying data if provided by the storage policy
+        template<typename S = StoragePolicy>
+        SCHNEK_INLINE auto getRawData() -> std::enable_if_t<
+            concepts::GridStorageConceptCondition<S>::has_get_raw_data_method,
+            decltype(this->storage.getRawData())> {
+          return this->storage.getRawData();
+        }
+
+        /// Fallback overload that triggers a compilation error when getRawData is unavailable
+        template<typename S = StoragePolicy>
+        SCHNEK_INLINE auto getRawData() -> std::enable_if_t<
+            !concepts::GridStorageConceptCondition<S>::has_get_raw_data_method,
+            T *> {
+          static_assert(
+              concepts::GridStorageConceptCondition<S>::has_get_raw_data_method,
+              "GridBase::getRawData() requires the storage policy to implement getRawData() returning a raw pointer"
+          );
+          return nullptr;
+        }
+
+        /// Get the size of the underlying data if provided by the storage policy
+        template<typename S = StoragePolicy>
+        SCHNEK_INLINE auto getSize() const -> std::enable_if_t<
+            concepts::GridStorageConceptCondition<S>::has_get_size_method,
+            decltype(this->storage.getSize())> {
+          return this->storage.getSize();
+        }
+
+        /// Fallback overload that triggers a compilation error when getSize is unavailable
+        template<typename S = StoragePolicy>
+        SCHNEK_INLINE auto getSize() const -> std::enable_if_t<
+            !concepts::GridStorageConceptCondition<S>::has_get_size_method,
+            T *> {
+          static_assert(
+              concepts::GridStorageConceptCondition<S>::has_get_size_method,
+              "GridBase::getSize() requires the storage policy to implement getSize() returning a raw pointer"
+          );
+          return nullptr;
+        }
+
         /** get access, writing */
         template<template<size_t> class ArrayCheckingPolicy>
         SCHNEK_INLINE T& get(const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos);  // write
@@ -143,17 +184,17 @@ namespace schnek {
         template<class Operator, size_t Length>
         SCHNEK_INLINE T operator[](const ArrayExpression<Operator, Length>& pos) const;  // read
 
-        /** index operator, for 1D grids, writing */
-        SCHNEK_INLINE T& operator[](ptrdiff_t i);
-        /** index operator, for 1D grids, reading */
-        SCHNEK_INLINE T operator[](ptrdiff_t i) const;
-
         /** index operator forwarding to the checking policy, writing */
         template<typename... Indices>
         SCHNEK_INLINE T& operator()(Indices... indices);
         /** index operator forwarding to the checking policy, reading */
         template<typename... Indices>
         SCHNEK_INLINE T operator()(Indices... indices) const;
+
+        /** index operator, for 1D grids, writing */
+        SCHNEK_INLINE T& operator[](ptrdiff_t i) { return this->operator()(i); }
+        /** index operator, for 1D grids, reading */
+        SCHNEK_INLINE T operator[](ptrdiff_t i) const { return this->operator()(i); }
 
         /** assign a value */
         SCHNEK_INLINE GridBase<T, rank, Policies...>& operator=(const T& val);

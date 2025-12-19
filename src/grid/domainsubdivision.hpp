@@ -53,6 +53,7 @@ namespace schnek {
       enum { Rank = GridType::Rank };
 
       typedef typename GridType::IndexType LimitType;
+      typedef typename GridType::SizeType SizeType;
       typedef typename GridType::value_type value_type;
 
       // typedef Grid<unsigned char, 1, GridAssertCheck, LazyArrayGridStorage> BufferType;
@@ -69,7 +70,8 @@ namespace schnek {
       /// Default constructor
       DomainSubdivision() {}
 
-      /** @brief Virtual destructor
+      /** 
+       *  @brief Virtual destructor
        *
        *  Needed for virtual methods.
        */
@@ -77,7 +79,8 @@ namespace schnek {
 
       size_t getDelta() { return bounds->getDelta(); }
 
-      /** Initialize the domain subdivision.
+      /** 
+       *  Initialize the domain subdivision.
        *
        *  The DomainSubdivision class is responsible for subdividing the domain for
        *  the different processes. The size of the local domain will be returned
@@ -85,7 +88,8 @@ namespace schnek {
        */
       virtual void init(const LimitType &low, const LimitType &high, size_t delta) = 0;
 
-      /** Convenience method.
+      /** 
+       *  Convenience method.
        *  Initialise the boundary with the extent of a grid.
        */
       void init(const DomainType &domain, size_t delta) { init(domain.getLo(), domain.getHi(), delta); }
@@ -98,10 +102,10 @@ namespace schnek {
       /** Convenience method.
        *  Initialise the boundary with the extent of the grid.
        */
-      void init(const LimitType &size, size_t delta) {
-        LimitType sizem(size);
+      void init(const SizeType &size, size_t delta) {
+        LimitType sizem{size};
         for (size_t i = 0; i < Rank; ++i) --sizem[i];
-        init(LimitType(0), sizem, delta);
+        init(LimitType{0}, sizem, delta);
       }
 
       /// Return the global domain size excluding ghost cells

@@ -96,7 +96,7 @@ namespace schnek {
       SingleArrayGridStorage<T, Rank, Policies...> &operator=(const SingleArrayGridStorage<T, Rank, Policies...> &);
 
       /// Access to the underlying raw data
-      T *getRawData() const { return this->allocation.getData(); }
+      T *getRawData() { return this->allocation.getData(); }
 
       /// Get the lowest coordinate in the grid (inclusive)
       SCHNEK_INLINE const IndexType &getLo() const { return this->range.getLo(); }
