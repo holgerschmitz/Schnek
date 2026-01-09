@@ -428,6 +428,247 @@ BOOST_FIXTURE_TEST_CASE( constructor_10d, ArrayTest )
   }
 }
 
+
+BOOST_FIXTURE_TEST_CASE( structured_bindings_1d, ArrayTest )
+{
+  const int N = 100000;
+  boost::timer::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    int v1 = idist(rGen);
+    Array<int, 1, ArrayBoostTestArgCheck> test(v1);
+    auto [a] = test;
+    BOOST_CHECK_EQUAL(v1, a);
+
+    ++show_progress;
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE( structured_bindings_2d, ArrayTest )
+{
+  const int N = 100000;
+  boost::timer::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    int v1 = idist(rGen);
+    int v2 = idist(rGen);
+    Array<int, 2, ArrayBoostTestArgCheck> test(v1, v2);
+    auto [a, b] = test;
+    BOOST_CHECK_EQUAL(v1, a);
+    BOOST_CHECK_EQUAL(v2, b);
+
+    ++show_progress;
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE( structured_bindings_3d, ArrayTest )
+{
+  const int N = 100000;
+  boost::timer::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    int v1 = idist(rGen);
+    int v2 = idist(rGen);
+    int v3 = idist(rGen);
+    Array<int, 3, ArrayBoostTestArgCheck> test(v1, v2, v3);
+    auto [a, b, c] = test;
+    BOOST_CHECK_EQUAL(v1, a);
+    BOOST_CHECK_EQUAL(v2, b);
+    BOOST_CHECK_EQUAL(v3, c);
+
+    ++show_progress;
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE( structured_bindings_4d, ArrayTest )
+{
+  const int N = 100000;
+  boost::timer::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    int v1 = idist(rGen);
+    int v2 = idist(rGen);
+    int v3 = idist(rGen);
+    int v4 = idist(rGen);
+    Array<int, 4, ArrayBoostTestArgCheck> test(v1, v2, v3, v4);
+    auto [a, b, c, d] = test;
+    BOOST_CHECK_EQUAL(v1, a);
+    BOOST_CHECK_EQUAL(v2, b);
+    BOOST_CHECK_EQUAL(v3, c);
+    BOOST_CHECK_EQUAL(v4, d);
+
+    ++show_progress;
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE( structured_bindings_5d, ArrayTest )
+{
+  const int N = 100000;
+  boost::timer::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    int v1 = idist(rGen);
+    int v2 = idist(rGen);
+    int v3 = idist(rGen);
+    int v4 = idist(rGen);
+    int v5 = idist(rGen);
+    Array<int, 5, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5);
+    auto [a, b, c, d, e] = test;
+    BOOST_CHECK_EQUAL(v1, a);
+    BOOST_CHECK_EQUAL(v2, b);
+    BOOST_CHECK_EQUAL(v3, c);
+    BOOST_CHECK_EQUAL(v4, d);
+    BOOST_CHECK_EQUAL(v5, e);
+
+    ++show_progress;
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE( structured_bindings_6d, ArrayTest )
+{
+  const int N = 100000;
+  boost::timer::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    int v1 = idist(rGen);
+    int v2 = idist(rGen);
+    int v3 = idist(rGen);
+    int v4 = idist(rGen);
+    int v5 = idist(rGen);
+    int v6 = idist(rGen);
+    Array<int, 6, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6);
+    auto [a, b, c, d, e, f] = test;
+    BOOST_CHECK_EQUAL(v1, a);
+    BOOST_CHECK_EQUAL(v2, b);
+    BOOST_CHECK_EQUAL(v3, c);
+    BOOST_CHECK_EQUAL(v4, d);
+    BOOST_CHECK_EQUAL(v5, e);
+    BOOST_CHECK_EQUAL(v6, f);
+
+    ++show_progress;
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE( structured_bindings_7d, ArrayTest )
+{
+  const int N = 100000;
+  boost::timer::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    int v1 = idist(rGen);
+    int v2 = idist(rGen);
+    int v3 = idist(rGen);
+    int v4 = idist(rGen);
+    int v5 = idist(rGen);
+    int v6 = idist(rGen);
+    int v7 = idist(rGen);
+    Array<int, 7, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7);
+    auto [a, b, c, d, e, f, g] = test;
+    BOOST_CHECK_EQUAL(v1, a);
+    BOOST_CHECK_EQUAL(v2, b);
+    BOOST_CHECK_EQUAL(v3, c);
+    BOOST_CHECK_EQUAL(v4, d);
+    BOOST_CHECK_EQUAL(v5, e);
+    BOOST_CHECK_EQUAL(v6, f);
+    BOOST_CHECK_EQUAL(v7, g);
+
+    ++show_progress;
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE( structured_bindings_8d, ArrayTest )
+{
+  const int N = 100000;
+  boost::timer::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    int v1 = idist(rGen);
+    int v2 = idist(rGen);
+    int v3 = idist(rGen);
+    int v4 = idist(rGen);
+    int v5 = idist(rGen);
+    int v6 = idist(rGen);
+    int v7 = idist(rGen);
+    int v8 = idist(rGen);
+    Array<int, 8, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7, v8);
+    auto [a, b, c, d, e, f, g, h] = test;
+    BOOST_CHECK_EQUAL(v1, a);
+    BOOST_CHECK_EQUAL(v2, b);
+    BOOST_CHECK_EQUAL(v3, c);
+    BOOST_CHECK_EQUAL(v4, d);
+    BOOST_CHECK_EQUAL(v5, e);
+    BOOST_CHECK_EQUAL(v6, f);
+    BOOST_CHECK_EQUAL(v7, g);
+    BOOST_CHECK_EQUAL(v8, h);
+
+    ++show_progress;
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE( structured_bindings_9d, ArrayTest )
+{
+  const int N = 100000;
+  boost::timer::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    int v1 = idist(rGen);
+    int v2 = idist(rGen);
+    int v3 = idist(rGen);
+    int v4 = idist(rGen);
+    int v5 = idist(rGen);
+    int v6 = idist(rGen);
+    int v7 = idist(rGen);
+    int v8 = idist(rGen);
+    int v9 = idist(rGen);
+    Array<int, 9, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7, v8, v9);
+    auto [a, b, c, d, e, f, g, h, j] = test;
+    BOOST_CHECK_EQUAL(v1, a);
+    BOOST_CHECK_EQUAL(v2, b);
+    BOOST_CHECK_EQUAL(v3, c);
+    BOOST_CHECK_EQUAL(v4, d);
+    BOOST_CHECK_EQUAL(v5, e);
+    BOOST_CHECK_EQUAL(v6, f);
+    BOOST_CHECK_EQUAL(v7, g);
+    BOOST_CHECK_EQUAL(v8, h);
+    BOOST_CHECK_EQUAL(v9, j);
+
+    ++show_progress;
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE( structured_bindings_10d, ArrayTest )
+{
+  const int N = 100000;
+  boost::timer::progress_display show_progress(N);
+
+  for (int i=0; i<N; i++) {
+    int v1 = idist(rGen);
+    int v2 = idist(rGen);
+    int v3 = idist(rGen);
+    int v4 = idist(rGen);
+    int v5 = idist(rGen);
+    int v6 = idist(rGen);
+    int v7 = idist(rGen);
+    int v8 = idist(rGen);
+    int v9 = idist(rGen);
+    int v10 = idist(rGen);
+    Array<int, 10, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10);
+    auto [a, b, c, d, e, f, g, h, j, k] = test;
+    BOOST_CHECK_EQUAL(v1, a);
+    BOOST_CHECK_EQUAL(v2, b);
+    BOOST_CHECK_EQUAL(v3, c);
+    BOOST_CHECK_EQUAL(v4, d);
+    BOOST_CHECK_EQUAL(v5, e);
+    BOOST_CHECK_EQUAL(v6, f);
+    BOOST_CHECK_EQUAL(v7, g);
+    BOOST_CHECK_EQUAL(v8, h);
+    BOOST_CHECK_EQUAL(v9, j);
+    BOOST_CHECK_EQUAL(v10, k);
+
+    ++show_progress;
+  }
+}
+
 BOOST_FIXTURE_TEST_CASE( expression_addition_1d, ArrayTest )
 {
   const int N = 100000;

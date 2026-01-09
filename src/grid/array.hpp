@@ -29,6 +29,7 @@
 
 #include <array>
 #include <initializer_list>
+#include <utility>
 
 #include "../config.hpp"
 #include "../macros.hpp"
@@ -246,6 +247,12 @@ namespace schnek {
 
       /// Returns the sum of squares of all elements
       T sqr() const;
+
+      template<std::size_t Index>
+      std::tuple_element_t<Index, Array>& get()
+      {
+        return this->at(Index);
+      }
   };
 
 }  // namespace schnek
@@ -293,6 +300,22 @@ template<
     class CheckingPolicy2>
 SCHNEK_INLINE bool
 operator<=(const schnek::Array<T1, Length, CheckingPolicy1> &, const schnek::Array<T2, Length, CheckingPolicy2> &);
+
+namespace std
+{
+  template<typename T, size_t Length, template<size_t> class CheckingPolicy>
+  struct tuple_size<schnek::Array<T, Length, CheckingPolicy>>
+  {
+    static constexpr size_t value = Length;
+  };
+
+  template<size_t Index, typename T, size_t Length, template<size_t> class CheckingPolicy>
+  struct tuple_element<Index, schnek::Array<T, Length, CheckingPolicy>>
+  {
+    static_assert(Index < Length, "Index out of bounds for Array");
+    using type = T;
+  };
+}
 
 #include "array.t"
 
