@@ -143,9 +143,10 @@ namespace schnek {
     std::string dset_name = getNextBlockName();
 
     typedef typename FieldType::IndexType IndexType;
+    typedef typename FieldType::SizeType SizeType;
     typedef typename FieldType::value_type T;
 
-    IndexType mdims = g.grid.getDims();
+    SizeType mdims = g.grid.getDims();
     IndexType mlo = g.grid.getLo();
     IndexType mhi = g.grid.getHi();
 

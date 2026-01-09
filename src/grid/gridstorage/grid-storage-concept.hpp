@@ -58,7 +58,10 @@ namespace schnek {
       using stride_method_t = decltype(std::declval<const T>().stride(std::declval<size_t>()));
 
       template<typename T>
-      using get_raw_data_method_t = decltype(std::declval<const T>().getRawData());
+      using get_raw_data_method_t = decltype(std::declval<T>().getRawData());
+
+      template<typename T>
+      using get_size_method_t = decltype(std::declval<const T>().getSize());
     }  // namespace internal::grid_storage
 
     // Reusable template class to check GridStorage requirements
@@ -78,6 +81,8 @@ namespace schnek {
             is_detected<internal::grid_storage::stride_method_t, GridStorage>::value;
         static constexpr bool has_get_raw_data_method =
             is_detected<internal::grid_storage::get_raw_data_method_t, GridStorage>::value;
+        static constexpr bool has_get_size_method =
+            is_detected<internal::grid_storage::get_size_method_t, GridStorage>::value;
 
         static constexpr bool value = has_value_type && has_rank && has_index_type && has_range_type &&
                                       has_get_method && has_resize_method && has_resize_range_method;

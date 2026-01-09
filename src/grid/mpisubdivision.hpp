@@ -61,8 +61,8 @@ namespace schnek {
 
       /// The Comm object referring to the cartesian process grid
       MPI_Comm comm;
-      LimitType prevcoord;  ///< The ranks of the neighbour processes towards the lower boundary
-      LimitType nextcoord;  ///< The ranks of the neighbour processes towards the higher boundary
+      Array<int, Rank> prevcoord;  ///< The MPI ranks of the neighbour processes towards the lower boundary
+      Array<int, Rank> nextcoord;  ///< The MPI ranks of the neighbour processes towards the higher boundary
 
       /// dimensions
       int dims[Rank];
@@ -92,7 +92,7 @@ namespace schnek {
       ~MPICartSubdivision();
 
       /// initialize
-      void init(const LimitType &low, const LimitType &high, int delta) override;
+      void init(const LimitType &low, const LimitType &high, size_t delta) override;
 
       /// Return the global domain size excluding ghost cells
       const DomainType &getGlobalDomain() const override { return globalDomain; }
@@ -151,7 +151,7 @@ namespace schnek {
       int procCount() const override { return ComSize; }
 
       /// returns an ID, which consists of the Dimensions and coordinates
-      int getUniqueId() const override;
+      size_t getUniqueId() const override;
 
       /** Returns true if this process is on the lower bound of the
        * global domain

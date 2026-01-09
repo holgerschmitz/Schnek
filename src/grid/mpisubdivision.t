@@ -60,7 +60,7 @@ namespace schnek {
   }
 
   template<class GridType>
-  void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi, int delta) {
+  void MPICartSubdivision<GridType>::init(const LimitType &lo, const LimitType &hi, size_t delta) {
     LimitType Low(lo);
     LimitType High(hi);
     globalDomain = DomainType(lo, hi);
@@ -69,14 +69,14 @@ namespace schnek {
 
     int periodic[Rank];
 
-    std::vector<int> box(Rank);
+    std::vector<size_t> box(Rank);
 
     for (size_t i = 0; i < Rank; ++i) {
       box[i] = High[i] - Low[i];
       periodic[i] = true;
     }
 
-    std::vector<int> eqDims;
+    std::vector<size_t> eqDims;
 
     equalFactors(ComSize, Rank, eqDims, box);
 
@@ -452,8 +452,8 @@ namespace schnek {
 
   /// returns an ID, which consists of the Dimensions and coordinates
   template<class GridType>
-  int MPICartSubdivision<GridType>::getUniqueId() const {
-    int id = mycoord[0];
+  size_t MPICartSubdivision<GridType>::getUniqueId() const {
+    size_t id = mycoord[0];
     for (int i = 1; i < Rank; ++i) id = dims[i] * id + mycoord[i];
 
     SCHNEK_TRACE_LOG(2, "MPICartSubdivision::getUniqueId() " << id)

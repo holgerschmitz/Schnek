@@ -114,7 +114,7 @@ namespace schnek {
               : coords(coords_), updater(updater_), implementations(implementations_) {}
 
         public:
-          template<typename T, template<typename, size_t>... Policies>
+          template<typename T, template<typename, size_t> typename... Policies>
           fieldAdder &operator()(Field<T, rank, Policies...> &field, T &value) {
             pImplBase i(new impl<T, rank, ArrayCheckingPolicy, Policies...>(field, coords, value, updater));
             implementations.push_back(i);
