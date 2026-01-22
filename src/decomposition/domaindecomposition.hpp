@@ -344,12 +344,6 @@ namespace schnek {
        *
        * multiple contexts can be created
        */
-      GridContext getGridContext(std::initializer_list<GridRegistration> registrations);
-
-      /**
-       * Get a grid context for calling a function over all local domains
-       * using a mix of full and projected registrations.
-       */
       GridContext getGridContext(std::initializer_list<RegistrationVariant> registrations);
 
       /**
@@ -807,26 +801,6 @@ namespace schnek {
     for (const auto &registration : registrations) {
       accumulate(registration, useFieldInfo);
     }
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  typename DomainDecomposition<rank, CheckingPolicy>::GridContext
-  DomainDecomposition<rank, CheckingPolicy>::getGridContext(std::initializer_list<GridRegistration> registrations) {
-    std::vector<const std::list<internal::pGridWrapper> *> selectedLists;
-    selectedLists.reserve(registrations.size());
-    for (const auto &registration : registrations) {
-      auto gridIt = grids.find(registration.id);
-      if (gridIt == grids.end()) {
-        SCHNECK_FAIL("Unknown grid registration id: " << registration.id);
-      }
-      selectedLists.push_back(&gridIt->second);
-    }
-    std::vector<RangeType> rangeCopies;
-    rangeCopies.reserve(ranges.size());
-    for (const auto &localRange : ranges) {
-      rangeCopies.push_back(localRange.range);
-    }
-    return GridContext{std::move(selectedLists), std::move(rangeCopies)};
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
