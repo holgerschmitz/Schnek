@@ -30,6 +30,7 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
     using Base = schnek::DomainDecomposition<rank, CheckingPolicy>;
     using RangeType = typename Base::RangeType;
     using DomainType = typename Base::DomainType;
+    using RegistrationVariant = typename Base::RegistrationVariant;
 
     MockDomainDecomposition() : Base() {}
 
@@ -85,6 +86,14 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
     template<class GridType>
     schnek::GridRegistration registerField(schnek::GridFactory<GridType> &factory, const RangeType &subRange) {
       return this->registerFieldImpl(factory, subRange);
+    }
+
+    template<class GridType>
+    typename Base::template ProjectedRegistration<GridType::Rank> registerProjection(
+        schnek::GridFactory<GridType> &factory,
+        const std::array<size_t, GridType::Rank> &axes
+    ) {
+      return this->registerFieldProjectionImpl(factory, axes);
     }
 };
 
@@ -247,6 +256,86 @@ BOOST_AUTO_TEST_CASE( register_subrange_no_overlap_skips_ranges )
   context.forEach([&](const RangeType &, GridType &) { ++callCount; });
 
   BOOST_CHECK_EQUAL(callCount, 0);
+}
+
+BOOST_AUTO_TEST_CASE( register_projection_1d_from_2d )
+{
+  using FullGridType = schnek::Grid<double, 2>;
+  using ProjectedGridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 2>;
+  using DomainType = schnek::Range<double, 2>;
+  using IndexType = schnek::Array<ptrdiff_t, 2>;
+  using DomainLimitType = schnek::Array<double, 2>;
+
+  MockDomainDecomposition<2> decomposition;
+
+  RangeType globalRange(IndexType(0, 0), IndexType(9, 9));
+  DomainType globalDomain(DomainLimitType(0.0, 0.0), DomainLimitType(10.0, 10.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  RangeType localRange1(IndexType(0, 0), IndexType(4, 4));
+  DomainType localDomain1(DomainLimitType(0.0, 0.0), DomainLimitType(5.0, 5.0));
+  decomposition.testAddLocalRange(localRange1, localDomain1);
+
+  RangeType localRange2(IndexType(0, 5), IndexType(4, 9));
+  DomainType localDomain2(DomainLimitType(0.0, 5.0), DomainLimitType(5.0, 10.0));
+  decomposition.testAddLocalRange(localRange2, localDomain2);
+
+  schnek::GridFactory<FullGridType> fullFactory;
+  auto fullReg = decomposition.registerField(fullFactory);
+
+  schnek::GridFactory<ProjectedGridType> projectedFactory;
+  auto projectedReg = decomposition.registerProjection<ProjectedGridType>(projectedFactory, {0});
+
+  auto context = decomposition.getGridContext({
+      MockDomainDecomposition<2>::RegistrationVariant{fullReg},
+      MockDomainDecomposition<2>::RegistrationVariant{projectedReg}
+  });
+
+  int callCount = 0;
+  context.forEach([&](const RangeType &range, FullGridType &fullGrid, ProjectedGridType &projectedGrid) {
+    ++callCount;
+
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[0], range.getLo()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[1], range.getLo()[1]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[0], range.getHi()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[1], range.getHi()[1]);
+
+    BOOST_CHECK_EQUAL(projectedGrid.getLo()[0], range.getLo()[0]);
+    BOOST_CHECK_EQUAL(projectedGrid.getHi()[0], range.getHi()[0]);
+  });
+
+  BOOST_CHECK_EQUAL(callCount, 2);
+}
+
+BOOST_AUTO_TEST_CASE( register_projection_invalid_axes )
+{
+  using ProjectedGridType1 = schnek::Grid<double, 1>;
+  using ProjectedGridType2 = schnek::Grid<double, 2>;
+  using RangeType = schnek::Range<ptrdiff_t, 3>;
+  using DomainType = schnek::Range<double, 3>;
+  using IndexType = schnek::Array<ptrdiff_t, 3>;
+  using DomainLimitType = schnek::Array<double, 3>;
+
+  MockDomainDecomposition<3> decomposition;
+
+  RangeType globalRange(IndexType(0, 0, 0), IndexType(9, 9, 9));
+  DomainType globalDomain(DomainLimitType(0.0, 0.0, 0.0), DomainLimitType(10.0, 10.0, 10.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  schnek::GridFactory<ProjectedGridType1> projectedFactory1;
+  schnek::GridFactory<ProjectedGridType2> projectedFactory2;
+
+  BOOST_CHECK_THROW(
+      decomposition.registerProjection<ProjectedGridType1>(projectedFactory1, {3}),
+      schnek::ScheckException
+  );
+  BOOST_CHECK_THROW(
+      decomposition.registerProjection<ProjectedGridType2>(projectedFactory2, {0, 0}),
+      schnek::ScheckException
+  );
 }
 
 // ==========================================================================

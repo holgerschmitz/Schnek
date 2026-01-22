@@ -27,6 +27,7 @@
 #ifndef SCHNEK_DECOMPOSITION_DETAIL_GRID_FACTORY_HPP_
 #define SCHNEK_DECOMPOSITION_DETAIL_GRID_FACTORY_HPP_
 
+#include <array>
 #include <cstddef>
 #include <memory>
 #include <typeinfo>
@@ -122,6 +123,14 @@ namespace schnek {
   struct GridRegistration {
       long id = -1;
   };
+
+    template<size_t projRank, size_t fullRank>
+    struct ProjectedGridRegistration {
+      static constexpr size_t ProjectedRank = projRank;
+      static constexpr size_t FullRank = fullRank;
+      long id = -1;
+      std::array<size_t, projRank> axes{};
+    };
 
   namespace internal {
 
