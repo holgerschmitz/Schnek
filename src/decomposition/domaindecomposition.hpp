@@ -172,8 +172,10 @@ namespace schnek {
            * The arguments to the function are the local grids corresponding to the registrations.
            *
            * The `RangeType` passed to the callback is derived from the first grid argument
-           * (the first entry in the registration list). In debug builds, the method asserts
-           * that the first grid range is a subset of every other grid range.
+           * (the first entry in the registration list) when that grid exposes a compatible
+           * full-rank range. Otherwise the local range is used. In debug builds, the method
+           * asserts that the first full-rank grid range is a subset of every other full-rank
+           * grid range.
            *
            * @tparam Func the function type
            * @param func a function taking the grids corrsponding to the registrations
@@ -543,10 +545,14 @@ namespace schnek {
 
       if (!hasNullGrid) {
         RangeType rangeRef = ranges[entry];
+        bool hasFullRange = false;
         if constexpr (paramCount > 0) {
           using FirstParam = typename boost::mpl::at_c<ParameterSeq, 0>::type;
           const auto &firstGrid = internal::GridReferenceExtractor<FirstParam>::extract(*iterators.front());
-          rangeRef = RangeType(firstGrid.getRange());
+          if constexpr (std::is_constructible<RangeType, decltype(firstGrid.getRange())>::value) {
+            rangeRef = RangeType(firstGrid.getRange());
+            hasFullRange = true;
+          }
 #ifndef NDEBUG
           auto rangeSubset = [](const RangeType &subset, const RangeType &superset) {
             for (size_t d = 0; d < rank; ++d) {
@@ -556,13 +562,17 @@ namespace schnek {
             }
             return true;
           };
-          for (auto &it : iterators) {
-            using Param = typename boost::mpl::at_c<ParameterSeq, 0>::type;
-            const auto &gridRef = internal::GridReferenceExtractor<Param>::extract(*it);
-            SCHNEK_ASSERT(
-                rangeSubset(rangeRef, RangeType(gridRef.getRange())),
-                "First grid range must be a subset of all grid ranges in GridContext::forEach"
-            );
+          if (hasFullRange) {
+            for (auto &it : iterators) {
+              using Param = typename boost::mpl::at_c<ParameterSeq, 0>::type;
+              const auto &gridRef = internal::GridReferenceExtractor<Param>::extract(*it);
+              if constexpr (std::is_constructible<RangeType, decltype(gridRef.getRange())>::value) {
+                SCHNEK_ASSERT(
+                    rangeSubset(rangeRef, RangeType(gridRef.getRange())),
+                    "First grid range must be a subset of all full-rank grid ranges in GridContext::forEach"
+                );
+              }
+            }
           }
 #endif
         }
@@ -703,9 +713,34 @@ namespace schnek {
     long id = registration->getId();
     projectedRegisteredFields[id] = registration;
 
+    RangeType unionRange;
+    DomainType unionDomain;
+    bool hasRanges = false;
+    for (const auto &localRange : ranges) {
+      if (!hasRanges) {
+        unionRange = localRange.range;
+        unionDomain = localRange.domain;
+        hasRanges = true;
+        continue;
+      }
+      for (size_t d = 0; d < projRank; ++d) {
+        const size_t axis = axes[d];
+        unionRange.getLo()[axis] = std::min(unionRange.getLo()[axis], localRange.range.getLo()[axis]);
+        unionRange.getHi()[axis] = std::max(unionRange.getHi()[axis], localRange.range.getHi()[axis]);
+        unionDomain.getLo()[axis] = std::min(unionDomain.getLo()[axis], localRange.domain.getLo()[axis]);
+        unionDomain.getHi()[axis] = std::max(unionDomain.getHi()[axis], localRange.domain.getHi()[axis]);
+      }
+    }
+
+    internal::pGridWrapper sharedGrid;
+    if (hasRanges) {
+      sharedGrid = registration->makeGrid(unionRange, unionDomain);
+    }
+
     std::list<internal::pGridWrapper> gridList;
     for (const auto &localRange : ranges) {
-      gridList.push_back(registration->makeGrid(localRange.range, localRange.domain));
+      (void)localRange;
+      gridList.push_back(sharedGrid);
     }
 
     projectedGrids[id] = std::move(gridList);
