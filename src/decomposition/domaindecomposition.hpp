@@ -160,6 +160,10 @@ namespace schnek {
            *
            * The arguments to the function are the local grids corresponding to the registrations.
            *
+           * The `RangeType` passed to the callback is derived from the first grid argument
+           * (the first entry in the registration list). In debug builds, the method asserts
+           * that the first grid range is a subset of every other grid range.
+           *
            * @tparam Func the function type
            * @param func a function taking the grids corrsponding to the registrations
            */
@@ -475,6 +479,24 @@ namespace schnek {
           using FirstParam = typename boost::mpl::at_c<ParameterSeq, 0>::type;
           const auto &firstGrid = internal::GridReferenceExtractor<FirstParam>::extract(*iterators.front());
           rangeRef = RangeType(firstGrid.getRange());
+#ifndef NDEBUG
+          auto rangeSubset = [](const RangeType &subset, const RangeType &superset) {
+            for (size_t d = 0; d < rank; ++d) {
+              if (subset.getLo()[d] < superset.getLo()[d] || subset.getHi()[d] > superset.getHi()[d]) {
+                return false;
+              }
+            }
+            return true;
+          };
+          for (auto &it : iterators) {
+            using Param = typename boost::mpl::at_c<ParameterSeq, 0>::type;
+            const auto &gridRef = internal::GridReferenceExtractor<Param>::extract(*it);
+            SCHNEK_ASSERT(
+                rangeSubset(rangeRef, RangeType(gridRef.getRange())),
+                "First grid range must be a subset of all grid ranges in GridContext::forEach"
+            );
+          }
+#endif
         }
         auto args = internal::GridArgumentBuilder<ParameterSeq>::build(iterators);
         std::apply([&](auto &&...gridArgs) { func(rangeRef, std::forward<decltype(gridArgs)>(gridArgs)...); }, args);
