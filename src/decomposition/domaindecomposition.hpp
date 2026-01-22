@@ -221,17 +221,18 @@ namespace schnek {
       template<class GridType>
       void setLocalWeights(const GridType &weights);
 
-      /**
-       * Initialisation and load balancing based on global weights
-       *
-       * This function is allowed to create multiple threads and return
-       */
       /*
        * Accumulate halo cells with neighbouring data.
        */
       virtual void accumulate(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) = 0;
       void accumulate(GridRegistration registration, bool useFieldInfo = true);
       void accumulate(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true);
+
+      /**
+       * Initialisation and load balancing based on global weights
+       *
+       * This function is allowed to create multiple threads and return
+       */
       virtual void init() = 0;
 
       /**
@@ -363,6 +364,15 @@ namespace schnek {
       template<class GridType>
       GridRegistration registerFieldImpl(GridFactory<GridType> &factory);
 
+      /**
+       * Register a grid or field by passing a factory, but only allocate for a sub-range.
+       *
+       * Only local ranges that intersect the sub-range will allocate a grid. For all other
+       * local ranges, a null pointer is stored in the internal grid list.
+       */
+      template<class GridType>
+      GridRegistration registerFieldImpl(GridFactory<GridType> &factory, const RangeType &subRange);
+
     private:
       struct LocalRangeInfo {
           RangeType range;
@@ -451,9 +461,25 @@ namespace schnek {
     }
 
     for (std::size_t entry = 0; entry < entryCount; ++entry) {
-      const RangeType &rangeRef = ranges[entry];
-      auto args = internal::GridArgumentBuilder<ParameterSeq>::build(iterators);
-      std::apply([&](auto &&...gridArgs) { func(rangeRef, std::forward<decltype(gridArgs)>(gridArgs)...); }, args);
+      bool hasNullGrid = false;
+      for (auto &it : iterators) {
+        if (!(*it)) {
+          hasNullGrid = true;
+          break;
+        }
+      }
+
+      if (!hasNullGrid) {
+        RangeType rangeRef = ranges[entry];
+        if constexpr (paramCount > 0) {
+          using FirstParam = typename boost::mpl::at_c<ParameterSeq, 0>::type;
+          const auto &firstGrid = internal::GridReferenceExtractor<FirstParam>::extract(*iterators.front());
+          rangeRef = RangeType(firstGrid.getRange());
+        }
+        auto args = internal::GridArgumentBuilder<ParameterSeq>::build(iterators);
+        std::apply([&](auto &&...gridArgs) { func(rangeRef, std::forward<decltype(gridArgs)>(gridArgs)...); }, args);
+      }
+
       for (auto &it : iterators) {
         ++it;
       }
@@ -506,6 +532,61 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  template<class GridType>
+  inline GridRegistration schnek::DomainDecomposition<rank, CheckingPolicy>::registerFieldImpl(
+      GridFactory<GridType> &factory, const RangeType &subRange
+  ) {
+    using Registration = internal::GridRegistrationImpl<rank, CheckingPolicy, GridType>;
+    auto registration = std::make_shared<Registration>(factory);
+    long id = registration->getId();
+    registeredFields[id] = registration;
+
+    std::list<internal::pGridWrapper> gridList;
+    for (const auto &localRange : ranges) {
+      RangeType intersection;
+      bool overlaps = true;
+      for (size_t d = 0; d < rank; ++d) {
+        const auto lo = std::max(localRange.range.getLo()[d], subRange.getLo()[d]);
+        const auto hi = std::min(localRange.range.getHi()[d], subRange.getHi()[d]);
+        if (lo > hi) {
+          overlaps = false;
+          break;
+        }
+        intersection.getLo()[d] = lo;
+        intersection.getHi()[d] = hi;
+      }
+
+      if (!overlaps) {
+        gridList.push_back(nullptr);
+        continue;
+      }
+
+      DomainType subDomain(localRange.domain);
+      for (size_t d = 0; d < rank; ++d) {
+        const ptrdiff_t localCells = localRange.range.getHi()[d] - localRange.range.getLo()[d] + 1;
+        const ptrdiff_t subCells = intersection.getHi()[d] - intersection.getLo()[d] + 1;
+
+        if (localCells <= 0) {
+          continue;
+        }
+
+        const double cellSize =
+            (localRange.domain.getHi()[d] - localRange.domain.getLo()[d]) / static_cast<double>(localCells);
+        const ptrdiff_t offsetLo = intersection.getLo()[d] - localRange.range.getLo()[d];
+
+        subDomain.getLo()[d] = localRange.domain.getLo()[d] + cellSize * static_cast<double>(offsetLo);
+        subDomain.getHi()[d] = subDomain.getLo()[d] + cellSize * static_cast<double>(subCells);
+      }
+
+      gridList.push_back(registration->makeGrid(intersection, subDomain));
+    }
+
+    grids[id] = std::move(gridList);
+
+    return GridRegistration{id};
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   void DomainDecomposition<rank, CheckingPolicy>::exchange(GridRegistration registration, bool useFieldInfo) {
     auto gridIt = grids.find(registration.id);
     if (gridIt == grids.end()) {
@@ -513,6 +594,9 @@ namespace schnek {
     }
 
     for (const auto &wrapper : gridIt->second) {
+      if (!wrapper) {
+        continue;
+      }
       this->exchange(wrapper, useFieldInfo);
     }
   }
@@ -534,6 +618,9 @@ namespace schnek {
     }
 
     for (const auto &wrapper : gridIt->second) {
+      if (!wrapper) {
+        continue;
+      }
       this->accumulate(wrapper, useFieldInfo);
     }
   }

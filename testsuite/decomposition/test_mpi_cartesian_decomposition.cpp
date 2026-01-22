@@ -516,6 +516,80 @@ BOOST_FIXTURE_TEST_CASE( foreach_single_process_1d, MpiCartesianDomainDecomposit
   BOOST_CHECK_EQUAL(callCount, 1);
 }
 
+BOOST_FIXTURE_TEST_CASE( foreach_single_process_1d_subrange, MpiCartesianDomainDecompositionTestFixture )
+{
+  MPI_Comm testComm = (MPI_Comm)(void*)123;
+  std::vector<int> coords(1, 0);
+  context.commWorld = (MPI_Comm)(void*)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+
+  using GridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  RangeType globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(42));
+  schnek::Range<double, 1> globalDomain(schnek::Array<double,1>(0), schnek::Array<double,1>(10));
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  decomposition.init();
+
+  RangeType subRange(schnek::Array<ptrdiff_t,1>(10), schnek::Array<ptrdiff_t,1>(20));
+
+  schnek::GridFactory<GridType> factory;
+  schnek::GridRegistration registration = decomposition.registerField(factory, subRange);
+
+  auto gridContext = decomposition.getGridContext({registration});
+
+  int callCount = 0;
+  gridContext.forEach([&](const RangeType &range, GridType &grid) {
+    ++callCount;
+    SCHNEK_CHECK_EQUAL(range, subRange);
+    SCHNEK_CHECK_EQUAL(grid.getRange(), subRange);
+  });
+
+  BOOST_CHECK_EQUAL(callCount, 1);
+}
+
+BOOST_FIXTURE_TEST_CASE( foreach_single_process_1d_subrange_no_overlap, MpiCartesianDomainDecompositionTestFixture )
+{
+  MPI_Comm testComm = (MPI_Comm)(void*)123;
+  std::vector<int> coords(1, 0);
+  context.commWorld = (MPI_Comm)(void*)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+
+  using GridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  RangeType globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(42));
+  schnek::Range<double, 1> globalDomain(schnek::Array<double,1>(0), schnek::Array<double,1>(10));
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  decomposition.init();
+
+  RangeType subRange(schnek::Array<ptrdiff_t,1>(100), schnek::Array<ptrdiff_t,1>(120));
+
+  schnek::GridFactory<GridType> factory;
+  schnek::GridRegistration registration = decomposition.registerField(factory, subRange);
+
+  auto gridContext = decomposition.getGridContext({registration});
+
+  int callCount = 0;
+  gridContext.forEach([&](const RangeType &, GridType &) { ++callCount; });
+
+  BOOST_CHECK_EQUAL(callCount, 0);
+}
+
 BOOST_FIXTURE_TEST_CASE( multi_process_1d, MpiCartesianDomainDecompositionTestFixture )
 {
   std::vector<int> numProcsArray;

@@ -119,6 +119,20 @@ namespace schnek {
         return registration;
       }
 
+      /**
+       * Register a grid or field by passing a factory, but only allocate for a sub-range.
+       */
+      template<class GridType>
+        GridRegistration registerField(
+          GridFactory<GridType> &factory,
+          const typename DomainDecomposition<rank, CheckingPolicy>::RangeType &subRange
+        ) {
+        auto registration = this->registerFieldImpl(factory, subRange);
+        registerExchangeHandler<GridType>();
+        registerAccumulateHandler<GridType>();
+        return registration;
+      }
+
       void exchange(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
       void accumulate(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
 

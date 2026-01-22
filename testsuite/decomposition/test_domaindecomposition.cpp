@@ -81,6 +81,11 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
     schnek::GridRegistration registerField(schnek::GridFactory<GridType> &factory) {
       return this->registerFieldImpl(factory);
     }
+
+    template<class GridType>
+    schnek::GridRegistration registerField(schnek::GridFactory<GridType> &factory, const RangeType &subRange) {
+      return this->registerFieldImpl(factory, subRange);
+    }
 };
 
 BOOST_AUTO_TEST_SUITE( domain_decomposition )
@@ -139,6 +144,109 @@ BOOST_AUTO_TEST_CASE( register_multiple_grids_2d )
   BOOST_CHECK_GE(reg1.id, 0);
   BOOST_CHECK_GE(reg2.id, 0);
   BOOST_CHECK_NE(reg1.id, reg2.id);
+}
+
+BOOST_AUTO_TEST_CASE( register_subrange_intersections_1d )
+{
+  using FieldType = schnek::Field<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 1>;
+  using IndexType = schnek::Array<ptrdiff_t, 1>;
+  using DomainLimitType = schnek::Array<double, 1>;
+  using StaggerType = typename FieldType::StaggerType;
+
+  MockDomainDecomposition<1> decomposition;
+
+  RangeType globalRange(IndexType(0), IndexType(14));
+  DomainType globalDomain(DomainLimitType(0.0), DomainLimitType(15.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  RangeType localRange1(IndexType(0), IndexType(4));
+  DomainType localDomain1(DomainLimitType(0.0), DomainLimitType(5.0));
+  decomposition.testAddLocalRange(localRange1, localDomain1);
+
+  RangeType localRange2(IndexType(5), IndexType(9));
+  DomainType localDomain2(DomainLimitType(5.0), DomainLimitType(10.0));
+  decomposition.testAddLocalRange(localRange2, localDomain2);
+
+  RangeType localRange3(IndexType(10), IndexType(14));
+  DomainType localDomain3(DomainLimitType(10.0), DomainLimitType(15.0));
+  decomposition.testAddLocalRange(localRange3, localDomain3);
+
+  RangeType subRange(IndexType(2), IndexType(7));
+
+  StaggerType noStagger(false);
+  schnek::GridFactory<FieldType> factory(noStagger, 0);
+  schnek::GridRegistration reg = decomposition.registerField(factory, subRange);
+
+  auto context = decomposition.getGridContext({reg});
+
+  int callCount = 0;
+  std::vector<RangeType> expectedRanges = {
+      RangeType(IndexType(2), IndexType(4)),
+      RangeType(IndexType(5), IndexType(7))
+  };
+  std::vector<DomainType> expectedDomains = {
+      DomainType(DomainLimitType(2.0), DomainLimitType(5.0)),
+      DomainType(DomainLimitType(5.0), DomainLimitType(8.0))
+  };
+
+  context.forEach([&](const RangeType &range, FieldType &field) {
+    BOOST_REQUIRE_LT(callCount, static_cast<int>(expectedRanges.size()));
+
+    const RangeType &expectedRange = expectedRanges[callCount];
+    const DomainType &expectedDomain = expectedDomains[callCount];
+
+    BOOST_CHECK_EQUAL(range.getLo()[0], expectedRange.getLo()[0]);
+    BOOST_CHECK_EQUAL(range.getHi()[0], expectedRange.getHi()[0]);
+    BOOST_CHECK_EQUAL(field.getLo()[0], expectedRange.getLo()[0]);
+    BOOST_CHECK_EQUAL(field.getHi()[0], expectedRange.getHi()[0]);
+
+    const DomainType &fieldDomain = field.getDomain();
+    BOOST_CHECK_CLOSE(fieldDomain.getLo()[0], expectedDomain.getLo()[0], 1e-12);
+    BOOST_CHECK_CLOSE(fieldDomain.getHi()[0], expectedDomain.getHi()[0], 1e-12);
+
+    ++callCount;
+  });
+
+  BOOST_CHECK_EQUAL(callCount, 2);
+}
+
+BOOST_AUTO_TEST_CASE( register_subrange_no_overlap_skips_ranges )
+{
+  using GridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 1>;
+  using IndexType = schnek::Array<ptrdiff_t, 1>;
+  using DomainLimitType = schnek::Array<double, 1>;
+
+  MockDomainDecomposition<1> decomposition;
+
+  RangeType globalRange(IndexType(0), IndexType(9));
+  DomainType globalDomain(DomainLimitType(0.0), DomainLimitType(10.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  RangeType localRange1(IndexType(0), IndexType(4));
+  DomainType localDomain1(DomainLimitType(0.0), DomainLimitType(5.0));
+  decomposition.testAddLocalRange(localRange1, localDomain1);
+
+  RangeType localRange2(IndexType(5), IndexType(9));
+  DomainType localDomain2(DomainLimitType(5.0), DomainLimitType(10.0));
+  decomposition.testAddLocalRange(localRange2, localDomain2);
+
+  RangeType subRange(IndexType(20), IndexType(25));
+
+  schnek::GridFactory<GridType> factory;
+  schnek::GridRegistration reg = decomposition.registerField(factory, subRange);
+
+  auto context = decomposition.getGridContext({reg});
+
+  int callCount = 0;
+  context.forEach([&](const RangeType &, GridType &) { ++callCount; });
+
+  BOOST_CHECK_EQUAL(callCount, 0);
 }
 
 // ==========================================================================
