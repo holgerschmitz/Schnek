@@ -117,6 +117,33 @@ namespace schnek {
           return buildImpl(iterators, std::make_index_sequence<boost::mpl::size<ParameterSeq>::value>{});
         }
     };
+
+    template<typename RangeType, size_t rank, typename ParameterSeq>
+    struct RangeSubsetChecker {
+        static bool rangeSubset(const RangeType &subset, const RangeType &superset) {
+          for (size_t d = 0; d < rank; ++d) {
+            if (subset.getLo()[d] < superset.getLo()[d] || subset.getHi()[d] > superset.getHi()[d]) {
+              return false;
+            }
+          }
+          return true;
+        }
+
+        template<std::size_t I, typename IteratorVec>
+        static void check(const RangeType &rangeRef, const IteratorVec &iters) {
+          if constexpr (I < boost::mpl::size<ParameterSeq>::value) {
+            using Param = typename boost::mpl::at_c<ParameterSeq, I>::type;
+            const auto &gridRef = GridReferenceExtractor<Param>::extract(*iters[I]);
+            if constexpr (std::is_constructible<RangeType, decltype(gridRef.getRange())>::value) {
+              SCHNEK_ASSERT(
+                  rangeSubset(rangeRef, RangeType(gridRef.getRange())),
+                  "First grid range must be a subset of all full-rank grid ranges in GridContext::forEach"
+              );
+            }
+            check<I + 1>(rangeRef, iters);
+          }
+        }
+    };
   }  // namespace internal
 
   /**
@@ -554,25 +581,8 @@ namespace schnek {
             hasFullRange = true;
           }
 #ifndef NDEBUG
-          auto rangeSubset = [](const RangeType &subset, const RangeType &superset) {
-            for (size_t d = 0; d < rank; ++d) {
-              if (subset.getLo()[d] < superset.getLo()[d] || subset.getHi()[d] > superset.getHi()[d]) {
-                return false;
-              }
-            }
-            return true;
-          };
           if (hasFullRange) {
-            for (auto &it : iterators) {
-              using Param = typename boost::mpl::at_c<ParameterSeq, 0>::type;
-              const auto &gridRef = internal::GridReferenceExtractor<Param>::extract(*it);
-              if constexpr (std::is_constructible<RangeType, decltype(gridRef.getRange())>::value) {
-                SCHNEK_ASSERT(
-                    rangeSubset(rangeRef, RangeType(gridRef.getRange())),
-                    "First grid range must be a subset of all full-rank grid ranges in GridContext::forEach"
-                );
-              }
-            }
+            internal::RangeSubsetChecker<RangeType, rank, ParameterSeq>::template check<0>(rangeRef, iterators);
           }
 #endif
         }
