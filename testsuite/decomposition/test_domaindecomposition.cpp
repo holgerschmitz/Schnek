@@ -437,6 +437,64 @@ BOOST_AUTO_TEST_CASE( register_projection_invalid_axes )
   );
 }
 
+BOOST_AUTO_TEST_CASE( projection_add_local_range_updates_shared_grid )
+{
+  using FullGridType = schnek::Grid<double, 2>;
+  using ProjectedGridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 2>;
+  using DomainType = schnek::Range<double, 2>;
+  using IndexType = schnek::Array<ptrdiff_t, 2>;
+  using DomainLimitType = schnek::Array<double, 2>;
+
+  MockDomainDecomposition<2> decomposition;
+
+  RangeType globalRange(IndexType(0, 0), IndexType(9, 9));
+  DomainType globalDomain(DomainLimitType(0.0, 0.0), DomainLimitType(10.0, 10.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  RangeType localRange1(IndexType(0, 0), IndexType(4, 4));
+  DomainType localDomain1(DomainLimitType(0.0, 0.0), DomainLimitType(5.0, 5.0));
+  decomposition.testAddLocalRange(localRange1, localDomain1);
+
+  schnek::GridFactory<FullGridType> fullFactory;
+  auto fullReg = decomposition.registerField(fullFactory);
+
+  schnek::GridFactory<ProjectedGridType> projectedFactory;
+  auto projectedReg = decomposition.registerProjection<ProjectedGridType>(projectedFactory, {0});
+
+  RangeType localRange2(IndexType(6, 5), IndexType(8, 9));
+  DomainType localDomain2(DomainLimitType(6.0, 5.0), DomainLimitType(9.0, 10.0));
+  decomposition.testAddLocalRange(localRange2, localDomain2);
+
+  auto context = decomposition.getGridContext({
+      MockDomainDecomposition<2>::RegistrationVariant{fullReg},
+      MockDomainDecomposition<2>::RegistrationVariant{projectedReg}
+  });
+
+  int callCount = 0;
+  const ProjectedGridType *sharedGridPtr = nullptr;
+  context.forEach([&](const RangeType &range, FullGridType &fullGrid, ProjectedGridType &projectedGrid) {
+    ++callCount;
+
+    if (!sharedGridPtr) {
+      sharedGridPtr = &projectedGrid;
+    } else {
+      BOOST_CHECK_EQUAL(sharedGridPtr, &projectedGrid);
+    }
+
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[0], range.getLo()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[1], range.getLo()[1]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[0], range.getHi()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[1], range.getHi()[1]);
+  });
+
+  BOOST_CHECK_EQUAL(callCount, 2);
+
+  BOOST_CHECK_EQUAL(sharedGridPtr->getLo()[0], localRange1.getLo()[0]);
+  BOOST_CHECK_EQUAL(sharedGridPtr->getHi()[0], localRange2.getHi()[0]);
+}
+
 // ==========================================================================
 // Grid context and forEach tests
 // ==========================================================================

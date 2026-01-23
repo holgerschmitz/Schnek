@@ -453,6 +453,11 @@ namespace schnek {
       struct ProjectedRegistrationInterface : public Unique<ProjectedRegistrationInterface> {
           virtual ~ProjectedRegistrationInterface() = default;
           virtual internal::pGridWrapper makeGrid(const RangeType &fullRange, const DomainType &fullDomain) = 0;
+          virtual internal::pGridWrapper ensureSharedGrid(
+            const RangeType &fullRange,
+            const DomainType &fullDomain,
+            std::list<internal::pGridWrapper> &gridList
+          ) = 0;
       };
 
       template<class GridType, size_t projRank>
@@ -460,11 +465,11 @@ namespace schnek {
           using ProjectedRangeType = Range<ptrdiff_t, projRank, CheckingPolicy>;
           using ProjectedDomainType = Range<double, projRank, CheckingPolicy>;
 
-          ProjectedRegistrationImpl(
+            ProjectedRegistrationImpl(
               GridFactory<GridType> &factoryIn,
               const std::array<size_t, projRank> &axesIn
-          )
-              : factory(factoryIn), axes(axesIn) {}
+            )
+              : factory(factoryIn), axes(axesIn), hasUnion(false) {}
 
           internal::pGridWrapper makeGrid(const RangeType &fullRange, const DomainType &fullDomain) override {
             typename ProjectedRangeType::LimitType lo;
@@ -485,8 +490,59 @@ namespace schnek {
             return factory.newGrid(projectedRange, projectedDomain);
           }
 
+          internal::pGridWrapper ensureSharedGrid(
+              const RangeType &fullRange,
+              const DomainType &fullDomain,
+              std::list<internal::pGridWrapper> &gridList
+          ) override {
+            bool expanded = updateUnion(fullRange, fullDomain);
+            if (expanded || !sharedGrid) {
+              sharedGrid = makeGrid(unionRange, unionDomain);
+              for (auto &entry : gridList) {
+                entry = sharedGrid;
+              }
+            }
+            return sharedGrid;
+          }
+
+          bool updateUnion(const RangeType &fullRange, const DomainType &fullDomain) {
+            if (!hasUnion) {
+              unionRange = fullRange;
+              unionDomain = fullDomain;
+              hasUnion = true;
+              return true;
+            }
+
+            bool changed = false;
+            for (size_t d = 0; d < projRank; ++d) {
+              const size_t axis = axes[d];
+              if (fullRange.getLo()[axis] < unionRange.getLo()[axis]) {
+                unionRange.getLo()[axis] = fullRange.getLo()[axis];
+                changed = true;
+              }
+              if (fullRange.getHi()[axis] > unionRange.getHi()[axis]) {
+                unionRange.getHi()[axis] = fullRange.getHi()[axis];
+                changed = true;
+              }
+              if (fullDomain.getLo()[axis] < unionDomain.getLo()[axis]) {
+                unionDomain.getLo()[axis] = fullDomain.getLo()[axis];
+                changed = true;
+              }
+              if (fullDomain.getHi()[axis] > unionDomain.getHi()[axis]) {
+                unionDomain.getHi()[axis] = fullDomain.getHi()[axis];
+                changed = true;
+              }
+            }
+
+            return changed;
+          }
+
           GridFactory<GridType> &factory;
           std::array<size_t, projRank> axes;
+            bool hasUnion;
+            RangeType unionRange;
+            DomainType unionDomain;
+            internal::pGridWrapper sharedGrid;
       };
 
       std::map<long, std::shared_ptr<ProjectedRegistrationInterface>> projectedRegisteredFields;
@@ -717,34 +773,9 @@ namespace schnek {
     long id = registration->getId();
     projectedRegisteredFields[id] = registration;
 
-    RangeType unionRange;
-    DomainType unionDomain;
-    bool hasRanges = false;
-    for (const auto &localRange : ranges) {
-      if (!hasRanges) {
-        unionRange = localRange.range;
-        unionDomain = localRange.domain;
-        hasRanges = true;
-        continue;
-      }
-      for (size_t d = 0; d < projRank; ++d) {
-        const size_t axis = axes[d];
-        unionRange.getLo()[axis] = std::min(unionRange.getLo()[axis], localRange.range.getLo()[axis]);
-        unionRange.getHi()[axis] = std::max(unionRange.getHi()[axis], localRange.range.getHi()[axis]);
-        unionDomain.getLo()[axis] = std::min(unionDomain.getLo()[axis], localRange.domain.getLo()[axis]);
-        unionDomain.getHi()[axis] = std::max(unionDomain.getHi()[axis], localRange.domain.getHi()[axis]);
-      }
-    }
-
-    internal::pGridWrapper sharedGrid;
-    if (hasRanges) {
-      sharedGrid = registration->makeGrid(unionRange, unionDomain);
-    }
-
     std::list<internal::pGridWrapper> gridList;
     for (const auto &localRange : ranges) {
-      (void)localRange;
-      gridList.push_back(sharedGrid);
+      gridList.push_back(registration->ensureSharedGrid(localRange.range, localRange.domain, gridList));
     }
 
     projectedGrids[id] = std::move(gridList);
@@ -849,7 +880,8 @@ namespace schnek {
     }
     for (auto &reg : projectedRegisteredFields) {
       long id = reg.first;
-      projectedGrids[id].push_back(reg.second->makeGrid(range, domain));
+      auto &gridList = projectedGrids[id];
+      gridList.push_back(reg.second->ensureSharedGrid(range, domain, gridList));
     }
   }
 
