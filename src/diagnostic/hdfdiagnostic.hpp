@@ -290,7 +290,6 @@ namespace schnek {
       GridContainer<Type> container;
       GridRegistration registration;
       std::string registrationName;
-      std::string decompositionName;
 
     protected:
       /// Open the output file
@@ -331,7 +330,7 @@ namespace schnek {
       virtual pHdfAttributes getAttributes() { return std::make_shared<HdfAttributes>(); };
 
     public:
-      HDFGridRegistrationDiagnostic() : decomposition(nullptr) {}
+      HDFGridRegistrationDiagnostic() = default;
       virtual ~HDFGridRegistrationDiagnostic() {}
   };
 
