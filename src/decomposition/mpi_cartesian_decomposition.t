@@ -480,7 +480,7 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchange(
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchangeGrid(
       const internal::pGridWrapper &wrapper, bool useFieldInfo
   ) {
     if (exchangeInitializers.empty()) {

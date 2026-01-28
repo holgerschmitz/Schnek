@@ -63,3 +63,7 @@ int schnek::MpiContextImpl::MPI_Allreduce(
 int schnek::MpiContextImpl::MPI_Bcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
   return MPI_Bcast(buffer, count, datatype, root, comm);
 }
+
+namespace schnek::detail {
+    MpiContextImpl mpiContextImpl{MPI_COMM_WORLD};
+}

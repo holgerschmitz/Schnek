@@ -30,6 +30,7 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
     using Base = schnek::DomainDecomposition<rank, CheckingPolicy>;
     using RangeType = typename Base::RangeType;
     using DomainType = typename Base::DomainType;
+    using RegistrationVariant = typename Base::RegistrationVariant;
 
     MockDomainDecomposition() : Base() {}
 
@@ -39,7 +40,7 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
     int getUniqueId() const override { return 0; }
     bool master() const override { return true; }
     int numProcs() const override { return 1; }
-    void exchange(const schnek::internal::pGridWrapper &wrapper, bool useFieldInfo) override {
+    void exchangeGrid(const schnek::internal::pGridWrapper &wrapper, bool useFieldInfo) override {
       (void)wrapper;
       (void)useFieldInfo;
     }
@@ -78,8 +79,21 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
     }
 
     template<class GridType>
-    schnek::GridRegistration registerField(schnek::GridFactory<GridType> &factory) {
+    schnek::GridRegistration registerField(const schnek::GridFactory<GridType> &factory) {
       return this->registerFieldImpl(factory);
+    }
+
+    template<class GridType>
+    schnek::GridRegistration registerField(const schnek::GridFactory<GridType> &factory, const RangeType &subRange) {
+      return this->registerFieldImpl(factory, subRange);
+    }
+
+    template<class GridType>
+    typename Base::template ProjectedRegistration<GridType::Rank> registerProjection(
+        schnek::GridFactory<GridType> &factory,
+        const std::array<size_t, GridType::Rank> &axes
+    ) {
+      return this->registerFieldProjectionImpl(factory, axes);
     }
 };
 
@@ -139,6 +153,346 @@ BOOST_AUTO_TEST_CASE( register_multiple_grids_2d )
   BOOST_CHECK_GE(reg1.id, 0);
   BOOST_CHECK_GE(reg2.id, 0);
   BOOST_CHECK_NE(reg1.id, reg2.id);
+}
+
+BOOST_AUTO_TEST_CASE( register_subrange_intersections_1d )
+{
+  using FieldType = schnek::Field<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 1>;
+  using IndexType = schnek::Array<ptrdiff_t, 1>;
+  using DomainLimitType = schnek::Array<double, 1>;
+  using StaggerType = typename FieldType::StaggerType;
+
+  MockDomainDecomposition<1> decomposition;
+
+  RangeType globalRange(IndexType(0), IndexType(14));
+  DomainType globalDomain(DomainLimitType(0.0), DomainLimitType(15.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  RangeType localRange1(IndexType(0), IndexType(4));
+  DomainType localDomain1(DomainLimitType(0.0), DomainLimitType(5.0));
+  decomposition.testAddLocalRange(localRange1, localDomain1);
+
+  RangeType localRange2(IndexType(5), IndexType(9));
+  DomainType localDomain2(DomainLimitType(5.0), DomainLimitType(10.0));
+  decomposition.testAddLocalRange(localRange2, localDomain2);
+
+  RangeType localRange3(IndexType(10), IndexType(14));
+  DomainType localDomain3(DomainLimitType(10.0), DomainLimitType(15.0));
+  decomposition.testAddLocalRange(localRange3, localDomain3);
+
+  RangeType subRange(IndexType(2), IndexType(7));
+
+  StaggerType noStagger(false);
+  schnek::GridFactory<FieldType> factory(noStagger, 0);
+  schnek::GridRegistration reg = decomposition.registerField(factory, subRange);
+
+  auto context = decomposition.getGridContext({reg});
+
+  int callCount = 0;
+  std::vector<RangeType> expectedRanges = {
+      RangeType(IndexType(2), IndexType(4)),
+      RangeType(IndexType(5), IndexType(7))
+  };
+  std::vector<DomainType> expectedDomains = {
+      DomainType(DomainLimitType(2.0), DomainLimitType(5.0)),
+      DomainType(DomainLimitType(5.0), DomainLimitType(8.0))
+  };
+
+  context.forEach([&](const RangeType &range, FieldType &field) {
+    BOOST_REQUIRE_LT(callCount, static_cast<int>(expectedRanges.size()));
+
+    const RangeType &expectedRange = expectedRanges[callCount];
+    const DomainType &expectedDomain = expectedDomains[callCount];
+
+    BOOST_CHECK_EQUAL(range.getLo()[0], expectedRange.getLo()[0]);
+    BOOST_CHECK_EQUAL(range.getHi()[0], expectedRange.getHi()[0]);
+    BOOST_CHECK_EQUAL(field.getLo()[0], expectedRange.getLo()[0]);
+    BOOST_CHECK_EQUAL(field.getHi()[0], expectedRange.getHi()[0]);
+
+    const DomainType &fieldDomain = field.getDomain();
+    BOOST_CHECK_CLOSE(fieldDomain.getLo()[0], expectedDomain.getLo()[0], 1e-12);
+    BOOST_CHECK_CLOSE(fieldDomain.getHi()[0], expectedDomain.getHi()[0], 1e-12);
+
+    ++callCount;
+  });
+
+  BOOST_CHECK_EQUAL(callCount, 2);
+}
+
+BOOST_AUTO_TEST_CASE( register_subrange_no_overlap_skips_ranges )
+{
+  using GridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 1>;
+  using IndexType = schnek::Array<ptrdiff_t, 1>;
+  using DomainLimitType = schnek::Array<double, 1>;
+
+  MockDomainDecomposition<1> decomposition;
+
+  RangeType globalRange(IndexType(0), IndexType(9));
+  DomainType globalDomain(DomainLimitType(0.0), DomainLimitType(10.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  RangeType localRange1(IndexType(0), IndexType(4));
+  DomainType localDomain1(DomainLimitType(0.0), DomainLimitType(5.0));
+  decomposition.testAddLocalRange(localRange1, localDomain1);
+
+  RangeType localRange2(IndexType(5), IndexType(9));
+  DomainType localDomain2(DomainLimitType(5.0), DomainLimitType(10.0));
+  decomposition.testAddLocalRange(localRange2, localDomain2);
+
+  RangeType subRange(IndexType(20), IndexType(25));
+
+  schnek::GridFactory<GridType> factory;
+  schnek::GridRegistration reg = decomposition.registerField(factory, subRange);
+
+  auto context = decomposition.getGridContext({reg});
+
+  int callCount = 0;
+  context.forEach([&](const RangeType &, GridType &) { ++callCount; });
+
+  BOOST_CHECK_EQUAL(callCount, 0);
+}
+
+BOOST_AUTO_TEST_CASE( register_projection_1d_from_2d )
+{
+  using FullGridType = schnek::Grid<double, 2>;
+  using ProjectedGridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 2>;
+  using DomainType = schnek::Range<double, 2>;
+  using IndexType = schnek::Array<ptrdiff_t, 2>;
+  using DomainLimitType = schnek::Array<double, 2>;
+
+  MockDomainDecomposition<2> decomposition;
+
+  RangeType globalRange(IndexType(0, 0), IndexType(9, 9));
+  DomainType globalDomain(DomainLimitType(0.0, 0.0), DomainLimitType(10.0, 10.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  RangeType localRange1(IndexType(0, 0), IndexType(4, 4));
+  DomainType localDomain1(DomainLimitType(0.0, 0.0), DomainLimitType(5.0, 5.0));
+  decomposition.testAddLocalRange(localRange1, localDomain1);
+
+  RangeType localRange2(IndexType(0, 5), IndexType(4, 9));
+  DomainType localDomain2(DomainLimitType(0.0, 5.0), DomainLimitType(5.0, 10.0));
+  decomposition.testAddLocalRange(localRange2, localDomain2);
+
+  schnek::GridFactory<FullGridType> fullFactory;
+  auto fullReg = decomposition.registerField(fullFactory);
+
+  schnek::GridFactory<ProjectedGridType> projectedFactory;
+  auto projectedReg = decomposition.registerProjection(projectedFactory, {0});
+
+  auto context = decomposition.getGridContext({fullReg, projectedReg});
+
+  int callCount = 0;
+  context.forEach([&](const RangeType &range, FullGridType &fullGrid, ProjectedGridType &projectedGrid) {
+    ++callCount;
+
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[0], range.getLo()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[1], range.getLo()[1]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[0], range.getHi()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[1], range.getHi()[1]);
+
+    BOOST_CHECK_EQUAL(projectedGrid.getLo()[0], range.getLo()[0]);
+    BOOST_CHECK_EQUAL(projectedGrid.getHi()[0], range.getHi()[0]);
+  });
+
+  BOOST_CHECK_EQUAL(callCount, 2);
+}
+
+BOOST_AUTO_TEST_CASE( foreach_projection_3d_shared_overlap )
+{
+  using FullGridType = schnek::Grid<double, 3>;
+  using ProjectedGridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 3>;
+  using DomainType = schnek::Range<double, 3>;
+  using IndexType = schnek::Array<ptrdiff_t, 3>;
+  using DomainLimitType = schnek::Array<double, 3>;
+
+  MockDomainDecomposition<3> decomposition;
+
+  RangeType globalRange(IndexType(0, 0, 0), IndexType(9, 9, 9));
+  DomainType globalDomain(DomainLimitType(0.0, 0.0, 0.0), DomainLimitType(10.0, 10.0, 10.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  RangeType localRange1(IndexType(0, 0, 0), IndexType(4, 2, 2));
+  DomainType localDomain1(DomainLimitType(0.0, 0.0, 0.0), DomainLimitType(5.0, 3.0, 3.0));
+  decomposition.testAddLocalRange(localRange1, localDomain1);
+
+  RangeType localRange2(IndexType(2, 5, 5), IndexType(6, 7, 7));
+  DomainType localDomain2(DomainLimitType(2.0, 5.0, 5.0), DomainLimitType(7.0, 8.0, 8.0));
+  decomposition.testAddLocalRange(localRange2, localDomain2);
+
+  schnek::GridFactory<FullGridType> fullFactory;
+  auto fullReg = decomposition.registerField(fullFactory);
+
+  schnek::GridFactory<ProjectedGridType> projectedFactory;
+  auto projectedReg = decomposition.registerProjection(projectedFactory, {0});
+
+  auto context = decomposition.getGridContext({fullReg, projectedReg});
+
+  int callCount = 0;
+  const ProjectedGridType *sharedGridPtr = nullptr;
+  context.forEach([&](const RangeType &range, FullGridType &fullGrid, ProjectedGridType &projectedGrid) {
+    ++callCount;
+
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[0], range.getLo()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[1], range.getLo()[1]);
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[2], range.getLo()[2]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[0], range.getHi()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[1], range.getHi()[1]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[2], range.getHi()[2]);
+
+    if (!sharedGridPtr) {
+      sharedGridPtr = &projectedGrid;
+    } else {
+      BOOST_CHECK_EQUAL(sharedGridPtr, &projectedGrid);
+    }
+  });
+
+  BOOST_CHECK_EQUAL(callCount, 2);
+}
+
+BOOST_AUTO_TEST_CASE( foreach_projection_first_argument_2d )
+{
+  using FullGridType = schnek::Grid<double, 2>;
+  using ProjectedGridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 2>;
+  using DomainType = schnek::Range<double, 2>;
+  using IndexType = schnek::Array<ptrdiff_t, 2>;
+  using DomainLimitType = schnek::Array<double, 2>;
+
+  MockDomainDecomposition<2> decomposition;
+
+  RangeType globalRange(IndexType(0, 0), IndexType(9, 9));
+  DomainType globalDomain(DomainLimitType(0.0, 0.0), DomainLimitType(10.0, 10.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  RangeType localRange1(IndexType(0, 0), IndexType(4, 7));
+  DomainType localDomain1(DomainLimitType(0.0, 0.0), DomainLimitType(5.0, 8.0));
+  decomposition.testAddLocalRange(localRange1, localDomain1);
+
+  schnek::GridFactory<FullGridType> fullFactory;
+  auto fullReg = decomposition.registerField(fullFactory);
+
+  schnek::GridFactory<ProjectedGridType> projectedFactory;
+  auto projectedReg = decomposition.registerProjection(projectedFactory, {0});
+
+  auto context = decomposition.getGridContext({projectedReg, fullReg});
+
+  int callCount = 0;
+  context.forEach([&](const RangeType &range, ProjectedGridType &projectedGrid, FullGridType &fullGrid) {
+    ++callCount;
+    BOOST_CHECK_EQUAL(range.getLo()[0], localRange1.getLo()[0]);
+    BOOST_CHECK_EQUAL(range.getLo()[1], localRange1.getLo()[1]);
+    BOOST_CHECK_EQUAL(range.getHi()[0], localRange1.getHi()[0]);
+    BOOST_CHECK_EQUAL(range.getHi()[1], localRange1.getHi()[1]);
+
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[0], localRange1.getLo()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[1], localRange1.getLo()[1]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[0], localRange1.getHi()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[1], localRange1.getHi()[1]);
+
+    BOOST_CHECK_EQUAL(projectedGrid.getLo()[0], localRange1.getLo()[0]);
+    BOOST_CHECK_EQUAL(projectedGrid.getHi()[0], localRange1.getHi()[0]);
+  });
+
+  BOOST_CHECK_EQUAL(callCount, 1);
+}
+
+BOOST_AUTO_TEST_CASE( register_projection_invalid_axes )
+{
+  using ProjectedGridType1 = schnek::Grid<double, 1>;
+  using ProjectedGridType2 = schnek::Grid<double, 2>;
+  using RangeType = schnek::Range<ptrdiff_t, 3>;
+  using DomainType = schnek::Range<double, 3>;
+  using IndexType = schnek::Array<ptrdiff_t, 3>;
+  using DomainLimitType = schnek::Array<double, 3>;
+
+  MockDomainDecomposition<3> decomposition;
+
+  RangeType globalRange(IndexType(0, 0, 0), IndexType(9, 9, 9));
+  DomainType globalDomain(DomainLimitType(0.0, 0.0, 0.0), DomainLimitType(10.0, 10.0, 10.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  schnek::GridFactory<ProjectedGridType1> projectedFactory1;
+  schnek::GridFactory<ProjectedGridType2> projectedFactory2;
+
+  BOOST_CHECK_THROW(
+      decomposition.registerProjection<ProjectedGridType1>(projectedFactory1, {3}),
+      schnek::ScheckException
+  );
+  BOOST_CHECK_THROW(
+      decomposition.registerProjection<ProjectedGridType2>(projectedFactory2, {0, 0}),
+      schnek::ScheckException
+  );
+}
+
+BOOST_AUTO_TEST_CASE( projection_add_local_range_updates_shared_grid )
+{
+  using FullGridType = schnek::Grid<double, 2>;
+  using ProjectedGridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 2>;
+  using DomainType = schnek::Range<double, 2>;
+  using IndexType = schnek::Array<ptrdiff_t, 2>;
+  using DomainLimitType = schnek::Array<double, 2>;
+
+  MockDomainDecomposition<2> decomposition;
+
+  RangeType globalRange(IndexType(0, 0), IndexType(9, 9));
+  DomainType globalDomain(DomainLimitType(0.0, 0.0), DomainLimitType(10.0, 10.0));
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+
+  RangeType localRange1(IndexType(0, 0), IndexType(4, 4));
+  DomainType localDomain1(DomainLimitType(0.0, 0.0), DomainLimitType(5.0, 5.0));
+  decomposition.testAddLocalRange(localRange1, localDomain1);
+
+  schnek::GridFactory<FullGridType> fullFactory;
+  auto fullReg = decomposition.registerField(fullFactory);
+
+  schnek::GridFactory<ProjectedGridType> projectedFactory;
+  auto projectedReg = decomposition.registerProjection<ProjectedGridType>(projectedFactory, {0});
+
+  RangeType localRange2(IndexType(6, 5), IndexType(8, 9));
+  DomainType localDomain2(DomainLimitType(6.0, 5.0), DomainLimitType(9.0, 10.0));
+  decomposition.testAddLocalRange(localRange2, localDomain2);
+
+  auto context = decomposition.getGridContext({
+      MockDomainDecomposition<2>::RegistrationVariant{fullReg},
+      MockDomainDecomposition<2>::RegistrationVariant{projectedReg}
+  });
+
+  int callCount = 0;
+  const ProjectedGridType *sharedGridPtr = nullptr;
+  context.forEach([&](const RangeType &range, FullGridType &fullGrid, ProjectedGridType &projectedGrid) {
+    ++callCount;
+
+    if (!sharedGridPtr) {
+      sharedGridPtr = &projectedGrid;
+    } else {
+      BOOST_CHECK_EQUAL(sharedGridPtr, &projectedGrid);
+    }
+
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[0], range.getLo()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getLo()[1], range.getLo()[1]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[0], range.getHi()[0]);
+    BOOST_CHECK_EQUAL(fullGrid.getHi()[1], range.getHi()[1]);
+  });
+
+  BOOST_CHECK_EQUAL(callCount, 2);
+
+  BOOST_CHECK_EQUAL(sharedGridPtr->getLo()[0], localRange1.getLo()[0]);
+  BOOST_CHECK_EQUAL(sharedGridPtr->getHi()[0], localRange2.getHi()[0]);
 }
 
 // ==========================================================================
@@ -389,7 +743,7 @@ BOOST_AUTO_TEST_CASE( foreach_register_after_add_range )
   int callCount = 0;
   std::vector<RangeType> expectedRanges = {localRange1, localRange2};
   
-  context.forEach([&callCount, &expectedRanges](const RangeType &range, GridType &grid) {
+  context.forEach([&callCount, &expectedRanges](const RangeType &range, GridType & /* grid */) {
     BOOST_REQUIRE_LT(callCount, static_cast<int>(expectedRanges.size()));
     
     const RangeType &expected = expectedRanges[callCount];
@@ -440,7 +794,7 @@ BOOST_AUTO_TEST_CASE( foreach_add_range_after_register )
   int callCount = 0;
   std::vector<RangeType> expectedRanges = {localRange1, localRange2};
   
-  context.forEach([&callCount, &expectedRanges](const RangeType &range, GridType &grid) {
+  context.forEach([&callCount, &expectedRanges](const RangeType &range, GridType & /* grid */) {
     BOOST_REQUIRE_LT(callCount, static_cast<int>(expectedRanges.size()));
     
     const RangeType &expected = expectedRanges[callCount];
