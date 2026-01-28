@@ -37,7 +37,7 @@ namespace {
       RegistrationDiagnosticTest(MockDomainDecomposition<2> &decompositionIn)
           : decomposition(&decompositionIn) {}
 
-      void setRegistrationName(const std::string &name) { registrationName = name; }
+      void setRegistrationName(const std::string &name) { this->fieldName = name; }
       void setGlobalRange(const IndexType &lo, const IndexType &hi) {
         globalMin = lo;
         globalMax = hi;
