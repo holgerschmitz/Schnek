@@ -281,15 +281,13 @@ namespace schnek {
    * into HDF5 data files.
    */
   template<typename Type, class DecompositionType, class DiagnosticType = IntervalDiagnostic>
-  class HDFGridRegistrationDiagnostic : public DiagnosticType {
+  class HDFGridRegistrationDiagnostic : public SimpleDiagnostic<GridRegistration, GridRegistration, DiagnosticType> {
     public:
       typedef typename Type::IndexType IndexType;
 
     protected:
       HdfOStream output;
       GridContainer<Type> container;
-      GridRegistration registration;
-      std::string registrationName;
 
     protected:
       /// Open the output file
@@ -301,9 +299,6 @@ namespace schnek {
 
       /// Block initialisation
       void init();
-
-      /// Block callback to initialise the parameters
-      void initParameters(BlockParameters &blockPars);
 
       /// Get the global minimum of the simulation bounds
       virtual IndexType getGlobalMin() = 0;

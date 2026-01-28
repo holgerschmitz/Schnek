@@ -350,18 +350,8 @@ namespace schnek {
   }
 
   template<typename Type, class DecompositionType, class DiagnosticType>
-  void HDFGridRegistrationDiagnostic<Type, DecompositionType, DiagnosticType>::initParameters(
-      BlockParameters &blockPars
-  ) {
-    DiagnosticType::initParameters(blockPars);
-    blockPars.addParameter("registration", &registrationName);
-  }
-
-  template<typename Type, class DecompositionType, class DiagnosticType>
   void HDFGridRegistrationDiagnostic<Type, DecompositionType, DiagnosticType>::init() {
-    Block::init();
-
-    this->retrieveData(registrationName, registration);
+    SimpleDiagnostic<GridRegistration, GridRegistration, DiagnosticType>::init();
 
     container.global_min = this->getGlobalMin();
     container.global_max = this->getGlobalMax();
@@ -377,7 +367,7 @@ namespace schnek {
     output.setBlockName(this->getDatasetName());
     output.setAttributes(this->getAttributes());
 
-    auto context = getDecomposition().getGridContext({registration});
+    auto context = getDecomposition().getGridContext({this->field});
     context.forEach([this](const typename DecompositionType::RangeType &range, Type &grid) {
       (void)range;
       CopyToContainer<Type>::copy(grid, this->container);

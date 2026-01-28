@@ -143,11 +143,12 @@ namespace schnek {
   template<class Type, typename PointerType = std::shared_ptr<Type>, class DiagnosticType = IntervalDiagnostic>
   class SimpleDiagnostic : public DiagnosticType {
     private:
-      /// The name of the field to write out
-      std::string fieldName;
       bool single_out;
 
     protected:
+      /// The name of the field to write out
+      std::string fieldName;
+
       PointerType field;
 
     public:
