@@ -40,7 +40,7 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
     int getUniqueId() const override { return 0; }
     bool master() const override { return true; }
     int numProcs() const override { return 1; }
-    void exchange(const schnek::internal::pGridWrapper &wrapper, bool useFieldInfo) override {
+    void exchangeGrid(const schnek::internal::pGridWrapper &wrapper, bool useFieldInfo) override {
       (void)wrapper;
       (void)useFieldInfo;
     }
@@ -79,12 +79,12 @@ class MockDomainDecomposition : public schnek::DomainDecomposition<rank, Checkin
     }
 
     template<class GridType>
-    schnek::GridRegistration registerField(schnek::GridFactory<GridType> &factory) {
+    schnek::GridRegistration registerField(const schnek::GridFactory<GridType> &factory) {
       return this->registerFieldImpl(factory);
     }
 
     template<class GridType>
-    schnek::GridRegistration registerField(schnek::GridFactory<GridType> &factory, const RangeType &subRange) {
+    schnek::GridRegistration registerField(const schnek::GridFactory<GridType> &factory, const RangeType &subRange) {
       return this->registerFieldImpl(factory, subRange);
     }
 

@@ -24,6 +24,9 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
   class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, CheckingPolicy> {
     public:
+      template<size_t projRank>
+      using ProjectedRegistration = ProjectedGridRegistration<projRank, rank>;
+
       typedef Array<Grid<Range<ptrdiff_t, 1>, 1>, rank> ProcRanges;
       /**
        * Constructor creating the domain decomposition object
@@ -112,7 +115,7 @@ namespace schnek {
        * are typically used in conjunction with the `getGridContext` method.
        */
       template<class GridType>
-      GridRegistration registerField(GridFactory<GridType> &factory) {
+      GridRegistration registerField(const GridFactory<GridType> &factory) {
         auto registration = this->registerFieldImpl(factory);
         registerExchangeHandler<GridType>();
         registerAccumulateHandler<GridType>();
@@ -123,8 +126,19 @@ namespace schnek {
        * Register a grid or field by passing a factory, but only allocate for a sub-range.
        */
       template<class GridType>
+      ProjectedRegistration<GridType::Rank> registerFieldProjection(
+        const GridFactory<GridType> &factory,
+        const std::array<size_t, GridType::Rank> &axes
+      ) {
+        return this->registerFieldProjectionImpl(factory, axes);
+      }
+
+      /**
+       * Register a grid or field by passing a factory, but only allocate for a sub-range.
+       */
+      template<class GridType>
         GridRegistration registerField(
-          GridFactory<GridType> &factory,
+          const GridFactory<GridType> &factory,
           const typename DomainDecomposition<rank, CheckingPolicy>::RangeType &subRange
         ) {
         auto registration = this->registerFieldImpl(factory, subRange);
@@ -133,7 +147,7 @@ namespace schnek {
         return registration;
       }
 
-      void exchange(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
+      void exchangeGrid(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
       void accumulate(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
 
     private:

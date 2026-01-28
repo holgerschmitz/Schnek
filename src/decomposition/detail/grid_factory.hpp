@@ -140,13 +140,13 @@ namespace schnek {
         using RangeType = typename Base::RangeType;
         using DomainType = typename Base::DomainType;
 
-        explicit GridRegistrationImpl(GridFactory<GridType> &factoryIn) : factory(factoryIn) {}
+        explicit GridRegistrationImpl(const GridFactory<GridType> &factoryIn) : factory(factoryIn) {}
 
         pGridWrapper makeGrid(const RangeType &range, const DomainType &domain) override {
           return factory.newGrid(range, domain);
         }
 
-        GridFactory<GridType> &factory;
+        GridFactory<GridType> factory;
     };
 
   }  // namespace internal

@@ -163,7 +163,7 @@ namespace schnek {
       typedef Range<ptrdiff_t, rank, CheckingPolicy> RangeType;
       typedef Range<double, rank, CheckingPolicy> DomainType;
       typedef Boundary<rank, CheckingPolicy> BoundaryType;
-      typedef boost::shared_ptr<BoundaryType> pBoundaryType;
+      typedef std::shared_ptr<BoundaryType> pBoundaryType;
       typedef Array<ptrdiff_t, rank> LimitType;
       typedef Array<size_t, rank> SizeType;
       template<size_t projRank>
@@ -353,7 +353,7 @@ namespace schnek {
        * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
        * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
        */
-      virtual void exchange(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) = 0;
+      virtual void exchangeGrid(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) = 0;
 
       /**
        * Exchange halo cells between processes using a single registration.
@@ -406,7 +406,7 @@ namespace schnek {
        * are typically used in conjunction with the `getGridContext` method.
        */
       template<class GridType>
-      GridRegistration registerFieldImpl(GridFactory<GridType> &factory);
+      GridRegistration registerFieldImpl(const GridFactory<GridType> &factory);
 
       /**
        * Register a grid or field by passing a factory, but only allocate for a sub-range.
@@ -415,7 +415,7 @@ namespace schnek {
        * local ranges, a null pointer is stored in the internal grid list.
        */
       template<class GridType>
-      GridRegistration registerFieldImpl(GridFactory<GridType> &factory, const RangeType &subRange);
+      GridRegistration registerFieldImpl(const GridFactory<GridType> &factory, const RangeType &subRange);
 
         /**
          * Register a grid or field projection by passing a factory and axes.
@@ -425,7 +425,7 @@ namespace schnek {
          */
         template<class GridType>
         ProjectedRegistration<GridType::Rank> registerFieldProjectionImpl(
-          GridFactory<GridType> &factory,
+          const GridFactory<GridType> &factory,
           const std::array<size_t, GridType::Rank> &axes
         );
 
@@ -466,7 +466,7 @@ namespace schnek {
           using ProjectedDomainType = Range<double, projRank, CheckingPolicy>;
 
             ProjectedRegistrationImpl(
-              GridFactory<GridType> &factoryIn,
+              const GridFactory<GridType> &factoryIn,
               const std::array<size_t, projRank> &axesIn
             )
               : factory(factoryIn), axes(axesIn), hasUnion(false) {}
@@ -537,7 +537,7 @@ namespace schnek {
             return changed;
           }
 
-          GridFactory<GridType> &factory;
+          GridFactory<GridType> factory;
           std::array<size_t, projRank> axes;
             bool hasUnion;
             RangeType unionRange;
@@ -674,7 +674,7 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<class GridType>
   inline GridRegistration schnek::DomainDecomposition<rank, CheckingPolicy>::registerFieldImpl(
-      GridFactory<GridType> &factory
+      const GridFactory<GridType> &factory
   ) {
     using Registration = internal::GridRegistrationImpl<rank, CheckingPolicy, GridType>;
     auto registration = std::make_shared<Registration>(factory);
@@ -694,7 +694,7 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<class GridType>
   inline GridRegistration schnek::DomainDecomposition<rank, CheckingPolicy>::registerFieldImpl(
-      GridFactory<GridType> &factory, const RangeType &subRange
+      const GridFactory<GridType> &factory, const RangeType &subRange
   ) {
     using Registration = internal::GridRegistrationImpl<rank, CheckingPolicy, GridType>;
     auto registration = std::make_shared<Registration>(factory);
@@ -750,7 +750,7 @@ namespace schnek {
   template<class GridType>
   inline typename DomainDecomposition<rank, CheckingPolicy>::template ProjectedRegistration<GridType::Rank>
   DomainDecomposition<rank, CheckingPolicy>::registerFieldProjectionImpl(
-      GridFactory<GridType> &factory,
+      const GridFactory<GridType> &factory,
       const std::array<size_t, GridType::Rank> &axes
   ) {
     constexpr size_t projRank = GridType::Rank;
@@ -797,7 +797,7 @@ namespace schnek {
       if (!wrapper) {
         continue;
       }
-      this->exchange(wrapper, useFieldInfo);
+      this->exchangeGrid(wrapper, useFieldInfo);
     }
   }
 
