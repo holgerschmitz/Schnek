@@ -35,6 +35,7 @@
 
 #include "../grid/grid.hpp"
 #include "diagnostic.hpp"
+#include "../decomposition/detail/grid_factory.hpp"
 
 #if defined(H5_HAVE_PARALLEL) && defined(SCHNEK_USE_HDF_PARALLEL)
 #include <mpi.h>
@@ -273,6 +274,65 @@ namespace schnek {
 
     public:
       virtual ~HDFGridDiagnostic() {}
+  };
+
+  /**
+   * Abstract diagnostic class for writing grids registered with a domain decomposition
+   * into HDF5 data files.
+   */
+  template<typename Type, class DecompositionType, class DiagnosticType = IntervalDiagnostic>
+  class HDFGridRegistrationDiagnostic : public DiagnosticType {
+    public:
+      typedef typename Type::IndexType IndexType;
+
+    protected:
+      HdfOStream output;
+      GridContainer<Type> container;
+      GridRegistration registration;
+      std::string registrationName;
+      std::string decompositionName;
+
+    protected:
+      /// Open the output file
+      void open(const std::string &);
+      /// Write into the output file
+      void write();
+      /// Close the output file
+      void close();
+
+      /// Block initialisation
+      void init();
+
+      /// Block callback to initialise the parameters
+      void initParameters(BlockParameters &blockPars);
+
+      /// Get the global minimum of the simulation bounds
+      virtual IndexType getGlobalMin() = 0;
+      /// Get the global maximum of the simulation bounds
+      virtual IndexType getGlobalMax() = 0;
+
+      /// Get the domain decomposition
+      virtual DecompositionType &getDecomposition() = 0;
+
+      /**
+       * Get the name of the data set in the HDF file
+       *
+       * @return  the field name `data`
+       */
+      virtual std::string getDatasetName();
+
+      /**
+       * Get the attributes to be stored with the dataset.
+       *
+       * Override this to store additional attributes with the dataset
+       *
+       * @return  an empty attributes set
+       */
+      virtual pHdfAttributes getAttributes() { return std::make_shared<HdfAttributes>(); };
+
+    public:
+      HDFGridRegistrationDiagnostic() : decomposition(nullptr) {}
+      virtual ~HDFGridRegistrationDiagnostic() {}
   };
 
   /**
