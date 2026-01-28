@@ -54,9 +54,10 @@ namespace schnek {
     std::string dset_name = getNextBlockName();
 
     typedef typename FieldType::IndexType IndexType;
+    typedef typename FieldType::SizeType SizeType;
     typedef typename FieldType::value_type T;
 
-    IndexType mdims = g.grid.getDims();
+    SizeType mdims = g.grid.getDims();
     IndexType mlo = g.grid.getLo();
     IndexType mhi = g.grid.getHi();
 
@@ -337,6 +338,56 @@ namespace schnek {
       container.global_min = this->getGlobalMin();
       container.global_max = this->getGlobalMax();
     }
+  }
+
+  //------------------------------------------------------------------------------
+  // HDFGridRegistrationDiagnostic
+  //------------------------------------------------------------------------------
+
+  template<typename Type, class DecompositionType, class DiagnosticType>
+  std::string HDFGridRegistrationDiagnostic<Type, DecompositionType, DiagnosticType>::getDatasetName() {
+    return "data";
+  }
+
+  template<typename Type, class DecompositionType, class DiagnosticType>
+  void HDFGridRegistrationDiagnostic<Type, DecompositionType, DiagnosticType>::initParameters(
+      BlockParameters &blockPars
+  ) {
+    DiagnosticType::initParameters(blockPars);
+    blockPars.addParameter("registration", &registrationName);
+  }
+
+  template<typename Type, class DecompositionType, class DiagnosticType>
+  void HDFGridRegistrationDiagnostic<Type, DecompositionType, DiagnosticType>::init() {
+    Block::init();
+
+    this->retrieveData(registrationName, registration);
+
+    container.global_min = this->getGlobalMin();
+    container.global_max = this->getGlobalMax();
+  }
+
+  template<typename Type, class DecompositionType, class DiagnosticType>
+  void HDFGridRegistrationDiagnostic<Type, DecompositionType, DiagnosticType>::open(const std::string &fname) {
+    output.open(fname.c_str());
+  }
+
+  template<typename Type, class DecompositionType, class DiagnosticType>
+  void HDFGridRegistrationDiagnostic<Type, DecompositionType, DiagnosticType>::write() {
+    output.setBlockName(this->getDatasetName());
+    output.setAttributes(this->getAttributes());
+
+    auto context = getDecomposition().getGridContext({registration});
+    context.forEach([this](const typename DecompositionType::RangeType &range, Type &grid) {
+      (void)range;
+      CopyToContainer<Type>::copy(grid, this->container);
+      this->output.writeGrid(this->container);
+    });
+  }
+
+  template<typename Type, class DecompositionType, class DiagnosticType>
+  void HDFGridRegistrationDiagnostic<Type, DecompositionType, DiagnosticType>::close() {
+    output.close();
   }
 
   //------------------------------------------------------------------------------

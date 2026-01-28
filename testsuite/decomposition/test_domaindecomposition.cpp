@@ -8,6 +8,8 @@
 #include "../utility.hpp"
 
 #include <decomposition/domaindecomposition.hpp>
+
+#include "mock_domain_decomposition.hpp"
 #include <grid/grid.hpp>
 #include <grid/field.hpp>
 
@@ -17,85 +19,7 @@
 // run only these tests:
 // ./schnek_tests --log_level=test_suite --run_test=domain_decomposition
 
-/**
- * @brief Mock implementation of DomainDecomposition for testing
- * 
- * This mock exposes the protected addLocalRange method so that tests
- * can add local ranges and verify the grid registration and forEach functionality.
- */
-template<size_t rank, template<size_t> class CheckingPolicy = schnek::ArrayNoArgCheck>
-class MockDomainDecomposition : public schnek::DomainDecomposition<rank, CheckingPolicy>
-{
-  public:
-    using Base = schnek::DomainDecomposition<rank, CheckingPolicy>;
-    using RangeType = typename Base::RangeType;
-    using DomainType = typename Base::DomainType;
-    using RegistrationVariant = typename Base::RegistrationVariant;
-
-    MockDomainDecomposition() : Base() {}
-
-    // Implement abstract methods with default/empty implementations
-    void init() override {}
-    void balanceLoad() override {}
-    int getUniqueId() const override { return 0; }
-    bool master() const override { return true; }
-    int numProcs() const override { return 1; }
-    void exchangeGrid(const schnek::internal::pGridWrapper &wrapper, bool useFieldInfo) override {
-      (void)wrapper;
-      (void)useFieldInfo;
-    }
-
-    void accumulate(const schnek::internal::pGridWrapper &wrapper, bool useFieldInfo) override {
-      (void)wrapper;
-      (void)useFieldInfo;
-    }
-
-    double avgReduce(double value) const override { return value; }
-    int avgReduce(int value) const override { return value; }
-    long avgReduce(long value) const override { return value; }
-
-    double sumReduce(double value) const override { return value; }
-    int sumReduce(int value) const override { return value; }
-    long sumReduce(long value) const override { return value; }
-
-    double maxReduce(double value) const override { return value; }
-    int maxReduce(int value) const override { return value; }
-    long maxReduce(long value) const override { return value; }
-
-    double minReduce(double value) const override { return value; }
-    int minReduce(int value) const override { return value; }
-    long minReduce(long value) const override { return value; }
-
-    // Expose the protected addLocalRange method for testing
-    void testAddLocalRange(RangeType range, DomainType domain)
-    {
-      this->addLocalRange(range, domain);
-    }
-
-    // Expose the protected addLocalIterationRange method for testing
-    void testAddLocalIterationRange(RangeType range)
-    {
-      this->addLocalIterationRange(range);
-    }
-
-    template<class GridType>
-    schnek::GridRegistration registerField(const schnek::GridFactory<GridType> &factory) {
-      return this->registerFieldImpl(factory);
-    }
-
-    template<class GridType>
-    schnek::GridRegistration registerField(const schnek::GridFactory<GridType> &factory, const RangeType &subRange) {
-      return this->registerFieldImpl(factory, subRange);
-    }
-
-    template<class GridType>
-    typename Base::template ProjectedRegistration<GridType::Rank> registerProjection(
-        schnek::GridFactory<GridType> &factory,
-        const std::array<size_t, GridType::Rank> &axes
-    ) {
-      return this->registerFieldProjectionImpl(factory, axes);
-    }
-};
+using schnek::test::MockDomainDecomposition;
 
 BOOST_AUTO_TEST_SUITE( domain_decomposition )
 

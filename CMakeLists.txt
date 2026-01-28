@@ -111,6 +111,7 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/decomposition/detail/test_grid_factory.cpp
     testsuite/decomposition/detail/test_grid_visitor.cpp
     testsuite/computation/test_algorithm.cpp
+    testsuite/diagnostic/test_hdfdiagnostic.cpp
     testsuite/generic/test_typelist.cpp
     testsuite/generic/test_static_range.cpp
     testsuite/grid/test_c_storage.cpp
