@@ -118,6 +118,21 @@ namespace schnek {
         }
     };
 
+    template<typename ParameterSeq>
+    struct GridArgumentBuilderFromWrappers {
+        template<typename WrapperVec, std::size_t... Is>
+        static auto buildImpl(const WrapperVec &wrappers, std::index_sequence<Is...>) {
+          return std::tuple<typename boost::mpl::at_c<ParameterSeq, Is>::type...>(
+              GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(wrappers[Is])...
+          );
+        }
+
+        template<typename WrapperVec>
+        static auto build(const WrapperVec &wrappers) {
+          return buildImpl(wrappers, std::make_index_sequence<boost::mpl::size<ParameterSeq>::value>{});
+        }
+    };
+
     template<typename RangeType, size_t rank, typename ParameterSeq>
     struct RangeSubsetChecker {
         static bool rangeSubset(const RangeType &subset, const RangeType &superset) {
@@ -208,6 +223,36 @@ namespace schnek {
            *
            * @tparam Func the function type
            * @param func a function taking the grids corrsponding to the registrations
+           */
+          template<typename Func>
+          void forEach(Func func);
+      };
+
+      template<size_t projRank>
+      class ProjectedGridContext {
+        private:
+          friend class DomainDecomposition;
+          using ProjectedRangeType = Range<ptrdiff_t, projRank, CheckingPolicy>;
+          std::vector<ProjectedRangeType> ranges;
+          std::vector<std::vector<internal::pGridWrapper>> gridEntries;
+          ProjectedGridContext(
+              std::vector<ProjectedRangeType> ranges,
+              std::vector<std::vector<internal::pGridWrapper>> gridEntries
+          )
+              : ranges(std::move(ranges)), gridEntries(std::move(gridEntries)) {}
+
+        public:
+          ProjectedGridContext() = delete;
+          ProjectedGridContext(const ProjectedGridContext &) = default;
+
+          /**
+           * @brief Calls the function for each unique projected region.
+           *
+           * The arguments to the function are the projected grids corresponding to the registrations.
+           * The first argument must be the projected range type derived from the registration axes.
+           *
+           * @tparam Func the function type
+           * @param func a function taking the projected grids corresponding to the registrations
            */
           template<typename Func>
           void forEach(Func func);
@@ -361,6 +406,18 @@ namespace schnek {
        * multiple contexts can be created
        */
       GridContext getGridContext(std::initializer_list<RegistrationVariant> registrations);
+
+        /**
+         * Get a projected grid context for calling a function over unique projected regions.
+         *
+         * All registrations must share the same projection axes. The returned context iterates only
+         * unique projected ranges to avoid duplicate callbacks when multiple local ranges project
+         * to the same region.
+         */
+        template<size_t projRank>
+        ProjectedGridContext<projRank> getProjectedGridContext(
+          std::initializer_list<ProjectedRegistration<projRank>> registrations
+        );
 
       /**
        * Exchange halo cells between processes by visiting a single grid wrapper.
@@ -662,6 +719,52 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  template<size_t projRank>
+  template<typename Func>
+  void DomainDecomposition<rank, CheckingPolicy>::ProjectedGridContext<projRank>::forEach(Func func) {
+    using AllParameters = internal::FunctionParameterTypesT<Func>;
+    constexpr std::size_t totalParams = boost::mpl::size<AllParameters>::value;
+    static_assert(totalParams >= 1, "Function must take at least a RangeType argument");
+
+    using RangeParam = typename boost::mpl::front<AllParameters>::type;
+    using RangeDecay = typename std::remove_reference<RangeParam>::type;
+    using RangeBase = typename std::remove_const<RangeDecay>::type;
+    static_assert(
+        std::is_same<RangeBase, ProjectedRangeType>::value,
+        "First function argument must be DomainDecomposition::ProjectedRangeType (by reference)"
+    );
+
+    using ParameterSeq = typename boost::mpl::pop_front<AllParameters>::type;
+    constexpr std::size_t paramCount = boost::mpl::size<ParameterSeq>::value;
+
+    if (!gridEntries.empty()) {
+      for (std::size_t i = 0; i < gridEntries.size(); ++i) {
+        if (gridEntries[i].size() != paramCount) {
+          SCHNECK_FAIL("Projected grid registration count mismatch at entry " << i);
+        }
+      }
+    }
+
+    for (std::size_t entry = 0; entry < ranges.size(); ++entry) {
+      bool hasNullGrid = false;
+      for (const auto &wrapper : gridEntries[entry]) {
+        if (!wrapper) {
+          hasNullGrid = true;
+          break;
+        }
+      }
+
+      if (!hasNullGrid) {
+        auto args = internal::GridArgumentBuilderFromWrappers<ParameterSeq>::build(gridEntries[entry]);
+        std::apply(
+            [&](auto &&...gridArgs) { func(ranges[entry], std::forward<decltype(gridArgs)>(gridArgs)...); },
+            args
+        );
+      }
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   inline void DomainDecomposition<rank, CheckingPolicy>::setGlobalRange(const RangeType &range) {
     globalRange = range;
     checkGlobalWeights();
@@ -881,6 +984,109 @@ namespace schnek {
       rangeCopies.push_back(localRange.range);
     }
     return GridContext{std::move(selectedLists), std::move(rangeCopies)};
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<size_t projRank>
+  typename DomainDecomposition<rank, CheckingPolicy>::template ProjectedGridContext<projRank>
+  DomainDecomposition<rank, CheckingPolicy>::getProjectedGridContext(
+      std::initializer_list<ProjectedRegistration<projRank>> registrations
+  ) {
+    if (registrations.size() == 0) {
+      SCHNECK_FAIL("Projected grid context requires at least one registration");
+    }
+
+    const auto &firstAxes = registrations.begin()->axes;
+    for (const auto &registration : registrations) {
+      if (registration.axes != firstAxes) {
+        SCHNECK_FAIL("All projected registrations must share identical projection axes");
+      }
+    }
+
+    std::vector<const std::list<internal::pGridWrapper> *> selectedLists;
+    selectedLists.reserve(registrations.size());
+
+    for (const auto &registration : registrations) {
+      auto gridIt = projectedGrids.find(registration.id);
+      if (gridIt == projectedGrids.end()) {
+        SCHNECK_FAIL("Unknown projected grid registration id: " << registration.id);
+      }
+      selectedLists.push_back(&gridIt->second);
+    }
+
+    std::size_t entryCount = ranges.size();
+    if (!selectedLists.empty()) {
+      entryCount = selectedLists.front()->size();
+      for (std::size_t i = 1; i < selectedLists.size(); ++i) {
+        if (selectedLists[i]->size() != entryCount) {
+          SCHNECK_FAIL("Projected grid list size mismatch for registration index " << i);
+        }
+      }
+      if (ranges.size() != entryCount) {
+        SCHNECK_FAIL("Projected range list size mismatch with registered grids");
+      }
+    }
+
+    using ProjectedRangeType = Range<ptrdiff_t, projRank, CheckingPolicy>;
+    std::vector<ProjectedRangeType> uniqueRanges;
+    std::vector<std::vector<internal::pGridWrapper>> uniqueEntries;
+
+    std::map<std::array<ptrdiff_t, projRank * 2>, std::size_t> uniqueIndex;
+
+    using ListIterator = typename std::list<internal::pGridWrapper>::const_iterator;
+    std::vector<ListIterator> iterators;
+    iterators.reserve(selectedLists.size());
+    for (auto listPtr : selectedLists) {
+      iterators.push_back(listPtr->begin());
+    }
+
+    auto makeKey = [](const ProjectedRangeType &range) {
+      std::array<ptrdiff_t, projRank * 2> key{};
+      for (size_t d = 0; d < projRank; ++d) {
+        key[d] = range.getLo()[d];
+        key[d + projRank] = range.getHi()[d];
+      }
+      return key;
+    };
+
+    auto rangeIt = ranges.begin();
+    for (std::size_t entry = 0; entry < entryCount; ++entry, ++rangeIt) {
+      bool hasNullGrid = false;
+      for (auto &it : iterators) {
+        if (!(*it)) {
+          hasNullGrid = true;
+          break;
+        }
+      }
+
+      if (!hasNullGrid) {
+        ProjectedRangeType projectedRange;
+        for (size_t d = 0; d < projRank; ++d) {
+          const size_t axis = firstAxes[d];
+          projectedRange.getLo()[d] = rangeIt->range.getLo()[axis];
+          projectedRange.getHi()[d] = rangeIt->range.getHi()[axis];
+        }
+
+        const auto key = makeKey(projectedRange);
+        if (uniqueIndex.find(key) == uniqueIndex.end()) {
+          uniqueIndex[key] = uniqueRanges.size();
+          uniqueRanges.push_back(projectedRange);
+
+          std::vector<internal::pGridWrapper> wrappers;
+          wrappers.reserve(iterators.size());
+          for (auto &it : iterators) {
+            wrappers.push_back(*it);
+          }
+          uniqueEntries.push_back(std::move(wrappers));
+        }
+      }
+
+      for (auto &it : iterators) {
+        ++it;
+      }
+    }
+
+    return ProjectedGridContext<projRank>{std::move(uniqueRanges), std::move(uniqueEntries)};
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
