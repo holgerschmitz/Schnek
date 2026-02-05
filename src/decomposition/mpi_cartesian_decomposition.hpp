@@ -24,6 +24,10 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
   class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, CheckingPolicy> {
     public:
+      typedef typename DomainDecomposition<rank, CheckingPolicy>::LimitType LimitType;
+      typedef typename DomainDecomposition<rank, CheckingPolicy>::RangeType RangeType;
+      typedef typename DomainDecomposition<rank, CheckingPolicy>::DomainType DomainType;
+
       template<size_t projRank>
       using ProjectedRegistration = ProjectedGridRegistration<projRank, rank>;
 
@@ -151,10 +155,6 @@ namespace schnek {
       void accumulate(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
 
     private:
-      typedef typename DomainDecomposition<rank, CheckingPolicy>::LimitType LimitType;
-      typedef typename DomainDecomposition<rank, CheckingPolicy>::RangeType RangeType;
-      typedef typename DomainDecomposition<rank, CheckingPolicy>::DomainType DomainType;
-
       /// The MPI context
       MpiContext &mpi;
 
