@@ -111,7 +111,7 @@ namespace schnek {
       IndexType getInnerHi() { return this->getHi() - ptrdiff_t(ghostCells); }
 
       /** Get the range the inner grid range */
-      RangeType getInnerRange() {
+      RangeType getInnerRange() const {
         IndexType lo = this->getLo();
         IndexType hi = this->getHi();
         lo += ptrdiff_t(ghostCells);

@@ -174,19 +174,21 @@ namespace schnek {
       struct RegistrationVariantBuilder<FullRank, std::index_sequence<Indices...>> {
           using type = std::variant<GridRegistration, ProjectedGridRegistration<Indices + 1, FullRank>...>;
       };
-      using RegistrationVariant = typename RegistrationVariantBuilder<
-          rank,
-          std::make_index_sequence<(rank > 1 ? rank - 1 : 0)>>::type;
+      using RegistrationVariant =
+          typename RegistrationVariantBuilder<rank, std::make_index_sequence<(rank > 1 ? rank - 1 : 0)>>::type;
 
       class GridContext {
         private:
           friend class DomainDecomposition;
+          /**
+           * For each registration, contains a list of pointers to the grids allocated for each range.
+           * Each list has the same length.
+           * If a grid is defined on a sub-range that does not intersect with the corresponding range, NULL_PTR is
+           * stored.
+           */
           std::vector<const std::list<internal::pGridWrapper> *> gridLists;
           std::vector<RangeType> ranges;
-          GridContext(
-              std::vector<const std::list<internal::pGridWrapper> *> gridLists,
-              std::vector<RangeType> ranges
-          )
+          GridContext(std::vector<const std::list<internal::pGridWrapper> *> gridLists, std::vector<RangeType> ranges)
               : gridLists(std::move(gridLists)), ranges(std::move(ranges)) {}
 
         public:
@@ -224,12 +226,26 @@ namespace schnek {
       void setGlobalRange(const RangeType &range);
 
       /**
+       * Get the global grid size of the simulation
+       *
+       * Calling this before calling `setGlobalRange()` results in undefined behaviour.
+       */
+      const RangeType &getGlobalRange() { return globalRange; }
+
+      /**
        * Set the global physical size of the simulation domain
        *
        * This needs to be called before the domain decomposition can be initialised by calling
        * init().
        */
       void setGlobalDomain(const DomainType &domain);
+
+      /**
+       * Get the global physical size of the simulation domain
+       *
+       * Calling this before calling `setGlobalDomain()` results in undefined behaviour.
+       */
+      const DomainType &getGlobalDomain() { return globalDomain; }
 
       /**
        * Set the global simulation weights used for load balancing
@@ -417,17 +433,16 @@ namespace schnek {
       template<class GridType>
       GridRegistration registerFieldImpl(const GridFactory<GridType> &factory, const RangeType &subRange);
 
-        /**
-         * Register a grid or field projection by passing a factory and axes.
-         *
-         * The projection rank is given by `GridType::Rank` and must satisfy 1 <= Rank < `rank`.
-         * The axes array defines which dimensions of the full domain are projected.
-         */
-        template<class GridType>
-        ProjectedRegistration<GridType::Rank> registerFieldProjectionImpl(
-          const GridFactory<GridType> &factory,
-          const std::array<size_t, GridType::Rank> &axes
-        );
+      /**
+       * Register a grid or field projection by passing a factory and axes.
+       *
+       * The projection rank is given by `GridType::Rank` and must satisfy 1 <= Rank < `rank`.
+       * The axes array defines which dimensions of the full domain are projected.
+       */
+      template<class GridType>
+      ProjectedRegistration<GridType::Rank> registerFieldProjectionImpl(
+          const GridFactory<GridType> &factory, const std::array<size_t, GridType::Rank> &axes
+      );
 
     private:
       struct LocalRangeInfo {
@@ -454,9 +469,7 @@ namespace schnek {
           virtual ~ProjectedRegistrationInterface() = default;
           virtual internal::pGridWrapper makeGrid(const RangeType &fullRange, const DomainType &fullDomain) = 0;
           virtual internal::pGridWrapper ensureSharedGrid(
-            const RangeType &fullRange,
-            const DomainType &fullDomain,
-            std::list<internal::pGridWrapper> &gridList
+              const RangeType &fullRange, const DomainType &fullDomain, std::list<internal::pGridWrapper> &gridList
           ) = 0;
       };
 
@@ -465,10 +478,7 @@ namespace schnek {
           using ProjectedRangeType = Range<ptrdiff_t, projRank, CheckingPolicy>;
           using ProjectedDomainType = Range<double, projRank, CheckingPolicy>;
 
-            ProjectedRegistrationImpl(
-              const GridFactory<GridType> &factoryIn,
-              const std::array<size_t, projRank> &axesIn
-            )
+          ProjectedRegistrationImpl(const GridFactory<GridType> &factoryIn, const std::array<size_t, projRank> &axesIn)
               : factory(factoryIn), axes(axesIn), hasUnion(false) {}
 
           internal::pGridWrapper makeGrid(const RangeType &fullRange, const DomainType &fullDomain) override {
@@ -491,9 +501,7 @@ namespace schnek {
           }
 
           internal::pGridWrapper ensureSharedGrid(
-              const RangeType &fullRange,
-              const DomainType &fullDomain,
-              std::list<internal::pGridWrapper> &gridList
+              const RangeType &fullRange, const DomainType &fullDomain, std::list<internal::pGridWrapper> &gridList
           ) override {
             bool expanded = updateUnion(fullRange, fullDomain);
             if (expanded || !sharedGrid) {
@@ -539,10 +547,10 @@ namespace schnek {
 
           GridFactory<GridType> factory;
           std::array<size_t, projRank> axes;
-            bool hasUnion;
-            RangeType unionRange;
-            DomainType unionDomain;
-            internal::pGridWrapper sharedGrid;
+          bool hasUnion;
+          RangeType unionRange;
+          DomainType unionDomain;
+          internal::pGridWrapper sharedGrid;
       };
 
       std::map<long, std::shared_ptr<ProjectedRegistrationInterface>> projectedRegisteredFields;
@@ -591,6 +599,7 @@ namespace schnek {
 
     const auto &selectedLists = gridLists;
 
+    // checking that all gridLists have the same number of entries that are equal to the number of ranges
     std::size_t entryCount = ranges.size();
     if (!selectedLists.empty()) {
       entryCount = selectedLists.front()->size();
@@ -604,6 +613,8 @@ namespace schnek {
       }
     }
 
+    // iterators contains an iterator for each grid registration
+    // Each iterator iterates over the range allocations
     using ListIterator = typename std::list<internal::pGridWrapper>::const_iterator;
     std::vector<ListIterator> iterators;
     iterators.reserve(selectedLists.size());
@@ -620,14 +631,18 @@ namespace schnek {
         }
       }
 
+      // If any of the grids are null, we don't do anything
       if (!hasNullGrid) {
         RangeType rangeRef = ranges[entry];
         bool hasFullRange = false;
         if constexpr (paramCount > 0) {
           using FirstParam = typename boost::mpl::at_c<ParameterSeq, 0>::type;
           const auto &firstGrid = internal::GridReferenceExtractor<FirstParam>::extract(*iterators.front());
-          if constexpr (std::is_constructible<RangeType, decltype(firstGrid.getRange())>::value) {
-            rangeRef = RangeType(firstGrid.getRange());
+          if constexpr (std::is_constructible<
+            RangeType, 
+            decltype(internal::RangeGetter<std::decay_t<decltype(firstGrid)>>::get(firstGrid))
+          >::value) {
+            rangeRef = RangeType(internal::RangeGetter<std::decay_t<decltype(firstGrid)>>::get(firstGrid));
             hasFullRange = true;
           }
 #ifndef NDEBUG
@@ -750,8 +765,7 @@ namespace schnek {
   template<class GridType>
   inline typename DomainDecomposition<rank, CheckingPolicy>::template ProjectedRegistration<GridType::Rank>
   DomainDecomposition<rank, CheckingPolicy>::registerFieldProjectionImpl(
-      const GridFactory<GridType> &factory,
-      const std::array<size_t, GridType::Rank> &axes
+      const GridFactory<GridType> &factory, const std::array<size_t, GridType::Rank> &axes
   ) {
     constexpr size_t projRank = GridType::Rank;
     static_assert(projRank >= 1, "Projected grid rank must be at least 1");
@@ -836,9 +850,7 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   typename DomainDecomposition<rank, CheckingPolicy>::GridContext
-  DomainDecomposition<rank, CheckingPolicy>::getGridContext(
-      std::initializer_list<RegistrationVariant> registrations
-  ) {
+  DomainDecomposition<rank, CheckingPolicy>::getGridContext(std::initializer_list<RegistrationVariant> registrations) {
     std::vector<const std::list<internal::pGridWrapper> *> selectedLists;
     selectedLists.reserve(registrations.size());
 

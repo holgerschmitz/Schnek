@@ -14,25 +14,25 @@ MPI_Comm schnek::MpiContextImpl::getCommWorld() {
 }
 
 int schnek::MpiContextImpl::MPI_Comm_size(MPI_Comm comm, int* commSize) {
-  return MPI_Comm_size(comm, commSize);
+  return ::MPI_Comm_size(comm, commSize);
 }
 
 int schnek::MpiContextImpl::MPI_Comm_rank(MPI_Comm comm, int* rank) {
-  return MPI_Comm_rank(comm, rank);
+  return ::MPI_Comm_rank(comm, rank);
 }
 
 int schnek::MpiContextImpl::MPI_Cart_create(
     MPI_Comm comm_old, int ndims, const int dims[], const int periods[], int reorder, MPI_Comm* comm_cart
 ) {
-  return MPI_Cart_create(comm_old, ndims, dims, periods, reorder, comm_cart);
+  return ::MPI_Cart_create(comm_old, ndims, dims, periods, reorder, comm_cart);
 }
 
 int schnek::MpiContextImpl::MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int coords[]) {
-  return MPI_Cart_coords(comm, rank, maxdims, coords);
+  return ::MPI_Cart_coords(comm, rank, maxdims, coords);
 }
 
 int schnek::MpiContextImpl::MPI_Cart_shift(MPI_Comm comm, int direction, int disp, int* rank_source, int* rank_dest) {
-  return MPI_Cart_shift(comm, direction, disp, rank_source, rank_dest);
+  return ::MPI_Cart_shift(comm, direction, disp, rank_source, rank_dest);
 }
 
 int schnek::MpiContextImpl::MPI_Sendrecv(
@@ -49,7 +49,7 @@ int schnek::MpiContextImpl::MPI_Sendrecv(
     MPI_Comm comm,
     MPI_Status* status
 ) {
-  return MPI_Sendrecv(
+  return ::MPI_Sendrecv(
       sendbuf, sendcount, sendtype, dest, sendtag, recvbuf, recvcount, recvtype, source, recvtag, comm, status
   );
 }
@@ -57,11 +57,11 @@ int schnek::MpiContextImpl::MPI_Sendrecv(
 int schnek::MpiContextImpl::MPI_Allreduce(
     const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm
 ) {
-  return MPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
+  return ::MPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
 }
 
 int schnek::MpiContextImpl::MPI_Bcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
-  return MPI_Bcast(buffer, count, datatype, root, comm);
+  return ::MPI_Bcast(buffer, count, datatype, root, comm);
 }
 
 namespace schnek::detail {

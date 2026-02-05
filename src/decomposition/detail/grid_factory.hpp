@@ -32,6 +32,7 @@
 #include <memory>
 #include <typeinfo>
 #include <utility>
+#include <type_traits>
 
 #include "../../grid/array.hpp"
 #include "../../grid/arraycheck.hpp"
@@ -147,6 +148,16 @@ namespace schnek {
         }
 
         GridFactory<GridType> factory;
+    };
+
+    template<typename T, typename = void>
+    struct RangeGetter {
+        static auto get(const T &grid) -> decltype(grid.getRange()) { return grid.getRange(); }
+    };
+
+    template<typename T>
+    struct RangeGetter<T, std::void_t<decltype(std::declval<const T &>().getInnerRange())>> {
+        static auto get(const T &grid) -> decltype(grid.getInnerRange()) { return grid.getInnerRange(); }
     };
 
   }  // namespace internal
