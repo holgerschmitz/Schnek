@@ -200,10 +200,16 @@ int MpiTestContextImpl::MPI_Bcast(void* buffer, int count, MPI_Datatype datatype
 
   args_MPI_Bcast.push_back(boost::make_tuple(count, datatype, root, comm));
 
-  auto retVal =  ret_MPI_Bcast[std::min(argsCount, ret_MPI_Bcast.size() - 1)];
-  memcpy(buffer, retVal.get<1>(), retVal.get<2>());
+  if (!ret_MPI_Bcast.empty()) {
+    auto retVal =  ret_MPI_Bcast[std::min(argsCount, ret_MPI_Bcast.size() - 1)];
+    memcpy(buffer, retVal.get<1>(), retVal.get<2>());
 
-  return retVal.get<0>();
+    return retVal.get<0>();
+  }
+
+  // No return data configured — this is the root (sender) case.
+  // Real MPI_Bcast does not modify the root's buffer.
+  return MPI_SUCCESS;
 }
 
 int MpiTestContextImpl::MPI_Isend(
