@@ -14,6 +14,7 @@
 #include "../util/factor.hpp"
 #include "../util/interpolate1d.hpp"
 #include "../util/logger.hpp"
+#include "detail/redistribution.hpp"
 #include "mpi_cartesian_decomposition.hpp"
 
 #undef SCHNEK_LOGLEVEL
@@ -144,8 +145,104 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::coordToMpiRank(const LimitType &coord) const {
+    int coordRaw[rank];
+    for (size_t i = 0; i < rank; ++i) {
+      coordRaw[i] = static_cast<int>(coord[i]);
+    }
+    int result;
+    int errorCode = mpi.MPI_Cart_rank(comm, coordRaw, &result);
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Cart_rank failed");
+    return result;
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::DomainType
+  MpiCartesianDomainDecomposition<rank, CheckingPolicy>::computeLocalDomain(const RangeType &localRange) const {
+    DomainType localDomain(this->globalDomain);
+    const LimitType &globalLo = this->globalRange.getLo();
+    const LimitType &globalHi = this->globalRange.getHi();
+
+    for (size_t d = 0; d < rank; ++d) {
+      const ptrdiff_t globalCells = globalHi[d] - globalLo[d] + 1;
+      const ptrdiff_t localCells = localRange.getHi()[d] - localRange.getLo()[d] + 1;
+      const double cellSize =
+          globalCells > 0 ? (this->globalDomain.getHi()[d] - this->globalDomain.getLo()[d]) / double(globalCells) : 0.0;
+      const ptrdiff_t startOffset = localRange.getLo()[d] - globalLo[d];
+
+      localDomain.getLo()[d] = this->globalDomain.getLo()[d] + cellSize * double(startOffset);
+      localDomain.getHi()[d] = localDomain.getLo()[d] + cellSize * double(localCells);
+    }
+
+    return localDomain;
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::balanceLoad() {
-    SCHNECK_FAIL("MpiCartesianDomainDecomposition::balanceLoad() not implemented");
+    using TransferBlockType = TransferBlock<rank, CheckingPolicy>;
+
+    // 1. Save the old proc ranges
+    ProcRanges oldRanges;
+    for (size_t d = 0; d < rank; ++d) {
+      oldRanges[d].resize(procRanges[d].getLo(), procRanges[d].getHi());
+      for (ptrdiff_t c = procRanges[d].getLo()[0]; c <= procRanges[d].getHi()[0]; ++c) {
+        oldRanges[d](c) = procRanges[d](c);
+      }
+    }
+
+    // 2. Compute new grid distribution
+    ProcRanges newRanges;
+    calcGridDistributon(newRanges);
+
+    // 3. Compute new local range and domain
+    RangeType newLocalRange;
+    for (size_t d = 0; d < rank; ++d) {
+      newLocalRange.getLo()[d] = newRanges[d](myCoord[d]).getLo()[0];
+      newLocalRange.getHi()[d] = newRanges[d](myCoord[d]).getHi()[0];
+    }
+
+    DomainType newLocalDomain = computeLocalDomain(newLocalRange);
+
+    // 4. Compute transfer plans
+    std::vector<TransferBlockType> sendPlan;
+    std::vector<TransferBlockType> recvPlan;
+
+    computeCartesianTransferPlan<rank, CheckingPolicy>(
+        oldRanges, newRanges, dims, myCoord, ComRank,
+        [this](const LimitType &coord) -> int { return coordToMpiRank(coord); }, sendPlan, recvPlan
+    );
+
+    // 5. Save old grid wrappers (take ownership)
+    auto &gridStorage = this->getGridStorage();
+    std::map<long, std::list<internal::pGridWrapper>> oldGrids;
+    for (auto &entry : gridStorage) {
+      oldGrids[entry.first] = std::move(entry.second);
+    }
+
+    // 6. Clear all local ranges and recreate with new layout
+    this->clearLocalRanges();
+    this->addLocalRange(newLocalRange, newLocalDomain);
+
+    // 7. Redistribute each registered grid one at a time
+    for (auto &entry : gridStorage) {
+      long id = entry.first;
+      auto &newGridList = entry.second;
+      auto oldGridIt = oldGrids.find(id);
+
+      if (oldGridIt == oldGrids.end() || oldGridIt->second.empty() || newGridList.empty()) {
+        continue;
+      }
+
+      auto oldWrapper = oldGridIt->second.front();
+      auto newWrapper = newGridList.front();
+
+      if (oldWrapper && newWrapper) {
+        redistributeGrid(oldWrapper, newWrapper, sendPlan, recvPlan);
+      }
+    }
+
+    // 8. Update proc ranges
+    procRanges = newRanges;
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -477,6 +574,186 @@ namespace schnek {
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerAccumulateHandler() {
     accumulateInitializers.emplace_back([](AccumulateVisitor &visitor) { visitor.template registerHandler<GridType>(); }
     );
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::RedistributeVisitor
+      : public internal::GridVisitor<
+            typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::RedistributeVisitor> {
+    public:
+      RedistributeVisitor(
+          MpiCartesianDomainDecomposition &parentIn,
+          internal::pGridWrapper newWrapperIn,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlanIn,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlanIn
+      )
+          : parent(parentIn), newWrapper(std::move(newWrapperIn)), sendPlan(sendPlanIn), recvPlan(recvPlanIn) {}
+
+      template<typename GridType>
+      void handle(GridType &oldGrid, bool /*flag*/) {
+        auto typedNewWrapper = std::dynamic_pointer_cast<internal::GridWrapperImpl<GridType>>(newWrapper);
+        SCHNEK_ASSERT(typedNewWrapper, "Grid type mismatch during redistribution");
+        parent.template redistributeTyped<GridType>(oldGrid, typedNewWrapper->grid, sendPlan, recvPlan);
+      }
+
+    private:
+      MpiCartesianDomainDecomposition &parent;
+      internal::pGridWrapper newWrapper;
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan;
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan;
+  };
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<class GridType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerRedistributeHandler() {
+    redistributeInitializers.emplace_back([](RedistributeVisitor &visitor) {
+      visitor.template registerHandler<GridType>();
+    });
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::redistributeGrid(
+      const internal::pGridWrapper &oldWrapper,
+      const internal::pGridWrapper &newWrapper,
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan,
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
+  ) {
+    if (redistributeInitializers.empty()) {
+      SCHNECK_FAIL("No registered grids available for redistribution");
+    }
+
+    RedistributeVisitor visitor(*this, newWrapper, sendPlan, recvPlan);
+    for (auto &initializer : redistributeInitializers) {
+      initializer(visitor);
+    }
+
+    oldWrapper->accept(visitor, false);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename GridType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::redistributeTyped(
+      GridType &oldGrid,
+      GridType &newGrid,
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan,
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
+  ) {
+    using ValueType = typename GridType::value_type;
+    using RangeTypeLocal = typename GridType::RangeType;
+
+    const MPI_Datatype mpiType = detail::mpiDatatypeFor<ValueType>();
+
+    auto gridRangeVolume = [](const RangeTypeLocal &range) -> size_t {
+      size_t volume = 1;
+      for (size_t d = 0; d < GridType::Rank; ++d) {
+        ptrdiff_t extent = range.getHi()[d] - range.getLo()[d] + 1;
+        if (extent <= 0) {
+          return 0;
+        }
+        volume *= static_cast<size_t>(extent);
+      }
+      return volume;
+    };
+
+    auto toIntCount = [](size_t count) -> int {
+      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
+        SCHNECK_FAIL("Redistribution block too large for MPI count");
+      }
+      return static_cast<int>(count);
+    };
+
+    // Separate local copy blocks from remote transfers
+    int localRank = ComRank;
+
+    // Post non-blocking receives for remote blocks
+    std::vector<std::vector<ValueType>> recvBuffers;
+    std::vector<MPI_Request> requests;
+
+    for (size_t i = 0; i < recvPlan.size(); ++i) {
+      if (recvPlan[i].mpiRank == localRank) {
+        continue;  // local copy handled separately
+      }
+
+      RangeTypeLocal recvRange(recvPlan[i].range);
+      size_t volume = gridRangeVolume(recvRange);
+      if (volume == 0) {
+        continue;
+      }
+
+      recvBuffers.emplace_back(volume);
+      MPI_Request req;
+      int errorCode =
+          mpi.MPI_Irecv(recvBuffers.back().data(), toIntCount(volume), mpiType, recvPlan[i].mpiRank, 0, comm, &req);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during redistribution");
+      requests.push_back(req);
+    }
+
+    // Pack and post non-blocking sends for remote blocks
+    std::vector<std::vector<ValueType>> sendBuffers;
+
+    for (size_t i = 0; i < sendPlan.size(); ++i) {
+      if (sendPlan[i].mpiRank == localRank) {
+        continue;  // local copy handled separately
+      }
+
+      RangeTypeLocal sendRange(sendPlan[i].range);
+      size_t volume = gridRangeVolume(sendRange);
+      if (volume == 0) {
+        continue;
+      }
+
+      // Try to use the raw data pointer if the range is the entire grid
+      // Otherwise, pack into a temporary buffer
+      sendBuffers.emplace_back(volume);
+      auto &buffer = sendBuffers.back();
+      size_t idx = 0;
+      for (auto it = sendRange.begin(); it != sendRange.end(); ++it) {
+        buffer[idx++] = oldGrid[*it];
+      }
+
+      MPI_Request req;
+      int errorCode = mpi.MPI_Isend(buffer.data(), toIntCount(volume), mpiType, sendPlan[i].mpiRank, 0, comm, &req);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during redistribution");
+      requests.push_back(req);
+    }
+
+    // Copy local data (blocks where source == destination == this process)
+    for (size_t i = 0; i < recvPlan.size(); ++i) {
+      if (recvPlan[i].mpiRank != localRank) {
+        continue;
+      }
+
+      RangeTypeLocal copyRange(recvPlan[i].range);
+      for (auto it = copyRange.begin(); it != copyRange.end(); ++it) {
+        newGrid[*it] = oldGrid[*it];
+      }
+    }
+
+    // Wait for all non-blocking operations to complete
+    if (!requests.empty()) {
+      int errorCode = mpi.MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during redistribution");
+    }
+
+    // Unpack received data into the new grid
+    size_t bufferIdx = 0;
+    for (size_t i = 0; i < recvPlan.size(); ++i) {
+      if (recvPlan[i].mpiRank == localRank) {
+        continue;
+      }
+
+      RangeTypeLocal recvRange(recvPlan[i].range);
+      size_t volume = gridRangeVolume(recvRange);
+      if (volume == 0) {
+        continue;
+      }
+
+      const auto &buffer = recvBuffers[bufferIdx++];
+      size_t idx = 0;
+      for (auto it = recvRange.begin(); it != recvRange.end(); ++it) {
+        newGrid[*it] = buffer[idx++];
+      }
+    }
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>

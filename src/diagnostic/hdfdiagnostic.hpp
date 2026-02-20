@@ -33,9 +33,9 @@
 
 #include <memory>
 
+#include "../decomposition/detail/grid_factory.hpp"
 #include "../grid/grid.hpp"
 #include "diagnostic.hpp"
-#include "../decomposition/detail/grid_factory.hpp"
 
 #if defined(H5_HAVE_PARALLEL) && defined(SCHNEK_USE_HDF_PARALLEL)
 #include <mpi.h>

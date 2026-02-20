@@ -29,8 +29,8 @@
 
 #include <boost/current_function.hpp>
 #include <exception>
-#include <string>
 #include <sstream>
+#include <string>
 
 namespace schnek {
 

@@ -30,9 +30,9 @@
 #include <array>
 #include <cstddef>
 #include <memory>
+#include <type_traits>
 #include <typeinfo>
 #include <utility>
-#include <type_traits>
 
 #include "../../grid/array.hpp"
 #include "../../grid/arraycheck.hpp"
@@ -125,13 +125,13 @@ namespace schnek {
       long id = -1;
   };
 
-    template<size_t projRank, size_t fullRank>
-    struct ProjectedGridRegistration {
+  template<size_t projRank, size_t fullRank>
+  struct ProjectedGridRegistration {
       static constexpr size_t ProjectedRank = projRank;
       static constexpr size_t FullRank = fullRank;
       long id = -1;
       std::array<size_t, projRank> axes{};
-    };
+  };
 
   namespace internal {
 

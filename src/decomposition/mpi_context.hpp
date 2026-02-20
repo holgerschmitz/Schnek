@@ -50,6 +50,14 @@ namespace schnek {
           const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm
       ) = 0;
       virtual int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) = 0;
+      virtual int MPI_Isend(
+          const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request
+      ) = 0;
+      virtual int MPI_Irecv(
+          void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Request *request
+      ) = 0;
+      virtual int MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[]) = 0;
+      virtual int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank) = 0;
   };
 
   /**
@@ -85,6 +93,14 @@ namespace schnek {
       );
       int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
       int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+      int MPI_Isend(
+          const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request
+      );
+      int MPI_Irecv(
+          void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Request *request
+      );
+      int MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[]);
+      int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank);
   };
 
   namespace detail {

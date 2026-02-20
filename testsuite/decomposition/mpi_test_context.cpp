@@ -205,3 +205,94 @@ int MpiTestContextImpl::MPI_Bcast(void* buffer, int count, MPI_Datatype datatype
 
   return retVal.get<0>();
 }
+
+int MpiTestContextImpl::MPI_Isend(
+    const void* buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request* request
+) {
+  size_t argsCount = args_MPI_Isend.size();
+  args_MPI_Isend.push_back({buf != nullptr, count, datatype, dest, tag, comm});
+
+  if (request) {
+    *request = MPI_REQUEST_NULL;
+  }
+
+  if (!ret_MPI_Isend.empty()) {
+    return ret_MPI_Isend[std::min(argsCount, ret_MPI_Isend.size() - 1)];
+  }
+
+  return MPI_SUCCESS;
+}
+
+int MpiTestContextImpl::MPI_Irecv(
+    void* buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Request* request
+) {
+  size_t argsCount = args_MPI_Irecv.size();
+  args_MPI_Irecv.push_back({buf != nullptr, count, datatype, source, tag, comm});
+
+  if (request) {
+    *request = MPI_REQUEST_NULL;
+  }
+
+  // Fill the receive buffer with pre-loaded data if available
+  if (!ret_MPI_Irecv.empty()) {
+    auto retVal = ret_MPI_Irecv[std::min(argsCount, ret_MPI_Irecv.size() - 1)];
+    const auto& payload = retVal.get<1>();
+    if (buf != nullptr && !payload.empty()) {
+      std::memcpy(buf, payload.data(), payload.size());
+    }
+    return retVal.get<0>();
+  }
+
+  return MPI_SUCCESS;
+}
+
+int MpiTestContextImpl::MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[]) {
+  size_t argsCount = args_MPI_Waitall.size();
+  args_MPI_Waitall.push_back({count});
+
+  // Set all requests to MPI_REQUEST_NULL (as MPI_Waitall does)
+  for (int i = 0; i < count; ++i) {
+    array_of_requests[i] = MPI_REQUEST_NULL;
+  }
+
+  if (!ret_MPI_Waitall.empty()) {
+    return ret_MPI_Waitall[std::min(argsCount, ret_MPI_Waitall.size() - 1)];
+  }
+
+  return MPI_SUCCESS;
+}
+
+int MpiTestContextImpl::MPI_Cart_rank(MPI_Comm comm, const int coords[], int* rank) {
+  size_t argsCount = args_MPI_Cart_rank.size();
+
+  // We need to determine the number of dimensions from the stored topology info
+  // For the mock, we use the dims from Cart_create args
+  int ndims = 1;
+  if (!args_MPI_Cart_create.empty()) {
+    ndims = args_MPI_Cart_create.back().get<1>();
+  }
+
+  std::vector<int> vcoords(coords, coords + ndims);
+  args_MPI_Cart_rank.push_back(boost::make_tuple(comm, vcoords));
+
+  if (!ret_MPI_Cart_rank.empty()) {
+    auto retVal = ret_MPI_Cart_rank[std::min(argsCount, ret_MPI_Cart_rank.size() - 1)];
+    *rank = retVal.get<1>();
+    return retVal.get<0>();
+  }
+
+  // Default: compute rank from coordinates using row-major ordering
+  // using dims from Cart_create
+  if (!args_MPI_Cart_create.empty()) {
+    const auto &dimsVec = args_MPI_Cart_create.back().get<2>();
+    int result = 0;
+    for (int d = 0; d < ndims; ++d) {
+      result = result * dimsVec[d] + coords[d];
+    }
+    *rank = result;
+  } else {
+    *rank = 0;
+  }
+
+  return MPI_SUCCESS;
+}

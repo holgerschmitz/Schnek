@@ -64,6 +64,26 @@ int schnek::MpiContextImpl::MPI_Bcast(void* buffer, int count, MPI_Datatype data
   return ::MPI_Bcast(buffer, count, datatype, root, comm);
 }
 
+int schnek::MpiContextImpl::MPI_Isend(
+    const void* buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request* request
+) {
+  return ::MPI_Isend(buf, count, datatype, dest, tag, comm, request);
+}
+
+int schnek::MpiContextImpl::MPI_Irecv(
+    void* buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Request* request
+) {
+  return ::MPI_Irecv(buf, count, datatype, source, tag, comm, request);
+}
+
+int schnek::MpiContextImpl::MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[]) {
+  return ::MPI_Waitall(count, array_of_requests, array_of_statuses);
+}
+
+int schnek::MpiContextImpl::MPI_Cart_rank(MPI_Comm comm, const int coords[], int* rank) {
+  return ::MPI_Cart_rank(comm, coords, rank);
+}
+
 namespace schnek::detail {
-    MpiContextImpl mpiContextImpl{MPI_COMM_WORLD};
+  MpiContextImpl mpiContextImpl{MPI_COMM_WORLD};
 }

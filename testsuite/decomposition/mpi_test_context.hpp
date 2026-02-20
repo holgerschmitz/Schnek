@@ -57,6 +57,42 @@ class MpiTestContextImpl : public schnek::MpiContext
     std::vector<boost::tuple<int, std::vector<char>>> ret_MPI_Allreduce;
     std::vector<boost::tuple<int, std::vector<char>>> ret_MPI_Sendrecv;
 
+    struct IsendCallInfo {
+      bool sendBufferPresent;
+      int count;
+      MPI_Datatype datatype;
+      int dest;
+      int tag;
+      MPI_Comm comm;
+    };
+    std::vector<IsendCallInfo> args_MPI_Isend;
+
+    struct IrecvCallInfo {
+      bool recvBufferPresent;
+      int count;
+      MPI_Datatype datatype;
+      int source;
+      int tag;
+      MPI_Comm comm;
+    };
+    std::vector<IrecvCallInfo> args_MPI_Irecv;
+
+    struct WaitallCallInfo {
+      int count;
+    };
+    std::vector<WaitallCallInfo> args_MPI_Waitall;
+
+    std::vector<boost::tuple<MPI_Comm, std::vector<int>>> args_MPI_Cart_rank;
+
+    // Isend return values: error code
+    std::vector<int> ret_MPI_Isend;
+    // Irecv return values: error code plus the data to fill into the recv buffer
+    std::vector<boost::tuple<int, std::vector<char>>> ret_MPI_Irecv;
+    // Waitall return values: error code
+    std::vector<int> ret_MPI_Waitall;
+    // Cart_rank return values: error code plus resulting rank
+    std::vector<boost::tuple<int, int>> ret_MPI_Cart_rank;
+
     MPI_Comm getCommWorld();
     int MPI_Comm_size(MPI_Comm comm, int *commSize );
     int MPI_Comm_rank(MPI_Comm comm, int *rank );
@@ -87,4 +123,12 @@ class MpiTestContextImpl : public schnek::MpiContext
                       MPI_Op op,
                       MPI_Comm comm);
     int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+    int MPI_Isend(
+        const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request
+    );
+    int MPI_Irecv(
+        void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Request *request
+    );
+    int MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[]);
+    int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank);
 };

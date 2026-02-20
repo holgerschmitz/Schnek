@@ -236,8 +236,7 @@ namespace schnek {
           std::vector<ProjectedRangeType> ranges;
           std::vector<std::vector<internal::pGridWrapper>> gridEntries;
           ProjectedGridContext(
-              std::vector<ProjectedRangeType> ranges,
-              std::vector<std::vector<internal::pGridWrapper>> gridEntries
+              std::vector<ProjectedRangeType> ranges, std::vector<std::vector<internal::pGridWrapper>> gridEntries
           )
               : ranges(std::move(ranges)), gridEntries(std::move(gridEntries)) {}
 
@@ -407,17 +406,17 @@ namespace schnek {
        */
       GridContext getGridContext(std::initializer_list<RegistrationVariant> registrations);
 
-        /**
-         * Get a projected grid context for calling a function over unique projected regions.
-         *
-         * All registrations must share the same projection axes. The returned context iterates only
-         * unique projected ranges to avoid duplicate callbacks when multiple local ranges project
-         * to the same region.
-         */
-        template<size_t projRank>
-        ProjectedGridContext<projRank> getProjectedGridContext(
+      /**
+       * Get a projected grid context for calling a function over unique projected regions.
+       *
+       * All registrations must share the same projection axes. The returned context iterates only
+       * unique projected ranges to avoid duplicate callbacks when multiple local ranges project
+       * to the same region.
+       */
+      template<size_t projRank>
+      ProjectedGridContext<projRank> getProjectedGridContext(
           std::initializer_list<ProjectedRegistration<projRank>> registrations
-        );
+      );
 
       /**
        * Exchange halo cells between processes by visiting a single grid wrapper.
@@ -464,6 +463,23 @@ namespace schnek {
        * This allows implementations to add a local range for grid allocation
        */
       void addLocalRange(RangeType range, DomainType domain);
+
+      /**
+       * Clear all local allocation ranges and associated grids.
+       *
+       * This is used by subclasses during load rebalancing to replace
+       * the current local ranges with new ones.
+       */
+      void clearLocalRanges();
+
+      /**
+       * Get mutable access to the grid storage.
+       *
+       * This allows subclasses to access and manipulate grid wrappers during
+       * load rebalancing. Each entry maps a registration ID to the list of
+       * grid wrappers (one per local allocation range).
+       */
+      std::map<long, std::list<internal::pGridWrapper>> &getGridStorage();
 
       /**
        * This allows implementations to add a local range for iteration
@@ -696,9 +712,8 @@ namespace schnek {
           using FirstParam = typename boost::mpl::at_c<ParameterSeq, 0>::type;
           const auto &firstGrid = internal::GridReferenceExtractor<FirstParam>::extract(*iterators.front());
           if constexpr (std::is_constructible<
-            RangeType, 
-            decltype(internal::RangeGetter<std::decay_t<decltype(firstGrid)>>::get(firstGrid))
-          >::value) {
+                            RangeType, decltype(internal::RangeGetter<std::decay_t<decltype(firstGrid)>>::get(firstGrid)
+                                       )>::value) {
             rangeRef = RangeType(internal::RangeGetter<std::decay_t<decltype(firstGrid)>>::get(firstGrid));
             hasFullRange = true;
           }
@@ -757,8 +772,7 @@ namespace schnek {
       if (!hasNullGrid) {
         auto args = internal::GridArgumentBuilderFromWrappers<ParameterSeq>::build(gridEntries[entry]);
         std::apply(
-            [&](auto &&...gridArgs) { func(ranges[entry], std::forward<decltype(gridArgs)>(gridArgs)...); },
-            args
+            [&](auto &&...gridArgs) { func(ranges[entry], std::forward<decltype(gridArgs)>(gridArgs)...); }, args
         );
       }
     }
@@ -1126,6 +1140,23 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   inline void DomainDecomposition<rank, CheckingPolicy>::checkLocalWeights() {}
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void DomainDecomposition<rank, CheckingPolicy>::clearLocalRanges() {
+    ranges.clear();
+    iterationRanges.clear();
+    for (auto &g : grids) {
+      g.second.clear();
+    }
+    for (auto &g : projectedGrids) {
+      g.second.clear();
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  std::map<long, std::list<internal::pGridWrapper>> &DomainDecomposition<rank, CheckingPolicy>::getGridStorage() {
+    return grids;
+  }
 
 }  // namespace schnek
 #endif  // SCHNEK_DOMAINDECOMPOSITION_HPP

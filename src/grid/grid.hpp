@@ -30,9 +30,9 @@
 #include <cstddef>
 #include <type_traits>
 
+#include "../generic/is-detected.hpp"
 #include "../macros.hpp"
 #include "../typetools.hpp"
-#include "../generic/is-detected.hpp"
 #include "array.hpp"
 #include "gridcheck/grid-check-concept.hpp"
 #include "gridcheck/gridcheck.hpp"
@@ -126,16 +126,15 @@ namespace schnek {
         /// Get a raw pointer to the underlying data if provided by the storage policy
         template<typename S = StoragePolicy>
         SCHNEK_INLINE auto getRawData() -> std::enable_if_t<
-            concepts::GridStorageConceptCondition<S>::has_get_raw_data_method,
-            decltype(this->storage.getRawData())> {
+                                            concepts::GridStorageConceptCondition<S>::has_get_raw_data_method,
+                                            decltype(this->storage.getRawData())> {
           return this->storage.getRawData();
         }
 
         /// Fallback overload that triggers a compilation error when getRawData is unavailable
         template<typename S = StoragePolicy>
-        SCHNEK_INLINE auto getRawData() -> std::enable_if_t<
-            !concepts::GridStorageConceptCondition<S>::has_get_raw_data_method,
-            T *> {
+        SCHNEK_INLINE auto getRawData()
+            -> std::enable_if_t<!concepts::GridStorageConceptCondition<S>::has_get_raw_data_method, T*> {
           static_assert(
               concepts::GridStorageConceptCondition<S>::has_get_raw_data_method,
               "GridBase::getRawData() requires the storage policy to implement getRawData() returning a raw pointer"
@@ -146,16 +145,15 @@ namespace schnek {
         /// Get the size of the underlying data if provided by the storage policy
         template<typename S = StoragePolicy>
         SCHNEK_INLINE auto getSize() const -> std::enable_if_t<
-            concepts::GridStorageConceptCondition<S>::has_get_size_method,
-            decltype(this->storage.getSize())> {
+                                               concepts::GridStorageConceptCondition<S>::has_get_size_method,
+                                               decltype(this->storage.getSize())> {
           return this->storage.getSize();
         }
 
         /// Fallback overload that triggers a compilation error when getSize is unavailable
         template<typename S = StoragePolicy>
-        SCHNEK_INLINE auto getSize() const -> std::enable_if_t<
-            !concepts::GridStorageConceptCondition<S>::has_get_size_method,
-            T *> {
+        SCHNEK_INLINE auto getSize() const
+            -> std::enable_if_t<!concepts::GridStorageConceptCondition<S>::has_get_size_method, T*> {
           static_assert(
               concepts::GridStorageConceptCondition<S>::has_get_size_method,
               "GridBase::getSize() requires the storage policy to implement getSize() returning a raw pointer"
