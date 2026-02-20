@@ -113,24 +113,21 @@ namespace schnek {
             using GridTransformStorage<T, rank, BaseGrid, Transformation>::GridTransformStorage;
         };
     };
-  }
-
+  }  // namespace internal
 
   template<class BaseGrid, typename Transformation, template<typename, size_t> class CheckingPolicy = GridNoArgCheck>
-  class GridTransform
-      : public internal::GridBase<
-            typename Transformation::value_type,
-            BaseGrid::Rank,
-            CheckingPolicy,
-            internal::GridTransformStoragePolicy<BaseGrid, Transformation>::template type
-        > {
+  class GridTransform : public internal::GridBase<
+                            typename Transformation::value_type,
+                            BaseGrid::Rank,
+                            CheckingPolicy,
+                            internal::GridTransformStoragePolicy<BaseGrid, Transformation>::template type> {
     private:
       typedef internal::GridBase<
           typename Transformation::value_type,
           BaseGrid::Rank,
           CheckingPolicy,
-          internal::GridTransformStoragePolicy<BaseGrid, Transformation>::template type
-      > ParentType;
+          internal::GridTransformStoragePolicy<BaseGrid, Transformation>::template type>
+          ParentType;
 
     public:
       enum { Rank = BaseGrid::Rank };

@@ -70,7 +70,7 @@ namespace schnek {
       /// Default constructor
       DomainSubdivision() {}
 
-      /** 
+      /**
        *  @brief Virtual destructor
        *
        *  Needed for virtual methods.
@@ -79,7 +79,7 @@ namespace schnek {
 
       size_t getDelta() { return bounds->getDelta(); }
 
-      /** 
+      /**
        *  Initialize the domain subdivision.
        *
        *  The DomainSubdivision class is responsible for subdividing the domain for
@@ -88,7 +88,7 @@ namespace schnek {
        */
       virtual void init(const LimitType &low, const LimitType &high, size_t delta) = 0;
 
-      /** 
+      /**
        *  Convenience method.
        *  Initialise the boundary with the extent of a grid.
        */

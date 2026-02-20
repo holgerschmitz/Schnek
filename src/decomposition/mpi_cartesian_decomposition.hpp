@@ -9,6 +9,7 @@
 #define SCHNEK_DECOMPOSITION_MPI_CARTESIAN_DECOMPOSITION_HPP_
 
 #include "../config.hpp"
+#include "detail/redistribution.hpp"
 #include "domaindecomposition.hpp"
 #include "mpi_context.hpp"
 
@@ -123,6 +124,7 @@ namespace schnek {
         auto registration = this->registerFieldImpl(factory);
         registerExchangeHandler<GridType>();
         registerAccumulateHandler<GridType>();
+        registerRedistributeHandler<GridType>();
         return registration;
       }
 
@@ -131,8 +133,7 @@ namespace schnek {
        */
       template<class GridType>
       ProjectedRegistration<GridType::Rank> registerFieldProjection(
-        const GridFactory<GridType> &factory,
-        const std::array<size_t, GridType::Rank> &axes
+          const GridFactory<GridType> &factory, const std::array<size_t, GridType::Rank> &axes
       ) {
         return this->registerFieldProjectionImpl(factory, axes);
       }
@@ -141,13 +142,14 @@ namespace schnek {
        * Register a grid or field by passing a factory, but only allocate for a sub-range.
        */
       template<class GridType>
-        GridRegistration registerField(
+      GridRegistration registerField(
           const GridFactory<GridType> &factory,
           const typename DomainDecomposition<rank, CheckingPolicy>::RangeType &subRange
-        ) {
+      ) {
         auto registration = this->registerFieldImpl(factory, subRange);
         registerExchangeHandler<GridType>();
         registerAccumulateHandler<GridType>();
+        registerRedistributeHandler<GridType>();
         return registration;
       }
 
@@ -230,6 +232,43 @@ namespace schnek {
       );
       std::vector<std::function<void(ExchangeVisitor &)>> exchangeInitializers;
       std::vector<std::function<void(AccumulateVisitor &)>> accumulateInitializers;
+
+      /**
+       * Convert Cartesian process coordinates to MPI rank
+       */
+      int coordToMpiRank(const LimitType &coord) const;
+
+      /**
+       * Compute local domain from a local range using the global range and domain
+       */
+      DomainType computeLocalDomain(const RangeType &localRange) const;
+
+      /**
+       * Redistribute a single grid between old and new layouts
+       *
+       * The visitor pattern is used to dispatch on the grid type. The method
+       * handles packing, MPI non-blocking communication, local data copying,
+       * and unpacking.
+       */
+      class RedistributeVisitor;
+      template<class GridType>
+      void registerRedistributeHandler();
+      template<typename GridType>
+      void redistributeTyped(
+          GridType &oldGrid,
+          GridType &newGrid,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
+      );
+
+      void redistributeGrid(
+          const internal::pGridWrapper &oldWrapper,
+          const internal::pGridWrapper &newWrapper,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
+      );
+
+      std::vector<std::function<void(RedistributeVisitor &)>> redistributeInitializers;
   };
 
 }  // namespace schnek
