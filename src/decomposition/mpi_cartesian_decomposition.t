@@ -232,7 +232,18 @@ namespace schnek {
       oldGrids[entry.first] = std::move(entry.second);
     }
 
-    // 6. Clear all local ranges and recreate with new layout
+    // 5b. Save old projected grid wrappers (shared ownership via shared_ptr copy).
+    // This must be done before clearLocalRanges() resets the union state and
+    // clears the projected grid lists.
+    auto &projectedStorage = this->getProjectedGridStorage();
+    std::map<long, std::list<internal::pGridWrapper>> oldProjectedGrids;
+    for (const auto &entry : projectedStorage) {
+      oldProjectedGrids[entry.first] = entry.second;
+    }
+
+    // 6. Clear all local ranges and recreate with new layout.
+    // clearLocalRanges() also resets the union state of every projected
+    // registration so that addLocalRange() builds fresh grids for the new range.
     this->clearLocalRanges();
     this->addLocalRange(newLocalRange, newLocalDomain);
 
@@ -254,7 +265,13 @@ namespace schnek {
       }
     }
 
-    // 8. Update proc ranges
+    // 8. Copy overlapping data from old projected grids into the newly-allocated
+    // projected grids.  This preserves projected values for regions whose
+    // projection is unchanged after rebalancing; data that falls outside the
+    // new local range is dropped.
+    this->copyProjectedGridOverlaps(oldProjectedGrids);
+
+    // 9. Update proc ranges
     procRanges = newRanges;
   }
 

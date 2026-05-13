@@ -3266,4 +3266,69 @@ BOOST_FIXTURE_TEST_CASE( balance_load_multiple_grids_preserved, MpiCartesianDoma
   });
 }
 
+BOOST_FIXTURE_TEST_CASE( balance_load_single_process_2d_projected_grid_preserved, MpiCartesianDomainDecompositionTestFixture )
+{
+  // Single process, 2D: register a 2D grid and a 1D projected grid (projection
+  // onto axis 0).  After balanceLoad the projected grid must retain the values
+  // that were written before the rebalance.
+  MPI_Comm testComm = (MPI_Comm)(void*)123;
+  std::vector<int> coords(2, 0);
+  context.commWorld = (MPI_Comm)(void*)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+
+  using GridType2D = schnek::Grid<double, 2>;
+  using GridType1D = schnek::Grid<double, 1>;
+  using RangeType2D = schnek::Range<ptrdiff_t, 2>;
+  using RangeType1D = schnek::Range<ptrdiff_t, 1>;
+
+  RangeType2D globalRange(schnek::Array<ptrdiff_t,2>(0, 0), schnek::Array<ptrdiff_t,2>(7, 5));
+  schnek::Range<double, 2> globalDomain(schnek::Array<double,2>(0.0, 0.0), schnek::Array<double,2>(1.0, 1.0));
+
+  schnek::MpiCartesianDomainDecomposition<2> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  // Register a 2D grid (needed to enable redistribution handlers)
+  schnek::GridFactory<GridType2D> factory2d;
+  schnek::GridRegistration reg2d = decomposition.registerField(factory2d);
+
+  // Register a 1D projected grid along axis 0
+  schnek::GridFactory<GridType1D> factory1d;
+  auto projReg = decomposition.registerFieldProjection(factory1d, std::array<size_t, 1>{0});
+
+  // Fill the projected grid with known values
+  auto projCtx = decomposition.getProjectedGridContext<1>({projReg});
+  projCtx.forEach([&](const RangeType1D &range, GridType1D &grid) {
+    for (auto it = range.begin(); it != range.end(); ++it) {
+      grid[*it] = static_cast<double>((*it)[0] * 7 + 3);
+    }
+  });
+
+  // Perform balance load (uniform, single process -> same layout, local copy only)
+  decomposition.balanceLoad();
+
+  // Verify the projected grid data is preserved after rebalancing
+  auto newProjCtx = decomposition.getProjectedGridContext<1>({projReg});
+  int callCount = 0;
+  newProjCtx.forEach([&](const RangeType1D &range, GridType1D &grid) {
+    ++callCount;
+    // The projected range on axis 0 should match the global range along axis 0
+    BOOST_CHECK_EQUAL(range.getLo()[0], globalRange.getLo()[0]);
+    BOOST_CHECK_EQUAL(range.getHi()[0], globalRange.getHi()[0]);
+    for (auto it = range.begin(); it != range.end(); ++it) {
+      BOOST_CHECK_EQUAL(grid[*it], static_cast<double>((*it)[0] * 7 + 3));
+    }
+  });
+  BOOST_CHECK_EQUAL(callCount, 1);
+
+  // Single process: no remote MPI transfers
+  BOOST_CHECK_EQUAL(context.args_MPI_Isend.size(), static_cast<size_t>(0));
+  BOOST_CHECK_EQUAL(context.args_MPI_Irecv.size(), static_cast<size_t>(0));
+  BOOST_CHECK_EQUAL(context.args_MPI_Waitall.size(), static_cast<size_t>(0));
+}
+
 BOOST_AUTO_TEST_SUITE_END()
