@@ -22,6 +22,20 @@
 
 namespace schnek {
 
+  /**
+   * MPI Cartesian domain decomposition backend.
+   *
+   * This backend partitions the global index range into a Cartesian grid of
+   * processes. Each process owns **exactly one** rectangular local range; the
+   * base-class abstraction of multiple local ranges per process is not used
+   * here.  All internal helpers (`balanceLoad`, `exchangeGrid`, etc.) rely on
+   * this single-region invariant and will assert in debug builds if it is
+   * violated.
+   *
+   * Future backends that support multiple regions per process (e.g. SFC, AMR)
+   * must not derive from this class; they should derive from
+   * `DomainDecomposition` directly.
+   */
   template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
   class MpiCartesianDomainDecomposition : public DomainDecomposition<rank, CheckingPolicy> {
     public:
