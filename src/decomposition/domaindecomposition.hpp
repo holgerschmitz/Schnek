@@ -487,6 +487,14 @@ namespace schnek {
       void addLocalIterationRange(RangeType range);
 
       /**
+       * Return the number of local ranges currently registered.
+       *
+       * Subclasses may use this to assert their own invariants (e.g. the
+       * single-region invariant of `MpiCartesianDomainDecomposition`).
+       */
+      size_t localRangeCount() const { return ranges.size(); }
+
+      /**
        * Register a grid or field by passing a factory.
        *
        * The domain decomposition will create instances of the grid for each local domain.

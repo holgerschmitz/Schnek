@@ -181,6 +181,19 @@ namespace schnek {
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::balanceLoad() {
     using TransferBlockType = TransferBlock<rank, CheckingPolicy>;
 
+#ifndef NDEBUG
+    // Invariant: this backend creates exactly one local range per process.
+    // Every registration's grid list must therefore hold at most one wrapper.
+    for (const auto &entry : this->getGridStorage()) {
+      SCHNEK_ASSERT(
+          entry.second.size() <= 1,
+          "MpiCartesianDomainDecomposition: registration " << entry.first
+              << " holds " << entry.second.size()
+              << " grid wrappers but the single-region invariant requires at most 1."
+      );
+    }
+#endif
+
     // 1. Save the old proc ranges
     ProcRanges oldRanges;
     for (size_t d = 0; d < rank; ++d) {
@@ -338,6 +351,15 @@ namespace schnek {
     }
 
     this->addLocalRange(localRange, localDomain);
+
+#ifndef NDEBUG
+    // Invariant: init() must add exactly one local range.
+    SCHNEK_ASSERT(
+        this->localRangeCount() == 1,
+        "MpiCartesianDomainDecomposition::init(): expected exactly 1 local range after init, got "
+            << this->localRangeCount()
+    );
+#endif
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
