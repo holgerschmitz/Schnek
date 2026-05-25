@@ -84,6 +84,9 @@ class MpiTestContextImpl : public schnek::MpiContext
 
     std::vector<boost::tuple<MPI_Comm, std::vector<int>>> args_MPI_Cart_rank;
 
+    std::vector<boost::tuple<MPI_Comm, std::vector<int>>> args_MPI_Cart_sub;
+    std::vector<MPI_Comm> args_MPI_Comm_free;
+
     // Isend return values: error code
     std::vector<int> ret_MPI_Isend;
     // Irecv return values: error code plus the data to fill into the recv buffer
@@ -92,6 +95,11 @@ class MpiTestContextImpl : public schnek::MpiContext
     std::vector<int> ret_MPI_Waitall;
     // Cart_rank return values: error code plus resulting rank
     std::vector<boost::tuple<int, int>> ret_MPI_Cart_rank;
+
+    // Cart_sub return values: error code plus sub-communicator handle
+    std::vector<boost::tuple<int, MPI_Comm>> ret_MPI_Cart_sub;
+    // Comm_free return value: error code
+    std::vector<int> ret_MPI_Comm_free;
 
     MPI_Comm getCommWorld();
     int MPI_Comm_size(MPI_Comm comm, int *commSize );
@@ -131,4 +139,6 @@ class MpiTestContextImpl : public schnek::MpiContext
     );
     int MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[]);
     int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank);
+    int MPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *newcomm);
+    int MPI_Comm_free(MPI_Comm *comm);
 };

@@ -18,6 +18,7 @@
 #include <mpi.h>
 
 #include <functional>
+#include <map>
 #include <vector>
 
 namespace schnek {
@@ -53,6 +54,13 @@ namespace schnek {
        * @param mpi  the MPI context to use for MPI calls
        */
       MpiCartesianDomainDecomposition(MpiContext &mpi = schnek::detail::mpiContextImpl);
+
+      ~MpiCartesianDomainDecomposition();
+
+      MpiCartesianDomainDecomposition(const MpiCartesianDomainDecomposition &) = delete;
+      MpiCartesianDomainDecomposition(MpiCartesianDomainDecomposition &&) = delete;
+      MpiCartesianDomainDecomposition &operator=(const MpiCartesianDomainDecomposition &) = delete;
+      MpiCartesianDomainDecomposition &operator=(MpiCartesianDomainDecomposition &&) = delete;
 
       /**
        * Initialisation and load balancing based on global weights
@@ -149,7 +157,9 @@ namespace schnek {
       ProjectedRegistration<GridType::Rank> registerFieldProjection(
           const GridFactory<GridType> &factory, const std::array<size_t, GridType::Rank> &axes
       ) {
-        return this->registerFieldProjectionImpl(factory, axes);
+        auto registration = this->registerFieldProjectionImpl(factory, axes);
+        registerRedistributeProjectedHandler<GridType>();
+        return registration;
       }
 
       /**
@@ -283,6 +293,57 @@ namespace schnek {
       );
 
       std::vector<std::function<void(RedistributeVisitor &)>> redistributeInitializers;
+
+      /// Dynamic-rank transfer block used for projected-grid redistribution.
+      struct DynProjTransferBlock {
+          int mpiRank;
+          std::vector<ptrdiff_t> lo;
+          std::vector<ptrdiff_t> hi;
+      };
+
+      /**
+       * Redistribute projected grids across processes after balanceLoad.
+       *
+       * For each projected registration:
+       *   1. Among the "canonical" replicas (processes whose Cartesian
+       *      coordinates are zero on every non-projected axis) perform a
+       *      point-to-point redistribution at projected rank.
+       *   2. Broadcast the new projected grid contents within each replica
+       *      group (the orthogonal sub-communicator), so non-canonical
+       *      replicas see identical data.
+       */
+      void redistributeProjectedGrids(
+          const std::map<long, std::list<internal::pGridWrapper>> &oldProjectedGrids,
+          const ProcRanges &oldRanges,
+          const ProcRanges &newRanges
+      );
+
+      /// Lazily-created orthogonal sub-communicators keyed by registration id.
+      std::map<std::vector<size_t>, MPI_Comm> projectedReplicaComms;
+
+      class RedistributeProjectedVisitor;
+      template<class GridType>
+      void registerRedistributeProjectedHandler();
+      template<typename GridType>
+      void redistributeProjectedTyped(
+          GridType &oldGrid,
+          GridType &newGrid,
+          MPI_Comm replicaComm,
+          bool isCanonical,
+          const std::vector<DynProjTransferBlock> &sendPlan,
+          const std::vector<DynProjTransferBlock> &recvPlan
+      );
+
+      void redistributeProjectedGrid(
+          const internal::pGridWrapper &oldWrapper,
+          const internal::pGridWrapper &newWrapper,
+          MPI_Comm replicaComm,
+          bool isCanonical,
+          const std::vector<DynProjTransferBlock> &sendPlan,
+          const std::vector<DynProjTransferBlock> &recvPlan
+      );
+
+      std::vector<std::function<void(RedistributeProjectedVisitor &)>> redistributeProjectedInitializers;
   };
 
 }  // namespace schnek

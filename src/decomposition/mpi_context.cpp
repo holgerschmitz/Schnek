@@ -84,6 +84,14 @@ int schnek::MpiContextImpl::MPI_Cart_rank(MPI_Comm comm, const int coords[], int
   return ::MPI_Cart_rank(comm, coords, rank);
 }
 
+int schnek::MpiContextImpl::MPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm* newcomm) {
+  return ::MPI_Cart_sub(comm, remain_dims, newcomm);
+}
+
+int schnek::MpiContextImpl::MPI_Comm_free(MPI_Comm* comm) {
+  return ::MPI_Comm_free(comm);
+}
+
 namespace schnek::detail {
   MpiContextImpl mpiContextImpl{MPI_COMM_WORLD};
 }
