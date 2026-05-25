@@ -186,10 +186,9 @@ namespace schnek {
     // Every registration's grid list must therefore hold at most one wrapper.
     for (const auto &entry : this->getGridStorage()) {
       SCHNEK_ASSERT(
-          entry.second.size() <= 1,
-          "MpiCartesianDomainDecomposition: registration " << entry.first
-              << " holds " << entry.second.size()
-              << " grid wrappers but the single-region invariant requires at most 1."
+          entry.second.size() <= 1, "MpiCartesianDomainDecomposition: registration "
+                                        << entry.first << " holds " << entry.second.size()
+                                        << " grid wrappers but the single-region invariant requires at most 1."
       );
     }
 #endif
@@ -265,11 +264,11 @@ namespace schnek {
       }
     }
 
-    // 8. Copy overlapping data from old projected grids into the newly-allocated
-    // projected grids.  This preserves projected values for regions whose
-    // projection is unchanged after rebalancing; data that falls outside the
-    // new local range is dropped.
-    this->copyProjectedGridOverlaps(oldProjectedGrids);
+    // 8. Redistribute projected grids across processes.  Canonical replicas
+    // perform a projected point-to-point exchange to compute the new contents,
+    // then broadcast them to non-canonical replicas via an orthogonal
+    // sub-communicator so all replicas of a projected grid agree.
+    this->redistributeProjectedGrids(oldProjectedGrids, oldRanges, newRanges);
 
     // 9. Update proc ranges
     procRanges = newRanges;
@@ -791,6 +790,422 @@ namespace schnek {
       size_t idx = 0;
       for (auto it = recvRange.begin(); it != recvRange.end(); ++it) {
         newGrid[*it] = buffer[idx++];
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Projected-grid redistribution
+  // ---------------------------------------------------------------------------
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::RedistributeProjectedVisitor
+      : public internal::GridVisitor<
+            typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::RedistributeProjectedVisitor> {
+    public:
+      RedistributeProjectedVisitor(
+          MpiCartesianDomainDecomposition &parentIn,
+          internal::pGridWrapper newWrapperIn,
+          MPI_Comm replicaCommIn,
+          bool isCanonicalIn,
+          const std::vector<DynProjTransferBlock> &sendPlanIn,
+          const std::vector<DynProjTransferBlock> &recvPlanIn
+      )
+          : parent(parentIn),
+            newWrapper(std::move(newWrapperIn)),
+            replicaComm(replicaCommIn),
+            isCanonical(isCanonicalIn),
+            sendPlan(sendPlanIn),
+            recvPlan(recvPlanIn) {}
+
+      template<typename GridType>
+      void handle(GridType &oldGrid, bool /*flag*/) {
+        auto typedNewWrapper = std::dynamic_pointer_cast<internal::GridWrapperImpl<GridType>>(newWrapper);
+        SCHNEK_ASSERT(typedNewWrapper, "Grid type mismatch during projected redistribution");
+        parent.template redistributeProjectedTyped<GridType>(
+            oldGrid, typedNewWrapper->grid, replicaComm, isCanonical, sendPlan, recvPlan
+        );
+      }
+
+    private:
+      MpiCartesianDomainDecomposition &parent;
+      internal::pGridWrapper newWrapper;
+      MPI_Comm replicaComm;
+      bool isCanonical;
+      const std::vector<DynProjTransferBlock> &sendPlan;
+      const std::vector<DynProjTransferBlock> &recvPlan;
+  };
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<class GridType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerRedistributeProjectedHandler() {
+    redistributeProjectedInitializers.emplace_back([](RedistributeProjectedVisitor &visitor) {
+      visitor.template registerHandler<GridType>();
+    });
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::redistributeProjectedGrid(
+      const internal::pGridWrapper &oldWrapper,
+      const internal::pGridWrapper &newWrapper,
+      MPI_Comm replicaComm,
+      bool isCanonical,
+      const std::vector<DynProjTransferBlock> &sendPlan,
+      const std::vector<DynProjTransferBlock> &recvPlan
+  ) {
+    SCHNEK_ASSERT(
+        !redistributeProjectedInitializers.empty(),
+        "No redistribute handler registered for projected grid type; "
+        "ensure registerFieldProjection is used to register all grid types before balanceLoad"
+    );
+
+    RedistributeProjectedVisitor visitor(*this, newWrapper, replicaComm, isCanonical, sendPlan, recvPlan);
+    for (auto &initializer : redistributeProjectedInitializers) {
+      initializer(visitor);
+    }
+
+    oldWrapper->accept(visitor, false);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename GridType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::redistributeProjectedTyped(
+      GridType &oldGrid,
+      GridType &newGrid,
+      MPI_Comm replicaComm,
+      bool isCanonical,
+      const std::vector<DynProjTransferBlock> &sendPlan,
+      const std::vector<DynProjTransferBlock> &recvPlan
+  ) {
+    using ValueType = typename GridType::value_type;
+    constexpr size_t projRank = GridType::Rank;
+
+    const MPI_Datatype mpiType = detail::mpiDatatypeFor<ValueType>();
+
+    auto toIntCount = [](size_t count) -> int {
+      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
+        SCHNECK_FAIL("Projected redistribution block too large for MPI count");
+      }
+      return static_cast<int>(count);
+    };
+
+    auto blockVolume = [](const DynProjTransferBlock &block) -> size_t {
+      size_t volume = 1;
+      for (size_t d = 0; d < block.lo.size(); ++d) {
+        ptrdiff_t extent = block.hi[d] - block.lo[d] + 1;
+        if (extent <= 0) {
+          return 0;
+        }
+        volume *= static_cast<size_t>(extent);
+      }
+      return volume;
+    };
+
+    auto makeTypedRange = [](const DynProjTransferBlock &block) {
+      typename GridType::IndexType lo, hi;
+      for (size_t d = 0; d < projRank; ++d) {
+        lo[d] = block.lo[d];
+        hi[d] = block.hi[d];
+      }
+      return typename GridType::RangeType(lo, hi);
+    };
+
+    // Step 1: canonical-only point-to-point redistribution at projected rank.
+    if (isCanonical) {
+      const int localRank = ComRank;
+
+      std::vector<std::vector<ValueType>> recvBuffers;
+      std::vector<MPI_Request> requests;
+
+      for (size_t i = 0; i < recvPlan.size(); ++i) {
+        if (recvPlan[i].mpiRank == localRank) continue;
+        size_t volume = blockVolume(recvPlan[i]);
+        if (volume == 0) continue;
+        recvBuffers.emplace_back(volume);
+        MPI_Request req;
+        int errorCode =
+            mpi.MPI_Irecv(recvBuffers.back().data(), toIntCount(volume), mpiType, recvPlan[i].mpiRank, 1, comm, &req);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during projected redistribution");
+        requests.push_back(req);
+      }
+
+      std::vector<std::vector<ValueType>> sendBuffers;
+      for (size_t i = 0; i < sendPlan.size(); ++i) {
+        if (sendPlan[i].mpiRank == localRank) continue;
+        size_t volume = blockVolume(sendPlan[i]);
+        if (volume == 0) continue;
+        sendBuffers.emplace_back(volume);
+        auto &buf = sendBuffers.back();
+        auto sendRange = makeTypedRange(sendPlan[i]);
+        size_t idx = 0;
+        for (auto it = sendRange.begin(); it != sendRange.end(); ++it) {
+          buf[idx++] = oldGrid[*it];
+        }
+        MPI_Request req;
+        int errorCode = mpi.MPI_Isend(buf.data(), toIntCount(volume), mpiType, sendPlan[i].mpiRank, 1, comm, &req);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during projected redistribution");
+        requests.push_back(req);
+      }
+
+      // Local copy
+      for (size_t i = 0; i < recvPlan.size(); ++i) {
+        if (recvPlan[i].mpiRank != localRank) continue;
+        auto copyRange = makeTypedRange(recvPlan[i]);
+        for (auto it = copyRange.begin(); it != copyRange.end(); ++it) {
+          newGrid[*it] = oldGrid[*it];
+        }
+      }
+
+      if (!requests.empty()) {
+        int errorCode = mpi.MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during projected redistribution");
+      }
+
+      // Unpack received data
+      size_t bufferIdx = 0;
+      for (size_t i = 0; i < recvPlan.size(); ++i) {
+        if (recvPlan[i].mpiRank == localRank) continue;
+        size_t volume = blockVolume(recvPlan[i]);
+        if (volume == 0) continue;
+        const auto &buf = recvBuffers[bufferIdx++];
+        auto recvRange = makeTypedRange(recvPlan[i]);
+        size_t idx = 0;
+        for (auto it = recvRange.begin(); it != recvRange.end(); ++it) {
+          newGrid[*it] = buf[idx++];
+        }
+      }
+    }
+
+    // Step 2: broadcast the full new projected grid contents within the replica
+    // sub-communicator so that non-canonical replicas see identical data.
+    if (replicaComm != MPI_COMM_NULL) {
+      typename GridType::RangeType fullRange(newGrid.getLo(), newGrid.getHi());
+      size_t volume = 1;
+      for (size_t d = 0; d < projRank; ++d) {
+        ptrdiff_t extent = newGrid.getHi()[d] - newGrid.getLo()[d] + 1;
+        if (extent <= 0) {
+          volume = 0;
+          break;
+        }
+        volume *= static_cast<size_t>(extent);
+      }
+      if (volume > 0) {
+        std::vector<ValueType> buf(volume);
+        if (isCanonical) {
+          size_t idx = 0;
+          for (auto it = fullRange.begin(); it != fullRange.end(); ++it) {
+            buf[idx++] = newGrid[*it];
+          }
+        }
+        int errorCode = mpi.MPI_Bcast(buf.data(), toIntCount(volume), mpiType, 0, replicaComm);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Bcast failed during projected redistribution");
+        if (!isCanonical) {
+          size_t idx = 0;
+          for (auto it = fullRange.begin(); it != fullRange.end(); ++it) {
+            newGrid[*it] = buf[idx++];
+          }
+        }
+      }
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::redistributeProjectedGrids(
+      const std::map<long, std::list<internal::pGridWrapper>> &oldProjectedGrids,
+      const ProcRanges &oldRanges,
+      const ProcRanges &newRanges
+  ) {
+    auto &projectedStorage = this->getProjectedGridStorage();
+    auto &registrations = this->getProjectedRegistrations();
+
+    for (auto &regEntry : registrations) {
+      long id = regEntry.first;
+      auto &reg = regEntry.second;
+      const auto axes = reg->getAxes();
+      const size_t projRank = reg->getProjRank();
+
+      // Mark which full-rank axes belong to the projection.
+      std::vector<bool> isProjAxis(rank, false);
+      for (size_t a : axes) {
+        SCHNEK_ASSERT(a < rank, "Projected axis out of range");
+        isProjAxis[a] = true;
+      }
+
+      // Canonical if all non-projected coordinates are zero.
+      bool isCanonical = true;
+      for (size_t d = 0; d < rank; ++d) {
+        if (!isProjAxis[d] && myCoord[d] != 0) {
+          isCanonical = false;
+          break;
+        }
+      }
+
+      // Build / retrieve replica sub-communicator (orthogonal complement).
+      // Only needed when at least one non-projected axis exists; if every axis
+      // is projected there are no non-canonical replicas and no Bcast is needed.
+      const bool hasNonProjectedAxis = (projRank < rank);
+      MPI_Comm replicaComm = MPI_COMM_NULL;
+      if (hasNonProjectedAxis) {
+        auto commIt = projectedReplicaComms.find(axes);
+        if (commIt != projectedReplicaComms.end()) {
+          replicaComm = commIt->second;
+        } else {
+          int remainDims[rank];
+          for (size_t d = 0; d < rank; ++d) {
+            remainDims[d] = isProjAxis[d] ? 0 : 1;
+          }
+          int errorCode = mpi.MPI_Cart_sub(comm, remainDims, &replicaComm);
+          SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Cart_sub failed during projected redistribution");
+          projectedReplicaComms[axes] = replicaComm;
+        }
+      }
+
+      // Build dynamic projected transfer plan among canonical processes.
+      std::vector<DynProjTransferBlock> sendPlan;
+      std::vector<DynProjTransferBlock> recvPlan;
+
+      if (isCanonical) {
+        // Project the per-axis bounds: oldProj[i][c] = (lo,hi) along projection axis i at coord c.
+        std::vector<std::vector<std::pair<ptrdiff_t, ptrdiff_t>>> oldProj(projRank);
+        std::vector<std::vector<std::pair<ptrdiff_t, ptrdiff_t>>> newProj(projRank);
+        for (size_t i = 0; i < projRank; ++i) {
+          size_t a = axes[i];
+          oldProj[i].reserve(dims[a]);
+          newProj[i].reserve(dims[a]);
+          for (ptrdiff_t c = 0; c < dims[a]; ++c) {
+            oldProj[i].emplace_back(oldRanges[a](c).getLo()[0], oldRanges[a](c).getHi()[0]);
+            newProj[i].emplace_back(newRanges[a](c).getLo()[0], newRanges[a](c).getHi()[0]);
+          }
+        }
+
+        // My projected coordinates.
+        std::vector<ptrdiff_t> myProjCoord(projRank);
+        for (size_t i = 0; i < projRank; ++i) {
+          myProjCoord[i] = myCoord[axes[i]];
+        }
+
+        // My old/new projected ranges.
+        std::vector<std::pair<ptrdiff_t, ptrdiff_t>> myOld(projRank), myNew(projRank);
+        for (size_t i = 0; i < projRank; ++i) {
+          myOld[i] = oldProj[i][myProjCoord[i]];
+          myNew[i] = newProj[i][myProjCoord[i]];
+        }
+
+        // For each direction find candidate partner coords that overlap.
+        std::vector<std::vector<ptrdiff_t>> sendOverlap(projRank), recvOverlap(projRank);
+        for (size_t i = 0; i < projRank; ++i) {
+          size_t a = axes[i];
+          for (ptrdiff_t c = 0; c < dims[a]; ++c) {
+            if (newProj[i][c].first <= myOld[i].second && newProj[i][c].second >= myOld[i].first) {
+              sendOverlap[i].push_back(c);
+            }
+            if (oldProj[i][c].first <= myNew[i].second && oldProj[i][c].second >= myNew[i].first) {
+              recvOverlap[i].push_back(c);
+            }
+          }
+        }
+
+        // Helper that resolves a projected coord vector to an MPI rank by
+        // building the full coordinate (zeros on non-projection axes).
+        auto coordToRank = [&](const std::vector<ptrdiff_t> &projCoord) -> int {
+          int fullCoord[rank];
+          for (size_t d = 0; d < rank; ++d) fullCoord[d] = 0;
+          for (size_t i = 0; i < projRank; ++i) {
+            fullCoord[axes[i]] = static_cast<int>(projCoord[i]);
+          }
+          int outRank = 0;
+          int err = mpi.MPI_Cart_rank(comm, fullCoord, &outRank);
+          SCHNEK_ASSERT(err == MPI_SUCCESS, "MPI_Cart_rank failed during projected redistribution");
+          return outRank;
+        };
+
+        auto enumerate = [&](const std::vector<std::vector<ptrdiff_t>> &overlap,
+                             const std::vector<std::pair<ptrdiff_t, ptrdiff_t>> &myRange,
+                             const std::vector<std::vector<std::pair<ptrdiff_t, ptrdiff_t>>> &partnerProj,
+                             std::vector<DynProjTransferBlock> &plan) {
+          size_t total = 1;
+          for (size_t i = 0; i < projRank; ++i) {
+            if (overlap[i].empty()) return;
+            total *= overlap[i].size();
+          }
+          std::vector<size_t> indices(projRank, 0);
+          std::vector<ptrdiff_t> projCoord(projRank);
+          for (size_t combo = 0; combo < total; ++combo) {
+            size_t rem = combo;
+            for (size_t i = projRank; i > 0; --i) {
+              indices[i - 1] = rem % overlap[i - 1].size();
+              rem /= overlap[i - 1].size();
+            }
+            DynProjTransferBlock block;
+            block.lo.resize(projRank);
+            block.hi.resize(projRank);
+            bool nonEmpty = true;
+            for (size_t i = 0; i < projRank; ++i) {
+              projCoord[i] = overlap[i][indices[i]];
+              ptrdiff_t lo = std::max(myRange[i].first, partnerProj[i][projCoord[i]].first);
+              ptrdiff_t hi = std::min(myRange[i].second, partnerProj[i][projCoord[i]].second);
+              if (lo > hi) {
+                nonEmpty = false;
+                break;
+              }
+              block.lo[i] = lo;
+              block.hi[i] = hi;
+            }
+            if (nonEmpty) {
+              block.mpiRank = coordToRank(projCoord);
+              plan.push_back(std::move(block));
+            }
+          }
+        };
+
+        enumerate(sendOverlap, myOld, newProj, sendPlan);
+        enumerate(recvOverlap, myNew, oldProj, recvPlan);
+      }
+
+      // Resolve old and new wrappers (any non-null entry; all entries share one grid).
+      auto oldIt = oldProjectedGrids.find(id);
+      auto newIt = projectedStorage.find(id);
+      if (oldIt == oldProjectedGrids.end() || newIt == projectedStorage.end()) continue;
+
+      internal::pGridWrapper oldWrapper, newWrapper;
+      for (const auto &w : oldIt->second) {
+        if (w) {
+          oldWrapper = w;
+          break;
+        }
+      }
+      for (const auto &w : newIt->second) {
+        if (w) {
+          newWrapper = w;
+          break;
+        }
+      }
+      if (!oldWrapper || !newWrapper) continue;
+
+#ifndef NDEBUG
+      SCHNEK_ASSERT(
+          oldIt->second.size() <= 1,
+          "MpiCartesianDomainDecomposition: projected registration "
+              << id << " holds " << oldIt->second.size()
+              << " old projected grid wrappers but the single-region invariant requires at most 1."
+      );
+      SCHNEK_ASSERT(
+          newIt->second.size() <= 1,
+          "MpiCartesianDomainDecomposition: projected registration "
+              << id << " holds " << newIt->second.size()
+              << " new projected grid wrappers but the single-region invariant requires at most 1."
+      );
+#endif
+
+      redistributeProjectedGrid(oldWrapper, newWrapper, replicaComm, isCanonical, sendPlan, recvPlan);
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  MpiCartesianDomainDecomposition<rank, CheckingPolicy>::~MpiCartesianDomainDecomposition() {
+    for (auto &entry : projectedReplicaComms) {
+      if (entry.second != MPI_COMM_NULL) {
+        mpi.MPI_Comm_free(&entry.second);
       }
     }
   }

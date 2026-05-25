@@ -502,9 +502,7 @@ namespace schnek {
        * @param oldProjectedGrids  The projected grid storage snapshot saved
        *        before clearLocalRanges() was called.
        */
-      void copyProjectedGridOverlaps(
-          const std::map<long, std::list<internal::pGridWrapper>> &oldProjectedGrids
-      );
+      void copyProjectedGridOverlaps(const std::map<long, std::list<internal::pGridWrapper>> &oldProjectedGrids);
 
       /**
        * This allows implementations to add a local range for iteration
@@ -590,6 +588,10 @@ namespace schnek {
           virtual void copyOverlap(
               const internal::pGridWrapper &oldWrapper, const internal::pGridWrapper &newWrapper
           ) = 0;
+          /// Number of axes the projection retains.
+          virtual size_t getProjRank() const = 0;
+          /// The full-rank axes (size == getProjRank()) that the projection keeps.
+          virtual std::vector<size_t> getAxes() const = 0;
       };
 
       template<class GridType, size_t projRank>
@@ -637,9 +639,8 @@ namespace schnek {
             sharedGrid.reset();
           }
 
-          void copyOverlap(
-              const internal::pGridWrapper &oldWrapper, const internal::pGridWrapper &newWrapper
-          ) override {
+          void copyOverlap(const internal::pGridWrapper &oldWrapper, const internal::pGridWrapper &newWrapper)
+              override {
             if (!oldWrapper || !newWrapper) return;
             auto oldTyped = std::dynamic_pointer_cast<internal::GridWrapperImpl<GridType>>(oldWrapper);
             auto newTyped = std::dynamic_pointer_cast<internal::GridWrapperImpl<GridType>>(newWrapper);
@@ -701,10 +702,26 @@ namespace schnek {
           RangeType unionRange;
           DomainType unionDomain;
           internal::pGridWrapper sharedGrid;
+
+          size_t getProjRank() const override { return projRank; }
+          std::vector<size_t> getAxes() const override { return std::vector<size_t>(axes.begin(), axes.end()); }
       };
 
       std::map<long, std::shared_ptr<ProjectedRegistrationInterface>> projectedRegisteredFields;
 
+    protected:
+      /**
+       * Get the table of projected registrations (keyed by registration id).
+       *
+       * Exposed to derived backends so that they can query metadata (axes,
+       * projected rank) and invoke per-registration helpers during operations
+       * such as load balancing.
+       */
+      std::map<long, std::shared_ptr<ProjectedRegistrationInterface>> &getProjectedRegistrations() {
+        return projectedRegisteredFields;
+      }
+
+    private:
       /**
        * @brief Contains the local ranges for the grids.
        */
@@ -1242,8 +1259,8 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  std::map<long, std::list<internal::pGridWrapper>>
-      &DomainDecomposition<rank, CheckingPolicy>::getProjectedGridStorage() {
+  std::map<long, std::list<internal::pGridWrapper>> &DomainDecomposition<rank, CheckingPolicy>::getProjectedGridStorage(
+  ) {
     return projectedGrids;
   }
 

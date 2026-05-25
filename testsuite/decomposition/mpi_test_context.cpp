@@ -302,3 +302,39 @@ int MpiTestContextImpl::MPI_Cart_rank(MPI_Comm comm, const int coords[], int* ra
 
   return MPI_SUCCESS;
 }
+
+int MpiTestContextImpl::MPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm* newcomm) {
+  size_t argsCount = args_MPI_Cart_sub.size();
+
+  int ndims = 0;
+  if (!args_MPI_Cart_create.empty()) {
+    ndims = args_MPI_Cart_create.back().get<1>();
+  }
+  std::vector<int> vremain(remain_dims, remain_dims + ndims);
+  args_MPI_Cart_sub.push_back(boost::make_tuple(comm, vremain));
+
+  if (!ret_MPI_Cart_sub.empty()) {
+    auto retVal = ret_MPI_Cart_sub[std::min(argsCount, ret_MPI_Cart_sub.size() - 1)];
+    if (newcomm) {
+      *newcomm = retVal.get<1>();
+    }
+    return retVal.get<0>();
+  }
+
+  if (newcomm) {
+    *newcomm = comm;
+  }
+  return MPI_SUCCESS;
+}
+
+int MpiTestContextImpl::MPI_Comm_free(MPI_Comm* comm) {
+  size_t argsCount = args_MPI_Comm_free.size();
+  args_MPI_Comm_free.push_back(comm ? *comm : MPI_COMM_NULL);
+  if (comm) {
+    *comm = MPI_COMM_NULL;
+  }
+  if (!ret_MPI_Comm_free.empty()) {
+    return ret_MPI_Comm_free[std::min(argsCount, ret_MPI_Comm_free.size() - 1)];
+  }
+  return MPI_SUCCESS;
+}
