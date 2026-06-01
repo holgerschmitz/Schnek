@@ -1233,7 +1233,27 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  inline void DomainDecomposition<rank, CheckingPolicy>::checkLocalWeights() {}
+  inline void DomainDecomposition<rank, CheckingPolicy>::checkLocalWeights() {
+    SizeType weightsSize = localWeights.getDims();
+    if (weightsSize.product() == 0) {
+      return;
+    }
+    // The local range is set by the backend in init(); validation is deferred
+    // until at least one local range has been registered.
+    if (ranges.empty()) {
+      return;
+    }
+    SCHNEK_ASSERT(
+        ranges.size() == 1, "Local weights are only supported on backends with a single local range per process"
+    );
+    const RangeType &localRange = ranges.front().range;
+    LimitType localSize = localRange.getHi() - localRange.getLo() + 1;
+    for (size_t d = 0; d < rank; ++d) {
+      if (weightsSize[d] == 0 || localSize[d] % ptrdiff_t(weightsSize[d]) != 0) {
+        SCHNECK_FAIL("Local weights must evenly divide the local range: dim = " << d);
+      }
+    }
+  }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void DomainDecomposition<rank, CheckingPolicy>::clearLocalRanges() {

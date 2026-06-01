@@ -59,6 +59,8 @@ namespace schnek {
       virtual int MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[]) = 0;
       virtual int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank) = 0;
       virtual int MPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *newcomm) = 0;
+      virtual int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm) = 0;
+      virtual int MPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) = 0;
       virtual int MPI_Comm_free(MPI_Comm *comm) = 0;
   };
 
@@ -104,6 +106,8 @@ namespace schnek {
       int MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[]);
       int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank);
       int MPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *newcomm);
+      int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
+      int MPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
       int MPI_Comm_free(MPI_Comm *comm);
   };
 
