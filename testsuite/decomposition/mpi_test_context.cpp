@@ -327,6 +327,45 @@ int MpiTestContextImpl::MPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI
   return MPI_SUCCESS;
 }
 
+int MpiTestContextImpl::MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm* newcomm) {
+  size_t argsCount = args_MPI_Comm_split.size();
+  args_MPI_Comm_split.push_back(boost::make_tuple(comm, color, key));
+
+  if (!ret_MPI_Comm_split.empty()) {
+    auto retVal = ret_MPI_Comm_split[std::min(argsCount, ret_MPI_Comm_split.size() - 1)];
+    if (newcomm) {
+      *newcomm = retVal.get<1>();
+    }
+    return retVal.get<0>();
+  }
+
+  if (newcomm) {
+    *newcomm = comm;
+  }
+  return MPI_SUCCESS;
+}
+
+int MpiTestContextImpl::MPI_Exscan(
+    const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm
+) {
+  size_t argsCount = args_MPI_Exscan.size();
+  args_MPI_Exscan.push_back(boost::make_tuple(comm, sendbuf != nullptr, recvbuf != nullptr, count, datatype, op));
+
+  if (!ret_MPI_Exscan.empty()) {
+    auto retVal = ret_MPI_Exscan[std::min(argsCount, ret_MPI_Exscan.size() - 1)];
+    const auto& payload = retVal.get<1>();
+    if (recvbuf != nullptr && !payload.empty()) {
+      std::memcpy(recvbuf, payload.data(), std::min(payload.size(), datatypeSize(datatype) * static_cast<size_t>(count)));
+    }
+    return retVal.get<0>();
+  }
+
+  // For simplicity, we won't implement the actual exclusive scan logic here.
+  // In a real test context, you might want to simulate this based on the rank and input data.
+
+  return MPI_SUCCESS;
+}
+
 int MpiTestContextImpl::MPI_Comm_free(MPI_Comm* comm) {
   size_t argsCount = args_MPI_Comm_free.size();
   args_MPI_Comm_free.push_back(comm ? *comm : MPI_COMM_NULL);

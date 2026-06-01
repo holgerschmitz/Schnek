@@ -2609,7 +2609,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_child, MpiCartesianDomainDecomp
       BOOST_CHECK_EQUAL(ranges[2].getLo(0), 0);
       BOOST_CHECK_EQUAL(ranges[2].getHi(0), factors[2]-1);
 
-      for (int r=0; r<factors[2]; ++r)
+      for (size_t r=0; r<factors[2]; ++r)
       {
         BOOST_CHECK_EQUAL(ranges[2](r).getLo()[0], 13*r);
         BOOST_CHECK_EQUAL(ranges[2](r).getHi()[0], 13*(r+1)-1);
@@ -4042,6 +4042,306 @@ BOOST_FIXTURE_TEST_CASE(
   // Both Bcast calls use the same sub-communicator handle.
   BOOST_REQUIRE_EQUAL(context.args_MPI_Bcast.size(), static_cast<size_t>(2));
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<3>(), context.args_MPI_Bcast[1].get<3>());
+}
+
+// ==========================================================================
+// Local weights load balancing
+// ==========================================================================
+
+BOOST_FIXTURE_TEST_CASE( balance_load_local_weights_shifts_cuts_shrink_1d, MpiCartesianDomainDecompositionTestFixture )
+{
+  // 2 processes, 1D, rank 0.
+  // After uniform init: rank 0 owns [0..3], rank 1 owns [4..7].
+  // Set local weights and provide a reduced (global) weight buffer such that
+  // the resulting cuts shift the rank-0 region to [0..5].
+  const int numProcs = 2;
+  const int myRank = 0;
+  const int myAxisRank = 0;
+
+  MPI_Comm testComm = (MPI_Comm)(void*)123;
+  std::vector<int> coords(1, myRank);
+  context.commWorld = (MPI_Comm)(void*)574;
+  MPI_Comm subComm  = (MPI_Comm)(void*)456;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, numProcs));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, myRank));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, myAxisRank));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+  context.ret_MPI_Cart_sub.push_back(boost::make_tuple(MPI_SUCCESS, subComm));
+
+  using GridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  RangeType globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(7));
+  schnek::Range<double, 1> globalDomain(schnek::Array<double,1>(0.0), schnek::Array<double,1>(1.0));
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  schnek::GridFactory<GridType> factory;
+  schnek::GridRegistration registration = decomposition.registerField(factory);
+
+  RangeType rank0OldRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(3));
+  auto gridContext = decomposition.getGridContext({registration});
+  gridContext.forEach([&](const RangeType &range, GridType &grid) {
+    SCHNEK_CHECK_EQUAL(range, rank0OldRange);
+    for (auto it = range.begin(); it != range.end(); ++it) {
+      grid[*it] = 400.0 + (*it)[0];
+    }
+  });
+
+  // Local weights on rank 0 covering local range [0..3] (no coarsening, all 1).
+  schnek::Grid<double, 1> localWeights(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(3));
+  for (int i = 0; i <= 3; ++i) localWeights(i) = 1.0;
+  decomposition.setLocalWeights(localWeights);
+
+  std::vector<double> reduced = {3.0, 4.0, 3.0, 6.0};
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(reduced)));
+  
+  std::vector<double> segmentTotal = {0.0};
+  context.ret_MPI_Exscan.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(segmentTotal)));
+
+  std::vector<double> totalWeight = {18.0};
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(totalWeight)));
+
+  std::vector<long> globalCuts = {3};
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(globalCuts)));
+
+  decomposition.balanceLoad();
+
+  RangeType rank0NewRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(2));
+  auto newGridContext = decomposition.getGridContext({registration});
+  int callCount = 0;
+  newGridContext.forEach([&](const RangeType &range, GridType &grid) {
+    ++callCount;
+    SCHNEK_CHECK_EQUAL(range, rank0NewRange);
+    for (ptrdiff_t i = 0; i <= 2; ++i) {
+      double valI = grid[schnek::Array<ptrdiff_t,1>(i)];
+      BOOST_CHECK_EQUAL(valI, 400.0 + i);
+    }
+  });
+  BOOST_CHECK_EQUAL(callCount, 1);
+
+  // calcGridDistributonLocalWeights should perform exactly one Allreduce per
+  // dimension (1 in this 1D case) over the full Cartesian communicator.
+  // Subsequent Allreduce calls may come from the redistribution machinery but
+  // the first one is the load-balancing reduction.
+  BOOST_REQUIRE_GE(context.args_MPI_Allreduce.size(), static_cast<size_t>(1));
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, static_cast<int>(reduced.size()));
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].datatype, MPI_DOUBLE);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].op, MPI_SUM);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].comm, subComm);
+
+  BOOST_CHECK_EQUAL(context.args_MPI_Irecv.size(), static_cast<size_t>(0));
+  BOOST_CHECK_EQUAL(context.args_MPI_Isend.size(), static_cast<size_t>(1));
+}
+
+BOOST_FIXTURE_TEST_CASE( balance_load_local_weights_shifts_cuts_grow_1d, MpiCartesianDomainDecompositionTestFixture )
+{
+  // 2 processes, 1D, rank 0.
+  // After uniform init: rank 0 owns [0..3], rank 1 owns [4..7].
+  // Set local weights and provide a reduced (global) weight buffer such that
+  // the resulting cuts shift the rank-0 region to [0..5].
+  const int numProcs = 2;
+  const int myRank = 0;
+  const int myAxisRank = 0;
+
+  MPI_Comm testComm = (MPI_Comm)(void*)123;
+  std::vector<int> coords(1, myRank);
+  context.commWorld = (MPI_Comm)(void*)574;
+  MPI_Comm subComm  = (MPI_Comm)(void*)456;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, numProcs));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, myRank));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, myAxisRank));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+  context.ret_MPI_Cart_sub.push_back(boost::make_tuple(MPI_SUCCESS, subComm));
+
+  using GridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  RangeType globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(7));
+  schnek::Range<double, 1> globalDomain(schnek::Array<double,1>(0.0), schnek::Array<double,1>(1.0));
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  schnek::GridFactory<GridType> factory;
+  schnek::GridRegistration registration = decomposition.registerField(factory);
+
+  RangeType rank0OldRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(3));
+  auto gridContext = decomposition.getGridContext({registration});
+  gridContext.forEach([&](const RangeType &range, GridType &grid) {
+    SCHNEK_CHECK_EQUAL(range, rank0OldRange);
+    for (auto it = range.begin(); it != range.end(); ++it) {
+      grid[*it] = 400.0 + (*it)[0];
+    }
+  });
+
+  // Local weights on rank 0 covering local range [0..3] (no coarsening, all 1).
+  schnek::Grid<double, 1> localWeights(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(3));
+  for (int i = 0; i <= 3; ++i) localWeights(i) = 1.0;
+  decomposition.setLocalWeights(localWeights);
+
+  std::vector<double> reduced = {1.0, 1.0, 1.0, 1.0};
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(reduced)));
+  
+  std::vector<double> segmentTotal = {0.0};
+  context.ret_MPI_Exscan.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(segmentTotal)));
+
+  std::vector<double> totalWeight = {20.0};
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(totalWeight)));
+
+  std::vector<long> globalCuts = {7};
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(globalCuts)));
+
+  // After rebalance rank 0 will own [0..6] and needs to receive [4..6] from rank 1.
+  std::vector<double> recvData = {504.0, 505.0, 506.0};
+  context.ret_MPI_Irecv.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(recvData)));
+
+  decomposition.balanceLoad();
+
+  RangeType rank0NewRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(6));
+  auto newGridContext = decomposition.getGridContext({registration});
+  int callCount = 0;
+  newGridContext.forEach([&](const RangeType &range, GridType &grid) {
+    ++callCount;
+    SCHNEK_CHECK_EQUAL(range, rank0NewRange);
+    for (ptrdiff_t i = 0; i <= 3; ++i) {
+      double valI = grid[schnek::Array<ptrdiff_t,1>(i)];
+      BOOST_CHECK_EQUAL(valI, 400.0 + i);
+    }
+    for (ptrdiff_t i = 4; i <= 6; ++i) {
+      double valI = grid[schnek::Array<ptrdiff_t,1>(i)];
+      BOOST_CHECK_EQUAL(valI, 500.0 + i);
+    }
+  });
+  BOOST_CHECK_EQUAL(callCount, 1);
+
+  // calcGridDistributonLocalWeights should perform exactly one Allreduce per
+  // dimension (1 in this 1D case) over the full Cartesian communicator.
+  // Subsequent Allreduce calls may come from the redistribution machinery but
+  // the first one is the load-balancing reduction.
+  BOOST_REQUIRE_GE(context.args_MPI_Allreduce.size(), static_cast<size_t>(1));
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, static_cast<int>(reduced.size()));
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].datatype, MPI_DOUBLE);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].op, MPI_SUM);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].comm, subComm);
+
+  BOOST_CHECK_EQUAL(context.args_MPI_Irecv.size(), static_cast<size_t>(1));
+  BOOST_CHECK_EQUAL(context.args_MPI_Isend.size(), static_cast<size_t>(0));
+}
+
+
+BOOST_FIXTURE_TEST_CASE( balance_load_local_weights_uniform_keeps_layout_1d, MpiCartesianDomainDecompositionTestFixture )
+{
+  // 4 processes, 1D, rank 1. Uniform local weights and a uniform reduced
+  // buffer should leave the rank-1 region at its initial [10..19] location.
+  const int numProcs = 4;
+  const int myRank = 1;
+  const int myAxisRank = 1;
+
+  MPI_Comm testComm = (MPI_Comm)(void*)123;
+  std::vector<int> coords(1, myRank);
+  context.commWorld = (MPI_Comm)(void*)574;
+  MPI_Comm subComm  = (MPI_Comm)(void*)456;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, numProcs));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, myRank));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, myAxisRank));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+  context.ret_MPI_Cart_sub.push_back(boost::make_tuple(MPI_SUCCESS, subComm));
+
+  using GridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  RangeType globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(39));
+  schnek::Range<double, 1> globalDomain(schnek::Array<double,1>(0.0), schnek::Array<double,1>(1.0));
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  schnek::GridFactory<GridType> factory;
+  schnek::GridRegistration registration = decomposition.registerField(factory);
+
+  // Initial uniform layout: each rank owns 10 cells. Rank 1 owns [10..19].
+  RangeType rank1OldRange(schnek::Array<ptrdiff_t,1>(10), schnek::Array<ptrdiff_t,1>(19));
+  auto gridContext = decomposition.getGridContext({registration});
+  gridContext.forEach([&](const RangeType &range, GridType &) {
+    SCHNEK_CHECK_EQUAL(range, rank1OldRange);
+  });
+
+  // Coarsened local weights: 5 entries each representing 2 cells (resolution=2).
+  schnek::Grid<double, 1> localWeights(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(4));
+  for (int i = 0; i <= 4; ++i) localWeights(i) = 1.0;
+  decomposition.setLocalWeights(localWeights);
+
+  std::vector<double> reduced = {1.0, 1.0, 1.0, 1.0, 1.0};
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(reduced)));
+  
+  std::vector<double> segmentTotal = {5.0};
+  context.ret_MPI_Exscan.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(segmentTotal)));
+
+  std::vector<double> totalWeight = {20.0};
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(totalWeight)));
+
+  std::vector<long> globalCuts = {10, 20, 30};
+  context.ret_MPI_Allreduce.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(globalCuts)));
+
+  decomposition.balanceLoad();
+
+  // Same layout -> no Irecv needed; rank 1 should still own [10..19].
+  auto newGridContext = decomposition.getGridContext({registration});
+  int callCount = 0;
+  newGridContext.forEach([&](const RangeType &range, GridType &) {
+    ++callCount;
+    SCHNEK_CHECK_EQUAL(range, rank1OldRange);
+  });
+  BOOST_CHECK_EQUAL(callCount, 1);
+
+  // One Allreduce on a buffer of length 20 with MPI_SUM over the Cartesian comm.
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce.size(), static_cast<size_t>(3));
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, 5);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].op, MPI_SUM);
+
+  BOOST_CHECK_EQUAL(context.args_MPI_Irecv.size(), static_cast<size_t>(0));
+  BOOST_CHECK_EQUAL(context.args_MPI_Isend.size(), static_cast<size_t>(0));
+}
+
+BOOST_FIXTURE_TEST_CASE( set_local_weights_rejects_misaligned_shape, MpiCartesianDomainDecompositionTestFixture )
+{
+  // checkLocalWeights() must reject weight grids whose dimensions do not evenly
+  // divide the local range extent.
+  const int numProcs = 2;
+  const int myRank = 0;
+
+  MPI_Comm testComm = (MPI_Comm)(void*)123;
+  std::vector<int> coords(1, myRank);
+  context.commWorld = (MPI_Comm)(void*)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, numProcs));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, myRank));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  RangeType globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(7));
+  schnek::Range<double, 1> globalDomain(schnek::Array<double,1>(0.0), schnek::Array<double,1>(1.0));
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  // Local range is [0..3] (4 cells). A weight grid of size 3 does not divide it.
+  schnek::Grid<double, 1> badWeights(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(2));
+  for (int i = 0; i <= 2; ++i) badWeights(i) = 1.0;
+  BOOST_CHECK_THROW(decomposition.setLocalWeights(badWeights), schnek::ScheckException);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

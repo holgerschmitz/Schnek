@@ -87,6 +87,9 @@ class MpiTestContextImpl : public schnek::MpiContext
     std::vector<boost::tuple<MPI_Comm, std::vector<int>>> args_MPI_Cart_sub;
     std::vector<MPI_Comm> args_MPI_Comm_free;
 
+    std::vector<boost::tuple<MPI_Comm, int, int>> args_MPI_Comm_split;
+    std::vector<boost::tuple<MPI_Comm, bool, bool, int, MPI_Datatype, MPI_Op>> args_MPI_Exscan;
+
     // Isend return values: error code
     std::vector<int> ret_MPI_Isend;
     // Irecv return values: error code plus the data to fill into the recv buffer
@@ -98,6 +101,13 @@ class MpiTestContextImpl : public schnek::MpiContext
 
     // Cart_sub return values: error code plus sub-communicator handle
     std::vector<boost::tuple<int, MPI_Comm>> ret_MPI_Cart_sub;
+
+    // Comm_split return values: error code plus new communicator handle
+    std::vector<boost::tuple<int, MPI_Comm>> ret_MPI_Comm_split;
+
+    // Exscan return values: error code plus the data to fill into the recv buffer
+    std::vector<boost::tuple<int, std::vector<char>>> ret_MPI_Exscan;
+
     // Comm_free return value: error code
     std::vector<int> ret_MPI_Comm_free;
 
@@ -140,5 +150,7 @@ class MpiTestContextImpl : public schnek::MpiContext
     int MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[]);
     int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank);
     int MPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *newcomm);
+    int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
+    int MPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
     int MPI_Comm_free(MPI_Comm *comm);
 };

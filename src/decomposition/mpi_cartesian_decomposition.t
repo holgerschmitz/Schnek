@@ -17,6 +17,8 @@
 #include "detail/redistribution.hpp"
 #include "mpi_cartesian_decomposition.hpp"
 
+#include "../util/array_io.hpp"
+
 #undef SCHNEK_LOGLEVEL
 #define SCHNEK_LOGLEVEL 0
 
@@ -482,8 +484,6 @@ namespace schnek {
           pos[orthInd[oi]] = p[oi];
         }
 
-        //      std::cout << "Sum: " << pos[0] << " " << pos[1] << " " << globalWeights[pos] << std::endl;
-
         sumTotal += globalWeights[pos];
       }
 
@@ -566,9 +566,318 @@ namespace schnek {
     }
   }
 
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  void
-  MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonLocalWeights(ProcRanges & /* ranges */) {}
+template<size_t rank, template<size_t> class CheckingPolicy>
+void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonLocalWeights(ProcRanges &ranges) {
+  const LimitType glo = this->globalRange.getLo();
+  const LimitType ghi = this->globalRange.getHi();
+
+  auto toIntCount = [](size_t count, const char *what) -> int {
+    if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
+      SCHNECK_FAIL(what << " is too large for an MPI int count");
+    }
+    return static_cast<int>(count);
+  };
+
+  auto flattenOrthogonalCoord = [this](size_t excludedDim) -> int {
+    long color = 0;
+    for (size_t d = 0; d < rank; ++d) {
+      if (d == excludedDim) continue;
+
+      color = color * static_cast<long>(dims[d]) + static_cast<long>(myCoord[d]);
+
+      if (color > static_cast<long>(std::numeric_limits<int>::max())) {
+        SCHNECK_FAIL("Cartesian communicator colour overflow");
+      }
+    }
+    return static_cast<int>(color);
+  };
+
+  auto setUniformRangesForDim = [&](size_t d) {
+    Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
+
+    const ptrdiff_t nProcs = dims[d];
+    const ptrdiff_t globalCells = ghi[d] - glo[d] + 1;
+
+    SCHNEK_ASSERT(nProcs > 0, "Invalid Cartesian process-grid dimension");
+    SCHNEK_ASSERT(globalCells >= nProcs, "Cannot assign non-empty ranges: more processes than cells");
+
+    dimRanges.resize(0, nProcs - 1);
+    dimRanges(0).getLo()[0] = glo[d];
+    dimRanges(nProcs - 1).getHi()[0] = ghi[d];
+
+    const ptrdiff_t q = globalCells / nProcs;
+    const ptrdiff_t r = globalCells % nProcs;
+
+    for (ptrdiff_t p = 1; p < nProcs; ++p) {
+      const ptrdiff_t cut = glo[d] + p * q + (p * r) / nProcs;
+      dimRanges(p - 1).getHi()[0] = cut - 1;
+      dimRanges(p).getLo()[0] = cut;
+    }
+  };
+
+  auto allreduceVectorSum = [&](const std::vector<double> &local, std::vector<double> &reduced, MPI_Comm c) {
+    SCHNEK_ASSERT(local.size() == reduced.size(), "Mismatched reduction buffer sizes");
+
+    size_t offset = 0;
+    while (offset < local.size()) {
+      const size_t remaining = local.size() - offset;
+      const size_t chunkSize =
+          std::min<size_t>(remaining, static_cast<size_t>(std::numeric_limits<int>::max()));
+
+      const int count = static_cast<int>(chunkSize);
+      int errorCode = mpi.MPI_Allreduce(
+          local.data() + offset,
+          reduced.data() + offset,
+          count,
+          MPI_DOUBLE,
+          MPI_SUM,
+          c
+      );
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while reducing local weight marginals");
+
+      offset += chunkSize;
+    }
+  };
+
+  // Current local range in global grid indices.
+  LimitType localLo;
+  LimitType localHi;
+  for (size_t d = 0; d < rank; ++d) {
+    localLo[d] = procRanges[d](myCoord[d]).getLo()[0];
+    localHi[d] = procRanges[d](myCoord[d]).getHi()[0];
+  }
+
+  const auto weightsDims = this->localWeights.getDims();
+  const LimitType weightsLo = this->localWeights.getLo();
+  const LimitType weightsHi = this->localWeights.getHi();
+
+  LimitType resolution;
+  for (size_t d = 0; d < rank; ++d) {
+    const ptrdiff_t localCells = localHi[d] - localLo[d] + 1;
+
+    SCHNEK_ASSERT(weightsDims[d] > 0, "Local weights must be non-empty");
+    SCHNEK_ASSERT(
+        localCells % ptrdiff_t(weightsDims[d]) == 0,
+        "Local weights dimensions must evenly divide the local range"
+    );
+
+    resolution[d] = localCells / ptrdiff_t(weightsDims[d]);
+
+    SCHNEK_ASSERT(resolution[d] > 0, "Invalid local weight coarsening factor");
+  }
+
+  // Local per-axis marginals. This is the only storage proportional to the
+  // local weight grid dimensions.
+  Array<std::vector<double>, rank> localMarginals;
+  for (size_t d = 0; d < rank; ++d) {
+    localMarginals[d].assign(static_cast<size_t>(weightsDims[d]), 0.0);
+  }
+
+  {
+    Range<ptrdiff_t, rank> wRange(weightsLo, weightsHi);
+
+    for (const LimitType &p : wRange) {
+      const double w = this->localWeights[p];
+
+      if (!(w >= 0.0)) {
+        SCHNECK_FAIL("Local weights must be finite and non-negative");
+      }
+
+      for (size_t d = 0; d < rank; ++d) {
+        localMarginals[d][static_cast<size_t>(p[d] - weightsLo[d])] += w;
+      }
+    }
+  }
+
+  for (size_t d = 0; d < rank; ++d) {
+    Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
+
+    const ptrdiff_t nProcs = dims[d];
+    const ptrdiff_t globalCells = ghi[d] - glo[d] + 1;
+
+    SCHNEK_ASSERT(nProcs > 0, "Invalid Cartesian process-grid dimension");
+    SCHNEK_ASSERT(globalCells >= nProcs, "Cannot assign non-empty ranges: more processes than cells");
+
+    dimRanges.resize(0, nProcs - 1);
+    dimRanges(0).getLo()[0] = glo[d];
+    dimRanges(nProcs - 1).getHi()[0] = ghi[d];
+
+    if (nProcs == 1) {
+      continue;
+    }
+
+    // ---------------------------------------------------------------------
+    // 1. Reduce this coordinate segment over the perpendicular Cartesian slice.
+    //    All ranks with the same coordinate in dimension d participate.
+    // ---------------------------------------------------------------------
+    MPI_Comm sliceComm = MPI_COMM_NULL;
+
+    {
+      int remainDims[rank];
+      for (size_t q = 0; q < rank; ++q) {
+        remainDims[q] = (q == d) ? 0 : 1;
+      }
+
+      int errorCode = mpi.MPI_Cart_sub(comm, remainDims, &sliceComm);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Cart_sub failed while creating local-weight slice communicator");
+    }
+
+    const long localBins = static_cast<long>(weightsDims[d]);
+
+#if defined(SCHNEK_DEBUG) || defined(SCHNEK_TRACE)
+    // Validate that all ranks in this perpendicular slice use the same number
+    // of local bins in direction d.  The vector Allreduce below requires equal
+    // counts on all participants.
+    long minBins = 0;
+    long maxBins = 0;
+
+    {
+      int errorCode =
+          mpi.MPI_Allreduce(&localBins, &minBins, 1, detail::mpiDatatypeFor<long>(), MPI_MIN, sliceComm);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating local weight shape");
+
+      errorCode =
+          mpi.MPI_Allreduce(&localBins, &maxBins, 1, detail::mpiDatatypeFor<long>(), MPI_MAX, sliceComm);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating local weight shape");
+
+      if (minBins != maxBins) {
+        SCHNECK_FAIL(
+            "Local weights must have the same extent in dimension "
+            << d << " for all ranks sharing the same Cartesian coordinate in that dimension"
+        );
+      }
+    }
+#endif
+
+    std::vector<double> reducedSegment(static_cast<size_t>(localBins), 0.0);
+    allreduceVectorSum(localMarginals[d], reducedSegment, sliceComm);
+
+    int errorCode = mpi.MPI_Comm_free(&sliceComm);
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight slice communicator");
+
+    double segmentTotal = 0.0;
+    for (double w : reducedSegment) {
+      segmentTotal += w;
+    }
+
+    // ---------------------------------------------------------------------
+    // 2. Build an axis communicator ordered by Cartesian coordinate d.
+    //    MPI_Exscan now gives the cumulative weight before this segment.
+    // ---------------------------------------------------------------------
+    MPI_Comm axisComm = MPI_COMM_NULL;
+
+    {
+      const int color = flattenOrthogonalCoord(d);
+      const int key = static_cast<int>(myCoord[d]);
+
+      errorCode = mpi.MPI_Comm_split(comm, color, key, &axisComm);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_split failed while creating local-weight axis communicator");
+    }
+
+    int axisRank = 0;
+    errorCode = mpi.MPI_Comm_rank(axisComm, &axisRank);
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_rank failed on local-weight axis communicator");
+
+    double segmentOffset = 0.0;
+    errorCode = mpi.MPI_Exscan(&segmentTotal, &segmentOffset, 1, MPI_DOUBLE, MPI_SUM, axisComm);
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Exscan failed while scanning local-weight segments");
+
+    if (axisRank == 0) {
+      segmentOffset = 0.0;
+    }
+
+    double totalWeight = 0.0;
+    errorCode = mpi.MPI_Allreduce(&segmentTotal, &totalWeight, 1, MPI_DOUBLE, MPI_SUM, axisComm);
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while computing total local weight");
+
+    if (!(totalWeight > 0.0)) {
+      setUniformRangesForDim(d);
+
+      errorCode = mpi.MPI_Comm_free(&axisComm);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight axis communicator");
+
+      continue;
+    }
+
+    // ---------------------------------------------------------------------
+    // 3. Locate the weighted quantile cuts.  A rank contributes a cut only if
+    //    the target cumulative weight lies inside its axis segment.
+    // ---------------------------------------------------------------------
+    const ptrdiff_t numCuts = nProcs - 1;
+    const long noCut = std::numeric_limits<long>::min();
+
+    std::vector<long> localCuts(static_cast<size_t>(numCuts), noCut);
+    std::vector<long> globalCuts(static_cast<size_t>(numCuts), noCut);
+
+    const double segmentEnd = segmentOffset + segmentTotal;
+
+    for (ptrdiff_t cutIndex = 1; cutIndex < nProcs; ++cutIndex) {
+      const double target = totalWeight * (double(cutIndex) / double(nProcs));
+
+      // The strict lower bound makes cuts that fall exactly on a segment
+      // boundary belong to the preceding segment, avoiding duplicate owners.
+      if ((target > segmentOffset) && (target <= segmentEnd)) {
+        double cumulative = segmentOffset;
+
+        for (ptrdiff_t k = 0; k < localBins; ++k) {
+          cumulative += reducedSegment[static_cast<size_t>(k)];
+
+          if (target <= cumulative) {
+            const ptrdiff_t cutCell = localLo[d] + resolution[d] * (k + 1);
+            localCuts[static_cast<size_t>(cutIndex - 1)] = static_cast<long>(cutCell);
+            break;
+          }
+        }
+      }
+    }
+
+    errorCode = mpi.MPI_Allreduce(
+        localCuts.data(),
+        globalCuts.data(),
+        toIntCount(globalCuts.size(), "Number of local-weight cuts"),
+        detail::mpiDatatypeFor<long>(),
+        MPI_MAX,
+        axisComm
+    );
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while collecting local-weight cuts");
+
+    errorCode = mpi.MPI_Comm_free(&axisComm);
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight axis communicator");
+
+    // ---------------------------------------------------------------------
+    // 4. Convert cuts into ProcRanges.  The clamp enforces non-empty ranges
+    //    when globalCells >= nProcs, even for pathological weights concentrated
+    //    in one bin.
+    // ---------------------------------------------------------------------
+    ptrdiff_t previousCut = glo[d];
+
+    for (ptrdiff_t cutIndex = 1; cutIndex < nProcs; ++cutIndex) {
+      long rawCut = globalCuts[static_cast<size_t>(cutIndex - 1)];
+
+      if (rawCut == noCut) {
+        // Defensive fallback for numerical edge cases.  This should rarely be
+        // used unless the target landed in a zero-weight plateau.
+        const ptrdiff_t q = globalCells / nProcs;
+        const ptrdiff_t r = globalCells % nProcs;
+        rawCut = static_cast<long>(glo[d] + cutIndex * q + (cutIndex * r) / nProcs);
+      }
+
+      ptrdiff_t cut = static_cast<ptrdiff_t>(rawCut);
+
+      const ptrdiff_t minCut = glo[d] + cutIndex;
+      const ptrdiff_t maxCut = ghi[d] - (nProcs - cutIndex) + 1;
+
+      cut = std::max(cut, minCut);
+      cut = std::min(cut, maxCut);
+      cut = std::max(cut, previousCut + 1);
+
+      dimRanges(cutIndex - 1).getHi()[0] = cut - 1;
+      dimRanges(cutIndex).getLo()[0] = cut;
+
+      previousCut = cut;
+    }
+  }
+}
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::ExchangeVisitor

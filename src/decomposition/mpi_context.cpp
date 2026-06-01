@@ -88,6 +88,16 @@ int schnek::MpiContextImpl::MPI_Cart_sub(MPI_Comm comm, const int remain_dims[],
   return ::MPI_Cart_sub(comm, remain_dims, newcomm);
 }
 
+int schnek::MpiContextImpl::MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm* newcomm) {
+  return ::MPI_Comm_split(comm, color, key, newcomm);
+}
+
+int schnek::MpiContextImpl::MPI_Exscan(
+    const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm
+) {
+  return ::MPI_Exscan(sendbuf, recvbuf, count, datatype, op, comm);
+}
+
 int schnek::MpiContextImpl::MPI_Comm_free(MPI_Comm* comm) {
   return ::MPI_Comm_free(comm);
 }
