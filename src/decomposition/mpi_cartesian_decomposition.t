@@ -1667,16 +1667,16 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       return volume;
     };
 
-    auto packRange = [&](RangeTypeLocal range, std::vector<ValueType> &buffer) {
-      const size_t volume = rangeVolume(range);
-      buffer.resize(volume);
+    // Helpers to pack/unpack a multi-dimensional range to/from a contiguous buffer for MPI communication.
+    // buffer is assumed to be pre-allocated to the correct size (range volume).
+    auto packRange = [&](RangeTypeLocal range, std::pmr::vector<ValueType> &buffer) {
       size_t idx = 0;
       for (auto it = range.begin(); it != range.end(); ++it) {
         buffer[idx++] = grid[*it];
       }
     };
 
-    auto unpackRange = [&](RangeTypeLocal range, const std::vector<ValueType> &buffer) {
+    auto unpackRange = [&](RangeTypeLocal range, const std::pmr::vector<ValueType> &buffer) {
       size_t idx = 0;
       for (auto it = range.begin(); it != range.end(); ++it) {
         grid[*it] = buffer[idx++];
@@ -1735,39 +1735,51 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         hiSourceRange = makeRange(lo, hi);
       }
 
-      // Exchange to fill lower ghost cells (receive from prev, send to next)
       size_t sendLowerCount = hiSourceRange ? rangeVolume(*hiSourceRange) : 0;
       size_t recvLowerCount = loGhostRange ? rangeVolume(*loGhostRange) : 0;
-      std::vector<ValueType> sendLowerBuffer;
+
+      size_t sendUpperCount = loSourceRange ? rangeVolume(*loSourceRange) : 0;
+      size_t recvUpperCount = hiGhostRange ? rangeVolume(*hiGhostRange) : 0;
+
+      size_t maxSendCount = std::max(sendLowerCount, sendUpperCount);
+      size_t maxRecvCount = std::max(recvLowerCount, recvUpperCount);
+
+      mpiSendScratchBuffer.reserve_bytes(maxSendCount * sizeof(ValueType));
+      mpiRecvScratchBuffer.reserve_bytes(maxRecvCount * sizeof(ValueType));
+
+      auto sendBuffer = mpiSendScratchBuffer.make_vector<ValueType>(maxSendCount);
+      auto recvBuffer = mpiRecvScratchBuffer.make_vector<ValueType>(maxRecvCount);
+
+      // Exchange to fill lower ghost cells (receive from prev, send to next)
       if (hiSourceRange && sendLowerCount > 0) {
-        packRange(*hiSourceRange, sendLowerBuffer);
+        packRange(*hiSourceRange, sendBuffer);
       }
-      std::vector<ValueType> recvLowerBuffer(recvLowerCount);
+
       this->mpi.MPI_Sendrecv(
-          sendLowerCount > 0 ? sendLowerBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType, nextRank, 0,
-          recvLowerCount > 0 ? recvLowerBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType, prevRank, 0, comm,
+          sendLowerCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType, nextRank, 0,
+          recvLowerCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType, prevRank, 0, comm,
           MPI_STATUS_IGNORE
       );
       if (loGhostRange && recvLowerCount > 0) {
-        unpackRange(*loGhostRange, recvLowerBuffer);
+        unpackRange(*loGhostRange, recvBuffer);
       }
 
       // Exchange to fill upper ghost cells (receive from next, send to prev)
-      size_t sendUpperCount = loSourceRange ? rangeVolume(*loSourceRange) : 0;
-      size_t recvUpperCount = hiGhostRange ? rangeVolume(*hiGhostRange) : 0;
-      std::vector<ValueType> sendUpperBuffer;
       if (loSourceRange && sendUpperCount > 0) {
-        packRange(*loSourceRange, sendUpperBuffer);
+        packRange(*loSourceRange, sendBuffer);
       }
-      std::vector<ValueType> recvUpperBuffer(recvUpperCount);
+
       this->mpi.MPI_Sendrecv(
-          sendUpperCount > 0 ? sendUpperBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType, prevRank, 0,
-          recvUpperCount > 0 ? recvUpperBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType, nextRank, 0, comm,
+          sendUpperCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType, prevRank, 0,
+          recvUpperCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType, nextRank, 0, comm,
           MPI_STATUS_IGNORE
       );
       if (hiGhostRange && recvUpperCount > 0) {
-        unpackRange(*hiGhostRange, recvUpperBuffer);
+        unpackRange(*hiGhostRange, recvBuffer);
       }
+
+      mpiSendScratchBuffer.reset();
+      mpiRecvScratchBuffer.reset();
     }
   }
 
@@ -1797,25 +1809,21 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       return volume;
     };
 
-    auto packRange = [&](RangeTypeLocal range, std::vector<ValueType> &buffer) {
-      const size_t volume = rangeVolume(range);
-      buffer.resize(volume);
+    auto packRange = [&](RangeTypeLocal range, std::pmr::vector<ValueType> &buffer) {
       size_t idx = 0;
       for (auto it = range.begin(); it != range.end(); ++it) {
         buffer[idx++] = grid[*it];
       }
     };
 
-    auto assignRange = [&](RangeTypeLocal range, const std::vector<ValueType> &buffer) {
+    auto assignRange = [&](RangeTypeLocal range, const std::pmr::vector<ValueType> &buffer) {
       size_t idx = 0;
       for (auto it = range.begin(); it != range.end(); ++it) {
         grid[*it] = buffer[idx++];
       }
     };
 
-    auto addIntoRange = [&](RangeTypeLocal range, const std::vector<ValueType> &buffer, std::vector<ValueType> &out) {
-      const size_t volume = rangeVolume(range);
-      out.resize(volume);
+    auto addIntoRange = [&](RangeTypeLocal range, const std::pmr::vector<ValueType> &buffer, std::pmr::vector<ValueType> &out) {
       size_t idx = 0;
       for (auto it = range.begin(); it != range.end(); ++it) {
         ValueType &val = grid[*it];
@@ -1877,65 +1885,71 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         hiSourceRange = makeRange(lo, hi);
       }
 
-      // Lower side: add incoming data to lower ghost cells, then return result to update upper inner cells in prev.
       const size_t sendLowerCount = hiSourceRange ? rangeVolume(*hiSourceRange) : 0;
       const size_t recvLowerCount = loGhostRange ? rangeVolume(*loGhostRange) : 0;
-
-      std::vector<ValueType> sendLowerBuffer;
-      if (hiSourceRange && sendLowerCount > 0) {
-        packRange(*hiSourceRange, sendLowerBuffer);
-      }
-      std::vector<ValueType> recvLowerBuffer(recvLowerCount);
-      this->mpi.MPI_Sendrecv(
-          sendLowerCount > 0 ? sendLowerBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType, nextRank, 0,
-          recvLowerCount > 0 ? recvLowerBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType, prevRank, 0, comm,
-          MPI_STATUS_IGNORE
-      );
-
-      std::vector<ValueType> sendBackLowerBuffer;
-      if (loGhostRange && recvLowerCount > 0) {
-        addIntoRange(*loGhostRange, recvLowerBuffer, sendBackLowerBuffer);
-      }
-
-      std::vector<ValueType> recvBackLowerBuffer(sendLowerCount);
-      this->mpi.MPI_Sendrecv(
-          sendBackLowerBuffer.empty() ? nullptr : sendBackLowerBuffer.data(), toIntCount(recvLowerCount), mpiType,
-          prevRank, 0, sendLowerCount > 0 ? recvBackLowerBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType,
-          nextRank, 0, comm, MPI_STATUS_IGNORE
-      );
-      if (hiSourceRange && sendLowerCount > 0) {
-        assignRange(*hiSourceRange, recvBackLowerBuffer);
-      }
-
-      // Upper side: add incoming data to upper ghost cells, then return result to update lower inner cells in next.
       const size_t sendUpperCount = loSourceRange ? rangeVolume(*loSourceRange) : 0;
       const size_t recvUpperCount = hiGhostRange ? rangeVolume(*hiGhostRange) : 0;
 
-      std::vector<ValueType> sendUpperBuffer;
-      if (loSourceRange && sendUpperCount > 0) {
-        packRange(*loSourceRange, sendUpperBuffer);
+      const size_t maxSendCount = std::max(sendLowerCount, sendUpperCount);
+      const size_t maxRecvCount = std::max(recvLowerCount, recvUpperCount);
+      const size_t maxCount = std::max(maxSendCount, maxRecvCount);
+
+      mpiSendScratchBuffer.reserve_bytes(maxCount * sizeof(ValueType));
+      mpiRecvScratchBuffer.reserve_bytes(maxCount * sizeof(ValueType));
+
+      auto sendBuffer = mpiSendScratchBuffer.make_vector<ValueType>(maxCount);
+      auto recvBuffer = mpiRecvScratchBuffer.make_vector<ValueType>(maxCount);
+
+      // Lower side: add incoming data to lower ghost cells, then return result to update upper inner cells in prev.
+      if (hiSourceRange && sendLowerCount > 0) {
+        packRange(*hiSourceRange, sendBuffer);
       }
-      std::vector<ValueType> recvUpperBuffer(recvUpperCount);
+
       this->mpi.MPI_Sendrecv(
-          sendUpperCount > 0 ? sendUpperBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType, prevRank, 0,
-          recvUpperCount > 0 ? recvUpperBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType, nextRank, 0, comm,
+          sendLowerCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType, nextRank, 0,
+          recvLowerCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType, prevRank, 0, comm,
           MPI_STATUS_IGNORE
       );
 
-      std::vector<ValueType> sendBackUpperBuffer;
-      if (hiGhostRange && recvUpperCount > 0) {
-        addIntoRange(*hiGhostRange, recvUpperBuffer, sendBackUpperBuffer);
+      if (loGhostRange && recvLowerCount > 0) {
+        addIntoRange(*loGhostRange, recvBuffer, sendBuffer);
       }
 
-      std::vector<ValueType> recvBackUpperBuffer(sendUpperCount);
       this->mpi.MPI_Sendrecv(
-          sendBackUpperBuffer.empty() ? nullptr : sendBackUpperBuffer.data(), toIntCount(recvUpperCount), mpiType,
-          nextRank, 0, sendUpperCount > 0 ? recvBackUpperBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType,
+          recvLowerCount > 0 ? sendBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType,
+          prevRank, 0, sendLowerCount > 0 ? recvBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType,
+          nextRank, 0, comm, MPI_STATUS_IGNORE
+      );
+      if (hiSourceRange && sendLowerCount > 0) {
+        assignRange(*hiSourceRange, recvBuffer);
+      }
+
+      // Upper side: add incoming data to upper ghost cells, then return result to update lower inner cells in next.
+      if (loSourceRange && sendUpperCount > 0) {
+        packRange(*loSourceRange, sendBuffer);
+      }
+
+      this->mpi.MPI_Sendrecv(
+          sendUpperCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType, prevRank, 0,
+          recvUpperCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType, nextRank, 0, comm,
+          MPI_STATUS_IGNORE
+      );
+
+      if (hiGhostRange && recvUpperCount > 0) {
+        addIntoRange(*hiGhostRange, recvBuffer, sendBuffer);
+      }
+
+      this->mpi.MPI_Sendrecv(
+          recvUpperCount > 0 ? sendBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType,
+          nextRank, 0, sendUpperCount > 0 ? recvBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType,
           prevRank, 0, comm, MPI_STATUS_IGNORE
       );
       if (loSourceRange && sendUpperCount > 0) {
-        assignRange(*loSourceRange, recvBackUpperBuffer);
+        assignRange(*loSourceRange, recvBuffer);
       }
+
+      mpiSendScratchBuffer.reset();
+      mpiRecvScratchBuffer.reset();
     }
   }
 
