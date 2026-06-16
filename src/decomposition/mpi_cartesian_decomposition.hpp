@@ -12,6 +12,7 @@
 #include "detail/redistribution.hpp"
 #include "domaindecomposition.hpp"
 #include "mpi_context.hpp"
+#include "../util/scratchbuffer.hpp"
 
 #ifdef SCHNEK_HAVE_MPI
 
@@ -262,6 +263,8 @@ namespace schnek {
       );
       std::vector<std::function<void(ExchangeVisitor &)>> exchangeInitializers;
       std::vector<std::function<void(AccumulateVisitor &)>> accumulateInitializers;
+      schnek::ScratchBuffer mpiSendScratchBuffer;
+      schnek::ScratchBuffer mpiRecvScratchBuffer;
 
       /**
        * Convert Cartesian process coordinates to MPI rank

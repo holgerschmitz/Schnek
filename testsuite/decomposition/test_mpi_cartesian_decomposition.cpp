@@ -2016,12 +2016,12 @@ BOOST_FIXTURE_TEST_CASE( foreach_single_process_3d, MpiCartesianDomainDecomposit
     gridContext.forEach([&](const RangeType &, FieldType &localField) { field = &localField; });
     BOOST_REQUIRE(field != nullptr);
 
-  fillField(*field, -7.0);
+    fillField(*field, -7.0);
 
-  FieldType expectedField(*field);
-  auto ghostSetup = buildGhostExchangeSetup(*field);
-  applyGhostExpectations(expectedField, ghostSetup);
-  context.ret_MPI_Sendrecv = ghostSetup.responses;
+    FieldType expectedField(*field);
+    auto ghostSetup = buildGhostExchangeSetup(*field);
+    applyGhostExpectations(expectedField, ghostSetup);
+    context.ret_MPI_Sendrecv = ghostSetup.responses;
 
     std::array<int, 3> prevRanks{{30, 40, 50}};
     std::array<int, 3> nextRanks{{31, 41, 51}};
