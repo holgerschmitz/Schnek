@@ -201,9 +201,9 @@ namespace schnek {
            * If a grid is defined on a sub-range that does not intersect with the corresponding range, NULL_PTR is
            * stored.
            */
-          std::vector<const std::list<internal::pGridWrapper> *> gridLists;
+          std::vector<const std::vector<internal::pGridWrapper> *> gridLists;
           std::vector<RangeType> ranges;
-          GridContext(std::vector<const std::list<internal::pGridWrapper> *> gridLists, std::vector<RangeType> ranges)
+          GridContext(std::vector<const std::vector<internal::pGridWrapper> *> gridLists, std::vector<RangeType> ranges)
               : gridLists(std::move(gridLists)), ranges(std::move(ranges)) {}
 
         public:
@@ -479,7 +479,7 @@ namespace schnek {
        * load rebalancing. Each entry maps a registration ID to the list of
        * grid wrappers (one per local allocation range).
        */
-      std::map<long, std::list<internal::pGridWrapper>> &getGridStorage();
+      std::map<long, std::vector<internal::pGridWrapper>> &getGridStorage();
 
       /**
        * Get mutable access to the projected grid storage.
@@ -489,7 +489,7 @@ namespace schnek {
        * grid wrappers (one per local allocation range; all entries in a list
        * point to the same shared grid).
        */
-      std::map<long, std::list<internal::pGridWrapper>> &getProjectedGridStorage();
+      std::map<long, std::vector<internal::pGridWrapper>> &getProjectedGridStorage();
 
       /**
        * Copy overlapping data from old projected grids into the newly-allocated
@@ -502,7 +502,7 @@ namespace schnek {
        * @param oldProjectedGrids  The projected grid storage snapshot saved
        *        before clearLocalRanges() was called.
        */
-      void copyProjectedGridOverlaps(const std::map<long, std::list<internal::pGridWrapper>> &oldProjectedGrids);
+      void copyProjectedGridOverlaps(const std::map<long, std::vector<internal::pGridWrapper>> &oldProjectedGrids);
 
       /**
        * This allows implementations to add a local range for iteration
@@ -561,19 +561,19 @@ namespace schnek {
        * @brief For each grid registration ID, this stores the local
        * list of grids for each allocation range
        */
-      std::map<long, std::list<internal::pGridWrapper>> grids;
+      std::map<long, std::vector<internal::pGridWrapper>> grids;
 
       /**
        * @brief For each projected registration ID, this stores the local
        * list of projected grids for each allocation range
        */
-      std::map<long, std::list<internal::pGridWrapper>> projectedGrids;
+      std::map<long, std::vector<internal::pGridWrapper>> projectedGrids;
 
       struct ProjectedRegistrationInterface : public Unique<ProjectedRegistrationInterface> {
           virtual ~ProjectedRegistrationInterface() = default;
           virtual internal::pGridWrapper makeGrid(const RangeType &fullRange, const DomainType &fullDomain) = 0;
           virtual internal::pGridWrapper ensureSharedGrid(
-              const RangeType &fullRange, const DomainType &fullDomain, std::list<internal::pGridWrapper> &gridList
+              const RangeType &fullRange, const DomainType &fullDomain, std::vector<internal::pGridWrapper> &gridList
           ) = 0;
           /**
            * Reset the union range state so that the next ensureSharedGrid call
@@ -622,7 +622,7 @@ namespace schnek {
           }
 
           internal::pGridWrapper ensureSharedGrid(
-              const RangeType &fullRange, const DomainType &fullDomain, std::list<internal::pGridWrapper> &gridList
+              const RangeType &fullRange, const DomainType &fullDomain, std::vector<internal::pGridWrapper> &gridList
           ) override {
             bool expanded = updateUnion(fullRange, fullDomain);
             if (expanded || !sharedGrid) {
@@ -782,7 +782,7 @@ namespace schnek {
 
     // iterators contains an iterator for each grid registration
     // Each iterator iterates over the range allocations
-    using ListIterator = typename std::list<internal::pGridWrapper>::const_iterator;
+    using ListIterator = typename std::vector<internal::pGridWrapper>::const_iterator;
     std::vector<ListIterator> iterators;
     iterators.reserve(selectedLists.size());
     for (auto listPtr : selectedLists) {
@@ -907,7 +907,8 @@ namespace schnek {
     long id = registration->getId();
     registeredFields[id] = registration;
 
-    std::list<internal::pGridWrapper> gridList;
+    std::vector<internal::pGridWrapper> gridList;
+    gridList.reserve(ranges.size());
     for (const auto &localRange : ranges) {
       gridList.push_back(registration->makeGrid(localRange.range, localRange.domain));
     }
@@ -927,7 +928,8 @@ namespace schnek {
     long id = registration->getId();
     registeredFields[id] = registration;
 
-    std::list<internal::pGridWrapper> gridList;
+    std::vector<internal::pGridWrapper> gridList;
+    gridList.reserve(ranges.size());
     for (const auto &localRange : ranges) {
       RangeType intersection;
       bool overlaps = true;
@@ -998,7 +1000,8 @@ namespace schnek {
     long id = registration->getId();
     projectedRegisteredFields[id] = registration;
 
-    std::list<internal::pGridWrapper> gridList;
+    std::vector<internal::pGridWrapper> gridList;
+    gridList.reserve(ranges.size());
     for (const auto &localRange : ranges) {
       gridList.push_back(registration->ensureSharedGrid(localRange.range, localRange.domain, gridList));
     }
@@ -1062,14 +1065,14 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   typename DomainDecomposition<rank, CheckingPolicy>::GridContext
   DomainDecomposition<rank, CheckingPolicy>::getGridContext(std::initializer_list<RegistrationVariant> registrations) {
-    std::vector<const std::list<internal::pGridWrapper> *> selectedLists;
+    std::vector<const std::vector<internal::pGridWrapper> *> selectedLists;
     selectedLists.reserve(registrations.size());
 
     for (const auto &registration : registrations) {
       std::visit(
           [&](const auto &typedReg) {
             using RegType = std::decay_t<decltype(typedReg)>;
-            const std::map<long, std::list<internal::pGridWrapper>> *targetMap = nullptr;
+            const std::map<long, std::vector<internal::pGridWrapper>> *targetMap = nullptr;
             if constexpr (std::is_same<RegType, GridRegistration>::value) {
               targetMap = &grids;
             } else {
@@ -1111,7 +1114,7 @@ namespace schnek {
       }
     }
 
-    std::vector<const std::list<internal::pGridWrapper> *> selectedLists;
+    std::vector<const std::vector<internal::pGridWrapper> *> selectedLists;
     selectedLists.reserve(registrations.size());
 
     for (const auto &registration : registrations) {
@@ -1141,7 +1144,7 @@ namespace schnek {
 
     std::map<std::array<ptrdiff_t, projRank * 2>, std::size_t> uniqueIndex;
 
-    using ListIterator = typename std::list<internal::pGridWrapper>::const_iterator;
+    using ListIterator = typename std::vector<internal::pGridWrapper>::const_iterator;
     std::vector<ListIterator> iterators;
     iterators.reserve(selectedLists.size());
     for (auto listPtr : selectedLists) {
@@ -1274,19 +1277,19 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  std::map<long, std::list<internal::pGridWrapper>> &DomainDecomposition<rank, CheckingPolicy>::getGridStorage() {
+  std::map<long, std::vector<internal::pGridWrapper>> &DomainDecomposition<rank, CheckingPolicy>::getGridStorage() {
     return grids;
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  std::map<long, std::list<internal::pGridWrapper>> &DomainDecomposition<rank, CheckingPolicy>::getProjectedGridStorage(
+  std::map<long, std::vector<internal::pGridWrapper>> &DomainDecomposition<rank, CheckingPolicy>::getProjectedGridStorage(
   ) {
     return projectedGrids;
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void DomainDecomposition<rank, CheckingPolicy>::copyProjectedGridOverlaps(
-      const std::map<long, std::list<internal::pGridWrapper>> &oldProjectedGrids
+      const std::map<long, std::vector<internal::pGridWrapper>> &oldProjectedGrids
   ) {
     for (const auto &oldEntry : oldProjectedGrids) {
       long id = oldEntry.first;

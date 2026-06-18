@@ -324,7 +324,7 @@ namespace schnek {
        *      replicas see identical data.
        */
       void redistributeProjectedGrids(
-          const std::map<long, std::list<internal::pGridWrapper>> &oldProjectedGrids,
+          const std::map<long, std::vector<internal::pGridWrapper>> &oldProjectedGrids,
           const ProcRanges &oldRanges,
           const ProcRanges &newRanges
       );
