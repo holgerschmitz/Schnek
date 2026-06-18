@@ -261,8 +261,10 @@ namespace schnek {
       void accumulateWithInteriorBounds(
           GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
       );
-      std::vector<std::function<void(ExchangeVisitor &)>> exchangeInitializers;
-      std::vector<std::function<void(AccumulateVisitor &)>> accumulateInitializers;
+      
+      std::unique_ptr<ExchangeVisitor> exchangeVisitor;
+      std::unique_ptr<AccumulateVisitor> accumulateVisitor;
+
       schnek::ScratchBuffer mpiSendScratchBuffer;
       schnek::ScratchBuffer mpiRecvScratchBuffer;
 
