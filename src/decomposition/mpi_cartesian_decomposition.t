@@ -228,7 +228,7 @@ namespace schnek {
 
     // 5. Save old grid wrappers (take ownership)
     auto &gridStorage = this->getGridStorage();
-    std::map<long, std::list<internal::pGridWrapper>> oldGrids;
+    std::map<long, std::vector<internal::pGridWrapper>> oldGrids;
     for (auto &entry : gridStorage) {
       oldGrids[entry.first] = std::move(entry.second);
     }
@@ -237,7 +237,7 @@ namespace schnek {
     // This must be done before clearLocalRanges() resets the union state and
     // clears the projected grid lists.
     auto &projectedStorage = this->getProjectedGridStorage();
-    std::map<long, std::list<internal::pGridWrapper>> oldProjectedGrids;
+    std::map<long, std::vector<internal::pGridWrapper>> oldProjectedGrids;
     for (const auto &entry : projectedStorage) {
       oldProjectedGrids[entry.first] = entry.second;
     }
@@ -1325,7 +1325,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::redistributeProjectedGrids(
-      const std::map<long, std::list<internal::pGridWrapper>> &oldProjectedGrids,
+      const std::map<long, std::vector<internal::pGridWrapper>> &oldProjectedGrids,
       const ProcRanges &oldRanges,
       const ProcRanges &newRanges
   ) {
