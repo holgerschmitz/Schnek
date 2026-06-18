@@ -59,10 +59,13 @@ namespace schnek {
         template<typename GridType>
         void registerHandler() {
           auto key = std::type_index(typeid(GridType));
-          auto [_, inserted] = dispatchers.emplace(key, [](Derived &visitor, void *gridPtr, bool useFieldInfo) {
+          dispatchers.emplace(key, [](Derived &visitor, void *gridPtr, bool useFieldInfo) {
             visitor.template handle<GridType>(*static_cast<GridType *>(gridPtr), useFieldInfo);
           });
-          (void)inserted;
+        }
+
+        bool empty() const {
+          return dispatchers.empty();
         }
 
       private:

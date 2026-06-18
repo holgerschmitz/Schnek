@@ -913,14 +913,19 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<class GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerExchangeHandler() {
-    exchangeInitializers.emplace_back([](ExchangeVisitor &visitor) { visitor.template registerHandler<GridType>(); });
+    if (exchangeVisitor.get() == nullptr) {
+      exchangeVisitor = std::make_unique<ExchangeVisitor>(*this);
+    }
+    exchangeVisitor->template registerHandler<GridType>();
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<class GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerAccumulateHandler() {
-    accumulateInitializers.emplace_back([](AccumulateVisitor &visitor) { visitor.template registerHandler<GridType>(); }
-    );
+    if (accumulateVisitor.get() == nullptr) {
+      accumulateVisitor = std::make_unique<AccumulateVisitor>(*this);
+    }
+    accumulateVisitor->template registerHandler<GridType>();
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -1523,32 +1528,22 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchangeGrid(
       const internal::pGridWrapper &wrapper, bool useFieldInfo
   ) {
-    if (exchangeInitializers.empty()) {
+    if (exchangeVisitor.get() == nullptr || exchangeVisitor->empty()) {
       SCHNECK_FAIL("No registered grids available for exchange");
     }
 
-    ExchangeVisitor visitor(*this);
-    for (auto &initializer : exchangeInitializers) {
-      initializer(visitor);
-    }
-
-    wrapper->accept(visitor, useFieldInfo);
+    wrapper->accept(*exchangeVisitor, useFieldInfo);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::accumulate(
       const internal::pGridWrapper &wrapper, bool useFieldInfo
   ) {
-    if (accumulateInitializers.empty()) {
+    if (accumulateVisitor.get() == nullptr || accumulateVisitor->empty()) {
       SCHNECK_FAIL("No registered grids available for accumulate");
     }
 
-    AccumulateVisitor visitor(*this);
-    for (auto &initializer : accumulateInitializers) {
-      initializer(visitor);
-    }
-
-    wrapper->accept(visitor, useFieldInfo);
+    wrapper->accept(*accumulateVisitor, useFieldInfo);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
