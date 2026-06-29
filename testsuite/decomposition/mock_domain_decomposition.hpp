@@ -45,6 +45,8 @@ namespace schnek {
           (void)useFieldInfo;
         }
 
+        void migrateParticles(const schnek::internal::pParticleWrapper &wrapper) override { (void)wrapper; }
+
         double avgReduce(double value) const override { return value; }
         int avgReduce(int value) const override { return value; }
         long avgReduce(long value) const override { return value; }

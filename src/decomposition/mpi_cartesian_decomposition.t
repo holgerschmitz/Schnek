@@ -1567,6 +1567,19 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::migrateParticles(
+      const internal::pParticleWrapper & /*wrapper*/
+  ) {
+    // TODO(T-008): implement MPI particle migration (design sections 5.2/5.3).
+    //
+    // The infrastructure required by this step is in place: particle
+    // registration, per-local-range container storage, fixed-size byte
+    // serialisation and the public migrate() surface. The per-particle bounds
+    // test and the dimension-by-dimension MPI exchange are intentionally
+    // deferred to the next implementation step.
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::RangeType
   MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getLocalInnerRange() const {
     typename RangeType::LimitType lo = this->globalRange.getLo();

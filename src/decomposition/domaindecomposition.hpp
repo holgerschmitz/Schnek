@@ -61,6 +61,7 @@
 #include "../grid/range.hpp"
 #include "../util/exceptions.hpp"
 #include "detail/grid_factory.hpp"
+#include "detail/particle_factory.hpp"
 
 namespace schnek {
   namespace internal {
@@ -445,6 +446,28 @@ namespace schnek {
        */
       void exchange(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true);
 
+      /**
+       * Migrate the particles of a single container to the process and container
+       * that now owns them.
+       *
+       * This is the virtual primitive implemented by each backend. It is called
+       * once per container (never once per particle); the per-particle work is
+       * done by a statically-typed handler recovered through the particle
+       * visitor.
+       */
+      virtual void migrateParticles(const internal::pParticleWrapper &wrapper) = 0;
+
+      /**
+       * Migrate every particle of a registration that has left its owning local
+       * range, using a single registration.
+       */
+      void migrate(ParticleRegistration registration);
+
+      /**
+       * Migrate the particles of multiple registrations.
+       */
+      void migrate(std::initializer_list<ParticleRegistration> registrations);
+
     protected:
       typedef Grid<double, rank> InternalGridType;
       /// The global grid size
@@ -490,6 +513,16 @@ namespace schnek {
        * point to the same shared grid).
        */
       std::map<long, std::vector<internal::pGridWrapper>> &getProjectedGridStorage();
+
+      /**
+       * Get mutable access to the particle container storage.
+       *
+       * Each entry maps a particle registration ID to the list of particle
+       * container wrappers (one per local allocation range). Exposed to derived
+       * backends so that `migrateParticles` and `balanceLoad` can reach the
+       * containers.
+       */
+      std::map<long, std::vector<internal::pParticleWrapper>> &getParticleStorage();
 
       /**
        * Copy overlapping data from old projected grids into the newly-allocated
@@ -548,6 +581,22 @@ namespace schnek {
           const GridFactory<GridType> &factory, const std::array<size_t, GridType::Rank> &axes
       );
 
+      /**
+       * Register a particle container by passing a factory and a position
+       * accessor.
+       *
+       * The decomposition will create one container instance for each local
+       * range. The accessor maps a particle to its continuous grid position and
+       * is captured into the wrapper type so that bounds tests inline.
+       *
+       * A `ParticleRegistration` is passed back for future reference, used with
+       * `migrate` and the particle iteration contexts.
+       */
+      template<class ContainerType, class PositionAccessor>
+      ParticleRegistration registerParticleDataImpl(
+          const ParticleContainerFactory<ContainerType> &factory, PositionAccessor accessor
+      );
+
     private:
       struct LocalRangeInfo {
           RangeType range;
@@ -568,6 +617,20 @@ namespace schnek {
        * list of projected grids for each allocation range
        */
       std::map<long, std::vector<internal::pGridWrapper>> projectedGrids;
+
+      using pParticleRegistrationInterface = internal::pParticleRegistrationInterface<rank, CheckingPolicy>;
+
+      /**
+       * @brief For each particle registration ID, this stores the factory used
+       * to create containers for new local ranges.
+       */
+      std::map<long, pParticleRegistrationInterface> registeredParticles;
+
+      /**
+       * @brief For each particle registration ID, this stores the local list of
+       * particle containers, one per allocation range.
+       */
+      std::map<long, std::vector<internal::pParticleWrapper>> particleContainers;
 
       struct ProjectedRegistrationInterface : public Unique<ProjectedRegistrationInterface> {
           virtual ~ProjectedRegistrationInterface() = default;
@@ -1063,6 +1126,57 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  void DomainDecomposition<rank, CheckingPolicy>::migrate(ParticleRegistration registration) {
+    auto containerIt = particleContainers.find(registration.id);
+    if (containerIt == particleContainers.end()) {
+      SCHNECK_FAIL("Unknown particle registration id: " << registration.id);
+    }
+
+    for (const auto &wrapper : containerIt->second) {
+      if (!wrapper) {
+        continue;
+      }
+      this->migrateParticles(wrapper);
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void DomainDecomposition<rank, CheckingPolicy>::migrate(
+      std::initializer_list<ParticleRegistration> registrations
+  ) {
+    for (const auto &registration : registrations) {
+      migrate(registration);
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<class ContainerType, class PositionAccessor>
+  inline ParticleRegistration DomainDecomposition<rank, CheckingPolicy>::registerParticleDataImpl(
+      const ParticleContainerFactory<ContainerType> &factory, PositionAccessor accessor
+  ) {
+    using Particle = typename ParticleContainerTraits<ContainerType>::value_type;
+    static_assert(
+        has_particle_serializer<Particle>::value,
+        "Particle type is not serialisable: make it trivially copyable or specialise ParticleSerializer<Particle>."
+    );
+
+    using Registration = internal::ParticleRegistrationImpl<rank, CheckingPolicy, ContainerType, PositionAccessor>;
+    auto registration = std::make_shared<Registration>(factory, std::move(accessor));
+    long id = registration->getId();
+    registeredParticles[id] = registration;
+
+    std::vector<internal::pParticleWrapper> containerList;
+    containerList.reserve(ranges.size());
+    for (const auto &localRange : ranges) {
+      containerList.push_back(registration->makeContainer(localRange.range, localRange.domain));
+    }
+
+    particleContainers[id] = std::move(containerList);
+
+    return ParticleRegistration{id};
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   typename DomainDecomposition<rank, CheckingPolicy>::GridContext
   DomainDecomposition<rank, CheckingPolicy>::getGridContext(std::initializer_list<RegistrationVariant> registrations) {
     std::vector<const std::vector<internal::pGridWrapper> *> selectedLists;
@@ -1212,6 +1326,10 @@ namespace schnek {
       auto &gridList = projectedGrids[id];
       gridList.push_back(reg.second->ensureSharedGrid(range, domain, gridList));
     }
+    for (auto &reg : registeredParticles) {
+      long id = reg.first;
+      particleContainers[id].push_back(reg.second->makeContainer(range, domain));
+    }
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -1268,6 +1386,9 @@ namespace schnek {
     for (auto &g : projectedGrids) {
       g.second.clear();
     }
+    for (auto &p : particleContainers) {
+      p.second.clear();
+    }
     // Reset each projected registration's union state so that the next
     // addLocalRange() call creates a fresh grid sized to the new range
     // rather than reusing the stale sharedGrid from before rebalancing.
@@ -1285,6 +1406,12 @@ namespace schnek {
   std::map<long, std::vector<internal::pGridWrapper>> &DomainDecomposition<rank, CheckingPolicy>::getProjectedGridStorage(
   ) {
     return projectedGrids;
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  std::map<long, std::vector<internal::pParticleWrapper>> &
+  DomainDecomposition<rank, CheckingPolicy>::getParticleStorage() {
+    return particleContainers;
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>

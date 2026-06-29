@@ -142,6 +142,22 @@ namespace schnek {
       void exchangeGrid(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
       void accumulate(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
 
+      /**
+       * Register a particle container by passing a factory and a position
+       * accessor.
+       *
+       * The serial decomposition creates a single container covering the global
+       * range.
+       */
+      template<class ContainerType, class PositionAccessor>
+      ParticleRegistration registerParticleData(
+          const ParticleContainerFactory<ContainerType> &factory, PositionAccessor accessor
+      ) {
+        return this->registerParticleDataImpl(factory, std::move(accessor));
+      }
+
+      void migrateParticles(const internal::pParticleWrapper &wrapper) override;
+
     private:
       class ExchangeVisitor;
       class AccumulateVisitor;
@@ -403,6 +419,14 @@ namespace schnek {
     }
 
     wrapper->accept(*accumulateVisitor, useFieldInfo);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void SerialDomainDecomposition<rank, CheckingPolicy>::migrateParticles(
+      const internal::pParticleWrapper & /*wrapper*/
+  ) {
+    // A single process owns the whole domain, so no particle can ever leave its
+    // local range. Migration is a no-op for the serial backend.
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>

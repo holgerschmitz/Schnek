@@ -187,6 +187,23 @@ namespace schnek {
       void exchangeGrid(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
       void accumulate(const internal::pGridWrapper &wrapper, bool useFieldInfo = true) override;
 
+      /**
+       * Register a particle container by passing a factory and a position
+       * accessor.
+       *
+       * The decomposition creates one container per local range (one for this
+       * single-region backend). The accessor maps a particle to its continuous
+       * grid position.
+       */
+      template<class ContainerType, class PositionAccessor>
+      ParticleRegistration registerParticleData(
+          const ParticleContainerFactory<ContainerType> &factory, PositionAccessor accessor
+      ) {
+        return this->registerParticleDataImpl(factory, std::move(accessor));
+      }
+
+      void migrateParticles(const internal::pParticleWrapper &wrapper) override;
+
     private:
       /// The MPI context
       MpiContext &mpi;
