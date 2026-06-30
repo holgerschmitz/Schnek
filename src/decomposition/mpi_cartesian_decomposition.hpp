@@ -18,6 +18,8 @@
 
 #include <mpi.h>
 
+#include <cmath>
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <vector>
@@ -199,7 +201,9 @@ namespace schnek {
       ParticleRegistration registerParticleData(
           const ParticleContainerFactory<ContainerType> &factory, PositionAccessor accessor
       ) {
-        return this->registerParticleDataImpl(factory, std::move(accessor));
+        auto registration = this->registerParticleDataImpl(factory, accessor);
+        registerMigrateHandler<ContainerType, PositionAccessor>();
+        return registration;
       }
 
       void migrateParticles(const internal::pParticleWrapper &wrapper) override;
@@ -281,6 +285,19 @@ namespace schnek {
       
       std::unique_ptr<ExchangeVisitor> exchangeVisitor;
       std::unique_ptr<AccumulateVisitor> accumulateVisitor;
+
+      /**
+       * Migrate particles of a single container to the processes that now own
+       * them. The visitor recovers the concrete container/accessor types so the
+       * per-particle bounds test, serialisation and movement are inlined.
+       */
+      class MigrateVisitor;
+      template<class ContainerType, class PositionAccessor>
+      void registerMigrateHandler();
+      template<typename WrapperImpl>
+      void migrateTyped(WrapperImpl &wrapper);
+
+      std::unique_ptr<MigrateVisitor> migrateVisitor;
 
       schnek::ScratchBuffer mpiSendScratchBuffer;
       schnek::ScratchBuffer mpiRecvScratchBuffer;
