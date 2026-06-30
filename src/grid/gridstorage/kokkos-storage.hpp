@@ -78,6 +78,16 @@ namespace schnek {
       /// The grid range type
       typedef Range<ptrdiff_t, rank_t> RangeType;
 
+      /// The underlying Kokkos view type
+      typedef Kokkos::View<typename internal::KokkosViewType<T, rank_t>::type, ViewProperties...> ViewType;
+
+      /// The memory space of the underlying Kokkos view
+      typedef typename ViewType::memory_space MemorySpace;
+
+      /// True if the underlying memory is accessible from host code
+      static constexpr bool host_accessible =
+          Kokkos::SpaceAccessibility<Kokkos::HostSpace, MemorySpace>::accessible;
+
     private:
       typedef std::function<void(const RangeType &)> UpdaterType;
       typedef std::map<void *, UpdaterType> UpdaterMapType;
@@ -88,7 +98,7 @@ namespace schnek {
       /// The dimensions of the grid `dims = high - low + 1`
       IndexType dims;
 
-      Kokkos::View<typename internal::KokkosViewType<T, rank_t>::type, ViewProperties...> view;
+      ViewType view;
 
       /// A map of updaters that are called when the grid is resized
       std::shared_ptr<UpdaterMapType> updaters;
@@ -158,7 +168,40 @@ namespace schnek {
       SCHNEK_INLINE size_t getDims(size_t k) const { return this->dims[k]; }
 
       /// Get the length of the allocated array
-      SCHNEK_INLINE size_t getSize() const { return this->size; }
+      SCHNEK_INLINE size_t getSize() const { return this->view.size(); }
+
+      /// Get a reference to the underlying Kokkos view
+      SCHNEK_INLINE ViewType &getKokkosView() { return this->view; }
+
+      /// Get a const reference to the underlying Kokkos view
+      SCHNEK_INLINE const ViewType &getKokkosView() const { return this->view; }
+
+      /**
+       * @brief Get a raw pointer to the underlying data
+       *
+       * Only available when the memory space is accessible from host code.
+       */
+      template<typename V = ViewType>
+      SCHNEK_INLINE std::enable_if_t<
+          Kokkos::SpaceAccessibility<Kokkos::HostSpace, typename V::memory_space>::accessible, T *>
+      getRawData() {
+        return this->view.data();
+      }
+
+      /// Create a host-accessible mirror of the underlying view
+      auto createHostMirror() const { return Kokkos::create_mirror_view(this->view); }
+
+      /// Copy the device data into a previously created host mirror
+      template<typename HostView>
+      void deepCopyToHost(HostView &hostView) const {
+        Kokkos::deep_copy(hostView, this->view);
+      }
+
+      /// Copy data from a host mirror into the device view
+      template<typename HostView>
+      void deepCopyFromHost(const HostView &hostView) {
+        Kokkos::deep_copy(this->view, hostView);
+      }
 
       /**
        * @brief resizes to grid with lower indices low[0],...,low[rank-1]
@@ -167,14 +210,19 @@ namespace schnek {
       void resize(const IndexType &low, const IndexType &high);
 
       /**
+       * @brief resizes the grid to the given range
+       */
+      void resize(const RangeType &range) { this->resize(range.getLo(), range.getHi()); }
+
+      /**
        * @brief returns the stride of the specified dimension
        */
       SCHNEK_INLINE ptrdiff_t stride(size_t dim) const;
 
     private:
       template<std::size_t... I>
-      auto createKokkosViewImpl(const IndexType &a, std::index_sequence<I...>) {
-        Kokkos::View<typename internal::KokkosViewType<T, rank_t>::type, ViewProperties...> view("schnek", a[I]...);
+      ViewType createKokkosViewImpl(const IndexType &a, std::index_sequence<I...>) {
+        ViewType view("schnek", a[I]...);
         return view;
       }
 

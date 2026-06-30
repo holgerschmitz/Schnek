@@ -429,6 +429,69 @@ BOOST_FIXTURE_TEST_CASE( copy_then_resize, GridTest )
   test_copy_resize(g);
 }
 
+BOOST_AUTO_TEST_CASE( host_accessible_flag )
+{
+  bool accessible = GridStorage<double, 2>::host_accessible;
+  BOOST_CHECK(accessible);
+}
+
+BOOST_FIXTURE_TEST_CASE( get_size, GridTest )
+{
+  typedef schnek::Grid<double, 3, GridBoostTestCheck, GridStorage> GridType;
+  GridType::IndexType lo, hi;
+  random_extent<3>(lo, hi);
+  GridType g(lo, hi);
+
+  size_t expected = 1;
+  for (size_t d = 0; d < 3; ++d)
+  {
+    expected *= (size_t)(hi[d] - lo[d] + 1);
+  }
+  BOOST_CHECK_EQUAL(g.getSize(), expected);
+}
+
+BOOST_FIXTURE_TEST_CASE( raw_data_access, GridTest )
+{
+  typedef schnek::Grid<double, 2, GridBoostTestCheck, GridStorage> GridType;
+  GridType::IndexType lo, hi;
+  random_extent<2>(lo, hi);
+  GridType g(lo, hi);
+  BOOST_CHECK(g.getRawData() != nullptr);
+}
+
+BOOST_FIXTURE_TEST_CASE( kokkos_view_access, GridTest )
+{
+  typedef schnek::Grid<double, 2, GridBoostTestCheck, GridStorage> GridType;
+  GridType::IndexType lo, hi;
+  random_extent<2>(lo, hi);
+  GridType g(lo, hi);
+
+  auto &view = g.getKokkosView();
+  BOOST_CHECK_EQUAL((ptrdiff_t)view.extent(0), hi[0] - lo[0] + 1);
+  BOOST_CHECK_EQUAL((ptrdiff_t)view.extent(1), hi[1] - lo[1] + 1);
+
+  // A value written through the grid is visible in the view (offset by lo)
+  g(lo[0], lo[1]) = 42.0;
+  BOOST_CHECK_EQUAL(view(0, 0), 42.0);
+}
+
+BOOST_FIXTURE_TEST_CASE( host_mirror_roundtrip, GridTest )
+{
+  typedef GridStorage<double, 2> StorageType;
+  StorageType::IndexType lo, hi;
+  random_extent<2>(lo, hi);
+  StorageType storage(lo, hi);
+
+  storage.get(lo) = 2.71;
+  auto mirror = storage.createHostMirror();
+  storage.deepCopyToHost(mirror);
+  BOOST_CHECK_EQUAL(mirror(0, 0), 2.71);
+
+  mirror(0, 0) = 1.41;
+  storage.deepCopyFromHost(mirror);
+  BOOST_CHECK_EQUAL(storage.get(lo), 1.41);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
