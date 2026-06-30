@@ -161,6 +161,35 @@ namespace schnek {
           return nullptr;
         }
 
+        /// Get the underlying Kokkos view if provided by the storage policy
+        template<typename S = StoragePolicy>
+        SCHNEK_INLINE auto getKokkosView()
+            -> std::enable_if_t<
+                concepts::GridStorageConceptCondition<S>::has_get_kokkos_view_method,
+                decltype(std::declval<S&>().getKokkosView())> {
+          return this->storage.getKokkosView();
+        }
+
+        /// Get the underlying Kokkos view (const) if provided by the storage policy
+        template<typename S = StoragePolicy>
+        SCHNEK_INLINE auto getKokkosView() const
+            -> std::enable_if_t<
+                concepts::GridStorageConceptCondition<S>::has_get_kokkos_view_method,
+                decltype(std::declval<const S&>().getKokkosView())> {
+          return this->storage.getKokkosView();
+        }
+
+        /// Fallback overload that triggers a compilation error when getKokkosView is unavailable
+        template<typename S = StoragePolicy>
+        SCHNEK_INLINE auto getKokkosView()
+            -> std::enable_if_t<!concepts::GridStorageConceptCondition<S>::has_get_kokkos_view_method, T*> {
+          static_assert(
+              concepts::GridStorageConceptCondition<S>::has_get_kokkos_view_method,
+              "GridBase::getKokkosView() requires the storage policy to implement getKokkosView()"
+          );
+          return nullptr;
+        }
+
         /** get access, writing */
         template<template<size_t> class ArrayCheckingPolicy>
         SCHNEK_INLINE T& get(const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos);  // write
