@@ -22,6 +22,7 @@
 #include <cstddef>
 #include <functional>
 #include <map>
+#include <set>
 #include <vector>
 
 namespace schnek {
@@ -203,6 +204,7 @@ namespace schnek {
       ) {
         auto registration = this->registerParticleDataImpl(factory, accessor);
         registerMigrateHandler<ContainerType, PositionAccessor>();
+        registerRedistributeParticleHandler<ContainerType, PositionAccessor>();
         return registration;
       }
 
@@ -298,6 +300,35 @@ namespace schnek {
       void migrateTyped(WrapperImpl &wrapper);
 
       std::unique_ptr<MigrateVisitor> migrateVisitor;
+
+      /**
+       * Redistribute the particles of a single container between the old and
+       * new sub-domain layouts during `balanceLoad`.
+       *
+       * Reuses the serialise/exchange/insert path of migration but routes each
+       * particle to its new owner using the same Cartesian transfer plan that
+       * drives grid redistribution, so particles may move more than one
+       * sub-domain when boundaries shift.
+       */
+      class RedistributeParticleVisitor;
+      template<class ContainerType, class PositionAccessor>
+      void registerRedistributeParticleHandler();
+      template<typename WrapperImpl>
+      void redistributeParticlesTyped(
+          WrapperImpl &oldWrapper,
+          WrapperImpl &newWrapper,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
+      );
+
+      void redistributeParticles(
+          const internal::pParticleWrapper &oldWrapper,
+          const internal::pParticleWrapper &newWrapper,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
+      );
+
+      std::vector<std::function<void(RedistributeParticleVisitor &)>> redistributeParticleInitializers;
 
       schnek::ScratchBuffer mpiSendScratchBuffer;
       schnek::ScratchBuffer mpiRecvScratchBuffer;

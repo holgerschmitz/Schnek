@@ -8,7 +8,9 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <map>
 #include <optional>
+#include <set>
 #include <type_traits>
 #include <vector>
 
@@ -245,6 +247,15 @@ namespace schnek {
       oldProjectedGrids[entry.first] = entry.second;
     }
 
+    // 5c. Save old particle containers (take ownership). This must be done
+    // before clearLocalRanges() destroys the per-range containers, otherwise
+    // every particle would be lost when the new layout is created.
+    auto &particleStorage = this->getParticleStorage();
+    std::map<long, std::vector<internal::pParticleWrapper>> oldParticles;
+    for (auto &entry : particleStorage) {
+      oldParticles[entry.first] = std::move(entry.second);
+    }
+
     // 6. Clear all local ranges and recreate with new layout.
     // clearLocalRanges() also resets the union state of every projected
     // registration so that addLocalRange() builds fresh grids for the new range.
@@ -266,6 +277,27 @@ namespace schnek {
 
       if (oldWrapper && newWrapper) {
         redistributeGrid(oldWrapper, newWrapper, sendPlan, recvPlan);
+      }
+    }
+
+    // 7b. Redistribute each registered particle container using the same
+    // Cartesian transfer plan. Fresh empty containers were created by
+    // addLocalRange(); particles are routed from the saved old containers to
+    // the process that owns them under the new layout.
+    for (auto &entry : particleStorage) {
+      long id = entry.first;
+      auto &newContainerList = entry.second;
+      auto oldParticleIt = oldParticles.find(id);
+
+      if (oldParticleIt == oldParticles.end() || oldParticleIt->second.empty() || newContainerList.empty()) {
+        continue;
+      }
+
+      auto oldWrapper = oldParticleIt->second.front();
+      auto newWrapper = newContainerList.front();
+
+      if (oldWrapper && newWrapper) {
+        redistributeParticles(oldWrapper, newWrapper, sendPlan, recvPlan);
       }
     }
 
@@ -1709,6 +1741,259 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         );
       }
     });
+#endif
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::RedistributeParticleVisitor
+      : public internal::ParticleVisitor<
+            typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::RedistributeParticleVisitor> {
+    public:
+      RedistributeParticleVisitor(
+          MpiCartesianDomainDecomposition &parentIn,
+          internal::pParticleWrapper newWrapperIn,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlanIn,
+          const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlanIn
+      )
+          : parent(parentIn), newWrapper(std::move(newWrapperIn)), sendPlan(sendPlanIn), recvPlan(recvPlanIn) {}
+
+      template<typename WrapperImpl>
+      void handle(WrapperImpl &oldWrapper) {
+        auto typedNewWrapper = std::dynamic_pointer_cast<WrapperImpl>(newWrapper);
+        SCHNEK_ASSERT(typedNewWrapper, "Particle container type mismatch during redistribution");
+        parent.template redistributeParticlesTyped<WrapperImpl>(oldWrapper, *typedNewWrapper, sendPlan, recvPlan);
+      }
+
+    private:
+      MpiCartesianDomainDecomposition &parent;
+      internal::pParticleWrapper newWrapper;
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan;
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan;
+  };
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<class ContainerType, class PositionAccessor>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerRedistributeParticleHandler() {
+    redistributeParticleInitializers.emplace_back([](RedistributeParticleVisitor &visitor) {
+      visitor.template registerHandler<internal::ParticleWrapperImpl<ContainerType, PositionAccessor>>();
+    });
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::redistributeParticles(
+      const internal::pParticleWrapper &oldWrapper,
+      const internal::pParticleWrapper &newWrapper,
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan,
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
+  ) {
+    if (redistributeParticleInitializers.empty()) {
+      SCHNECK_FAIL("No registered particle containers available for redistribution");
+    }
+
+    RedistributeParticleVisitor visitor(*this, newWrapper, sendPlan, recvPlan);
+    for (auto &initializer : redistributeParticleInitializers) {
+      initializer(visitor);
+    }
+
+    oldWrapper->accept(visitor);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename WrapperImpl>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::redistributeParticlesTyped(
+      WrapperImpl &oldWrapper,
+      WrapperImpl &newWrapper,
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan,
+      const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
+  ) {
+    using ContainerType = std::decay_t<decltype(oldWrapper.container)>;
+    using Traits = ParticleContainerTraits<ContainerType>;
+    using Particle = typename Traits::value_type;
+    using Serializer = ParticleSerializer<Particle>;
+
+    auto &oldContainer = oldWrapper.container;
+    auto &newContainer = newWrapper.container;
+    auto &accessor = oldWrapper.accessor;
+
+    constexpr std::size_t particleBytes = Serializer::size();
+    const int localRank = ComRank;
+
+    auto toIntCount = [](std::size_t count) -> int {
+      if (count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+        SCHNECK_FAIL("Particle redistribution block too large for MPI count");
+      }
+      return static_cast<int>(count);
+    };
+
+    // The owning cell of a particle in every dimension.
+    auto owningCell = [&accessor](const Particle &p) -> LimitType {
+      LimitType cell;
+      const auto pos = accessor(p);
+      for (size_t d = 0; d < rank; ++d) {
+        cell[d] = static_cast<ptrdiff_t>(std::floor(pos[d]));
+      }
+      return cell;
+    };
+
+    auto blockContains = [](const TransferBlock<rank, CheckingPolicy> &block, const LimitType &cell) -> bool {
+      for (size_t d = 0; d < rank; ++d) {
+        if (cell[d] < block.range.getLo()[d] || cell[d] > block.range.getHi()[d]) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    // Partner ranks are taken from the transfer plan (not from the particle
+    // counts) so that the count exchange stays symmetric even when a block
+    // carries no particles.
+    std::set<int> sendRanks;
+    for (const auto &block : sendPlan) {
+      if (block.mpiRank != localRank) {
+        sendRanks.insert(block.mpiRank);
+      }
+    }
+    std::set<int> recvRanks;
+    for (const auto &block : recvPlan) {
+      if (block.mpiRank != localRank) {
+        recvRanks.insert(block.mpiRank);
+      }
+    }
+
+    std::map<int, std::vector<std::byte>> sendBuffers;
+    for (int r : sendRanks) {
+      sendBuffers[r];  // ensure an entry exists for every send partner
+    }
+
+    // Route every old particle to its new owner: a local owner is inserted
+    // straight into the new container, a remote owner is serialised into the
+    // partner's send buffer.
+    Traits::forEach(oldContainer, [&](const Particle &p) {
+      const LimitType cell = owningCell(p);
+      int dest = 0;
+      bool found = false;
+      for (const auto &block : sendPlan) {
+        if (blockContains(block, cell)) {
+          dest = block.mpiRank;
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        SCHNECK_FAIL("Particle owning cell lies outside the old local range during redistribution");
+      }
+
+      if (dest == localRank) {
+        Traits::insert(newContainer, p);
+        return;
+      }
+
+      std::vector<std::byte> &buffer = sendBuffers[dest];
+      const std::size_t offset = buffer.size();
+      buffer.resize(offset + particleBytes);
+      Serializer::serialize(p, buffer.data() + offset);
+    });
+
+    // Phase 1: exchange particle counts with every partner.
+    std::map<int, int> sendCounts;
+    std::map<int, int> recvCounts;
+    std::vector<MPI_Request> countRequests;
+
+    for (int r : recvRanks) {
+      int &slot = recvCounts[r];
+      slot = 0;
+      MPI_Request req;
+      int errorCode = mpi.MPI_Irecv(&slot, 1, MPI_INT, r, 0, comm, &req);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during particle redistribution");
+      countRequests.push_back(req);
+    }
+
+    for (int r : sendRanks) {
+      int &slot = sendCounts[r];
+      slot = toIntCount(sendBuffers[r].size() / particleBytes);
+      MPI_Request req;
+      int errorCode = mpi.MPI_Isend(&slot, 1, MPI_INT, r, 0, comm, &req);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during particle redistribution");
+      countRequests.push_back(req);
+    }
+
+    if (!countRequests.empty()) {
+      int errorCode =
+          mpi.MPI_Waitall(static_cast<int>(countRequests.size()), countRequests.data(), MPI_STATUSES_IGNORE);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during particle redistribution");
+    }
+
+    // Phase 2: exchange the serialised payloads.
+    std::map<int, std::vector<std::byte>> recvBuffers;
+    std::vector<MPI_Request> payloadRequests;
+
+    for (int r : recvRanks) {
+      const std::size_t bytes = static_cast<std::size_t>(recvCounts[r]) * particleBytes;
+      std::vector<std::byte> &buffer = recvBuffers[r];
+      buffer.resize(bytes);
+      if (bytes > 0) {
+        MPI_Request req;
+        int errorCode = mpi.MPI_Irecv(buffer.data(), toIntCount(bytes), MPI_BYTE, r, 1, comm, &req);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during particle redistribution");
+        payloadRequests.push_back(req);
+      }
+    }
+
+    for (int r : sendRanks) {
+      std::vector<std::byte> &buffer = sendBuffers[r];
+      if (!buffer.empty()) {
+        MPI_Request req;
+        int errorCode = mpi.MPI_Isend(buffer.data(), toIntCount(buffer.size()), MPI_BYTE, r, 1, comm, &req);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during particle redistribution");
+        payloadRequests.push_back(req);
+      }
+    }
+
+    if (!payloadRequests.empty()) {
+      int errorCode =
+          mpi.MPI_Waitall(static_cast<int>(payloadRequests.size()), payloadRequests.data(), MPI_STATUSES_IGNORE);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during particle redistribution");
+    }
+
+    // Deserialise arrivals into the new container.
+    for (int r : recvRanks) {
+      const std::vector<std::byte> &buffer = recvBuffers[r];
+      const std::size_t count = buffer.size() / particleBytes;
+      for (std::size_t i = 0; i < count; ++i) {
+        Traits::insert(newContainer, Serializer::deserialize(buffer.data() + i * particleBytes));
+      }
+    }
+
+#ifndef NDEBUG
+    // Every particle now in the new container must be owned by this process's
+    // new local range. The new range is the bounding box of the receive plan,
+    // which tiles it exactly, so the check does not depend on `procRanges`
+    // having been updated yet.
+    if (!recvPlan.empty()) {
+      LimitType newLo = recvPlan.front().range.getLo();
+      LimitType newHi = recvPlan.front().range.getHi();
+      for (const auto &block : recvPlan) {
+        for (size_t d = 0; d < rank; ++d) {
+          if (block.range.getLo()[d] < newLo[d]) {
+            newLo[d] = block.range.getLo()[d];
+          }
+          if (block.range.getHi()[d] > newHi[d]) {
+            newHi[d] = block.range.getHi()[d];
+          }
+        }
+      }
+
+      Traits::forEach(newContainer, [&](const Particle &p) {
+        const LimitType cell = owningCell(p);
+        for (size_t d = 0; d < rank; ++d) {
+          SCHNEK_ASSERT(
+              cell[d] >= newLo[d] && cell[d] <= newHi[d],
+              "Redistributed particle is not owned by the new local range in dimension " << d
+          );
+        }
+      });
+    }
 #endif
   }
 
