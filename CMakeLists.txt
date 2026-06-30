@@ -110,6 +110,7 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/decomposition/test_mpi_cartesian_decomposition.cpp
     testsuite/decomposition/test_serial_decomposition.cpp
     testsuite/decomposition/detail/test_grid_factory.cpp
+    testsuite/decomposition/detail/test_grid_transfer.cpp
     testsuite/decomposition/detail/test_grid_visitor.cpp
     testsuite/computation/test_algorithm.cpp
     testsuite/diagnostic/test_hdfdiagnostic.cpp
