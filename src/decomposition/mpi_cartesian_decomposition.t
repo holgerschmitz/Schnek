@@ -19,6 +19,7 @@
 #include "../util/factor.hpp"
 #include "../util/interpolate1d.hpp"
 #include "../util/logger.hpp"
+#include "detail/grid_transfer.hpp"
 #include "detail/redistribution.hpp"
 #include "mpi_cartesian_decomposition.hpp"
 
@@ -1118,10 +1119,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       // Otherwise, pack into a temporary buffer
       sendBuffers.emplace_back(volume);
       auto &buffer = sendBuffers.back();
-      size_t idx = 0;
-      for (auto it = sendRange.begin(); it != sendRange.end(); ++it) {
-        buffer[idx++] = oldGrid[*it];
-      }
+      detail::GridTransfer<GridType>::pack(oldGrid, sendRange, buffer.data());
 
       MPI_Request req;
       int errorCode = mpi.MPI_Isend(buffer.data(), toIntCount(volume), mpiType, sendPlan[i].mpiRank, 0, comm, &req);
@@ -1136,9 +1134,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       }
 
       RangeTypeLocal copyRange(recvPlan[i].range);
-      for (auto it = copyRange.begin(); it != copyRange.end(); ++it) {
-        newGrid[*it] = oldGrid[*it];
-      }
+      detail::GridTransfer<GridType>::copy(oldGrid, newGrid, copyRange);
     }
 
     // Wait for all non-blocking operations to complete
@@ -1161,10 +1157,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       }
 
       const auto &buffer = recvBuffers[bufferIdx++];
-      size_t idx = 0;
-      for (auto it = recvRange.begin(); it != recvRange.end(); ++it) {
-        newGrid[*it] = buffer[idx++];
-      }
+      detail::GridTransfer<GridType>::unpack(newGrid, recvRange, buffer.data());
     }
   }
 
@@ -1311,10 +1304,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         sendBuffers.emplace_back(volume);
         auto &buf = sendBuffers.back();
         auto sendRange = makeTypedRange(sendPlan[i]);
-        size_t idx = 0;
-        for (auto it = sendRange.begin(); it != sendRange.end(); ++it) {
-          buf[idx++] = oldGrid[*it];
-        }
+        detail::GridTransfer<GridType>::pack(oldGrid, sendRange, buf.data());
         MPI_Request req;
         int errorCode = mpi.MPI_Isend(buf.data(), toIntCount(volume), mpiType, sendPlan[i].mpiRank, 1, comm, &req);
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during projected redistribution");
@@ -1325,9 +1315,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       for (size_t i = 0; i < recvPlan.size(); ++i) {
         if (recvPlan[i].mpiRank != localRank) continue;
         auto copyRange = makeTypedRange(recvPlan[i]);
-        for (auto it = copyRange.begin(); it != copyRange.end(); ++it) {
-          newGrid[*it] = oldGrid[*it];
-        }
+        detail::GridTransfer<GridType>::copy(oldGrid, newGrid, copyRange);
       }
 
       if (!requests.empty()) {
@@ -1343,10 +1331,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         if (volume == 0) continue;
         const auto &buf = recvBuffers[bufferIdx++];
         auto recvRange = makeTypedRange(recvPlan[i]);
-        size_t idx = 0;
-        for (auto it = recvRange.begin(); it != recvRange.end(); ++it) {
-          newGrid[*it] = buf[idx++];
-        }
+        detail::GridTransfer<GridType>::unpack(newGrid, recvRange, buf.data());
       }
     }
 
@@ -1366,18 +1351,12 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       if (volume > 0) {
         std::vector<ValueType> buf(volume);
         if (isCanonical) {
-          size_t idx = 0;
-          for (auto it = fullRange.begin(); it != fullRange.end(); ++it) {
-            buf[idx++] = newGrid[*it];
-          }
+          detail::GridTransfer<GridType>::pack(newGrid, fullRange, buf.data());
         }
         int errorCode = mpi.MPI_Bcast(buf.data(), toIntCount(volume), mpiType, 0, replicaComm);
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Bcast failed during projected redistribution");
         if (!isCanonical) {
-          size_t idx = 0;
-          for (auto it = fullRange.begin(); it != fullRange.end(); ++it) {
-            newGrid[*it] = buf[idx++];
-          }
+          detail::GridTransfer<GridType>::unpack(newGrid, fullRange, buf.data());
         }
       }
     }
@@ -2095,18 +2074,14 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
 
     // Helpers to pack/unpack a multi-dimensional range to/from a contiguous buffer for MPI communication.
     // buffer is assumed to be pre-allocated to the correct size (range volume).
+    // The element movement is delegated to the GridTransfer customisation point so that the
+    // same code path works for host- and device-resident storage backends.
     auto packRange = [&](RangeTypeLocal range, std::pmr::vector<ValueType> &buffer) {
-      size_t idx = 0;
-      for (auto it = range.begin(); it != range.end(); ++it) {
-        buffer[idx++] = grid[*it];
-      }
+      detail::GridTransfer<GridType>::pack(grid, range, buffer.data());
     };
 
     auto unpackRange = [&](RangeTypeLocal range, const std::pmr::vector<ValueType> &buffer) {
-      size_t idx = 0;
-      for (auto it = range.begin(); it != range.end(); ++it) {
-        grid[*it] = buffer[idx++];
-      }
+      detail::GridTransfer<GridType>::unpack(grid, range, buffer.data());
     };
 
     auto toIntCount = [](size_t count) -> int {
