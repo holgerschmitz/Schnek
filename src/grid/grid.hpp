@@ -74,6 +74,7 @@ namespace schnek {
         typedef typename CheckingPolicy::IndexType IndexType;
         typedef typename StoragePolicy::SizeType SizeType;
         typedef typename StoragePolicy::RangeType RangeType;
+        typedef StoragePolicy storage_type;
         enum { Rank = rank };
 
       public:
