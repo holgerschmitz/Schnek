@@ -109,6 +109,7 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/decomposition/mpi_test_context.cpp
     testsuite/decomposition/test_mpi_cartesian_decomposition.cpp
     testsuite/decomposition/test_kokkos_exchange.cpp
+    testsuite/decomposition/test_for_each_cell.cpp
     testsuite/decomposition/test_serial_decomposition.cpp
     testsuite/decomposition/detail/test_grid_factory.cpp
     testsuite/decomposition/detail/test_grid_transfer.cpp
