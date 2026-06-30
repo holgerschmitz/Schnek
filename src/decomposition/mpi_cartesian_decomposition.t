@@ -5,9 +5,12 @@
  *  Author: Holger Schmitz (holger@notjustphysics.com)
  */
 
+#include <cmath>
+#include <cstddef>
 #include <limits>
 #include <optional>
 #include <type_traits>
+#include <vector>
 
 #include "../diagnostic/diagnostic.hpp"
 #include "../util/exceptions.hpp"
@@ -929,6 +932,31 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::MigrateVisitor
+      : public internal::ParticleVisitor<
+            typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::MigrateVisitor> {
+    public:
+      explicit MigrateVisitor(MpiCartesianDomainDecomposition &parentIn) : parent(parentIn) {}
+
+      template<typename WrapperImpl>
+      void handle(WrapperImpl &wrapper) {
+        parent.template migrateTyped<WrapperImpl>(wrapper);
+      }
+
+    private:
+      MpiCartesianDomainDecomposition &parent;
+  };
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<class ContainerType, class PositionAccessor>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerMigrateHandler() {
+    if (migrateVisitor.get() == nullptr) {
+      migrateVisitor = std::make_unique<MigrateVisitor>(*this);
+    }
+    migrateVisitor->template registerHandler<internal::ParticleWrapperImpl<ContainerType, PositionAccessor>>();
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::RedistributeVisitor
       : public internal::GridVisitor<
             typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::RedistributeVisitor> {
@@ -1568,15 +1596,120 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::migrateParticles(
-      const internal::pParticleWrapper & /*wrapper*/
+      const internal::pParticleWrapper &wrapper
   ) {
-    // TODO(T-008): implement MPI particle migration (design sections 5.2/5.3).
-    //
-    // The infrastructure required by this step is in place: particle
-    // registration, per-local-range container storage, fixed-size byte
-    // serialisation and the public migrate() surface. The per-particle bounds
-    // test and the dimension-by-dimension MPI exchange are intentionally
-    // deferred to the next implementation step.
+    if (migrateVisitor.get() == nullptr || migrateVisitor->empty()) {
+      SCHNECK_FAIL("No registered particle containers available for migration");
+    }
+
+    wrapper->accept(*migrateVisitor);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename WrapperImpl>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::migrateTyped(WrapperImpl &wrapper) {
+    using ContainerType = std::decay_t<decltype(wrapper.container)>;
+    using Traits = ParticleContainerTraits<ContainerType>;
+    using Particle = typename Traits::value_type;
+    using Serializer = ParticleSerializer<Particle>;
+
+    auto &container = wrapper.container;
+    auto &accessor = wrapper.accessor;
+
+    const RangeType localRange = getLocalInnerRange();
+    const LimitType lo = localRange.getLo();
+    const LimitType hi = localRange.getHi();
+
+    constexpr std::size_t particleBytes = Serializer::size();
+
+    auto toIntCount = [](std::size_t count) -> int {
+      if (count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+        SCHNECK_FAIL("Particle migration block too large for MPI_Sendrecv count");
+      }
+      return static_cast<int>(count);
+    };
+
+    // The owning cell of a particle along dimension `dim`.
+    auto owningCell = [&accessor](const Particle &p, size_t dim) -> ptrdiff_t {
+      return static_cast<ptrdiff_t>(std::floor(accessor(p)[dim]));
+    };
+
+    // Sweep one dimension at a time. A particle bound for a diagonal neighbour
+    // is forwarded dimension by dimension: received particles are re-inserted
+    // into the container and re-examined by the next dimension's sweep.
+    for (size_t dim = 0; dim < rank; ++dim) {
+      int prevRank = MPI_PROC_NULL;
+      int nextRank = MPI_PROC_NULL;
+      this->mpi.MPI_Cart_shift(comm, static_cast<int>(dim), 1, &prevRank, &nextRank);
+
+      // Collect departures, routed by the sign of the out-of-bounds offset.
+      // `goingDown` travels to `prevRank` (lower coordinate), `goingUp` to
+      // `nextRank` (higher coordinate).
+      std::vector<std::byte> goingDown;
+      std::vector<std::byte> goingUp;
+      std::size_t downCount = 0;
+      std::size_t upCount = 0;
+
+      auto pred = [&](const Particle &p) -> bool {
+        const ptrdiff_t cell = owningCell(p, dim);
+        return cell < lo[dim] || cell > hi[dim];
+      };
+
+      auto sink = [&](const Particle &p) {
+        const ptrdiff_t cell = owningCell(p, dim);
+        std::vector<std::byte> &buffer = (cell < lo[dim]) ? goingDown : goingUp;
+        std::size_t &counter = (cell < lo[dim]) ? downCount : upCount;
+        const std::size_t offset = buffer.size();
+        buffer.resize(offset + particleBytes);
+        Serializer::serialize(p, buffer.data() + offset);
+        ++counter;
+      };
+
+      Traits::extractIf(container, pred, sink);
+
+      // Phase A: upward movement. Send to `nextRank`, receive from `prevRank`.
+      // Phase B: downward movement. Send to `prevRank`, receive from `nextRank`.
+      // Each phase first exchanges the particle count, then the payload.
+      auto exchange = [&](std::vector<std::byte> &sendBuffer, std::size_t sendCount, int sendRank, int recvRank) {
+        int sendCountInt = toIntCount(sendCount);
+        int recvCountInt = 0;
+        this->mpi.MPI_Sendrecv(
+            &sendCountInt, 1, MPI_INT, sendRank, 0, &recvCountInt, 1, MPI_INT, recvRank, 0, comm, MPI_STATUS_IGNORE
+        );
+
+        const std::size_t recvCount = static_cast<std::size_t>(recvCountInt);
+        std::vector<std::byte> recvBuffer(recvCount * particleBytes);
+
+        this->mpi.MPI_Sendrecv(
+            sendCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendCount * particleBytes), MPI_BYTE, sendRank, 1,
+            recvCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvCount * particleBytes), MPI_BYTE, recvRank, 1,
+            comm, MPI_STATUS_IGNORE
+        );
+
+        for (std::size_t i = 0; i < recvCount; ++i) {
+          Traits::insert(container, Serializer::deserialize(recvBuffer.data() + i * particleBytes));
+        }
+      };
+
+      exchange(goingUp, upCount, nextRank, prevRank);
+      exchange(goingDown, downCount, prevRank, nextRank);
+    }
+
+#ifndef NDEBUG
+    // After all sweeps every surviving particle must lie inside the local inner
+    // range. A particle still out of bounds travelled more than one process
+    // away, violating the migration precondition.
+    Traits::forEach(container, [&](const Particle &p) {
+      for (size_t d = 0; d < rank; ++d) {
+        const ptrdiff_t cell = owningCell(p, d);
+        SCHNEK_ASSERT(
+            cell >= lo[d] && cell <= hi[d],
+            "Particle migrated more than one process away in dimension "
+                << d << "; migration assumes particles move at most one sub-domain per step."
+        );
+      }
+    });
+#endif
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
