@@ -182,9 +182,9 @@ namespace schnek {
        * Only available when the memory space is accessible from host code.
        */
       template<typename V = ViewType>
-      SCHNEK_INLINE std::enable_if_t<
-          Kokkos::SpaceAccessibility<Kokkos::HostSpace, typename V::memory_space>::accessible, T *>
-      getRawData() {
+      SCHNEK_INLINE auto getRawData() -> std::enable_if_t<
+          Kokkos::SpaceAccessibility<Kokkos::HostSpace, typename V::memory_space>::accessible, 
+          T *>{
         return this->view.data();
       }
 

@@ -118,6 +118,48 @@ namespace schnek {
         kernel(pos, grids...);
       }
 
+      template<std::size_t I, class T>
+      struct PackElement {
+        T value;
+
+        SCHNEK_INLINE
+        explicit PackElement(const T& v) : value(v) {}
+      };
+
+      template<class IndexSeq, class RangeType, class Kernel, class... Grids>
+      struct ForEachCellDeviceFunctorImpl;
+      
+      template<std::size_t... Is, class RangeType, class Kernel, class... Grids>
+      struct ForEachCellDeviceFunctorImpl<
+          std::index_sequence<Is...>, RangeType, Kernel, Grids...>
+        : PackElement<Is, Grids>... {
+      
+        Kernel kernel;
+      
+        SCHNEK_INLINE
+        ForEachCellDeviceFunctorImpl(Kernel kernel_, Grids... grids_)
+          : PackElement<Is, Grids>(grids_)...
+          , kernel(kernel_) {}
+      
+        SCHNEK_INLINE
+        void operator()(const typename RangeType::LimitType& pos) const {
+          invokeCellKernel(
+            kernel,
+            pos,
+            PackElement<Is, Grids>::value...
+          );
+        }
+      };
+
+      template<class RangeType, class Kernel, class... Grids>
+      using ForEachCellDeviceFunctor =
+        ForEachCellDeviceFunctorImpl<
+          std::index_sequence_for<Grids...>,
+          RangeType,
+          Kernel,
+          Grids...
+        >;
+
       /**
        * @brief Device launch: sweep `range` with the Kokkos `IterationPolicy`.
        *
@@ -129,8 +171,14 @@ namespace schnek {
        */
       template<class IterationPolicy, class RangeType, class Kernel, class... Grids>
       void forEachCellDevice(const RangeType &range, Kernel kernel, Grids... grids) {
+        using Functor =
+          ForEachCellDeviceFunctor<
+            RangeType,
+            Kernel,
+            std::decay_t<Grids>...
+          >;
         IterationPolicy::forEach(
-            range, KOKKOS_LAMBDA(const typename RangeType::LimitType &pos) { invokeCellKernel(kernel, pos, grids...); }
+            range, Functor(kernel, grids...)
         );
       }
 #endif  // SCHNEK_HAVE_KOKKOS

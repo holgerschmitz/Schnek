@@ -71,7 +71,7 @@ namespace schnek {
     template<class GridStorage>
     struct GridStorageConceptCondition {
         static constexpr bool has_value_type = is_detected<value_type_t, GridStorage>::value;
-        static constexpr bool has_rank = has_rank<GridStorage>::value;
+        static constexpr bool has_rank = schnek::concepts::has_rank<GridStorage>::value;
         static constexpr bool has_index_type = is_detected<index_type_t, GridStorage>::value;
         static constexpr bool has_range_type = is_detected<range_type_t, GridStorage>::value;
         static constexpr bool has_get_method = is_detected<internal::grid_storage::get_method_t, GridStorage>::value;

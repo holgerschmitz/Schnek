@@ -56,7 +56,7 @@ namespace schnek::concepts {
   template<class GridAllocation>
   struct GridAllocationConceptCondition {
       static constexpr bool has_value_type = is_detected<value_type_t, GridAllocation>::value;
-      static constexpr bool has_rank = has_rank<GridAllocation>::value;
+      static constexpr bool has_rank = schnek::concepts::has_rank<GridAllocation>::value;
       static constexpr bool has_index_type = is_detected<index_type_t, GridAllocation>::value;
       static constexpr bool has_range_type = is_detected<range_type_t, GridAllocation>::value;
       static constexpr bool has_data_method =
