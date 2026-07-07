@@ -1,3 +1,6 @@
+#ifndef SCHNEK_CONFIG_HPP
+#define SCHNEK_CONFIG_HPP
+
 /* Define this macro if Schnek is compiled with MPI support */
 #cmakedefine SCHNEK_HAVE_MPI
 
@@ -15,3 +18,5 @@
 
 /* Skip C++ definitions when using Open MPI */
 #define OMPI_SKIP_MPICXX
+
+#endif

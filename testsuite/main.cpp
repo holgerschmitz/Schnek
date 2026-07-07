@@ -23,10 +23,8 @@ class KokkosInitialiser
 
     KokkosInitialiser() {
         std::cerr << "KOKKOS INIT\n";
-        Kokkos::InitArguments args;
-        args.num_threads = 0;
-        args.num_numa = 0;
-        Kokkos::initialize(args);
+        Kokkos::initialize(Kokkos::InitializationSettings()
+            .set_num_threads(1));
     }
 
     ~KokkosInitialiser() {

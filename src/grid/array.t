@@ -349,68 +349,68 @@ namespace schnek {
     return s;
   }
 
+  template<
+      class T1,
+      class T2,
+      size_t Length,
+      template<size_t>
+      class CheckingPolicy1,
+      template<size_t>
+      class CheckingPolicy2>
+  bool operator==(
+      const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2
+  ) {
+    for (size_t i = 0; i < Length; ++i)
+      if (arr1[i] != arr2[i]) return false;
+    return true;
+  }
+
+  template<
+      class T1,
+      class T2,
+      size_t Length,
+      template<size_t>
+      class CheckingPolicy1,
+      template<size_t>
+      class CheckingPolicy2>
+  bool operator!=(
+      const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2
+  ) {
+    for (size_t i = 0; i < Length; ++i)
+      if (arr1[i] != arr2[i]) return true;
+    return false;
+  }
+
+  template<
+      class T1,
+      class T2,
+      size_t Length,
+      template<size_t>
+      class CheckingPolicy1,
+      template<size_t>
+      class CheckingPolicy2>
+  bool operator<(
+      const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2
+  ) {
+    for (size_t i = 0; i < Length; ++i)
+      if (arr1[i] >= arr2[i]) return false;
+    return true;
+  }
+
+  template<
+      class T1,
+      class T2,
+      size_t Length,
+      template<size_t>
+      class CheckingPolicy1,
+      template<size_t>
+      class CheckingPolicy2>
+  bool operator<=(
+      const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2
+  ) {
+    for (size_t i = 0; i < Length; ++i)
+      if (arr1[i] > arr2[i]) return false;
+    return true;
+  }
+
 }  // namespace schnek
-
-template<
-    class T1,
-    class T2,
-    size_t Length,
-    template<size_t>
-    class CheckingPolicy1,
-    template<size_t>
-    class CheckingPolicy2>
-bool operator==(
-    const schnek::Array<T1, Length, CheckingPolicy1>& arr1, const schnek::Array<T2, Length, CheckingPolicy2>& arr2
-) {
-  for (size_t i = 0; i < Length; ++i)
-    if (arr1[i] != arr2[i]) return false;
-  return true;
-}
-
-template<
-    class T1,
-    class T2,
-    size_t Length,
-    template<size_t>
-    class CheckingPolicy1,
-    template<size_t>
-    class CheckingPolicy2>
-bool operator!=(
-    const schnek::Array<T1, Length, CheckingPolicy1>& arr1, const schnek::Array<T2, Length, CheckingPolicy2>& arr2
-) {
-  for (size_t i = 0; i < Length; ++i)
-    if (arr1[i] != arr2[i]) return true;
-  return false;
-}
-
-template<
-    class T1,
-    class T2,
-    size_t Length,
-    template<size_t>
-    class CheckingPolicy1,
-    template<size_t>
-    class CheckingPolicy2>
-bool operator<(
-    const schnek::Array<T1, Length, CheckingPolicy1>& arr1, const schnek::Array<T2, Length, CheckingPolicy2>& arr2
-) {
-  for (size_t i = 0; i < Length; ++i)
-    if (arr1[i] >= arr2[i]) return false;
-  return true;
-}
-
-template<
-    class T1,
-    class T2,
-    size_t Length,
-    template<size_t>
-    class CheckingPolicy1,
-    template<size_t>
-    class CheckingPolicy2>
-bool operator<=(
-    const schnek::Array<T1, Length, CheckingPolicy1>& arr1, const schnek::Array<T2, Length, CheckingPolicy2>& arr2
-) {
-  for (size_t i = 0; i < Length; ++i)
-    if (arr1[i] > arr2[i]) return false;
-  return true;
-}

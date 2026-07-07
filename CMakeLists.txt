@@ -1,12 +1,9 @@
-cmake_minimum_required(VERSION 3.12)
-cmake_policy(VERSION 3.12)
+cmake_minimum_required(VERSION 3.25.2)
 
 set(SCHNEK_VERSION 1.2.0)
 
-enable_language(CXX)
-
 # set the project name
-project(Schnek VERSION ${SCHNEK_VERSION})
+project(Schnek VERSION ${SCHNEK_VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,9 +11,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(MPI_CXX_SKIP_MPICXX TRUE)
 
-find_package(MPI)
-find_package(HDF5)
-find_package(Kokkos PATHS ${KOKKOS_DIR})
+find_package(MPI COMPONENTS CXX)
+find_package(HDF5 COMPONENTS CXX)
+find_package(Kokkos CONFIG)
 find_package(Boost REQUIRED)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -48,18 +45,65 @@ add_library(schnek SHARED
     src/variables/variables.cpp
 )
 
-target_include_directories(schnek PUBLIC ${MPI_INCLUDE_PATH})
-target_include_directories(schnek PUBLIC ${HDF5_INCLUDE_DIRS})
-target_include_directories(schnek PUBLIC ${Boost_INCLUDE_DIRS})
+target_include_directories(schnek
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
+    $<INSTALL_INTERFACE:include>
+)
 
-target_link_libraries(schnek PUBLIC ${MPI_C_LIBRARIES})
-target_link_libraries(schnek PUBLIC ${HDF5_LIBRARIES})
+target_compile_features(schnek PUBLIC cxx_std_17)
 
+target_compile_options(schnek PRIVATE
+  -Wall -Wextra
+)
 
-if (Kokkos_FOUND)
-  target_include_directories(schnek PUBLIC ${Kokkos_INCLUDE_DIR})
+target_link_libraries(schnek
+  PUBLIC
+    Boost::boost
+)
+
+if(MPI_CXX_FOUND)
+  target_link_libraries(schnek PUBLIC MPI::MPI_CXX)
+  target_compile_definitions(schnek PUBLIC SCHNEK_HAVE_MPI=1)
+endif()
+
+if(HDF5_FOUND)
+  target_link_libraries(schnek PUBLIC HDF5::HDF5)
+  target_compile_definitions(schnek PUBLIC SCHNEK_HAVE_HDF5=1)
+endif()
+
+function(schnek_mark_kokkos_target target_name)
+  if(Kokkos_FOUND AND Kokkos_COMPILE_LANGUAGE)
+    set_property(TARGET ${target_name} PROPERTY
+      ${Kokkos_COMPILE_LANGUAGE}_ARCHITECTURES
+      ${Kokkos_${Kokkos_COMPILE_LANGUAGE}_ARCHITECTURES}
+    )
+
+    set_property(TARGET ${target_name} PROPERTY
+      ${Kokkos_COMPILE_LANGUAGE}_STANDARD
+      ${Kokkos_${Kokkos_COMPILE_LANGUAGE}_STANDARD}
+    )
+  endif()
+endfunction()
+
+if(Kokkos_FOUND)
+  message(STATUS "Kokkos_VERSION = ${Kokkos_VERSION}")
+  message(STATUS "Kokkos_DIR = ${Kokkos_DIR}")
+  message(STATUS "Kokkos_COMPILE_LANGUAGE = ${Kokkos_COMPILE_LANGUAGE}")
+  message(STATUS "Kokkos_CUDA_ARCHITECTURES = ${Kokkos_CUDA_ARCHITECTURES}")
+  message(STATUS "Kokkos_CUDA_STANDARD = ${Kokkos_CUDA_STANDARD}")
+  message(STATUS "CMAKE_CUDA_ARCHITECTURES = ${CMAKE_CUDA_ARCHITECTURES}")
+
+  target_link_libraries(schnek PUBLIC Kokkos::kokkos)
   target_compile_definitions(schnek PUBLIC KOKKOS_DEPENDENCE)
-  target_link_libraries(schnek PUBLIC Kokkos::kokkoscore)
+
+  message(STATUS "Kokkos_COMPILE_LANGUAGE = ${Kokkos_COMPILE_LANGUAGE}")
+
+  if(Kokkos_COMPILE_LANGUAGE)
+    enable_language(${Kokkos_COMPILE_LANGUAGE})
+  endif()
+  schnek_mark_kokkos_target(schnek)
 endif()
 
 # Uncomment to see all defined variables
@@ -81,7 +125,6 @@ set(lib_dest_root "lib")
 set(lib_dest "${lib_dest_root}/schnek")
 
 configure_file(src/config.hpp.in src/config.hpp)
-
 
 install(TARGETS schnek 
   EXPORT schnek 
@@ -127,22 +170,23 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/grid/concepts/test_concepts.cpp
 )
 
-target_include_directories(schnek_tests PUBLIC "src")
-target_include_directories(schnek_tests PUBLIC ${MPI_INCLUDE_PATH})
-target_include_directories(schnek_tests PUBLIC ${HDF5_INCLUDE_DIRS})
-target_include_directories(schnek_tests PUBLIC ${Boost_INCLUDE_DIRS})
-
-if (Kokkos_FOUND)
-  target_include_directories(schnek_tests PUBLIC ${Kokkos_INCLUDE_DIR})
-  target_compile_definitions(schnek_tests PUBLIC KOKKOS_DEPENDENCE)
-  target_link_libraries(schnek PUBLIC Kokkos::kokkoscore)
+if(Kokkos_FOUND)
+  set_source_files_properties(
+      testsuite/main.cpp
+      testsuite/utility.cpp
+      testsuite/decomposition/test_domaindecomposition.cpp
+      testsuite/decomposition/test_kokkos_exchange.cpp
+      testsuite/grid/test_kokkos_storage.cpp
+      testsuite/grid/test_range_kokkos_iteration.cpp
+      PROPERTIES LANGUAGE ${Kokkos_COMPILE_LANGUAGE}
+  )
+  
+  schnek_mark_kokkos_target(schnek_tests)
 endif()
 
-target_link_libraries(schnek_tests schnek)
-target_link_libraries(schnek_tests ${MPI_C_LIBRARIES})
-target_link_libraries(schnek_tests ${HDF5_LIBRARIES})
-
-target_compile_features(schnek_tests PRIVATE cxx_std_14)
+target_link_libraries(schnek_tests PRIVATE schnek)
+target_compile_features(schnek_tests PRIVATE cxx_std_17)
 
 add_test(NAME test COMMAND schnek_tests)
 enable_testing()
+

@@ -47,29 +47,29 @@ namespace schnek {
 
     public:
       /// Default constructor
-      Range() : lo(0), hi(0) {}
-      Range(const Range &domain) : lo(domain.lo), hi(domain.hi) {}
+      SCHNEK_INLINE Range() : lo(0), hi(0) {}
+      SCHNEK_INLINE Range(const Range &domain) : lo(domain.lo), hi(domain.hi) {}
 
       /// Construct with rectangle minimum and maximum
       template<template<size_t> class ArrayCheckingPolicy>
-      Range(const Array<T, rank, ArrayCheckingPolicy> &lo_, const Array<T, rank, ArrayCheckingPolicy> &hi_)
+      SCHNEK_INLINE Range(const Array<T, rank, ArrayCheckingPolicy> &lo_, const Array<T, rank, ArrayCheckingPolicy> &hi_)
           : lo(lo_), hi(hi_) {}
 
       /// Construct with rectangle minimum and maximum from different numeric type
       template<typename T2, template<size_t> class ArrayCheckingPolicy>
-      Range(const Array<T2, rank, ArrayCheckingPolicy> &lo_, const Array<T2, rank, ArrayCheckingPolicy> &hi_)
+      SCHNEK_INLINE Range(const Array<T2, rank, ArrayCheckingPolicy> &lo_, const Array<T2, rank, ArrayCheckingPolicy> &hi_)
           : lo(lo_), hi(hi_) {}
 
       /// Copy constructor
       template<template<size_t> class ArrayCheckingPolicy>
-      Range(const Range<T, rank, ArrayCheckingPolicy> &domain) : lo(domain.getLo()), hi(domain.getHi()) {}
+      SCHNEK_INLINE Range(const Range<T, rank, ArrayCheckingPolicy> &domain) : lo(domain.getLo()), hi(domain.getHi()) {}
 
       /// Copy constructor from different numeric type
       template<typename T2, template<size_t> class ArrayCheckingPolicy>
-      Range(const Range<T2, rank, ArrayCheckingPolicy> &domain) : lo(domain.getLo()), hi(domain.getHi()) {}
+      SCHNEK_INLINE Range(const Range<T2, rank, ArrayCheckingPolicy> &domain) : lo(domain.getLo()), hi(domain.getHi()) {}
 
       /// Assignment operator
-      Range &operator=(const Range &domain) {
+      SCHNEK_INLINE Range &operator=(const Range &domain) {
         lo = domain.lo;
         hi = domain.hi;
         return *this;
@@ -77,7 +77,7 @@ namespace schnek {
 
       /// Assignment operator from different numeric type
       template<typename T2, template<size_t> class ArrayCheckingPolicy>
-      Range &operator=(const Range<T2, rank, ArrayCheckingPolicy> &domain) {
+      SCHNEK_INLINE Range &operator=(const Range<T2, rank, ArrayCheckingPolicy> &domain) {
         lo = domain.getLo();
         hi = domain.getHi();
         return *this;

@@ -53,7 +53,7 @@ namespace schnek {
   class Array : public CheckingPolicy<Length> {
     private:
       /// The data stored in a C array
-      std::array<T, Length> data;
+      T data[Length];
 
       /// ThisType defined for convenience
       typedef Array<T, Length, CheckingPolicy> ThisType;
