@@ -39,14 +39,14 @@ namespace schnek {
   class GridNoArgCheck {
     public:
       typedef Array<ptrdiff_t, rank, ArrayNoArgCheck> IndexType;
-      SCHNEK_INLINE static const IndexType &check(const IndexType &pos, const IndexType &low, const IndexType &high);
+      static const IndexType &check(const IndexType &pos, const IndexType &low, const IndexType &high);
   };
 
   template<typename T, size_t rank>
   class GridAssertCheck {
     public:
       typedef Array<ptrdiff_t, rank, ArrayAssertArgCheck> IndexType;
-      SCHNEK_INLINE static const IndexType &check(const IndexType &pos, const IndexType &low, const IndexType &high);
+      static const IndexType &check(const IndexType &pos, const IndexType &low, const IndexType &high);
   };
 
   template<typename T, size_t rank>
@@ -70,13 +70,13 @@ namespace schnek {
   };
 
   template<typename T, size_t rank>
-  SCHNEK_INLINE const typename GridNoArgCheck<T, rank>::IndexType &
+  const typename GridNoArgCheck<T, rank>::IndexType &
   GridNoArgCheck<T, rank>::check(const IndexType &pos, const IndexType &, const IndexType &) {
     return pos;
   }
 
   template<typename T, size_t rank>
-  SCHNEK_INLINE const typename GridAssertCheck<T, rank>::IndexType &GridAssertCheck<T, rank>::check(
+  const typename GridAssertCheck<T, rank>::IndexType &GridAssertCheck<T, rank>::check(
       const IndexType &pos, const IndexType &low, const IndexType &high
   ) {
     for (size_t i = 0; i < rank; ++i) {

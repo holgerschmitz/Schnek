@@ -175,7 +175,12 @@ if(Kokkos_FOUND)
       testsuite/main.cpp
       testsuite/utility.cpp
       testsuite/decomposition/test_domaindecomposition.cpp
+      testsuite/decomposition/test_for_each_cell.cpp
       testsuite/decomposition/test_kokkos_exchange.cpp
+      testsuite/decomposition/test_mpi_cartesian_decomposition.cpp
+      testsuite/decomposition/test_serial_decomposition.cpp
+      testsuite/decomposition/detail/test_grid_transfer.cpp
+      testsuite/diagnostic/test_hdfdiagnostic.cpp
       testsuite/grid/test_kokkos_storage.cpp
       testsuite/grid/test_range_kokkos_iteration.cpp
       PROPERTIES LANGUAGE ${Kokkos_COMPILE_LANGUAGE}

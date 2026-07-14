@@ -88,6 +88,9 @@ namespace schnek {
       static constexpr bool host_accessible =
           Kokkos::SpaceAccessibility<Kokkos::HostSpace, MemorySpace>::accessible;
 
+      /// Set the flag to true, so that the encapsulating Grid class compiles with device annotations.
+      static constexpr bool use_device_annotations = true;
+          
     private:
       typedef std::function<void(const RangeType &)> UpdaterType;
       typedef std::map<void *, UpdaterType> UpdaterMapType;
@@ -136,7 +139,7 @@ namespace schnek {
        * @param index The grid index
        * @return the rvalue at the grid index
        */
-      SCHNEK_INLINE const T &get(const IndexType &index) const;
+      SCHNEK_FUNCTION const T &get(const IndexType &index) const;
 
       /**
        * @brief Get the lvalue at a given grid index
@@ -144,37 +147,37 @@ namespace schnek {
        * @param index The grid index
        * @return the lvalue at the grid index
        */
-      SCHNEK_INLINE T &get(const IndexType &index);
+      SCHNEK_FUNCTION T &get(const IndexType &index);
 
       /// Get the lowest coordinate in the grid (inclusive)
-      SCHNEK_INLINE const IndexType &getLo() const { return this->range.getLo(); }
+      SCHNEK_FUNCTION const IndexType &getLo() const { return this->range.getLo(); }
 
       /// Get the highest coordinate in the grid (inclusive)
-      SCHNEK_INLINE const IndexType &getHi() const { return this->range.getHi(); }
+      SCHNEK_FUNCTION const IndexType &getHi() const { return this->range.getHi(); }
 
       /// Get the lowest coordinate in the grid (inclusive)
-      SCHNEK_INLINE const RangeType &getRange() const { return this->range; }
+      SCHNEK_FUNCTION const RangeType &getRange() const { return this->range; }
 
       /// Get the dimensions of the grid `dims = high - low + 1`
-      SCHNEK_INLINE const SizeType &getDims() const { return this->dims; }
+      SCHNEK_FUNCTION const SizeType &getDims() const { return this->dims; }
 
       /// Get k-th component of the lowest coordinate in the grid (inclusive)
-      SCHNEK_INLINE ptrdiff_t getLo(size_t k) const { return this->range.getLo(k); }
+      SCHNEK_FUNCTION ptrdiff_t getLo(size_t k) const { return this->range.getLo(k); }
 
       /// Get k-th component of the highest coordinate in the grid (inclusive)
-      SCHNEK_INLINE ptrdiff_t getHi(size_t k) const { return this->range.getHi(k); }
+      SCHNEK_FUNCTION ptrdiff_t getHi(size_t k) const { return this->range.getHi(k); }
 
       /// Get k-th component of the dimensions of the grid `dims = high - low + 1`
-      SCHNEK_INLINE size_t getDims(size_t k) const { return this->dims[k]; }
+      SCHNEK_FUNCTION size_t getDims(size_t k) const { return this->dims[k]; }
 
       /// Get the length of the allocated array
-      SCHNEK_INLINE size_t getSize() const { return this->view.size(); }
+      SCHNEK_FUNCTION size_t getSize() const { return this->view.size(); }
 
       /// Get a reference to the underlying Kokkos view
-      SCHNEK_INLINE ViewType &getKokkosView() { return this->view; }
+      SCHNEK_FUNCTION ViewType &getKokkosView() { return this->view; }
 
       /// Get a const reference to the underlying Kokkos view
-      SCHNEK_INLINE const ViewType &getKokkosView() const { return this->view; }
+      const ViewType &getKokkosView() const { return this->view; }
 
       /**
        * @brief Get a raw pointer to the underlying data
@@ -182,7 +185,7 @@ namespace schnek {
        * Only available when the memory space is accessible from host code.
        */
       template<typename V = ViewType>
-      SCHNEK_INLINE auto getRawData() -> std::enable_if_t<
+      auto getRawData() -> std::enable_if_t<
           Kokkos::SpaceAccessibility<Kokkos::HostSpace, typename V::memory_space>::accessible, 
           T *>{
         return this->view.data();
@@ -217,7 +220,7 @@ namespace schnek {
       /**
        * @brief returns the stride of the specified dimension
        */
-      SCHNEK_INLINE ptrdiff_t stride(size_t dim) const;
+      ptrdiff_t stride(size_t dim) const;
 
     private:
       template<std::size_t... I>
@@ -328,7 +331,7 @@ namespace schnek {
   }
 
   template<typename T, size_t rank_t, class... ViewProperties>
-  SCHNEK_INLINE ptrdiff_t KokkosGridStorage<T, rank_t, ViewProperties...>::stride(size_t dim) const {
+  ptrdiff_t KokkosGridStorage<T, rank_t, ViewProperties...>::stride(size_t dim) const {
     return this->view.stride(dim);
   }
 

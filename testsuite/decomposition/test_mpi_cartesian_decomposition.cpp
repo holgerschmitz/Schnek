@@ -1560,7 +1560,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d, MpiCartesianDomainDecompositionTestFi
         BOOST_CHECK_EQUAL(ranges[d].getLo(0), 0);
         BOOST_CHECK_EQUAL(ranges[d].getHi(0), factors[d]-1);
 
-        for (int r=0; r<factors[d]; ++r)
+        for (size_t r=0; r<factors[d]; ++r)
         {
           int lo = globalRangeMin[d] + ((globalRangeMax[d] - globalRangeMin[d] + 1)*long(r))/factors[d];
           int hi = globalRangeMin[d] + ((globalRangeMax[d] - globalRangeMin[d] + 1)*long(r + 1))/factors[d] - 1;
@@ -1735,7 +1735,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_master, MpiCartesianDomainDecom
 
       for (int r=0; r<2; ++r)
       {
-        for (int i=0; i<factors[r]; ++i)
+        for (size_t i=0; i<factors[r]; ++i)
         {
           double xmin =  2.0*double(i)/double(factors[r]) - 1.0;
           double xmax =  2.0*double(i + 1)/double(factors[r]) - 1.0;
@@ -1807,13 +1807,13 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_child, MpiCartesianDomainDecomp
       int *dims0 = new int[2*factors[0]];
       int *dims1 = new int[2*factors[1]];
 
-      for (int i=0; i<factors[0]; ++i)
+      for (size_t i=0; i<factors[0]; ++i)
       {
         dims0[2*i] = 10*i;
         dims0[2*i + 1] = 10*(i + 1) - 1;
       }
 
-      for (int i=0; i<factors[1]; ++i)
+      for (size_t i=0; i<factors[1]; ++i)
       {
         dims1[2*i] = 13*i;
         dims1[2*i + 1] = 13*(i + 1) - 1;
@@ -1889,7 +1889,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_child, MpiCartesianDomainDecomp
       BOOST_CHECK_EQUAL(ranges[0].getLo(0), 0);
       BOOST_CHECK_EQUAL(ranges[0].getHi(0), factors[0]-1);
 
-      for (int r=0; r<factors[0]; ++r)
+      for (size_t r=0; r<factors[0]; ++r)
       {
         BOOST_CHECK_EQUAL(ranges[0](r).getLo()[0], 10*r);
         BOOST_CHECK_EQUAL(ranges[0](r).getHi()[0], 10*(r+1)-1);
@@ -1898,7 +1898,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_child, MpiCartesianDomainDecomp
       BOOST_CHECK_EQUAL(ranges[1].getLo(0), 0);
       BOOST_CHECK_EQUAL(ranges[1].getHi(0), factors[1]-1);
 
-      for (int r=0; r<factors[1]; ++r)
+      for (size_t r=0; r<factors[1]; ++r)
       {
         BOOST_CHECK_EQUAL(ranges[1](r).getLo()[0], 13*r);
         BOOST_CHECK_EQUAL(ranges[1](r).getHi()[0], 13*(r+1)-1);
@@ -2264,7 +2264,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d, MpiCartesianDomainDecompositionTestFi
         BOOST_CHECK_EQUAL(ranges[d].getLo(0), 0);
         BOOST_CHECK_EQUAL(ranges[d].getHi(0), factors[d]-1);
 
-        for (int r=0; r<factors[d]; ++r)
+        for (size_t r=0; r<factors[d]; ++r)
         {
           ptrdiff_t lo = globalRangeMin[d] + ((globalRangeMax[d] - globalRangeMin[d] + 1)*long(r))/factors[d];
           ptrdiff_t hi = globalRangeMin[d] + ((globalRangeMax[d] - globalRangeMin[d] + 1)*long(r + 1))/factors[d] - 1;
@@ -2459,7 +2459,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_master, MpiCartesianDomainDecom
 
       for (int r=0; r<3; ++r)
       {
-        for (int i=0; i<factors[r]; ++i)
+        for (size_t i=0; i<factors[r]; ++i)
         {
           double xmin =  2.0*double(i)/double(factors[r]) - 1.0;
           double xmax =  2.0*double(i + 1)/double(factors[r]) - 1.0;
@@ -2533,19 +2533,19 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_child, MpiCartesianDomainDecomp
       int *dims1 = new int[2*factors[1]];
       int *dims2 = new int[2*factors[2]];
 
-      for (int i=0; i<factors[0]; ++i)
+      for (size_t i=0; i<factors[0]; ++i)
       {
         dims0[2*i] = 10*i;
         dims0[2*i + 1] = 10*(i + 1) - 1;
       }
 
-      for (int i=0; i<factors[1]; ++i)
+      for (size_t i=0; i<factors[1]; ++i)
       {
         dims1[2*i] = 7*i;
         dims1[2*i + 1] = 7*(i + 1) - 1;
       }
 
-      for (int i=0; i<factors[2]; ++i)
+      for (size_t i=0; i<factors[2]; ++i)
       {
         dims2[2*i] = 13*i;
         dims2[2*i + 1] = 13*(i + 1) - 1;
@@ -2629,7 +2629,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_child, MpiCartesianDomainDecomp
       BOOST_CHECK_EQUAL(ranges[0].getLo(0), 0);
       BOOST_CHECK_EQUAL(ranges[0].getHi(0), factors[0]-1);
 
-      for (int r=0; r<factors[0]; ++r)
+      for (size_t r=0; r<factors[0]; ++r)
       {
         BOOST_CHECK_EQUAL(ranges[0](r).getLo()[0], 10*r);
         BOOST_CHECK_EQUAL(ranges[0](r).getHi()[0], 10*(r+1)-1);
@@ -2638,7 +2638,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_child, MpiCartesianDomainDecomp
       BOOST_CHECK_EQUAL(ranges[1].getLo(0), 0);
       BOOST_CHECK_EQUAL(ranges[1].getHi(0), factors[1]-1);
 
-      for (int r=0; r<factors[1]; ++r)
+      for (size_t r=0; r<factors[1]; ++r)
       {
         BOOST_CHECK_EQUAL(ranges[1](r).getLo()[0], 7*r);
         BOOST_CHECK_EQUAL(ranges[1](r).getHi()[0], 7*(r+1)-1);

@@ -450,15 +450,6 @@ BOOST_FIXTURE_TEST_CASE( get_size, GridTest )
   BOOST_CHECK_EQUAL(g.getSize(), expected);
 }
 
-BOOST_FIXTURE_TEST_CASE( raw_data_access, GridTest )
-{
-  typedef schnek::Grid<double, 2, GridBoostTestCheck, GridStorage> GridType;
-  GridType::IndexType lo, hi;
-  random_extent<2>(lo, hi);
-  GridType g(lo, hi);
-  BOOST_CHECK(g.getRawData() != nullptr);
-}
-
 BOOST_FIXTURE_TEST_CASE( kokkos_view_access, GridTest )
 {
   typedef schnek::Grid<double, 2, GridBoostTestCheck, GridStorage> GridType;

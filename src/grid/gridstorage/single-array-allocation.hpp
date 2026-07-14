@@ -145,12 +145,12 @@ namespace schnek {
        *
        * The updater is called when the data is resized.
        */
-      SCHNEK_FUNCTION void onUpdate(const UpdaterType &updater);
+      void onUpdate(const UpdaterType &updater);
 
       /**
        * @brief Get the pointer to the data
        */
-      SCHNEK_FUNCTION T *getData();
+      T *getData();
 
     private:
       UpdaterType updater;
@@ -249,12 +249,12 @@ namespace schnek {
        *
        * The updater is called when the data is resized.
        */
-      SCHNEK_FUNCTION void onUpdate(const UpdaterType &updater);
+      void onUpdate(const UpdaterType &updater);
 
       /**
        * @brief Get the pointer to the data
        */
-      SCHNEK_FUNCTION T *getData();
+      T *getData();
 
     private:
       UpdaterType updater;
@@ -307,7 +307,7 @@ namespace schnek {
   }
 
   template<typename T, size_t Rank>
-  SCHNEK_INLINE_FUNCTION void SingleArrayInstantAllocation<T, Rank>::onUpdate(const UpdaterType &updater) {
+  void SingleArrayInstantAllocation<T, Rank>::onUpdate(const UpdaterType &updater) {
     this->updater = updater;
   }
 
@@ -382,12 +382,12 @@ namespace schnek {
   }
 
   template<typename T, size_t Rank>
-  SCHNEK_INLINE_FUNCTION void SingleArrayLazyAllocation<T, Rank>::onUpdate(const UpdaterType &updater) {
+  void SingleArrayLazyAllocation<T, Rank>::onUpdate(const UpdaterType &updater) {
     this->updater = updater;
   }
 
   template<typename T, size_t Rank>
-  SCHNEK_INLINE_FUNCTION T *SingleArrayLazyAllocation<T, Rank>::getData() {
+  T *SingleArrayLazyAllocation<T, Rank>::getData() {
     return this->data->ptr;
   }
 
