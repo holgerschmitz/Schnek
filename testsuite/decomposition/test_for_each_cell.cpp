@@ -27,6 +27,19 @@
 
 namespace {
 
+  template<typename GridT>
+  struct AssignKernelSerial {
+      void operator()(const typename GridT::IndexType &pos, GridT &grid) const {
+        double value = 0.0;
+        double factor = 1.0;
+        for (size_t d = 0; d < static_cast<size_t>(GridT::Rank); ++d) {
+          value += factor * static_cast<double>(pos[d]);
+          factor *= 100.0;
+        }
+        grid[pos] = value;
+      }
+  };
+
   // Per-cell kernel that writes a position-dependent value into the grid. The
   // operator() is const and SCHNEK_INLINE so the same functor is callable on the
   // host and (on a CUDA build) on the device.
@@ -46,7 +59,7 @@ namespace {
   // Kernel adding the second grid into the first, cell by cell.
   template<typename GridT>
   struct AddKernel {
-      SCHNEK_INLINE void operator()(const typename GridT::IndexType &pos, GridT &dst, GridT &src) const {
+      void operator()(const typename GridT::IndexType &pos, GridT &dst, GridT &src) const {
         dst[pos] = dst[pos] + src[pos];
       }
   };
@@ -89,7 +102,7 @@ BOOST_AUTO_TEST_CASE(for_each_cell_assigns_every_cell_1d) {
   BOOST_REQUIRE(grid != nullptr);
   *grid = -1.0;
 
-  gridContext.forEachCell(AssignKernel<GridType>{});
+  gridContext.forEachCell(AssignKernelSerial<GridType>{});
 
   RangeType range(grid->getLo(), grid->getHi());
   for (auto it = range.begin(); it != range.end(); ++it) {
@@ -119,7 +132,7 @@ BOOST_AUTO_TEST_CASE(for_each_cell_assigns_every_cell_2d) {
   BOOST_REQUIRE(grid != nullptr);
   *grid = -1.0;
 
-  gridContext.forEachCell(AssignKernel<GridType>{});
+  gridContext.forEachCell(AssignKernelSerial<GridType>{});
 
   RangeType range(grid->getLo(), grid->getHi());
   for (auto it = range.begin(); it != range.end(); ++it) {

@@ -64,6 +64,8 @@ namespace schnek {
       /// The dimensions of the grid `dims = high - low + 1`
       Array<size_t, rank> dims;
 
+      /// Set the flag to false, so that the encapsulating Grid class compiles without device annotations.
+      static constexpr bool use_device_annotations = false;
     private:
       using PolicyList = generic::TypeList<Policies<T, rank>...>;
       using AllocationPolicy = typename PolicyList::template getWithDefault<
@@ -99,28 +101,28 @@ namespace schnek {
       T *getRawData() { return this->allocation.getData(); }
 
       /// Get the lowest coordinate in the grid (inclusive)
-      SCHNEK_INLINE const IndexType &getLo() const { return this->range.getLo(); }
+      const IndexType &getLo() const { return this->range.getLo(); }
 
       /// Get the highest coordinate in the grid (inclusive)
-      SCHNEK_INLINE const IndexType &getHi() const { return this->range.getHi(); }
+      const IndexType &getHi() const { return this->range.getHi(); }
 
       /// Get the lowest coordinate in the grid (inclusive)
-      SCHNEK_INLINE const RangeType &getRange() const { return this->range; }
+      const RangeType &getRange() const { return this->range; }
 
       /// Get the dimensions of the grid `dims = high - low + 1`
-      SCHNEK_INLINE const SizeType &getDims() const { return this->dims; }
+      const SizeType &getDims() const { return this->dims; }
 
       /// Get k-th component of the lowest coordinate in the grid (inclusive)
-      SCHNEK_INLINE ptrdiff_t getLo(size_t k) const { return this->range.getLo(k); }
+      ptrdiff_t getLo(size_t k) const { return this->range.getLo(k); }
 
       /// Get k-th component of the highest coordinate in the grid (inclusive)
-      SCHNEK_INLINE ptrdiff_t getHi(size_t k) const { return this->range.getHi(k); }
+      ptrdiff_t getHi(size_t k) const { return this->range.getHi(k); }
 
       /// Get k-th component of the dimensions of the grid `dims = high - low + 1`
-      SCHNEK_INLINE size_t getDims(size_t k) const { return this->dims[k]; }
+      size_t getDims(size_t k) const { return this->dims[k]; }
 
       /// Get the length of the allocated array
-      SCHNEK_INLINE size_t getSize() const { return this->size; }
+      size_t getSize() const { return this->size; }
 
       /**
        * @brief Get the lvalue at a given grid index
@@ -128,7 +130,7 @@ namespace schnek {
        * @param index The grid index
        * @return the lvalue at the grid index
        */
-      SCHNEK_INLINE T &get(const IndexType &index) { return this->layout.get(index, this->dims); }
+      T &get(const IndexType &index) { return this->layout.get(index, this->dims); }
 
       /**
        * @brief Get the rvalue at a given grid index
@@ -136,7 +138,7 @@ namespace schnek {
        * @param index The grid index
        * @return the rvalue at the grid index
        */
-      SCHNEK_INLINE const T &get(const IndexType &index) const { return this->layout.get(index, this->dims); }
+      const T &get(const IndexType &index) const { return this->layout.get(index, this->dims); }
 
       /**
        * @brief resizes to grid with lower indices lo[0],...,lo[rank-1]
@@ -153,16 +155,16 @@ namespace schnek {
       /**
        * @brief returns the stride of the specified dimension
        */
-      SCHNEK_INLINE ptrdiff_t stride(size_t dim) const { return this->layout.stride(dim, this->dims); }
+      ptrdiff_t stride(size_t dim) const { return this->layout.stride(dim, this->dims); }
 
       typedef T *storage_iterator;
       typedef const T *const_storage_iterator;
 
-      SCHNEK_INLINE storage_iterator begin() { return this->allocation.getData(); }
-      SCHNEK_INLINE storage_iterator end() { return this->allocation.getData() + this->size; }
+      storage_iterator begin() { return this->allocation.getData(); }
+      storage_iterator end() { return this->allocation.getData() + this->size; }
 
-      SCHNEK_INLINE const_storage_iterator cbegin() const { return this->allocation.getData(); }
-      SCHNEK_INLINE const_storage_iterator cend() const { return this->allocation.getData() + this->size; }
+      const_storage_iterator cbegin() const { return this->allocation.getData(); }
+      const_storage_iterator cend() const { return this->allocation.getData() + this->size; }
 
     private:
       void updateSize(const RangeType &range) {

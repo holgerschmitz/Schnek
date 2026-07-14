@@ -22,7 +22,7 @@ using namespace schnek;
 
 #ifdef SCHNEK_HAVE_KOKKOS
 
-
+namespace {
 #ifdef KOKKOS_ENABLE_CUDA
     typedef Kokkos::Cuda Execution;
     
@@ -38,6 +38,7 @@ using namespace schnek;
 
     typedef schnek::RangeCIterationPolicy<2> Iteration;
 #endif
+}
 
 struct Assign1d {
     typedef Grid<ptrdiff_t, 1, GridNoArgCheck, GridStorage> GridType;
