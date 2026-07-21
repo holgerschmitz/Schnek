@@ -471,7 +471,7 @@ namespace schnek {
          *
          * The ranges then extend from 0 to size[i]-1
          */
-        SCHNEK_FUNCTION void resize(const IndexType& size);
+        void resize(const IndexType& size);
 
         /**
          * @brief Resize to lower indices low[0],...,low[rank-1]
@@ -487,7 +487,7 @@ namespace schnek {
          *
          * The ranges then extend from low[i] to high[i]
          */
-        SCHNEK_FUNCTION void resize(const IndexType& low, const IndexType& high);
+        void resize(const IndexType& low, const IndexType& high);
 
         /**
          * @brief Resize to lower indices range.getLo(0),...,range.getLo(rank-1)
@@ -502,7 +502,7 @@ namespace schnek {
          * m.resize(range);
          * \end{verbatim}
          */
-        SCHNEK_FUNCTION void resize(const RangeType& range);
+        void resize(const RangeType& range);
 
         /** Resize to match the size of another matrix */
         template<
@@ -511,7 +511,7 @@ namespace schnek {
             class CheckingPolicy2,
             template<typename, size_t>
             class StoragePolicy2>
-        SCHNEK_FUNCTION void resize(const GridBaseDevice<T2, rank, CheckingPolicy2, StoragePolicy2>& grid);
+        void resize(const GridBaseDevice<T2, rank, CheckingPolicy2, StoragePolicy2>& grid);
     };
 
     template<typename T, size_t rank, template<typename, size_t> class... Policies>

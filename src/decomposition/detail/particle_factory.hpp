@@ -26,16 +26,19 @@
 #ifndef SCHNEK_DECOMPOSITION_DETAIL_PARTICLE_FACTORY_HPP_
 #define SCHNEK_DECOMPOSITION_DETAIL_PARTICLE_FACTORY_HPP_
 
+#include <array>
 #include <cstddef>
 #include <cstring>
 #include <memory>
 #include <type_traits>
 #include <typeinfo>
 #include <utility>
+#include <vector>
 
 #include "../../grid/array.hpp"
 #include "../../grid/arraycheck.hpp"
 #include "../../grid/range.hpp"
+#include "../../macros.hpp"
 #include "../../util/unique.hpp"
 #include "particle_visitor.hpp"
 
@@ -73,30 +76,96 @@ namespace schnek {
       }
 
       /**
-       * Remove every particle for which `pred(particle)` returns true, calling
-       * `sink(particle)` on each removed particle *before* it is erased.
+       * Partition the container in place, routing departing particles into
+       * per-bucket, host-accessible byte buffers using a count -> scan -> pack
+       * scheme.
        *
-       * This is the single primitive that drives migration: out-of-bounds
-       * particles are serialised by `sink` and then dropped. The default
-       * implementation performs a stable compaction in a single pass so that
-       * surviving particles keep their relative order and no reallocation
-       * occurs.
+       * For every particle, `classify(p)` returns a bucket index:
+       *   - `0` keeps the particle (survivors are compacted in place, preserving
+       *     their relative order),
+       *   - `1 .. NumBuckets` removes the particle and serialises it (via
+       *     `Serializer`) into `outBuffers[bucket - 1]`.
+       *
+       * On return `outBuffers[b]` holds exactly `counts[b] * Serializer::size()`
+       * bytes, tightly packed with no worst-case over-allocation, and is safe to
+       * hand straight to MPI.
+       *
+       * This is the single primitive that drives migration. The default
+       * (host) implementation performs the three passes serially. A
+       * device-resident container specialises this trait and implements each
+       * pass with a parallel classify / exclusive-scan / scatter so that no
+       * particle data ever has to leave the device before packing; only the
+       * final tightly-sized byte buffers are staged to the host. Because the
+       * output buffers are ordinary `std::vector<std::byte>`, the surrounding
+       * MPI code is identical for host and device containers.
+       *
+       * @tparam Serializer  the particle serialiser (device-callable)
+       * @tparam NumBuckets  the number of removal buckets (deduced)
+       * @tparam Classifier  the device-callable particle classifier (deduced)
        */
-      template<class Pred, class Sink>
-      static void extractIf(ContainerType &c, Pred &&pred, Sink &&sink) {
+      template<class Serializer, std::size_t NumBuckets, class Classifier>
+      static void partitionAndPack(
+          ContainerType &c,
+          const Classifier &classify,
+          std::array<std::vector<std::byte>, NumBuckets> &outBuffers,
+          std::array<std::size_t, NumBuckets> &counts
+      ) {
+        constexpr std::size_t particleBytes = Serializer::size();
+        const std::size_t n = c.size();
+
+        // Pass 1: classify every particle and count per bucket.
+        std::vector<int> bucket(n);
+        for (std::size_t b = 0; b < NumBuckets; ++b) {
+          counts[b] = 0;
+        }
+        for (std::size_t i = 0; i < n; ++i) {
+          const int bkt = classify(c[i]);
+          bucket[i] = bkt;
+          if (bkt != 0) {
+            ++counts[static_cast<std::size_t>(bkt) - 1];
+          }
+        }
+
+        // Pass 2: size the output buffers from the per-bucket totals (the
+        // host-serial equivalent of an exclusive scan over bucket sizes).
+        for (std::size_t b = 0; b < NumBuckets; ++b) {
+          outBuffers[b].assign(counts[b] * particleBytes, std::byte{0});
+        }
+
+        // Pass 3: scatter. Running per-bucket offsets act as the exclusive scan;
+        // survivors are compacted in place.
+        std::array<std::size_t, NumBuckets> offset{};
         std::size_t out = 0;
-        const std::size_t count = c.size();
-        for (std::size_t i = 0; i < count; ++i) {
-          if (pred(c[i])) {
-            sink(c[i]);
-          } else {
+        for (std::size_t i = 0; i < n; ++i) {
+          const int bkt = bucket[i];
+          if (bkt == 0) {
             if (out != i) {
               c[out] = std::move(c[i]);
             }
             ++out;
+          } else {
+            const std::size_t b = static_cast<std::size_t>(bkt) - 1;
+            Serializer::serialize(c[i], outBuffers[b].data() + offset[b] * particleBytes);
+            ++offset[b];
           }
         }
         c.resize(out);
+      }
+
+      /**
+       * Deserialise `count` particles from the tightly-packed, host-accessible
+       * byte buffer `src` (`Serializer::size()` bytes each) and append them to
+       * `c`.
+       *
+       * The default implementation deserialises serially on the host. A
+       * device-resident container specialises this trait to stage the bytes onto
+       * the device and deserialise them in parallel into the appended region.
+       */
+      template<class Serializer>
+      static void bulkInsert(ContainerType &c, const std::byte *src, std::size_t count) {
+        for (std::size_t i = 0; i < count; ++i) {
+          c.push_back(Serializer::deserialize(src + i * Serializer::size()));
+        }
       }
   };
 
@@ -118,16 +187,24 @@ namespace schnek {
   template<class Particle, class Enable = void>
   struct ParticleSerializer;
 
-  /// Default serializer for trivially-copyable particles (a plain memcpy).
+  /// Default serializer for trivially-copyable particles (a plain byte copy).
   template<class Particle>
   struct ParticleSerializer<Particle, std::enable_if_t<std::is_trivially_copyable_v<Particle>>> {
       static constexpr std::size_t size() { return sizeof(Particle); }
 
-      static void serialize(const Particle &p, std::byte *dst) { std::memcpy(dst, &p, sizeof(Particle)); }
+      SCHNEK_FUNCTION static void serialize(const Particle &p, std::byte *dst) {
+        const std::byte *src = reinterpret_cast<const std::byte *>(&p);
+        for (std::size_t i = 0; i < sizeof(Particle); ++i) {
+          dst[i] = src[i];
+        }
+      }
 
-      static Particle deserialize(const std::byte *src) {
+      SCHNEK_FUNCTION static Particle deserialize(const std::byte *src) {
         Particle p;
-        std::memcpy(&p, src, sizeof(Particle));
+        std::byte *dst = reinterpret_cast<std::byte *>(&p);
+        for (std::size_t i = 0; i < sizeof(Particle); ++i) {
+          dst[i] = src[i];
+        }
         return p;
       }
   };

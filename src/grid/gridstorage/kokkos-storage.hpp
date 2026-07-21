@@ -210,17 +210,17 @@ namespace schnek {
        * @brief resizes to grid with lower indices low[0],...,low[rank-1]
        * and upper indices high[0],...,high[rank-1]
        */
-      SCHNEK_FUNCTION void resize(const IndexType &low, const IndexType &high);
+      void resize(const IndexType &low, const IndexType &high);
 
       /**
        * @brief resizes the grid to the given range
        */
-      SCHNEK_FUNCTION void resize(const RangeType &range) { this->resize(range.getLo(), range.getHi()); }
+      void resize(const RangeType &range) { this->resize(range.getLo(), range.getHi()); }
 
       /**
        * @brief returns the stride of the specified dimension
        */
-      ptrdiff_t stride(size_t dim) const;
+      SCHNEK_FUNCTION ptrdiff_t stride(size_t dim) const;
 
     private:
       template<std::size_t... I>
@@ -324,14 +324,14 @@ namespace schnek {
   }
 
   template<typename T, size_t rank_t, class... ViewProperties>
-  SCHNEK_INLINE void KokkosGridStorage<T, rank_t, ViewProperties...>::resize(const IndexType &lo, const IndexType &hi) {
+  void KokkosGridStorage<T, rank_t, ViewProperties...>::resize(const IndexType &lo, const IndexType &hi) {
     IndexType dims = hi - lo + 1;
     this->view = createKokkosView(dims);
     update(RangeType{lo, hi});
   }
 
   template<typename T, size_t rank_t, class... ViewProperties>
-  ptrdiff_t KokkosGridStorage<T, rank_t, ViewProperties...>::stride(size_t dim) const {
+  SCHNEK_INLINE ptrdiff_t KokkosGridStorage<T, rank_t, ViewProperties...>::stride(size_t dim) const {
     return this->view.stride(dim);
   }
 

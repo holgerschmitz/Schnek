@@ -5,6 +5,7 @@
  *  Author: Holger Schmitz (holger@notjustphysics.com)
  */
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <limits>
@@ -1620,8 +1621,35 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     template<typename Particle, typename WrapperImpl>
     struct OwningCellDim {
       WrapperImpl wrapper;
-      SCHNEK_FUNCTION ptrdiff_t operator()(const Particle &p, size_t dim) {
+      SCHNEK_FUNCTION ptrdiff_t operator()(const Particle &p, size_t dim) const {
       return static_cast<ptrdiff_t>(std::floor(wrapper.accessor(p)[dim]));
+      }
+    };
+
+    /**
+     * Classifies a particle along a single dimension into a migration bucket:
+     *   - `0` keep (owning cell inside `[lo, hi]`),
+     *   - `1` going down (owning cell `< lo`, travels to the lower neighbour),
+     *   - `2` going up   (owning cell `> hi`, travels to the higher neighbour).
+     *
+     * Device-callable, so it can drive a parallel partition on a
+     * device-resident particle container.
+     */
+    template<typename Particle, typename WrapperImpl>
+    struct DimBucketClassifier {
+      OwningCellDim<Particle, WrapperImpl> owningCell;
+      ptrdiff_t lo;
+      ptrdiff_t hi;
+      size_t dim;
+      SCHNEK_FUNCTION int operator()(const Particle &p) const {
+        const ptrdiff_t cell = owningCell(p, dim);
+        if (cell < lo) {
+          return 1;
+        }
+        if (cell > hi) {
+          return 2;
+        }
+        return 0;
       }
     };
 
@@ -1636,7 +1664,6 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     using Serializer = ParticleSerializer<Particle>;
 
     auto &container = wrapper.container;
-    auto &accessor = wrapper.accessor;
 
     const RangeType localRange = getLocalInnerRange();
     const LimitType lo = localRange.getLo();
@@ -1651,8 +1678,9 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       return static_cast<int>(count);
     };
 
-    // The owning cell of a particle along dimension `dim`.
-    internal::OwningCellDim<Particle, WrapperImpl> owningCell{wrapper};
+    // The owning cell of a particle along dimension `dim` (used by the debug
+    // post-condition check below).
+    internal::mpi_cartesian_decomposition::OwningCellDim<Particle, WrapperImpl> owningCell{wrapper};
 
     // Sweep one dimension at a time. A particle bound for a diagonal neighbour
     // is forwarded dimension by dimension: received particles are re-inserted
@@ -1662,34 +1690,30 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       int nextRank = MPI_PROC_NULL;
       this->mpi.MPI_Cart_shift(comm, static_cast<int>(dim), 1, &prevRank, &nextRank);
 
-      // Collect departures, routed by the sign of the out-of-bounds offset.
-      // `goingDown` travels to `prevRank` (lower coordinate), `goingUp` to
-      // `nextRank` (higher coordinate).
-      std::vector<std::byte> goingDown;
-      std::vector<std::byte> goingUp;
-      std::size_t downCount = 0;
-      std::size_t upCount = 0;
-
-      auto pred = [&](const Particle &p) -> bool {
-        const ptrdiff_t cell = owningCell(p, dim);
-        return cell < lo[dim] || cell > hi[dim];
+      // Partition the container in place with a device-safe count -> scan ->
+      // pack primitive. Departing particles are serialised into tightly-sized,
+      // host-accessible buffers (no worst-case allocation): bucket 0 travels
+      // down to `prevRank`, bucket 1 travels up to `nextRank`. Survivors are
+      // compacted in place. The classifier and serialiser are device-callable,
+      // so a device-resident container can run all three passes on the GPU and
+      // only stage the final byte buffers to the host for MPI.
+      internal::mpi_cartesian_decomposition::DimBucketClassifier<Particle, WrapperImpl> classify{
+          {wrapper}, lo[dim], hi[dim], dim
       };
 
-      auto sink = [&](const Particle &p) {
-        const ptrdiff_t cell = owningCell(p, dim);
-        std::vector<std::byte> &buffer = (cell < lo[dim]) ? goingDown : goingUp;
-        std::size_t &counter = (cell < lo[dim]) ? downCount : upCount;
-        const std::size_t offset = buffer.size();
-        buffer.resize(offset + particleBytes);
-        Serializer::serialize(p, buffer.data() + offset);
-        ++counter;
-      };
+      std::array<std::vector<std::byte>, 2> outBuffers;
+      std::array<std::size_t, 2> counts{};
+      Traits::template partitionAndPack<Serializer>(container, classify, outBuffers, counts);
 
-      Traits::extractIf(container, pred, sink);
+      std::vector<std::byte> &goingDown = outBuffers[0];
+      std::vector<std::byte> &goingUp = outBuffers[1];
+      const std::size_t downCount = counts[0];
+      const std::size_t upCount = counts[1];
 
       // Phase A: upward movement. Send to `nextRank`, receive from `prevRank`.
       // Phase B: downward movement. Send to `prevRank`, receive from `nextRank`.
-      // Each phase first exchanges the particle count, then the payload.
+      // Each phase first exchanges the particle count, then the payload, and
+      // finally deserialises arrivals back into the container.
       auto exchange = [&](std::vector<std::byte> &sendBuffer, std::size_t sendCount, int sendRank, int recvRank) {
         int sendCountInt = toIntCount(sendCount);
         int recvCountInt = 0;
@@ -1706,9 +1730,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
             comm, MPI_STATUS_IGNORE
         );
 
-        for (std::size_t i = 0; i < recvCount; ++i) {
-          Traits::insert(container, Serializer::deserialize(recvBuffer.data() + i * particleBytes));
-        }
+        Traits::template bulkInsert<Serializer>(container, recvBuffer.data(), recvCount);
       };
 
       exchange(goingUp, upCount, nextRank, prevRank);

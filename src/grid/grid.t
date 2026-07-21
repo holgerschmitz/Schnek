@@ -332,19 +332,19 @@ namespace schnek {
     }
 
     template<typename T, size_t rank, template<typename, size_t> class... Policies>
-    SCHNEK_INLINE void GridBaseDevice<T, rank, Policies...>::resize(const IndexType& d) {
+    void GridBaseDevice<T, rank, Policies...>::resize(const IndexType& d) {
       IndexType high;
       for (size_t i = 0; i < rank; ++i) high[i] = d[i] - 1;
       storage.resize(IndexType::Zero(), high);
     }
 
     template<typename T, size_t rank, template<typename, size_t> class... Policies>
-    SCHNEK_INLINE void GridBaseDevice<T, rank, Policies...>::resize(const IndexType& low, const IndexType& high) {
+    void GridBaseDevice<T, rank, Policies...>::resize(const IndexType& low, const IndexType& high) {
       storage.resize(low, high);
     }
 
     template<typename T, size_t rank, template<typename, size_t> class... Policies>
-    SCHNEK_INLINE void GridBaseDevice<T, rank, Policies...>::resize(const RangeType& range) {
+    void GridBaseDevice<T, rank, Policies...>::resize(const RangeType& range) {
       storage.resize(range.getLo(), range.getHi());
     }
 
@@ -355,7 +355,7 @@ namespace schnek {
         class CheckingPolicy2,
         template<typename, size_t>
         class StoragePolicy2>
-    SCHNEK_INLINE void GridBaseDevice<T, rank, Policies...>::resize(const GridBaseDevice<T2, rank, CheckingPolicy2, StoragePolicy2>& grid) {
+    void GridBaseDevice<T, rank, Policies...>::resize(const GridBaseDevice<T2, rank, CheckingPolicy2, StoragePolicy2>& grid) {
       storage.resize(grid.getLo(), grid.getHi());
     }
 
