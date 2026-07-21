@@ -65,12 +65,10 @@ target_link_libraries(schnek
 
 if(MPI_CXX_FOUND)
   target_link_libraries(schnek PUBLIC MPI::MPI_CXX)
-  target_compile_definitions(schnek PUBLIC SCHNEK_HAVE_MPI=1)
 endif()
 
 if(HDF5_FOUND)
   target_link_libraries(schnek PUBLIC HDF5::HDF5)
-  target_compile_definitions(schnek PUBLIC SCHNEK_HAVE_HDF5=1)
 endif()
 
 function(schnek_mark_kokkos_target target_name)
