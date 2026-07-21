@@ -27,7 +27,7 @@
 #ifndef SCHNEK_MPISUBDIVISION_HPP
 #define SCHNEK_MPISUBDIVISION_HPP
 
-#include "../config.hpp"
+#include "config.hpp"
 #include "domainsubdivision.hpp"
 
 #ifdef SCHNEK_HAVE_MPI

@@ -26,7 +26,7 @@
 #ifndef SCHNEK_HDFDIAGNOSTIC_HPP_
 #define SCHNEK_HDFDIAGNOSTIC_HPP_
 
-#include "../config.hpp"
+#include "config.hpp"
 #ifdef SCHNEK_HAVE_HDF5
 
 #include <hdf5.h>

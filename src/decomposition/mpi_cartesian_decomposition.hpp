@@ -8,7 +8,7 @@
 #ifndef SCHNEK_DECOMPOSITION_MPI_CARTESIAN_DECOMPOSITION_HPP_
 #define SCHNEK_DECOMPOSITION_MPI_CARTESIAN_DECOMPOSITION_HPP_
 
-#include "../config.hpp"
+#include "config.hpp"
 #include "detail/redistribution.hpp"
 #include "domaindecomposition.hpp"
 #include "mpi_context.hpp"

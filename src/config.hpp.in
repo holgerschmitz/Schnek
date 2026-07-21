@@ -14,9 +14,11 @@
 #cmakedefine SCHNEK_HAVE_KOKKOS
 
 /* Integer Schnek Version Number */
-#cmakedefine SCHNEK_VERSION @SCHNEK_VERSION @
+#cmakedefine SCHNEK_VERSION @SCHNEK_VERSION@
 
+#ifndef OMPI_SKIP_MPICXX
 /* Skip C++ definitions when using Open MPI */
 #define OMPI_SKIP_MPICXX
+#endif
 
 #endif

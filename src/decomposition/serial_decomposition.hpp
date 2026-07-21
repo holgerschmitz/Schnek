@@ -8,7 +8,7 @@
 #ifndef SCHNEK_DECOMPOSITION_SERIAL_DECOMPOSITION_HPP_
 #define SCHNEK_DECOMPOSITION_SERIAL_DECOMPOSITION_HPP_
 
-#include "../config.hpp"
+#include "config.hpp"
 #include "detail/grid_visitor.hpp"
 #include "domaindecomposition.hpp"
 

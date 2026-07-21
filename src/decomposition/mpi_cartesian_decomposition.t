@@ -30,7 +30,7 @@
 
 namespace schnek {
 
-  namespace detail {
+  namespace internal {
     template<typename T>
     MPI_Datatype mpiDatatypeFor() {
       if constexpr (std::is_same_v<T, signed char>) {
@@ -59,7 +59,7 @@ namespace schnek {
         SCHNECK_FAIL("Unsupported grid value type for MPI exchange");
       }
     }
-  }  // namespace detail
+  }  // namespace internal
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   MpiCartesianDomainDecomposition<rank, CheckingPolicy>::MpiCartesianDomainDecomposition(MpiContext &mpi) : mpi(mpi) {}
@@ -78,7 +78,7 @@ namespace schnek {
   template<typename T>
   T MpiCartesianDomainDecomposition<rank, CheckingPolicy>::allReduce(T value, MPI_Op op) const {
     T result{};
-    int errorCode = mpi.MPI_Allreduce(&value, &result, 1, detail::mpiDatatypeFor<T>(), op, comm);
+    int errorCode = mpi.MPI_Allreduce(&value, &result, 1, internal::mpiDatatypeFor<T>(), op, comm);
     SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed");
     return result;
   }
@@ -769,11 +769,11 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
 
     {
       int errorCode =
-          mpi.MPI_Allreduce(&localBins, &minBins, 1, detail::mpiDatatypeFor<long>(), MPI_MIN, sliceComm);
+          mpi.MPI_Allreduce(&localBins, &minBins, 1, internal::mpiDatatypeFor<long>(), MPI_MIN, sliceComm);
       SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating local weight shape");
 
       errorCode =
-          mpi.MPI_Allreduce(&localBins, &maxBins, 1, detail::mpiDatatypeFor<long>(), MPI_MAX, sliceComm);
+          mpi.MPI_Allreduce(&localBins, &maxBins, 1, internal::mpiDatatypeFor<long>(), MPI_MAX, sliceComm);
       SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating local weight shape");
 
       if (minBins != maxBins) {
@@ -871,7 +871,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         localCuts.data(),
         globalCuts.data(),
         toIntCount(globalCuts.size(), "Number of local-weight cuts"),
-        detail::mpiDatatypeFor<long>(),
+        internal::mpiDatatypeFor<long>(),
         MPI_MAX,
         axisComm
     );
@@ -1054,7 +1054,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     using ValueType = typename GridType::value_type;
     using RangeTypeLocal = typename GridType::RangeType;
 
-    const MPI_Datatype mpiType = detail::mpiDatatypeFor<ValueType>();
+    const MPI_Datatype mpiType = internal::mpiDatatypeFor<ValueType>();
 
     auto gridRangeVolume = [](const RangeTypeLocal &range) -> size_t {
       size_t volume = 1;
@@ -1247,7 +1247,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     using ValueType = typename GridType::value_type;
     constexpr size_t projRank = GridType::Rank;
 
-    const MPI_Datatype mpiType = detail::mpiDatatypeFor<ValueType>();
+    const MPI_Datatype mpiType = internal::mpiDatatypeFor<ValueType>();
 
     auto toIntCount = [](size_t count) -> int {
       if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
@@ -1616,6 +1616,17 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     wrapper->accept(*migrateVisitor);
   }
 
+  namespace internal::mpi_cartesian_decomposition {
+    template<typename Particle, typename WrapperImpl>
+    struct OwningCellDim {
+      WrapperImpl wrapper;
+      SCHNEK_FUNCTION ptrdiff_t operator()(const Particle &p, size_t dim) {
+      return static_cast<ptrdiff_t>(std::floor(wrapper.accessor(p)[dim]));
+      }
+    };
+
+  }
+
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename WrapperImpl>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::migrateTyped(WrapperImpl &wrapper) {
@@ -1641,9 +1652,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     };
 
     // The owning cell of a particle along dimension `dim`.
-    auto owningCell = [&accessor](const Particle &p, size_t dim) -> ptrdiff_t {
-      return static_cast<ptrdiff_t>(std::floor(accessor(p)[dim]));
-    };
+    internal::OwningCellDim<Particle, WrapperImpl> owningCell{wrapper};
 
     // Sweep one dimension at a time. A particle bound for a diagonal neighbour
     // is forwarded dimension by dimension: received particles are re-inserted
@@ -1777,6 +1786,21 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     oldWrapper->accept(visitor);
   }
 
+  namespace internal::mpi_cartesian_decomposition {
+    template<size_t rank, typename Particle, typename LimitType, typename WrapperImpl>
+    struct OwningCell {
+      WrapperImpl wrapper;
+      SCHNEK_FUNCTION LimitType operator()(const Particle &p) {
+        LimitType cell;
+        const auto pos = wrapper.accessor(p);
+        for (size_t d = 0; d < rank; ++d) {
+          cell[d] = static_cast<ptrdiff_t>(std::floor(pos[d]));
+        }
+        return cell;
+      }
+    };
+  }
+
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename WrapperImpl>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::redistributeParticlesTyped(
@@ -1792,7 +1816,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
 
     auto &oldContainer = oldWrapper.container;
     auto &newContainer = newWrapper.container;
-    auto &accessor = oldWrapper.accessor;
+    // auto &accessor = oldWrapper.accessor;
 
     constexpr std::size_t particleBytes = Serializer::size();
     const int localRank = ComRank;
@@ -1805,14 +1829,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     };
 
     // The owning cell of a particle in every dimension.
-    auto owningCell = [&accessor](const Particle &p) -> LimitType {
-      LimitType cell;
-      const auto pos = accessor(p);
-      for (size_t d = 0; d < rank; ++d) {
-        cell[d] = static_cast<ptrdiff_t>(std::floor(pos[d]));
-      }
-      return cell;
-    };
+    internal::mpi_cartesian_decomposition::OwningCell<rank, Particle, LimitType, WrapperImpl> owningCell{oldWrapper};
 
     auto blockContains = [](const TransferBlock<rank, CheckingPolicy> &block, const LimitType &cell) -> bool {
       for (size_t d = 0; d < rank; ++d) {
@@ -2091,7 +2108,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       return static_cast<int>(count);
     };
 
-    const MPI_Datatype mpiType = detail::mpiDatatypeFor<ValueType>();
+    const MPI_Datatype mpiType = internal::mpiDatatypeFor<ValueType>();
 
     for (size_t dim = 0; dim < rank; ++dim) {
       int prevRank = MPI_PROC_NULL;
@@ -2241,7 +2258,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       return static_cast<int>(count);
     };
 
-    const MPI_Datatype mpiType = detail::mpiDatatypeFor<ValueType>();
+    const MPI_Datatype mpiType = internal::mpiDatatypeFor<ValueType>();
 
     for (size_t dim = 0; dim < rank; ++dim) {
       int prevRank = MPI_PROC_NULL;

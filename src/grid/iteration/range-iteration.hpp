@@ -26,7 +26,7 @@
 #ifndef SCHNEK_GRID_ITERATION_RANGEITERATION_HPP_
 #define SCHNEK_GRID_ITERATION_RANGEITERATION_HPP_
 
-#include "../../config.hpp"
+#include "config.hpp"
 #include "../array.hpp"
 
 namespace schnek {

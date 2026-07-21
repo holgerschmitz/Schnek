@@ -224,27 +224,27 @@ namespace schnek {
     template<typename T, size_t rank, template<typename, size_t> class... Policies>
     template<template<size_t> class ArrayCheckingPolicy>
     SCHNEK_INLINE T& GridBaseDevice<T, rank, Policies...>::get(const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos) {
-      return this->storage.get(CheckingPolicy::check(pos, this->getLo(), this->getHi()));
+      return this->storage.get(pos);
     }
 
     template<typename T, size_t rank, template<typename, size_t> class... Policies>
     template<template<size_t> class ArrayCheckingPolicy>
     SCHNEK_INLINE T GridBaseDevice<T, rank, Policies...>::get(const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos) const {
-      return this->storage.get(CheckingPolicy::check(pos, this->getLo(), this->getHi()));
+      return this->storage.get(pos);
     }
 
     template<typename T, size_t rank, template<typename, size_t> class... Policies>
     template<template<size_t> class ArrayCheckingPolicy>
     SCHNEK_INLINE T& GridBaseDevice<T, rank, Policies...>::operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos
     ) {
-      return this->storage.get(CheckingPolicy::check(pos, this->getLo(), this->getHi()));
+      return this->storage.get(pos);
     }
 
     template<typename T, size_t rank, template<typename, size_t> class... Policies>
     template<template<size_t> class ArrayCheckingPolicy>
     SCHNEK_INLINE T GridBaseDevice<T, rank, Policies...>::operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos
     ) const {
-      return this->storage.get(CheckingPolicy::check(pos, this->getLo(), this->getHi()));
+      return this->storage.get(pos);
     }
 
     template<typename T, size_t rank, template<typename, size_t> class... Policies>
@@ -269,7 +269,7 @@ namespace schnek {
       );
 
       IndexType pos{static_cast<ptrdiff_t>(indices)...};
-      return this->storage.get(CheckingPolicy::check(pos, this->getLo(), this->getHi()));
+      return this->storage.get(pos);
     }
 
     template<typename T, size_t rank, template<typename, size_t> class... Policies>
@@ -282,7 +282,7 @@ namespace schnek {
       );
 
       IndexType pos{static_cast<ptrdiff_t>(indices)...};
-      return this->storage.get(CheckingPolicy::check(pos, this->getLo(), this->getHi()));
+      return this->storage.get(pos);
     }
 
     template<typename T, size_t rank, template<typename, size_t> class... Policies>

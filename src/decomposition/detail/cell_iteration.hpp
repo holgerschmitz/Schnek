@@ -29,7 +29,7 @@
 #include <cstddef>
 #include <type_traits>
 
-#include "../../config.hpp"
+#include "config.hpp"
 #include "../../grid/gridstorage/grid-storage-concept.hpp"
 #include "../../grid/iteration/range-iteration.hpp"
 

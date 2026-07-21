@@ -26,7 +26,7 @@
 #ifndef SCHNEK_GRID_GRIDSTORAGE_KOKKOSSTORAGE_HPP_
 #define SCHNEK_GRID_GRIDSTORAGE_KOKKOSSTORAGE_HPP_
 
-#include "../../config.hpp"
+#include "config.hpp"
 
 #ifdef SCHNEK_HAVE_KOKKOS
 
@@ -210,12 +210,12 @@ namespace schnek {
        * @brief resizes to grid with lower indices low[0],...,low[rank-1]
        * and upper indices high[0],...,high[rank-1]
        */
-      void resize(const IndexType &low, const IndexType &high);
+      SCHNEK_FUNCTION void resize(const IndexType &low, const IndexType &high);
 
       /**
        * @brief resizes the grid to the given range
        */
-      void resize(const RangeType &range) { this->resize(range.getLo(), range.getHi()); }
+      SCHNEK_FUNCTION void resize(const RangeType &range) { this->resize(range.getLo(), range.getHi()); }
 
       /**
        * @brief returns the stride of the specified dimension
@@ -324,7 +324,7 @@ namespace schnek {
   }
 
   template<typename T, size_t rank_t, class... ViewProperties>
-  void KokkosGridStorage<T, rank_t, ViewProperties...>::resize(const IndexType &lo, const IndexType &hi) {
+  SCHNEK_INLINE void KokkosGridStorage<T, rank_t, ViewProperties...>::resize(const IndexType &lo, const IndexType &hi) {
     IndexType dims = hi - lo + 1;
     this->view = createKokkosView(dims);
     update(RangeType{lo, hi});

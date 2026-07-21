@@ -26,7 +26,7 @@
 #ifndef SCHNEK_GRID_ITERATION_KOKKOSITERATION_HPP_
 #define SCHNEK_GRID_ITERATION_KOKKOSITERATION_HPP_
 
-#include "../../config.hpp"
+#include "config.hpp"
 #include "../array.hpp"
 
 #ifdef SCHNEK_HAVE_KOKKOS
