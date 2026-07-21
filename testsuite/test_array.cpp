@@ -1506,10 +1506,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_2d, ArrayTest )
     int v1 = idist(rGen);
     int v2 = idist(rGen);
     int dim = index_dist(rGen);
-    std::vector<int> indices(2);
-    indices[0] = 0;
-    indices[1] = 1;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices{1 - dim};
     Array<int, 2, ArrayBoostTestArgCheck> test(v1, v2);
     Array<int, 1, ArrayBoostTestArgCheck> test_projectDim = test.projectDim(dim);
     BOOST_CHECK_EQUAL(test_projectDim[0], test[indices[0]]);
@@ -1531,9 +1528,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_3d, ArrayTest )
     int v3 = idist(rGen);
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(3);
-    for (int i=0; i<3; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(2);
+    for (int i = 0; i < 3; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 3, ArrayBoostTestArgCheck> test(v1, v2, v3);
     Array<int, 2, ArrayBoostTestArgCheck> test_projectDim = test.projectDim(dim);
@@ -1558,9 +1559,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_4d, ArrayTest )
     int v4 = idist(rGen);
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(4);
-    for (int i=0; i<4; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(3);
+    for (int i = 0; i < 4; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 4, ArrayBoostTestArgCheck> test(v1, v2, v3, v4);
     Array<int, 3, ArrayBoostTestArgCheck> test_projectDim = test.projectDim(dim);
@@ -1586,9 +1591,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_5d, ArrayTest )
     int v5 = idist(rGen);
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(5);
-    for (int i=0; i<5; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(4);
+    for (int i = 0; i < 5; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 5, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5);
     Array<int, 4, ArrayBoostTestArgCheck> test_projectDim = test.projectDim(dim);
@@ -1615,9 +1624,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_6d, ArrayTest )
     int v6 = idist(rGen);
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(6);
-    for (int i=0; i<6; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(5);
+    for (int i = 0; i < 6; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 6, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6);
     Array<int, 5, ArrayBoostTestArgCheck> test_projectDim = test.projectDim(dim);
@@ -1645,9 +1658,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_7d, ArrayTest )
     int v7 = idist(rGen);
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(7);
-    for (int i=0; i<7; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(6);
+    for (int i = 0; i < 7; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 7, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7);
     Array<int, 6, ArrayBoostTestArgCheck> test_projectDim = test.projectDim(dim);
@@ -1676,9 +1693,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_8d, ArrayTest )
     int v8 = idist(rGen);
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(8);
-    for (int i=0; i<8; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(7);
+    for (int i = 0; i < 8; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 8, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7, v8);
     Array<int, 7, ArrayBoostTestArgCheck> test_projectDim = test.projectDim(dim);
@@ -1708,9 +1729,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_9d, ArrayTest )
     int v9 = idist(rGen);
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(9);
-    for (int i=0; i<9; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(8);
+    for (int i = 0; i < 9; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 9, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7, v8, v9);
     Array<int, 8, ArrayBoostTestArgCheck> test_projectDim = test.projectDim(dim);
@@ -1741,9 +1766,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_10d, ArrayTest )
     int v10 = idist(rGen);
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(10);
-    for (int i=0; i<10; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(9);
+    for (int i = 0; i < 10; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 10, ArrayBoostTestArgCheck> test(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10);
     Array<int, 9, ArrayBoostTestArgCheck> test_projectDim = test.projectDim(dim);

@@ -63,34 +63,36 @@ namespace {
     return bytes;
   }
 
-  // A simple trivially-copyable particle. The grid position is stored as plain
-  // doubles (an Array<double> member would not be trivially copyable because
-  // Array has a user-declared destructor), so the default ParticleSerializer
-  // (a memcpy) applies. `std::vector<TestParticle>` satisfies the default
-  // ParticleContainerTraits.
-  struct TestParticle {
-    double pos[3];
-    int id;
-  };
+  namespace schnek_test {
+    // A simple trivially-copyable particle. The grid position is stored as plain
+    // doubles (an Array<double> member would not be trivially copyable because
+    // Array has a user-declared destructor), so the default ParticleSerializer
+    // (a memcpy) applies. `std::vector<TestParticle>` satisfies the default
+    // ParticleContainerTraits.
+    struct TestParticle {
+        double pos[3];
+        int id;
+    };
 
-  static_assert(std::is_trivially_copyable<TestParticle>::value, "TestParticle must be trivially copyable");
+    static_assert(std::is_trivially_copyable<TestParticle>::value, "TestParticle must be trivially copyable");
 
-  // Position accessor mapping a TestParticle to its continuous grid position.
-  template<size_t Rank>
-  struct TestPositionAccessor {
-    SCHNEK_FUNCTION schnek::Array<double, Rank> operator()(const TestParticle &p) const {
-      schnek::Array<double, Rank> position;
-      for (size_t d = 0; d < Rank; ++d) {
-        position[d] = p.pos[d];
+    // Position accessor mapping a TestParticle to its continuous grid position.
+    template<size_t Rank>
+    struct TestPositionAccessor {
+      SCHNEK_FUNCTION schnek::Array<double, Rank> operator()(const TestParticle &p) const {
+        schnek::Array<double, Rank> position;
+        for (size_t d = 0; d < Rank; ++d) {
+            position[d] = p.pos[d];
+        }
+        return position;
       }
-      return position;
-    }
-  };
+    };
+  } // namespace schnek_test
 
   // Serialise a vector of particles into the byte payload expected by the MPI
   // mock (mirrors the default ParticleSerializer, a raw memcpy).
-  std::vector<char> toParticleBytes(const std::vector<TestParticle> &particles) {
-    std::vector<char> bytes(particles.size() * sizeof(TestParticle));
+  std::vector<char> toParticleBytes(const std::vector<schnek_test::TestParticle> &particles) {
+    std::vector<char> bytes(particles.size() * sizeof(schnek_test::TestParticle));
     if (!particles.empty()) {
       std::memcpy(bytes.data(), particles.data(), bytes.size());
     }
@@ -4396,8 +4398,8 @@ BOOST_FIXTURE_TEST_CASE( particle_migration_1d, MpiCartesianDomainDecompositionT
   context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
   context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
 
-  using Container = std::vector<TestParticle>;
-  using Accessor = TestPositionAccessor<1>;
+  using Container = std::vector<schnek_test::TestParticle>;
+  using Accessor = schnek_test::TestPositionAccessor<1>;
   using RangeType = schnek::Range<ptrdiff_t, 1>;
 
   RangeType globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(9));
@@ -4409,12 +4411,12 @@ BOOST_FIXTURE_TEST_CASE( particle_migration_1d, MpiCartesianDomainDecompositionT
   decomposition.init();
 
   // Registering installs the migrate handler for this container/accessor type.
-  schnek::ParticleContainerFactory<Container> factory;
+//   schnek::ParticleContainerFactory<Container> factory;
   Accessor accessor;
 //   decomposition.registerParticleData(factory, accessor);
 
   auto makeParticle = [](double x, int id) {
-    TestParticle p{};
+    schnek_test::TestParticle p{};
     p.pos[0] = x;
     p.id = id;
     return p;
@@ -4440,8 +4442,8 @@ BOOST_FIXTURE_TEST_CASE( particle_migration_1d, MpiCartesianDomainDecompositionT
   // Arrivals injected by the mock. The upward exchange receives from prevRank,
   // the downward exchange receives from nextRank. All arrivals land inside the
   // inner range.
-  std::vector<TestParticle> fromPrev{makeParticle(1.0, 300)};
-  std::vector<TestParticle> fromNext{makeParticle(8.0, 301), makeParticle(9.0, 302)};
+  std::vector<schnek_test::TestParticle> fromPrev{makeParticle(1.0, 300)};
+  std::vector<schnek_test::TestParticle> fromNext{makeParticle(8.0, 301), makeParticle(9.0, 302)};
 
   const int upArrivals = static_cast<int>(fromPrev.size());
   const int downArrivals = static_cast<int>(fromNext.size());
@@ -4471,7 +4473,7 @@ BOOST_FIXTURE_TEST_CASE( particle_migration_1d, MpiCartesianDomainDecompositionT
   BOOST_CHECK_EQUAL_COLLECTIONS(ids.begin(), ids.end(), expectedIds.begin(), expectedIds.end());
 
   // --- MPI call structure ---
-  const size_t particleBytes = sizeof(TestParticle);
+  const size_t particleBytes = sizeof(schnek_test::TestParticle);
 
   BOOST_REQUIRE_EQUAL(context.args_MPI_Cart_shift.size(), static_cast<size_t>(1));
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_shift[0].get<1>(), 0);  // direction
@@ -4516,8 +4518,8 @@ BOOST_FIXTURE_TEST_CASE( particle_migration_no_departures_1d, MpiCartesianDomain
   context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
   context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
 
-  using Container = std::vector<TestParticle>;
-  using Accessor = TestPositionAccessor<1>;
+  using Container = std::vector<schnek_test::TestParticle>;
+  using Accessor = schnek_test::TestPositionAccessor<1>;
   using RangeType = schnek::Range<ptrdiff_t, 1>;
 
   RangeType globalRange(schnek::Array<ptrdiff_t,1>(0), schnek::Array<ptrdiff_t,1>(9));
@@ -4532,8 +4534,9 @@ BOOST_FIXTURE_TEST_CASE( particle_migration_no_departures_1d, MpiCartesianDomain
   Accessor accessor;
   decomposition.registerParticleData(factory, accessor);
 
+
   auto makeParticle = [](double x, int id) {
-    TestParticle p{};
+    schnek_test::TestParticle p{};
     p.pos[0] = x;
     p.id = id;
     return p;

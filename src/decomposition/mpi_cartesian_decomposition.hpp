@@ -56,7 +56,7 @@ namespace schnek {
        * 
        * For each dimension, the local ranges of all processes in that dimension are stored in a 1d Grid.
        */
-      typedef Array<Grid<Range<ptrdiff_t, 1>, 1>, rank> ProcRanges;
+      typedef std::array<Grid<Range<ptrdiff_t, 1>, 1>, rank> ProcRanges;
       
       /**
        * Constructor creating the domain decomposition object

@@ -450,8 +450,8 @@ namespace schnek {
         /** assign a value */
         SCHNEK_FUNCTION GridBaseDevice<T, rank, Policies...>& operator=(const T& val);
 
-        /** copy constructor */
-        SCHNEK_FUNCTION GridBaseDevice<T, rank, Policies...>& operator=(const GridBaseDevice<T, rank, Policies...>& val) = default;
+        /** copy assignment (execution space inferred by the compiler) */
+        GridBaseDevice<T, rank, Policies...>& operator=(const GridBaseDevice<T, rank, Policies...>& val) = default;
 
         template<typename T2, template<typename, size_t> class... Policies2>
         SCHNEK_FUNCTION GridBaseDevice<T, rank, Policies...>& operator-=(GridBaseDevice<T2, rank, Policies2...>&);

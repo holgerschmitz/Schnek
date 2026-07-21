@@ -148,7 +148,7 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  const Array<Grid<Range<ptrdiff_t, 1>, 1>, rank> &MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getProcRanges(
+  const std::array<Grid<Range<ptrdiff_t, 1>, 1>, rank> &MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getProcRanges(
   ) {
     return procRanges;
   }
@@ -1653,6 +1653,43 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       }
     };
 
+    template<typename Traits, typename Serializer, typename ContainerType, std::size_t particleBytes>
+    struct ExchangeParticle {
+      MpiContext &mpi;
+      MPI_Comm comm;
+      ContainerType &container;
+
+      int toIntCount(std::size_t count) {
+        if (count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+            SCHNECK_FAIL("Particle migration block too large for MPI_Sendrecv count");
+        }
+        return static_cast<int>(count);
+      }
+
+      // Phase A: upward movement. Send to `nextRank`, receive from `prevRank`.
+      // Phase B: downward movement. Send to `prevRank`, receive from `nextRank`.
+      // Each phase first exchanges the particle count, then the payload, and
+      // finally deserialises arrivals back into the container.
+      void operator()(std::vector<std::byte> &sendBuffer, std::size_t sendCount, int sendRank, int recvRank) {
+        int sendCountInt = toIntCount(sendCount);
+        int recvCountInt = 0;
+        this->mpi.MPI_Sendrecv(
+            &sendCountInt, 1, MPI_INT, sendRank, 0, &recvCountInt, 1, MPI_INT, recvRank, 0, comm, MPI_STATUS_IGNORE
+        );
+
+        const std::size_t recvCount = static_cast<std::size_t>(recvCountInt);
+        std::vector<std::byte> recvBuffer(recvCount * particleBytes);
+
+        this->mpi.MPI_Sendrecv(
+            sendCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendCount * particleBytes), MPI_BYTE, sendRank, 1,
+            recvCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvCount * particleBytes), MPI_BYTE, recvRank, 1,
+            comm, MPI_STATUS_IGNORE
+        );
+
+        Traits::template bulkInsert<Serializer>(container, recvBuffer.data(), recvCount);
+      };
+    };
+
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -1711,28 +1748,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       const std::size_t downCount = counts[0];
       const std::size_t upCount = counts[1];
 
-      // Phase A: upward movement. Send to `nextRank`, receive from `prevRank`.
-      // Phase B: downward movement. Send to `prevRank`, receive from `nextRank`.
-      // Each phase first exchanges the particle count, then the payload, and
-      // finally deserialises arrivals back into the container.
-      auto exchange = [&](std::vector<std::byte> &sendBuffer, std::size_t sendCount, int sendRank, int recvRank) {
-        int sendCountInt = toIntCount(sendCount);
-        int recvCountInt = 0;
-        this->mpi.MPI_Sendrecv(
-            &sendCountInt, 1, MPI_INT, sendRank, 0, &recvCountInt, 1, MPI_INT, recvRank, 0, comm, MPI_STATUS_IGNORE
-        );
-
-        const std::size_t recvCount = static_cast<std::size_t>(recvCountInt);
-        std::vector<std::byte> recvBuffer(recvCount * particleBytes);
-
-        this->mpi.MPI_Sendrecv(
-            sendCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendCount * particleBytes), MPI_BYTE, sendRank, 1,
-            recvCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvCount * particleBytes), MPI_BYTE, recvRank, 1,
-            comm, MPI_STATUS_IGNORE
-        );
-
-        Traits::template bulkInsert<Serializer>(container, recvBuffer.data(), recvCount);
-      };
+      internal::mpi_cartesian_decomposition::ExchangeParticle<Traits, Serializer, ContainerType, particleBytes> exchange{this->mpi, comm, container};
 
       exchange(goingUp, upCount, nextRank, prevRank);
       exchange(goingDown, downCount, prevRank, nextRank);
@@ -1822,6 +1838,56 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         return cell;
       }
     };
+
+    template<size_t rank, typename Traits, typename Particle, typename LimitType, typename PositionAccessor, typename SendPlanType, typename ContainerType, typename Serializer, std::size_t particleBytes>
+    struct RouteParticle {
+      OwningCell<rank, Particle, LimitType, PositionAccessor> owningCell;
+      const SendPlanType &sendPlan;
+      int localRank;
+      ContainerType &newContainer;
+      std::map<int, std::vector<std::byte>> &sendBuffers;
+
+
+      bool blockContains(const typename SendPlanType::value_type &block, const LimitType &cell) {
+        for (size_t d = 0; d < rank; ++d) {
+          if (cell[d] < block.range.getLo()[d] || cell[d] > block.range.getHi()[d]) {
+            return false;
+          }
+        }
+        return true;
+      };
+
+      // Route every old particle to its new owner: a local owner is inserted
+      // straight into the new container, a remote owner is serialised into the
+      // partner's send buffer.
+      void operator()(const Particle &p) {
+        const LimitType cell = owningCell(p);
+        int dest = 0;
+        bool found = false;
+        for (const auto &block : sendPlan) {
+          if (blockContains(block, cell)) {
+            dest = block.mpiRank;
+            found = true;
+            break;
+          }
+        }
+  
+        if (!found) {
+          SCHNECK_FAIL("Particle owning cell lies outside the old local range during redistribution");
+        }
+  
+        if (dest == localRank) {
+          Traits::insert(newContainer, p);
+          return;
+        }
+  
+        std::vector<std::byte> &buffer = sendBuffers[dest];
+        const std::size_t offset = buffer.size();
+        buffer.resize(offset + particleBytes);
+        Serializer::serialize(p, buffer.data() + offset);
+      }
+    };
+
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -1837,6 +1903,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     using Particle = typename Traits::value_type;
     using Serializer = ParticleSerializer<Particle>;
     using PositionAccessor = std::decay_t<decltype(oldWrapper.accessor)>;
+    using SendPlanType = std::decay_t<decltype(sendPlan)>;
 
     auto &oldContainer = oldWrapper.container;
     auto &newContainer = newWrapper.container;
@@ -1857,14 +1924,14 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         oldWrapper.accessor
     };
 
-    auto blockContains = [](const TransferBlock<rank, CheckingPolicy> &block, const LimitType &cell) -> bool {
-      for (size_t d = 0; d < rank; ++d) {
-        if (cell[d] < block.range.getLo()[d] || cell[d] > block.range.getHi()[d]) {
-          return false;
-        }
-      }
-      return true;
-    };
+    // auto blockContains = [](const TransferBlock<rank, CheckingPolicy> &block, const LimitType &cell) -> bool {
+    //   for (size_t d = 0; d < rank; ++d) {
+    //     if (cell[d] < block.range.getLo()[d] || cell[d] > block.range.getHi()[d]) {
+    //       return false;
+    //     }
+    //   }
+    //   return true;
+    // };
 
     // Partner ranks are taken from the transfer plan (not from the particle
     // counts) so that the count exchange stays symmetric even when a block
@@ -1887,35 +1954,12 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       sendBuffers[r];  // ensure an entry exists for every send partner
     }
 
-    // Route every old particle to its new owner: a local owner is inserted
-    // straight into the new container, a remote owner is serialised into the
-    // partner's send buffer.
-    Traits::forEach(oldContainer, [&](const Particle &p) {
-      const LimitType cell = owningCell(p);
-      int dest = 0;
-      bool found = false;
-      for (const auto &block : sendPlan) {
-        if (blockContains(block, cell)) {
-          dest = block.mpiRank;
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
-        SCHNECK_FAIL("Particle owning cell lies outside the old local range during redistribution");
-      }
-
-      if (dest == localRank) {
-        Traits::insert(newContainer, p);
-        return;
-      }
-
-      std::vector<std::byte> &buffer = sendBuffers[dest];
-      const std::size_t offset = buffer.size();
-      buffer.resize(offset + particleBytes);
-      Serializer::serialize(p, buffer.data() + offset);
-    });
+    internal::mpi_cartesian_decomposition::RouteParticle<
+        rank, Traits, Particle, LimitType, PositionAccessor, SendPlanType, ContainerType, Serializer, particleBytes
+    > routeParticle{
+        {oldWrapper.accessor}, sendPlan, localRank, newContainer, sendBuffers
+    };
+    Traits::forEach(oldContainer, routeParticle);
 
     // Phase 1: exchange particle counts with every partner.
     std::map<int, int> sendCounts;
