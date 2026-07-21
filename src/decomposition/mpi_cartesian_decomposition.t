@@ -1618,11 +1618,11 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   }
 
   namespace internal::mpi_cartesian_decomposition {
-    template<typename Particle, typename WrapperImpl>
+    template<typename Particle, typename PositionAccessor>
     struct OwningCellDim {
-      WrapperImpl wrapper;
+      PositionAccessor accessor;
       SCHNEK_FUNCTION ptrdiff_t operator()(const Particle &p, size_t dim) const {
-      return static_cast<ptrdiff_t>(std::floor(wrapper.accessor(p)[dim]));
+        return static_cast<ptrdiff_t>(std::floor(accessor(p)[dim]));
       }
     };
 
@@ -1635,9 +1635,9 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
      * Device-callable, so it can drive a parallel partition on a
      * device-resident particle container.
      */
-    template<typename Particle, typename WrapperImpl>
+    template<typename Particle, typename PositionAccessor>
     struct DimBucketClassifier {
-      OwningCellDim<Particle, WrapperImpl> owningCell;
+      OwningCellDim<Particle, PositionAccessor> owningCell;
       ptrdiff_t lo;
       ptrdiff_t hi;
       size_t dim;
@@ -1662,6 +1662,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     using Traits = ParticleContainerTraits<ContainerType>;
     using Particle = typename Traits::value_type;
     using Serializer = ParticleSerializer<Particle>;
+    using PositionAccessor = std::decay_t<decltype(wrapper.accessor)>;
 
     auto &container = wrapper.container;
 
@@ -1680,7 +1681,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
 
     // The owning cell of a particle along dimension `dim` (used by the debug
     // post-condition check below).
-    internal::mpi_cartesian_decomposition::OwningCellDim<Particle, WrapperImpl> owningCell{wrapper};
+    internal::mpi_cartesian_decomposition::OwningCellDim<Particle, PositionAccessor> owningCell{wrapper.accessor};
 
     // Sweep one dimension at a time. A particle bound for a diagonal neighbour
     // is forwarded dimension by dimension: received particles are re-inserted
@@ -1697,8 +1698,8 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       // compacted in place. The classifier and serialiser are device-callable,
       // so a device-resident container can run all three passes on the GPU and
       // only stage the final byte buffers to the host for MPI.
-      internal::mpi_cartesian_decomposition::DimBucketClassifier<Particle, WrapperImpl> classify{
-          {wrapper}, lo[dim], hi[dim], dim
+      internal::mpi_cartesian_decomposition::DimBucketClassifier<Particle, PositionAccessor> classify{
+          {wrapper.accessor}, lo[dim], hi[dim], dim
       };
 
       std::array<std::vector<std::byte>, 2> outBuffers;
@@ -1809,12 +1810,12 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   }
 
   namespace internal::mpi_cartesian_decomposition {
-    template<size_t rank, typename Particle, typename LimitType, typename WrapperImpl>
+    template<size_t rank, typename Particle, typename LimitType, typename PositionAccessor>
     struct OwningCell {
-      WrapperImpl wrapper;
+      PositionAccessor accessor;
       SCHNEK_FUNCTION LimitType operator()(const Particle &p) {
         LimitType cell;
-        const auto pos = wrapper.accessor(p);
+        const auto pos = accessor(p);
         for (size_t d = 0; d < rank; ++d) {
           cell[d] = static_cast<ptrdiff_t>(std::floor(pos[d]));
         }
@@ -1835,6 +1836,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     using Traits = ParticleContainerTraits<ContainerType>;
     using Particle = typename Traits::value_type;
     using Serializer = ParticleSerializer<Particle>;
+    using PositionAccessor = std::decay_t<decltype(oldWrapper.accessor)>;
 
     auto &oldContainer = oldWrapper.container;
     auto &newContainer = newWrapper.container;
@@ -1851,7 +1853,9 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     };
 
     // The owning cell of a particle in every dimension.
-    internal::mpi_cartesian_decomposition::OwningCell<rank, Particle, LimitType, WrapperImpl> owningCell{oldWrapper};
+    internal::mpi_cartesian_decomposition::OwningCell<rank, Particle, LimitType, PositionAccessor> owningCell{
+        oldWrapper.accessor
+    };
 
     auto blockContains = [](const TransferBlock<rank, CheckingPolicy> &block, const LimitType &cell) -> bool {
       for (size_t d = 0; d < rank; ++d) {
