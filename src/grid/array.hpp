@@ -62,8 +62,8 @@ namespace schnek {
       typedef T value_type;
       static constexpr size_t length = Length;
 
-      /// The default constructor
-      SCHNEK_INLINE Array();
+      /// The default constructor (execution space inferred by the compiler)
+      Array() = default;
       /// Copy constructor copies the values
       template<template<size_t> class CheckingPolicy2>
       SCHNEK_INLINE Array(const Array<T, Length, CheckingPolicy2> &);
@@ -103,7 +103,8 @@ namespace schnek {
       SCHNEK_INLINE
       Array(const T &, const T &, const T &, const T &, const T &, const T &, const T &, const T &, const T &, const T &);
 
-      SCHNEK_INLINE ~Array() {}
+      /// The destructor (execution space inferred by the compiler)
+      ~Array() = default;
 
       /// Accessor operator
       SCHNEK_INLINE T &operator[](size_t);

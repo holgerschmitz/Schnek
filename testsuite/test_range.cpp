@@ -877,9 +877,7 @@ BOOST_FIXTURE_TEST_CASE( projectDim_2d, RangeTest )
 
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(2);
-    for (int i=0; i<2; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices{1 - dim};
 
     Array<int, 2, ArrayBoostTestArgCheck> lo(lo1, lo2);
     Array<int, 2, ArrayBoostTestArgCheck> hi(hi1, hi2);
@@ -911,9 +909,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_3d, RangeTest )
 
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(3);
-    for (int i=0; i<3; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(2);
+    for (int i = 0; i < 3; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 3, ArrayBoostTestArgCheck> lo(lo1, lo2, lo3);
     Array<int, 3, ArrayBoostTestArgCheck> hi(hi1, hi2, hi3);
@@ -950,9 +952,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_4d, RangeTest )
 
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(4);
-    for (int i=0; i<4; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(3);
+    for (int i = 0; i < 4; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 4, ArrayBoostTestArgCheck> lo(lo1, lo2, lo3, lo4);
     Array<int, 4, ArrayBoostTestArgCheck> hi(hi1, hi2, hi3, hi4);
@@ -991,9 +997,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_5d, RangeTest )
 
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(5);
-    for (int i=0; i<5; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(4);
+    for (int i = 0; i < 5; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 5, ArrayBoostTestArgCheck> lo(lo1, lo2, lo3, lo4, lo5);
     Array<int, 5, ArrayBoostTestArgCheck> hi(hi1, hi2, hi3, hi4, hi5);
@@ -1034,9 +1044,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_6d, RangeTest )
 
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(6);
-    for (int i=0; i<6; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(5);
+    for (int i = 0; i < 6; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 6, ArrayBoostTestArgCheck> lo(lo1, lo2, lo3, lo4, lo5, lo6);
     Array<int, 6, ArrayBoostTestArgCheck> hi(hi1, hi2, hi3, hi4, hi5, hi6);
@@ -1079,9 +1093,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_7d, RangeTest )
 
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(7);
-    for (int i=0; i<7; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(6);
+    for (int i = 0; i < 7; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 7, ArrayBoostTestArgCheck> lo(lo1, lo2, lo3, lo4, lo5, lo6, lo7);
     Array<int, 7, ArrayBoostTestArgCheck> hi(hi1, hi2, hi3, hi4, hi5, hi6, hi7);
@@ -1126,9 +1144,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_8d, RangeTest )
 
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(8);
-    for (int i=0; i<8; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(7);
+    for (int i = 0; i < 8; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 8, ArrayBoostTestArgCheck> lo(lo1, lo2, lo3, lo4, lo5, lo6, lo7, lo8);
     Array<int, 8, ArrayBoostTestArgCheck> hi(hi1, hi2, hi3, hi4, hi5, hi6, hi7, hi8);
@@ -1175,9 +1197,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_9d, RangeTest )
 
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(9);
-    for (int i=0; i<9; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(8);
+    for (int i = 0; i < 9; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 9, ArrayBoostTestArgCheck> lo(lo1, lo2, lo3, lo4, lo5, lo6, lo7, lo8, lo9);
     Array<int, 9, ArrayBoostTestArgCheck> hi(hi1, hi2, hi3, hi4, hi5, hi6, hi7, hi8, hi9);
@@ -1226,9 +1252,13 @@ BOOST_FIXTURE_TEST_CASE( projectDim_10d, RangeTest )
 
     int dim = index_dist(rGen);
 
-    std::vector<int> indices(10);
-    for (int i=0; i<10; ++i) indices[i] = i;
-    indices.erase(indices.begin()+dim);
+    std::vector<int> indices;
+    indices.reserve(9);
+    for (int i = 0; i < 10; ++i) {
+        if (i != dim) {
+            indices.push_back(i);
+        }
+    }
 
     Array<int, 10, ArrayBoostTestArgCheck> lo(lo1, lo2, lo3, lo4, lo5, lo6, lo7, lo8, lo9, lo10);
     Array<int, 10, ArrayBoostTestArgCheck> hi(hi1, hi2, hi3, hi4, hi5, hi6, hi7, hi8, hi9, hi10);
