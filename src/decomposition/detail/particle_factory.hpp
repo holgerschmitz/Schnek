@@ -236,7 +236,7 @@ namespace schnek {
   template<auto MemberPtr>
   struct MemberPositionAccessor {
       template<class Particle>
-      auto operator()(const Particle &p) const -> decltype(p.*MemberPtr) {
+      SCHNEK_FUNCTION auto operator()(const Particle &p) const -> decltype(p.*MemberPtr) {
         return p.*MemberPtr;
       }
   };

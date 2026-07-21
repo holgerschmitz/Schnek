@@ -81,12 +81,12 @@ namespace schnek {
         /**
          * @brief Default constructor
          */
-        GridBase() = default;
+        GridBase();
 
         /**
          * @brief Copy constructor
          */
-        GridBase(const GridBase&) = default;
+        GridBase(const GridBase&);
 
         template<template<size_t> class ArrayCheckingPolicy>
         GridBase(const Array<size_t, rank, ArrayCheckingPolicy>& size);
@@ -229,7 +229,7 @@ namespace schnek {
         GridBase<T, rank, Policies...>& operator=(const T& val);
 
         /** copy constructor */
-        GridBase<T, rank, Policies...>& operator=(const GridBase<T, rank, Policies...>& val) = default;
+        GridBase<T, rank, Policies...>& operator=(const GridBase& val);
 
         template<typename T2, template<typename, size_t> class... Policies2>
         GridBase<T, rank, Policies...>& operator-=(GridBase<T2, rank, Policies2...>&);

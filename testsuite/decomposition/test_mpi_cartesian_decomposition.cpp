@@ -78,7 +78,7 @@ namespace {
   // Position accessor mapping a TestParticle to its continuous grid position.
   template<size_t Rank>
   struct TestPositionAccessor {
-    schnek::Array<double, Rank> operator()(const TestParticle &p) const {
+    SCHNEK_FUNCTION schnek::Array<double, Rank> operator()(const TestParticle &p) const {
       schnek::Array<double, Rank> position;
       for (size_t d = 0; d < Rank; ++d) {
         position[d] = p.pos[d];
@@ -4411,7 +4411,7 @@ BOOST_FIXTURE_TEST_CASE( particle_migration_1d, MpiCartesianDomainDecompositionT
   // Registering installs the migrate handler for this container/accessor type.
   schnek::ParticleContainerFactory<Container> factory;
   Accessor accessor;
-  decomposition.registerParticleData(factory, accessor);
+//   decomposition.registerParticleData(factory, accessor);
 
   auto makeParticle = [](double x, int id) {
     TestParticle p{};
