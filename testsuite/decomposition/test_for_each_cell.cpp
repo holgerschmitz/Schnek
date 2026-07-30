@@ -82,6 +82,7 @@ BOOST_AUTO_TEST_SUITE(for_each_cell)
 
 BOOST_AUTO_TEST_CASE(for_each_cell_assigns_every_cell_1d) {
   using GridType = schnek::Grid<double, 1>;
+  using EGridType = typename GridType::ExecutionViewType<>;
   using RangeType = schnek::Range<ptrdiff_t, 1>;
 
   RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));

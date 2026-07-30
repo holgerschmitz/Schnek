@@ -41,7 +41,7 @@ namespace {
 }
 
 struct Assign1d {
-    typedef Grid<ptrdiff_t, 1, GridNoArgCheck, GridStorage> GridType;
+    typedef Grid<ptrdiff_t, 1, GridNoArgCheck, GridStorage>::ExecutionViewType<Execution> GridType;
     mutable GridType grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {

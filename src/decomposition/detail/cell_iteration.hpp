@@ -146,7 +146,7 @@ namespace schnek {
           invokeCellKernel(
             kernel,
             pos,
-            PackElement<Is, Grids>::value...
+            PackElement<Is, Grids>::value.getExecutionView() ...
           );
         }
       };
