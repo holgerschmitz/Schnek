@@ -42,23 +42,23 @@
 namespace schnek {
   namespace detail {
 
-    namespace internal {
-      /**
-       * @brief Detects whether a storage policy is backed by a Kokkos view, i.e.
-       *        it exposes a `getKokkosView()` accessor.
-       */
-      template<
-          class Storage,
-          bool = concepts::GridStorageConceptCondition<Storage>::has_get_kokkos_view_method>
-      struct is_kokkos_storage : std::false_type {};
+    // namespace internal {
+    //   /**
+    //    * @brief Detects whether a storage policy is backed by a Kokkos view, i.e.
+    //    *        it exposes a `getKokkosView()` accessor.
+    //    */
+    //   template<
+    //       class Storage,
+    //       bool = concepts::GridStorageConceptCondition<Storage>::has_get_kokkos_view_method>
+    //   struct is_kokkos_storage : std::false_type {};
 
-      template<class Storage>
-      struct is_kokkos_storage<Storage, true> : std::true_type {};
-    }  // namespace internal
+    //   template<class Storage>
+    //   struct is_kokkos_storage<Storage, true> : std::true_type {};
+    // }  // namespace internal
 
-    /// True if `GridType` is backed by a Kokkos storage policy.
-    template<class GridType>
-    struct is_kokkos_grid : internal::is_kokkos_storage<typename GridType::storage_type> {};
+    // /// True if `GridType` is backed by a Kokkos storage policy.
+    // template<class GridType>
+    // struct is_kokkos_grid : internal::is_kokkos_storage<typename GridType::storage_type> {};
 
     /**
      * @brief Maps a grid type to the iteration policy used to sweep its cells.
@@ -70,27 +70,12 @@ namespace schnek {
      * underlying view handle), which is required so the view can be captured into
      * a device kernel while writes still target the shared device memory.
      */
-    template<class GridType, typename Enable = void>
-    struct IterationPolicyFor {
-        static constexpr std::size_t Rank = static_cast<std::size_t>(GridType::Rank);
-        using type = RangeCIterationPolicy<Rank>;
-        /// Capture grids by value (true) or by reference (false) for the kernel.
-        static constexpr bool device_capture = false;
-    };
-
-#ifdef SCHNEK_HAVE_KOKKOS
-
     template<class GridType>
-    struct IterationPolicyFor<GridType, std::enable_if_t<is_kokkos_grid<GridType>::value>> {
-        static constexpr std::size_t Rank = static_cast<std::size_t>(GridType::Rank);
-        using Storage = typename GridType::storage_type;
-        using ExecSpace = typename Storage::ViewType::execution_space;
-        using type = RangeKokkosIterationPolicy<Rank, ExecSpace>;
-        static constexpr bool device_capture = true;
+    struct IterationPolicyFor {
+        using type = GridType::IterationPolicyType;
+        /// Capture grids by value (true) or by reference (false) for the kernel.
+        // static constexpr bool device_capture = false;
     };
-
-#endif  // SCHNEK_HAVE_KOKKOS
-
     namespace internal {
       /**
        * @brief Host launch: sweep `range` with `IterationPolicy`, capturing the
@@ -120,10 +105,10 @@ namespace schnek {
 
       template<std::size_t I, class T>
       struct PackElement {
-        T value;
+        typename T::ExecutionViewType<void> value;
 
         SCHNEK_INLINE
-        explicit PackElement(const T& v) : value(v) {}
+        explicit PackElement(T& v) : value(v.template getExecutionView<void>()) {}
       };
 
       template<class IndexSeq, class RangeType, class Kernel, class... Grids>
@@ -146,7 +131,7 @@ namespace schnek {
           invokeCellKernel(
             kernel,
             pos,
-            PackElement<Is, Grids>::value.getExecutionView() ...
+            PackElement<Is, Grids>::value ...
           );
         }
       };
