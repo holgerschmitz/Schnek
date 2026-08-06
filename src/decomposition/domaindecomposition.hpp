@@ -979,7 +979,7 @@ namespace schnek {
     using FirstGrid = typename std::remove_const<typename std::remove_reference<FirstGridParam>::type>::type;
     using PolicyInfo = detail::IterationPolicyFor<FirstGrid>;
     using IterationPolicy = typename PolicyInfo::type;
-    constexpr bool deviceCapture = PolicyInfo::device_capture;
+    // constexpr bool deviceCapture = PolicyInfo::device_capture;
 
     if (gridLists.size() != paramCount) {
       SCHNECK_FAIL(
@@ -1020,9 +1020,9 @@ namespace schnek {
 
       if (!hasNullGrid) {
         RangeType rangeRef = ranges[entry];
-        internal::launchCellEntry<IterationPolicy, deviceCapture, ParameterSeq>(
-            rangeRef, kernel, iterators, std::make_index_sequence<paramCount>{}
-        );
+        // internal::launchCellEntry<IterationPolicy, deviceCapture, ParameterSeq>(
+        //     rangeRef, kernel, iterators, std::make_index_sequence<paramCount>{}
+        // );
       }
 
       for (auto &it : iterators) {

@@ -38,6 +38,7 @@
 
 #include "../../macros.hpp"
 #include "../array.hpp"
+#include "../iteration/kokkos-iteration.hpp"
 #include "../range.hpp"
 
 namespace schnek {
@@ -87,7 +88,15 @@ namespace schnek {
               Kokkos::DefaultExecutionSpace,
               MemorySpace
           >::accessible;;
-            
+
+        /**
+         * @brief The natural iteration policy for sweeping this storage's cells
+         *
+         * Selects the execution-space-aware `RangeKokkosIterationPolicy`, using the execution
+         * space of the underlying `Kokkos::View`, so that cell iteration runs on whichever
+         * execution space the view's memory space is associated with.
+         */
+        using IterationPolicyType = RangeKokkosIterationPolicy<rank_t, typename ViewType::execution_space>;            
       protected:
         /// The lowest and highest coordinates in the grid (inclusive)
         RangeType range;
@@ -112,14 +121,14 @@ namespace schnek {
          * @param lo the lowest coordinate in the grid (inclusive)
          * @param hi the highest coordinate in the grid (inclusive)
          */
-        SCHNEK_FUNCTION KokkosGridStorageBase(const IndexType &lo, const IndexType &hi);
+        KokkosGridStorageBase(const IndexType &lo, const IndexType &hi);
 
         /**
          * @brief Construct with a given size
          *
          * @param range the lowest and highest coordinates in the grid (inclusive)
          */
-        SCHNEK_FUNCTION KokkosGridStorageBase(const RangeType &range);
+        KokkosGridStorageBase(const RangeType &range);
 
         /**
          * @brief Get the rvalue at a given grid index
@@ -200,12 +209,12 @@ namespace schnek {
         SCHNEK_FUNCTION ptrdiff_t stride(size_t dim) const;
 
       private:
-        SCHNEK_FUNCTION auto createKokkosView(const IndexType &dims) {
+        auto createKokkosView(const IndexType &dims) {
           return createKokkosViewImpl(dims, std::make_index_sequence<rank_t>{});
         }
 
         template<std::size_t... I>
-        SCHNEK_FUNCTION ViewType createKokkosViewImpl(const IndexType &a, std::index_sequence<I...>) {
+        ViewType createKokkosViewImpl(const IndexType &a, std::index_sequence<I...>) {
           ViewType view("schnek", a[I]...);
           return view;
         }
@@ -441,14 +450,14 @@ namespace schnek {
         : range{IndexType{0}, IndexType{0}}, dims{0} {}
 
     template<typename T, size_t rank_t, class... ViewProperties>
-    SCHNEK_INLINE KokkosGridStorageBase<T, rank_t, ViewProperties...>::KokkosGridStorageBase(const IndexType &lo, const IndexType &hi)
+    KokkosGridStorageBase<T, rank_t, ViewProperties...>::KokkosGridStorageBase(const IndexType &lo, const IndexType &hi)
         : range{lo, hi} {
       dims = hi - lo + 1;
       view = createKokkosView(dims);
     }
 
     template<typename T, size_t rank_t, class... ViewProperties>
-    SCHNEK_INLINE KokkosGridStorageBase<T, rank_t, ViewProperties...>::KokkosGridStorageBase(const RangeType &range)
+    KokkosGridStorageBase<T, rank_t, ViewProperties...>::KokkosGridStorageBase(const RangeType &range)
         : range{range} {
       dims = range.getHi() - range.getLo() + 1;
       view = createKokkosView(dims);

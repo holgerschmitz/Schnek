@@ -37,6 +37,7 @@
 #include "gridcheck/grid-check-concept.hpp"
 #include "gridcheck/gridcheck.hpp"
 #include "gridstorage.hpp"
+#include "iteration/range-iteration.hpp"
 #include "range.hpp"
 
 namespace schnek {
@@ -51,6 +52,29 @@ namespace schnek {
   class ArrayExpression;
 
   namespace internal {
+    /**
+     * @brief Determines the iteration policy used to sweep a grid's cells.
+     *
+     * If `Storage` exposes a nested `IterationPolicyType` (and a corresponding
+     * `iteration_device_capture` flag), that policy is used as-is. This is how
+     * `KokkosGridStorageBase`-derived storage (and `KokkosExecutionView`, which
+     * shares the same base) advertises the execution-space-aware policy driven
+     * by its underlying `Kokkos::View`. Otherwise this falls back to the
+     * host `RangeCIterationPolicy` with reference (non-device) capture, which is
+     * correct for `SingleArrayGridStorage` and other host-only storage policies.
+     */
+    template<typename Storage, size_t rank, typename = void>
+    struct StorageIterationPolicyOr {
+        using type = RangeCIterationPolicy<rank>;
+        static constexpr bool device_capture = false;
+    };
+
+    template<typename Storage, size_t rank>
+    struct StorageIterationPolicyOr<Storage, rank, std::void_t<typename Storage::IterationPolicyType>> {
+        using type = typename Storage::IterationPolicyType;
+        static constexpr bool device_capture = Storage::iteration_device_capture;
+    };
+
     /**
      * @brief The generic base class for the Grid class template
      *
@@ -78,6 +102,13 @@ namespace schnek {
         typedef typename StoragePolicy::RangeType RangeType;
         typedef StoragePolicy storage_type;
         enum { Rank = rank };
+
+        /// The natural iteration policy for sweeping this grid's cells, derived from the storage policy
+        using IterationPolicyType = typename internal::StorageIterationPolicyOr<StoragePolicy, rank>::type;
+
+        /// True if the grid must be captured by value (rather than by reference) for cell iteration
+        static constexpr bool iteration_device_capture =
+            internal::StorageIterationPolicyOr<StoragePolicy, rank>::device_capture;
 
       public:
         /**
@@ -337,11 +368,17 @@ namespace schnek {
       typedef internal::GridBase<T, rank, Policies...> BaseType;
 
       template<typename ExecutionSpace = void>
-      using ExecutionViewType = internal::ExecutionViewTypeOr<
+      using ExecutionViewType = typename internal::ExecutionViewTypeOr<
         GridType,
         ExecutionSpace,
         typename BaseType::StoragePolicy
       >::type;
+
+      /// The natural iteration policy for sweeping this grid's cells, derived from the storage policy
+      using IterationPolicyType = typename BaseType::IterationPolicyType;
+
+      /// True if the grid must be captured by value (rather than by reference) for cell iteration
+      static constexpr bool iteration_device_capture = BaseType::iteration_device_capture;
 
       enum { Rank = rank };
 

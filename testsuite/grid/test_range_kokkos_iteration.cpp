@@ -41,8 +41,8 @@ namespace {
 }
 
 struct Assign1d {
-    typedef Grid<ptrdiff_t, 1, GridNoArgCheck, GridStorage>::ExecutionViewType<Execution> GridType;
-    mutable GridType grid;
+    typedef Grid<ptrdiff_t, 1, GridNoArgCheck, GridStorage> GridType;
+    mutable GridType::ExecutionViewType<Execution> grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
         grid[pos] = pos[0];
@@ -51,7 +51,7 @@ struct Assign1d {
 
 struct Assign2d {
     typedef Grid<ptrdiff_t, 2, GridNoArgCheck, GridStorage> GridType;
-    mutable GridType grid;
+    mutable GridType::ExecutionViewType<Execution> grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
         grid[pos] = pos[0] + 3*pos[1];
@@ -60,7 +60,7 @@ struct Assign2d {
 
 struct Assign3d {
     typedef Grid<ptrdiff_t, 3, GridNoArgCheck, GridStorage> GridType;
-    mutable GridType grid;
+    mutable GridType::ExecutionViewType<Execution> grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
         grid[pos] = pos[0] + 3*pos[1] + 7*pos[2];
@@ -69,7 +69,7 @@ struct Assign3d {
 
 struct Assign4d {
     typedef Grid<ptrdiff_t, 4, GridNoArgCheck, GridStorage> GridType;
-    mutable GridType grid;
+    mutable GridType::ExecutionViewType<Execution> grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
         grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3];
@@ -78,7 +78,7 @@ struct Assign4d {
 
 struct Assign5d {
     typedef Grid<ptrdiff_t, 5, GridNoArgCheck, GridStorage> GridType;
-    mutable GridType grid;
+    mutable GridType::ExecutionViewType<Execution> grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
         grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3] + 23*pos[4];
@@ -87,7 +87,7 @@ struct Assign5d {
 
 struct Assign6d {
     typedef Grid<ptrdiff_t, 6, GridNoArgCheck, GridStorage> GridType;
-    mutable GridType grid;
+    mutable GridType::ExecutionViewType<Execution> grid;
     SCHNEK_INLINE void operator()(const GridType::IndexType& pos) const
     {
         grid[pos] = pos[0] + 3*pos[1] + 7*pos[2] + 13*pos[3] + 23*pos[4] + 47*pos[5];
@@ -110,7 +110,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_1d,  RangeIterationTest)
         Range<ptrdiff_t, 1, ArrayNoArgCheck> range(lo, hi);
         Assign1d::GridType grid(lo, hi);
         
-        Assign1d assign{grid};
+        Assign1d assign{grid.getExecutionView()};
         RangeKokkosIterationPolicy<1, Execution>::forEach(range, assign);
         
         Kokkos::fence();
@@ -137,7 +137,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_2d, RangeIterationTest )
         Range<ptrdiff_t, 2, ArrayNoArgCheck> range(lo, hi);
         Assign2d::GridType grid(lo, hi);
 
-        Assign2d assign{grid};
+        Assign2d assign{grid.getExecutionView()};
         RangeKokkosIterationPolicy<2>::forEach(range, assign);
 
         Kokkos::fence();
@@ -165,7 +165,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_3d, RangeIterationTest )
         Range<ptrdiff_t, 3, ArrayNoArgCheck> range(lo, hi);
         Assign3d::GridType grid(lo, hi);
 
-        Assign3d assign{grid};
+        Assign3d assign{grid.getExecutionView()};
         RangeKokkosIterationPolicy<3>::forEach(range, assign);
 
         Kokkos::fence();
@@ -196,7 +196,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_4d, RangeIterationTest )
         Range<ptrdiff_t, 4, ArrayNoArgCheck> range(lo, hi);
         Assign4d::GridType grid(lo, hi);
 
-        Assign4d assign{grid};
+        Assign4d assign{grid.getExecutionView()};
         RangeKokkosIterationPolicy<4>::forEach(range, assign);
 
         Kokkos::fence();
@@ -233,7 +233,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_5d, RangeIterationTest )
         Range<ptrdiff_t, 5, ArrayNoArgCheck> range(lo, hi);
         Assign5d::GridType grid(lo, hi);
 
-        Assign5d assign{grid};
+        Assign5d assign{grid.getExecutionView()};
         RangeKokkosIterationPolicy<5>::forEach(range, assign);
 
         Kokkos::fence();
@@ -273,7 +273,7 @@ BOOST_FIXTURE_TEST_CASE( iterate_6d, RangeIterationTest )
         Range<ptrdiff_t, 6, ArrayNoArgCheck> range(lo, hi);
         Assign6d::GridType grid(lo, hi);
 
-        Assign6d assign{grid};
+        Assign6d assign{grid.getExecutionView()};
         RangeKokkosIterationPolicy<6>::forEach(range, assign);
 
         Kokkos::fence();
