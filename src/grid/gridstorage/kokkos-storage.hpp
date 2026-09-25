@@ -271,16 +271,20 @@ namespace schnek {
       /** index operator, writing */
       template<template<size_t> class ArrayCheckingPolicy>
       SCHNEK_FUNCTION T& operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos) { return this->get(pos); }  // write
-      /** index operator, reading */
+      /** index operator through a const view handle */
       template<template<size_t> class ArrayCheckingPolicy>
-      SCHNEK_FUNCTION T operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos) const { return this->get(pos); };  // read
+      SCHNEK_FUNCTION T& operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos) const {
+        return const_cast<KokkosExecutionView *>(this)->get(pos);
+      }
 
       /** index operator, writing */
       template<class Operator, size_t Length>
       SCHNEK_FUNCTION T& operator[](const ArrayExpression<Operator, Length>& pos) { return this->get(pos); };  // write
-      /** index operator, reading */
+      /** index operator through a const view handle */
       template<class Operator, size_t Length>
-      SCHNEK_FUNCTION T operator[](const ArrayExpression<Operator, Length>& pos) const { return this->get(pos); };  // read
+      SCHNEK_FUNCTION T& operator[](const ArrayExpression<Operator, Length>& pos) const {
+        return const_cast<KokkosExecutionView *>(this)->get(pos);
+      }
 
       /** index operator forwarding to the checking policy, writing */
       template<typename... Indices>
@@ -292,21 +296,21 @@ namespace schnek {
         );
         return this->get(IndexType{static_cast<ptrdiff_t>(indices)...});
       }
-      /** index operator forwarding to the checking policy, reading */
+      /** index operator forwarding through a const view handle */
       template<typename... Indices>
-      SCHNEK_FUNCTION T operator()(Indices... indices) const {
+      SCHNEK_FUNCTION T& operator()(Indices... indices) const {
         static_assert(sizeof...(Indices) == rank, "KokkosExecutionView::operator() expects exactly rank indices");
         static_assert(
             (std::is_convertible_v<Indices, ptrdiff_t> && ...),
             "KokkosExecutionView::operator() indices must be convertible to ptrdiff_t"
         );
-        return this->get(IndexType{static_cast<ptrdiff_t>(indices)...});
+        return const_cast<KokkosExecutionView *>(this)->get(IndexType{static_cast<ptrdiff_t>(indices)...});
       }
 
       /** index operator, for 1D grids, writing */
       SCHNEK_FUNCTION T& operator[](ptrdiff_t i) { return this->operator()(i); }
-      /** index operator, for 1D grids, reading */
-      SCHNEK_FUNCTION T operator[](ptrdiff_t i) const { return this->operator()(i); }
+      /** index operator, for 1D grids, through a const view handle */
+      SCHNEK_FUNCTION T& operator[](ptrdiff_t i) const { return this->operator()(i); }
   };
 
   /**

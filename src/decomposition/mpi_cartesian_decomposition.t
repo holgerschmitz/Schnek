@@ -14,12 +14,14 @@
 #include <set>
 #include <type_traits>
 #include <vector>
+#include <mpi-ext.h>
 
 #include "../diagnostic/diagnostic.hpp"
 #include "../util/exceptions.hpp"
 #include "../util/factor.hpp"
 #include "../util/interpolate1d.hpp"
 #include "../util/logger.hpp"
+#include "../util/volume.hpp"
 #include "detail/grid_transfer.hpp"
 #include "detail/redistribution.hpp"
 #include "mpi_cartesian_decomposition.hpp"
@@ -1057,18 +1059,6 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
 
     const MPI_Datatype mpiType = internal::mpiDatatypeFor<ValueType>();
 
-    auto gridRangeVolume = [](const RangeTypeLocal &range) -> size_t {
-      size_t volume = 1;
-      for (size_t d = 0; d < GridType::Rank; ++d) {
-        ptrdiff_t extent = range.getHi()[d] - range.getLo()[d] + 1;
-        if (extent <= 0) {
-          return 0;
-        }
-        volume *= static_cast<size_t>(extent);
-      }
-      return volume;
-    };
-
     auto toIntCount = [](size_t count) -> int {
       if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
         SCHNECK_FAIL("Redistribution block too large for MPI count");
@@ -1089,7 +1079,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       }
 
       RangeTypeLocal recvRange(recvPlan[i].range);
-      size_t volume = gridRangeVolume(recvRange);
+      size_t volume = schnek::volume(recvRange);
       if (volume == 0) {
         continue;
       }
@@ -1111,7 +1101,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       }
 
       RangeTypeLocal sendRange(sendPlan[i].range);
-      size_t volume = gridRangeVolume(sendRange);
+      size_t volume = schnek::volume(sendRange);
       if (volume == 0) {
         continue;
       }
@@ -1152,7 +1142,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       }
 
       RangeTypeLocal recvRange(recvPlan[i].range);
-      size_t volume = gridRangeVolume(recvRange);
+      size_t volume = schnek::volume(recvRange);
       if (volume == 0) {
         continue;
       }
@@ -1257,18 +1247,6 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       return static_cast<int>(count);
     };
 
-    auto blockVolume = [](const DynProjTransferBlock &block) -> size_t {
-      size_t volume = 1;
-      for (size_t d = 0; d < block.lo.size(); ++d) {
-        ptrdiff_t extent = block.hi[d] - block.lo[d] + 1;
-        if (extent <= 0) {
-          return 0;
-        }
-        volume *= static_cast<size_t>(extent);
-      }
-      return volume;
-    };
-
     auto makeTypedRange = [](const DynProjTransferBlock &block) {
       typename GridType::IndexType lo, hi;
       for (size_t d = 0; d < projRank; ++d) {
@@ -1287,7 +1265,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
 
       for (size_t i = 0; i < recvPlan.size(); ++i) {
         if (recvPlan[i].mpiRank == localRank) continue;
-        size_t volume = blockVolume(recvPlan[i]);
+        size_t volume = schnek::volume(std::pair{recvPlan[i].lo, recvPlan[i].hi});
         if (volume == 0) continue;
         recvBuffers.emplace_back(volume);
         MPI_Request req;
@@ -1300,7 +1278,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       std::vector<std::vector<ValueType>> sendBuffers;
       for (size_t i = 0; i < sendPlan.size(); ++i) {
         if (sendPlan[i].mpiRank == localRank) continue;
-        size_t volume = blockVolume(sendPlan[i]);
+        size_t volume = schnek::volume(std::pair{sendPlan[i].lo, sendPlan[i].hi});
         if (volume == 0) continue;
         sendBuffers.emplace_back(volume);
         auto &buf = sendBuffers.back();
@@ -1328,7 +1306,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       size_t bufferIdx = 0;
       for (size_t i = 0; i < recvPlan.size(); ++i) {
         if (recvPlan[i].mpiRank == localRank) continue;
-        size_t volume = blockVolume(recvPlan[i]);
+        size_t volume = schnek::volume(std::pair{recvPlan[i].lo, recvPlan[i].hi});
         if (volume == 0) continue;
         const auto &buf = recvBuffers[bufferIdx++];
         auto recvRange = makeTypedRange(recvPlan[i]);
@@ -1340,15 +1318,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     // sub-communicator so that non-canonical replicas see identical data.
     if (replicaComm != MPI_COMM_NULL) {
       typename GridType::RangeType fullRange(newGrid.getLo(), newGrid.getHi());
-      size_t volume = 1;
-      for (size_t d = 0; d < projRank; ++d) {
-        ptrdiff_t extent = newGrid.getHi()[d] - newGrid.getLo()[d] + 1;
-        if (extent <= 0) {
-          volume = 0;
-          break;
-        }
-        volume *= static_cast<size_t>(extent);
-      }
+      size_t volume = schnek::volume<projRank>(newGrid);
       if (volume > 0) {
         std::vector<ValueType> buf(volume);
         if (isCanonical) {
@@ -2138,36 +2108,72 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchangeWithInteriorBounds(
       GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
   ) {
+    /*
+     * Implementation plan for reusable, memory-space-aware MPI buffers:
+     *
+     * 1. Replace the two host-only ScratchBuffer members in the decomposition
+     *    with a small buffer registry keyed by the grid's communication memory
+     *    space. Keep one reusable send buffer and one reusable receive buffer
+     *    per memory space, so capacity survives calls, is shared by all grid
+     *    value types, and grows only when a larger halo requires it. Store
+     *    capacity in bytes and expose an aligned typed view for each call;
+     *    never retain a typed vector in the registry and never release the
+     *    allocation at the end of this function.
+     *
+     * 2. Add a GridTransfer memory-space trait/customisation point that maps a
+     *    GridType to its MPI buffer type and allocator. Host grids should use
+     *    the existing host allocation; Kokkos grids should use a
+     *    Kokkos::View<std::byte *, GridType::storage_type::MemorySpace> (or an
+     *    equivalent byte allocation). The grid backend, rather than this MPI
+     *    orchestration code, must select the memory space.
+     *
+     * 3. Change GridTransfer::pack and GridTransfer::unpack to accept the
+     *    selected memory-space buffer/view (or its raw pointer), and make the
+     *    Kokkos specialisation pack directly into and unpack directly from
+     *    that allocation. Remove its per-call temporary staging View and host
+     *    deep_copy; with GPU-aware MPI, MPI_Sendrecv must receive the device
+     *    pointer directly. Retain the host implementation unchanged apart
+     *    from adapting it to the common buffer interface.
+     *
+     * 4. In this function, obtain the registry entry from GridTransfer<GridType>,
+     *    reserve maxSendCount/maxRecvCount in bytes, and create temporary
+     *    typed views over the retained storage for the current ValueType. Use
+     *    those views for packing, MPI_Sendrecv, and unpacking. Preserve the
+     *    existing range/count logic and MPI datatype selection, including the
+     *    int-count overflow check.
+     *
+     * 5. Apply the same buffer-registry and memory-space plumbing to
+     *    accumulateWithInteriorBounds, since it has the same scratch-buffer
+     *    lifetime problem and must remain compatible with exchange. Add host
+     *    and Kokkos tests that call exchange repeatedly with different value
+     *    types and verify halo values for host storage and GPU-aware MPI with
+     *    device storage; also verify that capacity is retained and grows only
+     *    when required. Build and run the focused MPI/Kokkos tests before the
+     *    full test suite.
+     */
     using IndexType = typename GridType::IndexType;
     using RangeTypeLocal = typename GridType::RangeType;
     using ValueType = typename GridType::value_type;
+    using MemorySpace = detail::GridBufferMemorySpace<GridType>;
+
+    auto &bufferRegistry = mpiBufferRegistry.template get<MemorySpace>();
+    auto &sendScratchBuffer = bufferRegistry.send();
+    auto &recvScratchBuffer = bufferRegistry.receive();
 
     const IndexType gridLo = grid.getLo();
     const IndexType gridHi = grid.getHi();
 
     auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
 
-    auto rangeVolume = [](const RangeTypeLocal &range) -> size_t {
-      size_t volume = 1;
-      for (size_t d = 0; d < rank; ++d) {
-        ptrdiff_t extent = range.getHi()[d] - range.getLo()[d] + 1;
-        if (extent <= 0) {
-          return 0;
-        }
-        volume *= static_cast<size_t>(extent);
-      }
-      return volume;
-    };
-
     // Helpers to pack/unpack a multi-dimensional range to/from a contiguous buffer for MPI communication.
     // buffer is assumed to be pre-allocated to the correct size (range volume).
     // The element movement is delegated to the GridTransfer customisation point so that the
     // same code path works for host- and device-resident storage backends.
-    auto packRange = [&](RangeTypeLocal range, std::pmr::vector<ValueType> &buffer) {
+    auto packRange = [&](RangeTypeLocal range, auto &buffer) {
       detail::GridTransfer<GridType>::pack(grid, range, buffer.data());
     };
 
-    auto unpackRange = [&](RangeTypeLocal range, const std::pmr::vector<ValueType> &buffer) {
+    auto unpackRange = [&](RangeTypeLocal range, const auto &buffer) {
       detail::GridTransfer<GridType>::unpack(grid, range, buffer.data());
     };
 
@@ -2223,20 +2229,20 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         hiSourceRange = makeRange(lo, hi);
       }
 
-      size_t sendLowerCount = hiSourceRange ? rangeVolume(*hiSourceRange) : 0;
-      size_t recvLowerCount = loGhostRange ? rangeVolume(*loGhostRange) : 0;
+      size_t sendLowerCount = hiSourceRange ? schnek::volume(*hiSourceRange) : 0;
+      size_t recvLowerCount = loGhostRange ? schnek::volume(*loGhostRange) : 0;
 
-      size_t sendUpperCount = loSourceRange ? rangeVolume(*loSourceRange) : 0;
-      size_t recvUpperCount = hiGhostRange ? rangeVolume(*hiGhostRange) : 0;
+      size_t sendUpperCount = loSourceRange ? schnek::volume(*loSourceRange) : 0;
+      size_t recvUpperCount = hiGhostRange ? schnek::volume(*hiGhostRange) : 0;
 
       size_t maxSendCount = std::max(sendLowerCount, sendUpperCount);
       size_t maxRecvCount = std::max(recvLowerCount, recvUpperCount);
 
-      mpiSendScratchBuffer.reserve_bytes(maxSendCount * sizeof(ValueType));
-      mpiRecvScratchBuffer.reserve_bytes(maxRecvCount * sizeof(ValueType));
+      sendScratchBuffer.reserve_bytes(detail::checkedCommunicationBufferBytes(maxSendCount, sizeof(ValueType)));
+      recvScratchBuffer.reserve_bytes(detail::checkedCommunicationBufferBytes(maxRecvCount, sizeof(ValueType)));
 
-      auto sendBuffer = mpiSendScratchBuffer.make_vector<ValueType>(maxSendCount);
-      auto recvBuffer = mpiRecvScratchBuffer.make_vector<ValueType>(maxRecvCount);
+      auto sendBuffer = sendScratchBuffer.template make_vector<ValueType>(maxSendCount);
+      auto recvBuffer = recvScratchBuffer.template make_vector<ValueType>(maxRecvCount);
 
       // Exchange to fill lower ghost cells (receive from prev, send to next)
       if (hiSourceRange && sendLowerCount > 0) {
@@ -2265,11 +2271,14 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       if (hiGhostRange && recvUpperCount > 0) {
         unpackRange(*hiGhostRange, recvBuffer);
       }
-
-      mpiSendScratchBuffer.reset();
-      mpiRecvScratchBuffer.reset();
+      sendScratchBuffer.reset();
+      recvScratchBuffer.reset();
     }
   }
+
+// ==============================================================================================================================
+// ==============================================================================================================================
+// ==============================================================================================================================
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
@@ -2279,46 +2288,27 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     using IndexType = typename GridType::IndexType;
     using RangeTypeLocal = typename GridType::RangeType;
     using ValueType = typename GridType::value_type;
+    using MemorySpace = detail::GridBufferMemorySpace<GridType>;
+
+    auto &bufferRegistry = mpiBufferRegistry.template get<MemorySpace>();
+    auto &sendScratchBuffer = bufferRegistry.send();
+    auto &recvScratchBuffer = bufferRegistry.receive();
 
     const IndexType gridLo = grid.getLo();
     const IndexType gridHi = grid.getHi();
 
     auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
 
-    auto rangeVolume = [](const RangeTypeLocal &range) -> size_t {
-      size_t volume = 1;
-      for (size_t d = 0; d < rank; ++d) {
-        ptrdiff_t extent = range.getHi()[d] - range.getLo()[d] + 1;
-        if (extent <= 0) {
-          return 0;
-        }
-        volume *= static_cast<size_t>(extent);
-      }
-      return volume;
+    auto packRange = [&](RangeTypeLocal range, auto &buffer) {
+      detail::GridTransfer<GridType>::pack(grid, range, buffer.data());
     };
 
-    auto packRange = [&](RangeTypeLocal range, std::pmr::vector<ValueType> &buffer) {
-      size_t idx = 0;
-      for (auto it = range.begin(); it != range.end(); ++it) {
-        buffer[idx++] = grid[*it];
-      }
+    auto assignRange = [&](RangeTypeLocal range, const auto &buffer) {
+      detail::GridTransfer<GridType>::unpack(grid, range, buffer.data());
     };
 
-    auto assignRange = [&](RangeTypeLocal range, const std::pmr::vector<ValueType> &buffer) {
-      size_t idx = 0;
-      for (auto it = range.begin(); it != range.end(); ++it) {
-        grid[*it] = buffer[idx++];
-      }
-    };
-
-    auto addIntoRange = [&](RangeTypeLocal range, const std::pmr::vector<ValueType> &buffer, std::pmr::vector<ValueType> &out) {
-      size_t idx = 0;
-      for (auto it = range.begin(); it != range.end(); ++it) {
-        ValueType &val = grid[*it];
-        val = val + buffer[idx];
-        out[idx] = val;
-        ++idx;
-      }
+    auto addIntoRange = [&](RangeTypeLocal range, const auto &buffer, auto &out) {
+      detail::GridTransfer<GridType>::accumulate(grid, range, buffer.data(), out.data());
     };
 
     auto toIntCount = [](size_t count) -> int {
@@ -2373,20 +2363,20 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         hiSourceRange = makeRange(lo, hi);
       }
 
-      const size_t sendLowerCount = hiSourceRange ? rangeVolume(*hiSourceRange) : 0;
-      const size_t recvLowerCount = loGhostRange ? rangeVolume(*loGhostRange) : 0;
-      const size_t sendUpperCount = loSourceRange ? rangeVolume(*loSourceRange) : 0;
-      const size_t recvUpperCount = hiGhostRange ? rangeVolume(*hiGhostRange) : 0;
+      const size_t sendLowerCount = hiSourceRange ? schnek::volume(*hiSourceRange) : 0;
+      const size_t recvLowerCount = loGhostRange ? schnek::volume(*loGhostRange) : 0;
+      const size_t sendUpperCount = loSourceRange ? schnek::volume(*loSourceRange) : 0;
+      const size_t recvUpperCount = hiGhostRange ? schnek::volume(*hiGhostRange) : 0;
 
       const size_t maxSendCount = std::max(sendLowerCount, sendUpperCount);
       const size_t maxRecvCount = std::max(recvLowerCount, recvUpperCount);
       const size_t maxCount = std::max(maxSendCount, maxRecvCount);
 
-      mpiSendScratchBuffer.reserve_bytes(maxCount * sizeof(ValueType));
-      mpiRecvScratchBuffer.reserve_bytes(maxCount * sizeof(ValueType));
+      sendScratchBuffer.reserve_bytes(detail::checkedCommunicationBufferBytes(maxCount, sizeof(ValueType)));
+      recvScratchBuffer.reserve_bytes(detail::checkedCommunicationBufferBytes(maxCount, sizeof(ValueType)));
 
-      auto sendBuffer = mpiSendScratchBuffer.make_vector<ValueType>(maxCount);
-      auto recvBuffer = mpiRecvScratchBuffer.make_vector<ValueType>(maxCount);
+      auto sendBuffer = sendScratchBuffer.template make_vector<ValueType>(maxCount);
+      auto recvBuffer = recvScratchBuffer.template make_vector<ValueType>(maxCount);
 
       // Lower side: add incoming data to lower ghost cells, then return result to update upper inner cells in prev.
       if (hiSourceRange && sendLowerCount > 0) {
@@ -2435,9 +2425,9 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       if (loSourceRange && sendUpperCount > 0) {
         assignRange(*loSourceRange, recvBuffer);
       }
-
-      mpiSendScratchBuffer.reset();
-      mpiRecvScratchBuffer.reset();
+      
+      sendScratchBuffer.reset();
+      recvScratchBuffer.reset();
     }
   }
 

@@ -9,10 +9,10 @@
 #define SCHNEK_DECOMPOSITION_MPI_CARTESIAN_DECOMPOSITION_HPP_
 
 #include "config.hpp"
+#include "detail/grid-communication-traits.hpp"
 #include "detail/redistribution.hpp"
 #include "domaindecomposition.hpp"
 #include "mpi_context.hpp"
-#include "../util/scratchbuffer.hpp"
 
 #ifdef SCHNEK_HAVE_MPI
 
@@ -330,8 +330,7 @@ namespace schnek {
 
       std::vector<std::function<void(RedistributeParticleVisitor &)>> redistributeParticleInitializers;
 
-      schnek::ScratchBuffer mpiSendScratchBuffer;
-      schnek::ScratchBuffer mpiRecvScratchBuffer;
+      detail::BufferRegistry mpiBufferRegistry;
 
       /**
        * Convert Cartesian process coordinates to MPI rank
