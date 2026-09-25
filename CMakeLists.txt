@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(MPI_CXX_SKIP_MPICXX TRUE)
 
 find_package(MPI COMPONENTS CXX)
-find_package(HDF5 COMPONENTS CXX)
+find_package(HDF5 COMPONENTS C)
 find_package(Kokkos CONFIG)
 find_package(Boost REQUIRED)
 
@@ -172,6 +172,7 @@ if(Kokkos_FOUND)
   set_source_files_properties(
       testsuite/main.cpp
       testsuite/utility.cpp
+      testsuite/decomposition/mpi_test_context.cpp
       testsuite/decomposition/test_domaindecomposition.cpp
       testsuite/decomposition/test_for_each_cell.cpp
       testsuite/decomposition/test_kokkos_exchange.cpp

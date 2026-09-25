@@ -34,11 +34,13 @@ class MpiTestContextImpl : public schnek::MpiContext
     };
     std::vector<AllreduceCallInfo> args_MPI_Allreduce;
     struct SendrecvCallInfo {
+      const void *sendBuffer;
       bool sendBufferPresent;
       int sendCount;
       MPI_Datatype sendType;
       int dest;
       int sendTag;
+      void *recvBuffer;
       bool recvBufferPresent;
       int recvCount;
       MPI_Datatype recvType;

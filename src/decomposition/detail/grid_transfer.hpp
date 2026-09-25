@@ -31,6 +31,7 @@
 
 #include "config.hpp"
 #include "../../grid/gridstorage/grid-storage-concept.hpp"
+#include "grid-communication-traits.hpp"
 
 #ifdef SCHNEK_HAVE_KOKKOS
 #include <Kokkos_Core.hpp>
@@ -98,6 +99,15 @@ namespace schnek {
           }
         }
 
+        static void accumulate(GridType &grid, const RangeType &range, const ValueType *src, ValueType *result) {
+          std::size_t idx = 0;
+          for (auto it = range.begin(); it != range.end(); ++it) {
+            ValueType &value = grid[*it];
+            value = value + src[idx];
+            result[idx++] = value;
+          }
+        }
+
         /**
          * @brief Local (no MPI) block copy of `range` from `src` to `dst`.
          *
@@ -143,10 +153,9 @@ namespace schnek {
      * @brief Device-aware `GridTransfer` specialisation for Kokkos grids whose
      *        memory space is not accessible from host code.
      *
-     * Pack and unpack gather/scatter the requested sub-range on the device into
-     * a contiguous device staging buffer using `RangeKokkosIterationPolicy`, then
-     * move the staging buffer to/from the host MPI buffer with a single
-     * `Kokkos::deep_copy`. The local `copy` is a device-to-device sweep.
+    * Pack and unpack gather/scatter the requested sub-range directly into the
+    * supplied communication buffer using `RangeKokkosIterationPolicy`. The
+    * local `copy` is a device-to-device sweep.
      *
      * The element ordering inside the contiguous buffer is row-major over the
      * range extents (the last dimension varies fastest), matching the order of
@@ -164,11 +173,6 @@ namespace schnek {
         using ExecSpace = typename ViewType::execution_space;
 
         static constexpr std::size_t Rank = StorageType::rank;
-
-        using StagingView = Kokkos::View<ValueType *, MemorySpace>;
-        using HostBuffer = Kokkos::View<ValueType *, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-        using ConstHostBuffer =
-            Kokkos::View<const ValueType *, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
         using BoundsArray = Kokkos::Array<ptrdiff_t, Rank>;
 
@@ -212,10 +216,7 @@ namespace schnek {
           BoundsArray strides, gridLo, rangeLo, extent;
           collectBounds(grid, view, range, strides, gridLo, rangeLo, extent);
 
-          StagingView staging(Kokkos::view_alloc(Kokkos::WithoutInitializing, "schnek:gridtransfer:pack"), volume);
-
           ValueType *viewData = view.data();
-          ValueType *stagingData = staging.data();
 
           RangeKokkosIterationPolicy<Rank, ExecSpace>::forEach(
               range,
@@ -227,13 +228,10 @@ namespace schnek {
                   flat = flat * static_cast<std::size_t>(extent[d]) +
                          static_cast<std::size_t>(pos[d] - rangeLo[d]);
                 }
-                stagingData[flat] = viewData[offset];
+                dst[flat] = viewData[offset];
               }
           );
           Kokkos::fence();
-
-          HostBuffer hostBuf(dst, volume);
-          Kokkos::deep_copy(hostBuf, staging);
         }
 
         static void unpack(GridType &grid, const RangeType &range, const ValueType *src) {
@@ -246,13 +244,7 @@ namespace schnek {
           BoundsArray strides, gridLo, rangeLo, extent;
           collectBounds(grid, view, range, strides, gridLo, rangeLo, extent);
 
-          StagingView staging(Kokkos::view_alloc(Kokkos::WithoutInitializing, "schnek:gridtransfer:unpack"), volume);
-
-          ConstHostBuffer hostBuf(src, volume);
-          Kokkos::deep_copy(staging, hostBuf);
-
           ValueType *viewData = view.data();
-          ValueType *stagingData = staging.data();
 
           RangeKokkosIterationPolicy<Rank, ExecSpace>::forEach(
               range,
@@ -264,7 +256,36 @@ namespace schnek {
                   flat = flat * static_cast<std::size_t>(extent[d]) +
                          static_cast<std::size_t>(pos[d] - rangeLo[d]);
                 }
-                viewData[offset] = stagingData[flat];
+                viewData[offset] = src[flat];
+              }
+          );
+          Kokkos::fence();
+        }
+
+        static void accumulate(GridType &grid, const RangeType &range, const ValueType *src, ValueType *result) {
+          const std::size_t volume = rangeVolume(range);
+          if (volume == 0) {
+            return;
+          }
+
+          ViewType view = grid.getKokkosView();
+          BoundsArray strides, gridLo, rangeLo, extent;
+          collectBounds(grid, view, range, strides, gridLo, rangeLo, extent);
+
+          ValueType *viewData = view.data();
+
+          RangeKokkosIterationPolicy<Rank, ExecSpace>::forEach(
+              range,
+              KOKKOS_LAMBDA(const LimitType &pos) {
+                ptrdiff_t offset = 0;
+                std::size_t flat = 0;
+                for (std::size_t d = 0; d < Rank; ++d) {
+                  offset += (pos[d] - gridLo[d]) * strides[d];
+                  flat = flat * static_cast<std::size_t>(extent[d]) +
+                         static_cast<std::size_t>(pos[d] - rangeLo[d]);
+                }
+                viewData[offset] = viewData[offset] + src[flat];
+                result[flat] = viewData[offset];
               }
           );
           Kokkos::fence();

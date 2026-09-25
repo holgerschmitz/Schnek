@@ -11,6 +11,14 @@
 #include <cstring>
 #include <stdexcept>
 
+#ifdef SCHNEK_HAVE_KOKKOS
+#include <Kokkos_Core.hpp>
+
+#ifdef KOKKOS_ENABLE_CUDA
+#include <cuda_runtime_api.h>
+#endif
+#endif
+
 namespace {
   size_t datatypeSize(MPI_Datatype type) {
     if (type == MPI_CHAR) {
@@ -128,6 +136,20 @@ int MpiTestContextImpl::MPI_Cart_shift(MPI_Comm comm, int direction, int disp, i
   return retVal.get<0>();
 }
 
+void mock_memcpy(void* dst, const void* src, std::size_t size)
+{
+#ifdef KOKKOS_ENABLE_CUDA
+    cudaError_t err =
+        cudaMemcpy(dst, src, size, cudaMemcpyDefault);
+
+    if (err != cudaSuccess) {
+        throw std::runtime_error(cudaGetErrorString(err));
+    }
+#else
+    std::memcpy(dst, src, size);
+#endif
+}
+
 int MpiTestContextImpl::MPI_Sendrecv(
     const void* sendbuf,
     int sendcount,
@@ -144,13 +166,14 @@ int MpiTestContextImpl::MPI_Sendrecv(
 )
 {
   size_t argsCount = args_MPI_Sendrecv.size();
-  args_MPI_Sendrecv.push_back({sendbuf != nullptr, sendcount, sendtype, dest, sendtag, recvbuf != nullptr, recvcount, recvtype, source, recvtag, comm});
+  args_MPI_Sendrecv.push_back({sendbuf, sendbuf != nullptr, sendcount, sendtype, dest, sendtag,
+                               recvbuf, recvbuf != nullptr, recvcount, recvtype, source, recvtag, comm});
 
   if (!ret_MPI_Sendrecv.empty()) {
     auto retVal = ret_MPI_Sendrecv[std::min(argsCount, ret_MPI_Sendrecv.size() - 1)];
     const auto& payload = retVal.get<1>();
     if (recvbuf != nullptr && !payload.empty()) {
-      std::memcpy(recvbuf, payload.data(), payload.size());
+      mock_memcpy(recvbuf, payload.data(), payload.size());
     }
     if (status != nullptr && status != MPI_STATUS_IGNORE) {
       std::memset(status, 0, sizeof(MPI_Status));
@@ -161,7 +184,7 @@ int MpiTestContextImpl::MPI_Sendrecv(
   if (sendbuf != nullptr && recvbuf != nullptr && sendcount > 0 && recvcount > 0 && sendtype == recvtype) {
     size_t sendBytes = datatypeSize(sendtype) * static_cast<size_t>(sendcount);
     size_t recvBytes = datatypeSize(recvtype) * static_cast<size_t>(recvcount);
-    std::memcpy(recvbuf, sendbuf, std::min(sendBytes, recvBytes));
+    mock_memcpy(recvbuf, sendbuf, std::min(sendBytes, recvBytes));
   }
 
   if (status != nullptr && status != MPI_STATUS_IGNORE) {

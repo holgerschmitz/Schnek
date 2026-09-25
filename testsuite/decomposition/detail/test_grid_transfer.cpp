@@ -1,6 +1,7 @@
 #include "../../utility.hpp"
 
 #include <decomposition/detail/grid_transfer.hpp>
+#include <decomposition/detail/grid-communication-traits.hpp>
 #include <grid/array.hpp>
 #include <grid/grid.hpp>
 #include <grid/range.hpp>
@@ -82,6 +83,51 @@ BOOST_AUTO_TEST_CASE(pack_unpack_roundtrip_is_identity) {
     BOOST_CHECK_CLOSE(dest(i), 0.5 * i, 1e-12);
   }
 }
+
+BOOST_AUTO_TEST_CASE(accumulate_adds_to_subrange_and_returns_updated_values) {
+  using GridType = schnek::Grid<int, 1>;
+  GridType grid(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(3));
+  grid = 10;
+
+  auto range = makeRange<1>(schnek::Array<ptrdiff_t, 1>(1), schnek::Array<ptrdiff_t, 1>(2));
+  std::vector<int> incoming = {2, 3};
+  std::vector<int> updated(2, 0);
+  std::vector<int> expected = {12, 13};
+
+  schnek::detail::GridTransfer<GridType>::accumulate(grid, range, incoming.data(), updated.data());
+
+  BOOST_CHECK_EQUAL_COLLECTIONS(updated.begin(), updated.end(), expected.begin(), expected.end());
+  BOOST_CHECK_EQUAL(grid(0), 10);
+  BOOST_CHECK_EQUAL(grid(1), 12);
+  BOOST_CHECK_EQUAL(grid(2), 13);
+  BOOST_CHECK_EQUAL(grid(3), 10);
+}
+
+BOOST_AUTO_TEST_CASE(host_communication_buffer_retains_and_grows_capacity) {
+  schnek::ScratchBuffer buffer;
+  buffer.reserve_bytes(2 * sizeof(int));
+  BOOST_CHECK_EQUAL(buffer.capacity_bytes(), 2 * sizeof(int));
+
+  buffer.reserve_bytes(sizeof(char));
+  BOOST_CHECK_EQUAL(buffer.capacity_bytes(), 2 * sizeof(int));
+
+  buffer.reserve_bytes(4 * sizeof(int));
+  BOOST_CHECK_EQUAL(buffer.capacity_bytes(), 4 * sizeof(int));
+}
+
+#ifdef SCHNEK_HAVE_KOKKOS
+BOOST_AUTO_TEST_CASE(kokkos_communication_buffer_retains_and_grows_capacity) {
+  schnek::detail::KokkosCommunicationBuffer<Kokkos::HostSpace> buffer;
+  buffer.reserve_bytes(2 * sizeof(int));
+  BOOST_CHECK_EQUAL(buffer.capacity_bytes(), 2 * sizeof(int));
+
+  buffer.reserve_bytes(sizeof(char));
+  BOOST_CHECK_EQUAL(buffer.capacity_bytes(), 2 * sizeof(int));
+
+  buffer.reserve_bytes(4 * sizeof(int));
+  BOOST_CHECK_EQUAL(buffer.capacity_bytes(), 4 * sizeof(int));
+}
+#endif
 
 BOOST_AUTO_TEST_CASE(copy_transfers_subrange_between_grids) {
   using GridType = schnek::Grid<int, 2>;
