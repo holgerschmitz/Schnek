@@ -138,9 +138,11 @@ namespace schnek {
         struct Entry : EntryBase {
             BufferType sendBuffer;
             BufferType receiveBuffer;
+            BufferType partitionBuffer;
 
             BufferType &send() { return sendBuffer; }
             BufferType &receive() { return receiveBuffer; }
+            BufferType &partition() { return partitionBuffer; }
         };
 
         template<class MemorySpace>
@@ -192,6 +194,39 @@ namespace schnek {
 
     template<class GridType>
     using GridCommunicationBuffer = typename GridCommunicationTraits<GridType>::buffer_type;
+
+    /**
+     * @brief Describes the communication memory space used by a particle container.
+     *
+     * Containers that expose both `MemorySpace` and `host_accessible` (the same
+     * convention as grid storage policies) are treated as backend-managed.
+     * All other containers, e.g. `std::vector`, use the host memory tag.
+     */
+    template<class ContainerType, typename Enable = void>
+    struct ParticleCommunicationTraits {
+        using memory_space = HostCommunicationMemorySpace;
+        using buffer_type = typename CommunicationBufferTraits<memory_space>::buffer_type;
+
+        static constexpr bool host_accessible = true;
+        static constexpr bool device_resident = false;
+    };
+
+    template<class ContainerType>
+    struct ParticleCommunicationTraits<
+        ContainerType,
+        std::void_t<typename ContainerType::MemorySpace, decltype(ContainerType::host_accessible)>> {
+        using memory_space = typename ContainerType::MemorySpace;
+        using buffer_type = typename CommunicationBufferTraits<memory_space>::buffer_type;
+
+        static constexpr bool host_accessible = ContainerType::host_accessible;
+        static constexpr bool device_resident = !host_accessible;
+    };
+
+    template<class ContainerType>
+    using ParticleBufferMemorySpace = typename ParticleCommunicationTraits<ContainerType>::memory_space;
+
+    template<class ContainerType>
+    using ParticleCommunicationBuffer = typename ParticleCommunicationTraits<ContainerType>::buffer_type;
 
   }  // namespace detail
 }  // namespace schnek
