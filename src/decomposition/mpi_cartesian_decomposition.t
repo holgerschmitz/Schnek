@@ -1623,11 +1623,25 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       }
     };
 
+    /// Device-callable predicate: the owning cell of a particle along `dim` lies in `[lo, hi]`.
+    template<typename Particle, typename PositionAccessor>
+    struct DimInRange {
+      OwningCellDim<Particle, PositionAccessor> owningCell;
+      ptrdiff_t lo;
+      ptrdiff_t hi;
+      size_t dim;
+      SCHNEK_FUNCTION bool operator()(const Particle &p) const {
+        const ptrdiff_t cell = owningCell(p, dim);
+        return cell >= lo && cell <= hi;
+      }
+    };
+
     template<typename Traits, typename Serializer, typename ContainerType, std::size_t particleBytes>
     struct ExchangeParticle {
       MpiContext &mpi;
       MPI_Comm comm;
       ContainerType &container;
+      schnek::detail::ParticleCommunicationBuffer<ContainerType> &recvScratchBuffer;
 
       int toIntCount(std::size_t count) {
         if (count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
@@ -1640,7 +1654,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       // Phase B: downward movement. Send to `prevRank`, receive from `nextRank`.
       // Each phase first exchanges the particle count, then the payload, and
       // finally deserialises arrivals back into the container.
-      void operator()(std::vector<std::byte> &sendBuffer, std::size_t sendCount, int sendRank, int recvRank) {
+      void operator()(const std::byte *sendBuffer, std::size_t sendCount, int sendRank, int recvRank) {
         int sendCountInt = toIntCount(sendCount);
         int recvCountInt = 0;
         this->mpi.MPI_Sendrecv(
@@ -1648,11 +1662,15 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         );
 
         const std::size_t recvCount = static_cast<std::size_t>(recvCountInt);
-        std::vector<std::byte> recvBuffer(recvCount * particleBytes);
+        const std::size_t recvBytes = recvCount * particleBytes;
+        const int recvByteCount = toIntCount(recvBytes);
+        recvScratchBuffer.reserve_bytes(recvBytes);
+        recvScratchBuffer.reset();
+        auto recvBuffer = recvScratchBuffer.template make_vector<std::byte>(recvBytes);
 
         this->mpi.MPI_Sendrecv(
-            sendCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendCount * particleBytes), MPI_BYTE, sendRank, 1,
-            recvCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvCount * particleBytes), MPI_BYTE, recvRank, 1,
+            sendCount > 0 ? sendBuffer : nullptr, toIntCount(sendCount * particleBytes), MPI_BYTE, sendRank, 1,
+            recvCount > 0 ? recvBuffer.data() : nullptr, recvByteCount, MPI_BYTE, recvRank, 1,
             comm, MPI_STATUS_IGNORE
         );
 
@@ -1679,16 +1697,10 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
 
     constexpr std::size_t particleBytes = Serializer::size();
 
-    auto toIntCount = [](std::size_t count) -> int {
-      if (count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
-        SCHNECK_FAIL("Particle migration block too large for MPI_Sendrecv count");
-      }
-      return static_cast<int>(count);
-    };
-
-    // The owning cell of a particle along dimension `dim` (used by the debug
-    // post-condition check below).
-    internal::mpi_cartesian_decomposition::OwningCellDim<Particle, PositionAccessor> owningCell{wrapper.accessor};
+    auto &bufferRegistry = mpiBufferRegistry.template get<detail::ParticleBufferMemorySpace<ContainerType>>();
+    auto &sendScratchBuffer = bufferRegistry.send();
+    auto &recvScratchBuffer = bufferRegistry.receive();
+    auto &partitionScratchBuffer = bufferRegistry.partition();
 
     // Sweep one dimension at a time. A particle bound for a diagonal neighbour
     // is forwarded dimension by dimension: received particles are re-inserted
@@ -1698,46 +1710,57 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       int nextRank = MPI_PROC_NULL;
       this->mpi.MPI_Cart_shift(comm, static_cast<int>(dim), 1, &prevRank, &nextRank);
 
-      // Partition the container in place with a device-safe count -> scan ->
-      // pack primitive. Departing particles are serialised into tightly-sized,
-      // host-accessible buffers (no worst-case allocation): bucket 0 travels
-      // down to `prevRank`, bucket 1 travels up to `nextRank`. Survivors are
-      // compacted in place. The classifier and serialiser are device-callable,
-      // so a device-resident container can run all three passes on the GPU and
-      // only stage the final byte buffers to the host for MPI.
+      // Partition the container in place with a count -> scan -> pack primitive.
+      // Departing particles are serialised into tightly-sized byte buffers in the
+      // container's memory space: bucket 0 travels down to `prevRank`, bucket 1
+      // travels up to `nextRank`. Survivors are compacted in place.
       internal::mpi_cartesian_decomposition::DimBucketClassifier<Particle, PositionAccessor> classify{
           {wrapper.accessor}, lo[dim], hi[dim], dim
       };
 
-      std::array<std::vector<std::byte>, 2> outBuffers;
       std::array<std::size_t, 2> counts{};
-      Traits::template partitionAndPack<Serializer>(container, classify, outBuffers, counts);
-
-      std::vector<std::byte> &goingDown = outBuffers[0];
-      std::vector<std::byte> &goingUp = outBuffers[1];
+      Traits::countBuckets(container, classify, counts);
       const std::size_t downCount = counts[0];
       const std::size_t upCount = counts[1];
 
-      internal::mpi_cartesian_decomposition::ExchangeParticle<Traits, Serializer, ContainerType, particleBytes> exchange{this->mpi, comm, container};
+      {
+        // Down and up departures share one allocation: down first, then up.
+        auto sendBytes = sendScratchBuffer.template make_vector<std::byte>((downCount + upCount) * particleBytes);
+        std::byte *goingDown = sendBytes.data();
+        std::byte *goingUp = goingDown + downCount * particleBytes;
+        const std::array<std::byte *, 2> outPtrs{goingDown, goingUp};
+        auto partitionScratch = partitionScratchBuffer.template make_vector<std::byte>(Traits::partitionScratchBytes(container));
+        Traits::template partitionAndPack<Serializer>(container, classify, outPtrs, partitionScratch.data());
 
-      exchange(goingUp, upCount, nextRank, prevRank);
-      exchange(goingDown, downCount, prevRank, nextRank);
+        internal::mpi_cartesian_decomposition::ExchangeParticle<Traits, Serializer, ContainerType, particleBytes> exchange{
+            this->mpi, comm, container, recvScratchBuffer
+        };
+
+        exchange(goingUp, upCount, nextRank, prevRank);
+        exchange(goingDown, downCount, prevRank, nextRank);
+      }
+
+      // All pmr views from this sweep are out of scope; the arenas can be released.
+      sendScratchBuffer.reset();
+      recvScratchBuffer.reset();
+      partitionScratchBuffer.reset();
     }
 
 #ifndef NDEBUG
     // After all sweeps every surviving particle must lie inside the local inner
     // range. A particle still out of bounds travelled more than one process
     // away, violating the migration precondition.
-    Traits::forEach(container, [&](const Particle &p) {
-      for (size_t d = 0; d < rank; ++d) {
-        const ptrdiff_t cell = owningCell(p, d);
-        SCHNEK_ASSERT(
-            cell >= lo[d] && cell <= hi[d],
-            "Particle migrated more than one process away in dimension "
-                << d << "; migration assumes particles move at most one sub-domain per step."
-        );
-      }
-    });
+    for (size_t d = 0; d < rank; ++d) {
+      const bool inside = Traits::allOf(
+          container,
+          internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{{wrapper.accessor}, lo[d], hi[d], d}
+      );
+      SCHNEK_ASSERT(
+          inside,
+          "Particle migrated more than one process away in dimension "
+              << d << "; migration assumes particles move at most one sub-domain per step."
+      );
+    }
 #endif
   }
 
@@ -1889,11 +1912,6 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       return static_cast<int>(count);
     };
 
-    // The owning cell of a particle in every dimension.
-    internal::mpi_cartesian_decomposition::OwningCell<rank, Particle, LimitType, PositionAccessor> owningCell{
-        oldWrapper.accessor
-    };
-
     // auto blockContains = [](const TransferBlock<rank, CheckingPolicy> &block, const LimitType &cell) -> bool {
     //   for (size_t d = 0; d < rank; ++d) {
     //     if (cell[d] < block.range.getLo()[d] || cell[d] > block.range.getHi()[d]) {
@@ -2020,15 +2038,13 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
         }
       }
 
-      Traits::forEach(newContainer, [&](const Particle &p) {
-        const LimitType cell = owningCell(p);
-        for (size_t d = 0; d < rank; ++d) {
-          SCHNEK_ASSERT(
-              cell[d] >= newLo[d] && cell[d] <= newHi[d],
-              "Redistributed particle is not owned by the new local range in dimension " << d
-          );
-        }
-      });
+      for (size_t d = 0; d < rank; ++d) {
+        const bool inside = Traits::allOf(
+            newContainer,
+            internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{{oldWrapper.accessor}, newLo[d], newHi[d], d}
+        );
+        SCHNEK_ASSERT(inside, "Redistributed particle is not owned by the new local range in dimension " << d);
+      }
     }
 #endif
   }
@@ -2108,49 +2124,6 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchangeWithInteriorBounds(
       GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
   ) {
-    /*
-     * Implementation plan for reusable, memory-space-aware MPI buffers:
-     *
-     * 1. Replace the two host-only ScratchBuffer members in the decomposition
-     *    with a small buffer registry keyed by the grid's communication memory
-     *    space. Keep one reusable send buffer and one reusable receive buffer
-     *    per memory space, so capacity survives calls, is shared by all grid
-     *    value types, and grows only when a larger halo requires it. Store
-     *    capacity in bytes and expose an aligned typed view for each call;
-     *    never retain a typed vector in the registry and never release the
-     *    allocation at the end of this function.
-     *
-     * 2. Add a GridTransfer memory-space trait/customisation point that maps a
-     *    GridType to its MPI buffer type and allocator. Host grids should use
-     *    the existing host allocation; Kokkos grids should use a
-     *    Kokkos::View<std::byte *, GridType::storage_type::MemorySpace> (or an
-     *    equivalent byte allocation). The grid backend, rather than this MPI
-     *    orchestration code, must select the memory space.
-     *
-     * 3. Change GridTransfer::pack and GridTransfer::unpack to accept the
-     *    selected memory-space buffer/view (or its raw pointer), and make the
-     *    Kokkos specialisation pack directly into and unpack directly from
-     *    that allocation. Remove its per-call temporary staging View and host
-     *    deep_copy; with GPU-aware MPI, MPI_Sendrecv must receive the device
-     *    pointer directly. Retain the host implementation unchanged apart
-     *    from adapting it to the common buffer interface.
-     *
-     * 4. In this function, obtain the registry entry from GridTransfer<GridType>,
-     *    reserve maxSendCount/maxRecvCount in bytes, and create temporary
-     *    typed views over the retained storage for the current ValueType. Use
-     *    those views for packing, MPI_Sendrecv, and unpacking. Preserve the
-     *    existing range/count logic and MPI datatype selection, including the
-     *    int-count overflow check.
-     *
-     * 5. Apply the same buffer-registry and memory-space plumbing to
-     *    accumulateWithInteriorBounds, since it has the same scratch-buffer
-     *    lifetime problem and must remain compatible with exchange. Add host
-     *    and Kokkos tests that call exchange repeatedly with different value
-     *    types and verify halo values for host storage and GPU-aware MPI with
-     *    device storage; also verify that capacity is retained and grows only
-     *    when required. Build and run the focused MPI/Kokkos tests before the
-     *    full test suite.
-     */
     using IndexType = typename GridType::IndexType;
     using RangeTypeLocal = typename GridType::RangeType;
     using ValueType = typename GridType::value_type;

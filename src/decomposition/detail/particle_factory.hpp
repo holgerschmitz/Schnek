@@ -40,9 +40,189 @@
 #include "../../grid/range.hpp"
 #include "../../macros.hpp"
 #include "../../util/unique.hpp"
+#include "grid-communication-traits.hpp"
 #include "particle_visitor.hpp"
 
+#include <cstdint>
+
 namespace schnek {
+
+  namespace internal {
+
+#ifdef SCHNEK_HAVE_KOKKOS
+    /**
+     * Deserialises `count` particles from the device-resident bytes `src` and appends them to `c`.
+     *
+     * `c.size()`, `c.resize(n)` (keeps existing elements) and `c.data()` address the container's memory space.
+     */
+    template<class Serializer, class ContainerType>
+    void deviceBulkInsert(ContainerType &c, const std::byte *src, std::size_t count) {
+      if (count == 0) {
+        return;
+      }
+
+      using Particle = typename ContainerType::value_type;
+      const std::size_t offset = c.size();
+      c.resize(offset + count);
+
+      Particle *dst = c.data() + offset;
+      const std::size_t particleBytes = Serializer::size();
+      Kokkos::parallel_for(
+          "schnek:bulkInsertParticles",
+          Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, count),
+          KOKKOS_LAMBDA(const std::size_t i) { dst[i] = Serializer::deserialize(src + i * particleBytes); }
+      );
+      Kokkos::fence();
+    }
+
+    /**
+     * Returns true when `pred(p)` holds for every particle in the device-resident container `c`.
+     */
+    template<class ContainerType, class Predicate>
+    bool deviceAllOf(const ContainerType &c, Predicate pred) {
+      using Particle = typename ContainerType::value_type;
+      const Particle *data = c.data();
+      bool result = true;
+      Kokkos::parallel_reduce(
+          "schnek:allOfParticles",
+          Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, c.size()),
+          KOKKOS_LAMBDA(const std::size_t i, bool &ok) { ok = ok && pred(data[i]); },
+          Kokkos::LAnd<bool>(result)
+      );
+      return result;
+    }
+
+    /**
+     * Counts the particles of the device-resident container `c` that `classify` assigns to each bucket (1-based).
+     */
+    template<std::size_t NumBuckets, class ContainerType, class Classifier>
+    void deviceCountBuckets(const ContainerType &c, const Classifier &classify, std::array<std::size_t, NumBuckets> &counts) {
+      using Particle = typename ContainerType::value_type;
+      const Particle *data = c.data();
+      const std::size_t n = c.size();
+      for (std::size_t b = 0; b < NumBuckets; ++b) {
+        const int bucket = static_cast<int>(b) + 1;
+        std::size_t total = 0;
+        Kokkos::parallel_reduce(
+            "schnek:countBucketParticles",
+            Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, n),
+            KOKKOS_LAMBDA(const std::size_t i, std::size_t &acc) {
+              if (classify(data[i]) == bucket) {
+                ++acc;
+              }
+            },
+            total
+        );
+        counts[b] = total;
+      }
+    }
+
+    /// Rounds `p` up to a multiple of `alignment`, which must be a power of two.
+    inline std::byte *alignDeviceScratch(std::byte *p, std::size_t alignment) {
+      const auto addr = reinterpret_cast<std::uintptr_t>(p);
+      return reinterpret_cast<std::byte *>((addr + alignment - 1) & ~(alignment - 1));
+    }
+
+    /**
+     * Partitions the device-resident container `c` in place. Departing particles are serialised into `outPtrs`,
+     * survivors are compacted in order. `scratch` holds the survivor and scan storage (see partitionScratchBytes).
+     * Only the survivor count is copied back to the host.
+     */
+    template<class Serializer, class ContainerType, class Classifier, std::size_t NumBuckets>
+    void devicePartitionAndPack(
+        ContainerType &c,
+        const Classifier &classify,
+        const std::array<std::byte *, NumBuckets> &outPtrs,
+        std::byte *scratch
+    ) {
+      using Particle = typename ContainerType::value_type;
+      const std::size_t particleBytes = Serializer::size();
+      const std::size_t n = c.size();
+      if (n == 0) {
+        return;
+      }
+
+      Particle *survivors = reinterpret_cast<Particle *>(alignDeviceScratch(scratch, alignof(Particle)));
+      std::size_t *position = reinterpret_cast<std::size_t *>(
+          alignDeviceScratch(reinterpret_cast<std::byte *>(survivors + n), alignof(std::size_t))
+      );
+      Particle *data = c.data();
+
+      // Target 0 gathers survivors; target b (1-based) packs removal bucket b.
+      std::size_t survivorCount = 0;
+      for (int target = 0; target <= static_cast<int>(NumBuckets); ++target) {
+        std::size_t total = 0;
+        Kokkos::parallel_scan(
+            "schnek:exclusiveScanBucket",
+            Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, n),
+            KOKKOS_LAMBDA(const std::size_t i, std::size_t &update, const bool isFinal) {
+              if (isFinal) {
+                position[i] = update;
+              }
+              if (classify(data[i]) == target) {
+                ++update;
+              }
+            },
+            total
+        );
+
+        if (target == 0) {
+          Kokkos::parallel_for(
+              "schnek:gatherSurvivors",
+              Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, n),
+              KOKKOS_LAMBDA(const std::size_t i) {
+                if (classify(data[i]) == 0) {
+                  survivors[position[i]] = data[i];
+                }
+              }
+          );
+          survivorCount = total;
+        } else {
+          std::byte *dst = outPtrs[static_cast<std::size_t>(target) - 1];
+          Kokkos::parallel_for(
+              "schnek:packBucket",
+              Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, n),
+              KOKKOS_LAMBDA(const std::size_t i) {
+                if (classify(data[i]) == target) {
+                  Serializer::serialize(data[i], dst + position[i] * particleBytes);
+                }
+              }
+          );
+        }
+      }
+
+      Kokkos::parallel_for(
+          "schnek:compactSurvivors",
+          Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, survivorCount),
+          KOKKOS_LAMBDA(const std::size_t i) { data[i] = survivors[i]; }
+      );
+      Kokkos::fence();
+      c.resize(survivorCount);
+    }
+#else
+    template<class Serializer, class ContainerType>
+    void deviceBulkInsert(ContainerType &, const std::byte *, std::size_t) {
+      static_assert(sizeof(ContainerType) == 0, "device-resident particle containers require Kokkos support");
+    }
+
+    template<class ContainerType, class Predicate>
+    bool deviceAllOf(const ContainerType &, Predicate) {
+      static_assert(sizeof(ContainerType) == 0, "device-resident particle containers require Kokkos support");
+      return false;
+    }
+
+    template<std::size_t NumBuckets, class ContainerType, class Classifier>
+    void deviceCountBuckets(const ContainerType &, const Classifier &, std::array<std::size_t, NumBuckets> &) {
+      static_assert(sizeof(ContainerType) == 0, "device-resident particle containers require Kokkos support");
+    }
+
+    template<class Serializer, class ContainerType, class Classifier, std::size_t NumBuckets>
+    void devicePartitionAndPack(ContainerType &, const Classifier &, const std::array<std::byte *, NumBuckets> &, std::byte *) {
+      static_assert(sizeof(ContainerType) == 0, "device-resident particle containers require Kokkos support");
+    }
+#endif
+
+  }  // namespace internal
 
   /**
    * @brief Adapts an arbitrary particle container to the small set of
@@ -75,29 +255,69 @@ namespace schnek {
         }
       }
 
+      /// True when `pred(p)` holds for every particle. Device-resident containers require a device-callable `pred`.
+      template<class Predicate>
+      static bool allOf(const ContainerType &c, Predicate pred) {
+        if constexpr (detail::ParticleCommunicationTraits<ContainerType>::device_resident) {
+          return internal::deviceAllOf(c, pred);
+        } else {
+          for (const auto &p : c) {
+            if (!pred(p)) {
+              return false;
+            }
+          }
+          return true;
+        }
+      }
+
       /**
-       * Partition the container in place, routing departing particles into
-       * per-bucket, host-accessible byte buffers using a count -> scan -> pack
-       * scheme.
+       * Count the particles each removal bucket would take, without modifying
+       * the container.
        *
-       * For every particle, `classify(p)` returns a bucket index:
-       *   - `0` keeps the particle (survivors are compacted in place, preserving
-       *     their relative order),
-       *   - `1 .. NumBuckets` removes the particle and serialises it (via
-       *     `Serializer`) into `outBuffers[bucket - 1]`.
+       * `classify(p)` returns `0` to keep a particle or `1 .. NumBuckets` to
+       * remove it into `counts[bucket - 1]`. The caller uses the counts to size
+       * the byte buffers passed to `partitionAndPack()`.
+       */
+      template<std::size_t NumBuckets, class Classifier>
+      static void countBuckets(const ContainerType &c, const Classifier &classify, std::array<std::size_t, NumBuckets> &counts) {
+        if constexpr (detail::ParticleCommunicationTraits<ContainerType>::device_resident) {
+          internal::deviceCountBuckets(c, classify, counts);
+        } else {
+          counts.fill(0);
+          for (const auto &p : c) {
+            const int bkt = classify(p);
+            if (bkt != 0) {
+              ++counts[static_cast<std::size_t>(bkt) - 1];
+            }
+          }
+        }
+      }
+
+      /**
+       * Number of scratch bytes `partitionAndPack()` needs in the buffer's memory space.
+       * Only device-resident containers use scratch; host containers need none.
+       */
+      static std::size_t partitionScratchBytes([[maybe_unused]] const ContainerType &c) {
+        if constexpr (detail::ParticleCommunicationTraits<ContainerType>::device_resident) {
+          // Worst-case padding for the two alignment rounds in devicePartitionAndPack().
+          return c.size() * (sizeof(value_type) + sizeof(std::size_t)) + alignof(value_type) + alignof(std::size_t);
+        } else {
+          return 0;
+        }
+      }
+
+      /**
+       * Partition the container in place, serialising departing particles into
+       * caller-provided byte buffers, one per removal bucket.
        *
-       * On return `outBuffers[b]` holds exactly `counts[b] * Serializer::size()`
-       * bytes, tightly packed with no worst-case over-allocation, and is safe to
-       * hand straight to MPI.
+       * `outPtrs[b]` must hold `countBuckets()[b] * Serializer::size()` bytes in
+       * the buffer's memory space. Survivors are compacted in place, preserving
+       * their relative order. The container is unchanged since `countBuckets()`,
+       * so classification is repeated here and yields the same buckets.
        *
-       * This is the single primitive that drives migration. The default
-       * (host) implementation performs the three passes serially. A
-       * device-resident container specialises this trait and implements each
-       * pass with a parallel classify / exclusive-scan / scatter so that no
-       * particle data ever has to leave the device before packing; only the
-       * final tightly-sized byte buffers are staged to the host. Because the
-       * output buffers are ordinary `std::vector<std::byte>`, the surrounding
-       * MPI code is identical for host and device containers.
+       * A device-resident container runs the classify, exclusive-scan and scatter
+       * passes in parallel on the device. `scratch` must hold `partitionScratchBytes(c)`
+       * bytes in the buffer's memory space; host containers ignore it.
        *
        * @tparam Serializer  the particle serialiser (device-callable)
        * @tparam NumBuckets  the number of removal buckets (deduced)
@@ -107,64 +327,49 @@ namespace schnek {
       static void partitionAndPack(
           ContainerType &c,
           const Classifier &classify,
-          std::array<std::vector<std::byte>, NumBuckets> &outBuffers,
-          std::array<std::size_t, NumBuckets> &counts
+          const std::array<std::byte *, NumBuckets> &outPtrs,
+          [[maybe_unused]] std::byte *scratch
       ) {
-        constexpr std::size_t particleBytes = Serializer::size();
-        const std::size_t n = c.size();
+        if constexpr (detail::ParticleCommunicationTraits<ContainerType>::device_resident) {
+          internal::devicePartitionAndPack<Serializer>(c, classify, outPtrs, scratch);
+        } else {
+          constexpr std::size_t particleBytes = Serializer::size();
+          const std::size_t n = c.size();
 
-        // Pass 1: classify every particle and count per bucket.
-        std::vector<int> bucket(n);
-        for (std::size_t b = 0; b < NumBuckets; ++b) {
-          counts[b] = 0;
-        }
-        for (std::size_t i = 0; i < n; ++i) {
-          const int bkt = classify(c[i]);
-          bucket[i] = bkt;
-          if (bkt != 0) {
-            ++counts[static_cast<std::size_t>(bkt) - 1];
-          }
-        }
-
-        // Pass 2: size the output buffers from the per-bucket totals (the
-        // host-serial equivalent of an exclusive scan over bucket sizes).
-        for (std::size_t b = 0; b < NumBuckets; ++b) {
-          outBuffers[b].assign(counts[b] * particleBytes, std::byte{0});
-        }
-
-        // Pass 3: scatter. Running per-bucket offsets act as the exclusive scan;
-        // survivors are compacted in place.
-        std::array<std::size_t, NumBuckets> offset{};
-        std::size_t out = 0;
-        for (std::size_t i = 0; i < n; ++i) {
-          const int bkt = bucket[i];
-          if (bkt == 0) {
-            if (out != i) {
-              c[out] = std::move(c[i]);
+          std::array<std::size_t, NumBuckets> offset{};
+          std::size_t out = 0;
+          for (std::size_t i = 0; i < n; ++i) {
+            const int bkt = classify(c[i]);
+            if (bkt == 0) {
+              if (out != i) {
+                c[out] = std::move(c[i]);
+              }
+              ++out;
+            } else {
+              const std::size_t b = static_cast<std::size_t>(bkt) - 1;
+              Serializer::serialize(c[i], outPtrs[b] + offset[b] * particleBytes);
+              ++offset[b];
             }
-            ++out;
-          } else {
-            const std::size_t b = static_cast<std::size_t>(bkt) - 1;
-            Serializer::serialize(c[i], outBuffers[b].data() + offset[b] * particleBytes);
-            ++offset[b];
           }
+          c.resize(out);
         }
-        c.resize(out);
       }
 
       /**
-       * Deserialise `count` particles from the tightly-packed, host-accessible
-       * byte buffer `src` (`Serializer::size()` bytes each) and append them to
-       * `c`.
+       * Deserialise `count` particles from the byte buffer `src` (`Serializer::size()` bytes each) and append them to
+       * `c`. `src` must lie in `ParticleBufferMemorySpace<ContainerType>`.
        *
-       * The default implementation deserialises serially on the host. A
-       * device-resident container specialises this trait to stage the bytes onto
-       * the device and deserialise them in parallel into the appended region.
+       * Host containers deserialise serially. Device-resident containers deserialise in parallel on the device, so
+       * `src` is never read on the host.
        */
       template<class Serializer>
       static void bulkInsert(ContainerType &c, const std::byte *src, std::size_t count) {
-        for (std::size_t i = 0; i < count; ++i) {
-          c.push_back(Serializer::deserialize(src + i * Serializer::size()));
+        if constexpr (detail::ParticleCommunicationTraits<ContainerType>::device_resident) {
+          internal::deviceBulkInsert<Serializer>(c, src, count);
+        } else {
+          for (std::size_t i = 0; i < count; ++i) {
+            c.push_back(Serializer::deserialize(src + i * Serializer::size()));
+          }
         }
       }
   };
