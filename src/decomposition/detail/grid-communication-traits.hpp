@@ -21,6 +21,7 @@
 
 #include <memory>
 #include <cstddef>
+#include <cstring>
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
@@ -100,6 +101,31 @@ namespace schnek {
 #endif
 
     /**
+     * @brief Copies `count` host elements into a buffer obtained from `make_vector`.
+     *
+     * Host buffers (PMR vectors) are written directly. Kokkos buffers are
+     * filled through a host staging view and `deep_copy`'d to the target
+     * memory space.
+     */
+    template<class T, class Vec>
+    void copyHostToCommunicationBuffer(Vec &dst, const T *src, std::size_t count) {
+      if (count == 0) {
+        return;
+      }
+#ifdef SCHNEK_HAVE_KOKKOS
+      if constexpr (Kokkos::is_view<Vec>::value) {
+        Kokkos::View<T *, Kokkos::HostSpace> staging(
+            Kokkos::view_alloc(Kokkos::WithoutInitializing, "schnek:staging"), count
+        );
+        std::memcpy(staging.data(), src, count * sizeof(T));
+        Kokkos::deep_copy(dst, staging);
+        return;
+      }
+#endif
+      std::memcpy(dst.data(), src, count * sizeof(T));
+    }
+
+    /**
      * @brief Selects the reusable communication buffer for a memory space.
      *
      * This is the allocator customisation point for grid backends. The host
@@ -139,10 +165,12 @@ namespace schnek {
             BufferType sendBuffer;
             BufferType receiveBuffer;
             BufferType partitionBuffer;
+            BufferType routeBuffer;
 
             BufferType &send() { return sendBuffer; }
             BufferType &receive() { return receiveBuffer; }
             BufferType &partition() { return partitionBuffer; }
+            BufferType &route() { return routeBuffer; }
         };
 
         template<class MemorySpace>
@@ -195,12 +223,19 @@ namespace schnek {
     template<class GridType>
     using GridCommunicationBuffer = typename GridCommunicationTraits<GridType>::buffer_type;
 
+    /// How MPI accesses communication buffers in a device memory space.
+    enum class DeviceMpiAccess {
+        Direct,      ///< MPI reads and writes device pointers; requires GPU-aware MPI.
+        HostStaged,  ///< Buffers are copied through host memory around each MPI call.
+    };
+
     /**
-     * @brief Describes the communication memory space used by a particle container.
+     * @brief Describes the communication policy used by a particle container.
      *
      * Containers that expose both `MemorySpace` and `host_accessible` (the same
      * convention as grid storage policies) are treated as backend-managed.
      * All other containers, e.g. `std::vector`, use the host memory tag.
+     * A backend-managed container may declare `static constexpr DeviceMpiAccess mpi_access`.
      */
     template<class ContainerType, typename Enable = void>
     struct ParticleCommunicationTraits {
@@ -208,7 +243,17 @@ namespace schnek {
         using buffer_type = typename CommunicationBufferTraits<memory_space>::buffer_type;
 
         static constexpr bool host_accessible = true;
-        static constexpr bool device_resident = false;
+        static constexpr DeviceMpiAccess mpi_access = DeviceMpiAccess::Direct;
+    };
+
+    template<class ContainerType, class = void>
+    struct ContainerMpiAccess {
+        static constexpr DeviceMpiAccess value = DeviceMpiAccess::Direct;
+    };
+
+    template<class ContainerType>
+    struct ContainerMpiAccess<ContainerType, std::void_t<decltype(ContainerType::mpi_access)>> {
+        static constexpr DeviceMpiAccess value = ContainerType::mpi_access;
     };
 
     template<class ContainerType>
@@ -219,7 +264,7 @@ namespace schnek {
         using buffer_type = typename CommunicationBufferTraits<memory_space>::buffer_type;
 
         static constexpr bool host_accessible = ContainerType::host_accessible;
-        static constexpr bool device_resident = !host_accessible;
+        static constexpr DeviceMpiAccess mpi_access = ContainerMpiAccess<ContainerType>::value;
     };
 
     template<class ContainerType>

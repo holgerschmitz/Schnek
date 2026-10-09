@@ -155,6 +155,9 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/decomposition/detail/test_grid_factory.cpp
     testsuite/decomposition/detail/test_grid_transfer.cpp
     testsuite/decomposition/detail/test_grid_visitor.cpp
+    testsuite/decomposition/detail/test_particle_factory.cpp
+    testsuite/decomposition/detail/test_block_particle_container.cpp
+    testsuite/decomposition/detail/test_particle_binning.cpp
     testsuite/computation/test_algorithm.cpp
     testsuite/diagnostic/test_hdfdiagnostic.cpp
     testsuite/generic/test_typelist.cpp
@@ -169,6 +172,11 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
 )
 
 if(Kokkos_FOUND)
+  target_sources(schnek_tests PRIVATE
+      testsuite/decomposition/detail/test_dense_kokkos_particle_container.cpp
+      testsuite/decomposition/detail/test_device_blocked_particle_container.cpp
+  )
+
   set_source_files_properties(
       testsuite/main.cpp
       testsuite/utility.cpp
@@ -179,6 +187,10 @@ if(Kokkos_FOUND)
       testsuite/decomposition/test_mpi_cartesian_decomposition.cpp
       testsuite/decomposition/test_serial_decomposition.cpp
       testsuite/decomposition/detail/test_grid_transfer.cpp
+      testsuite/decomposition/detail/test_particle_factory.cpp
+      testsuite/decomposition/detail/test_block_particle_container.cpp
+      testsuite/decomposition/detail/test_dense_kokkos_particle_container.cpp
+      testsuite/decomposition/detail/test_device_blocked_particle_container.cpp
       testsuite/diagnostic/test_hdfdiagnostic.cpp
       testsuite/grid/test_kokkos_storage.cpp
       testsuite/grid/test_range_kokkos_iteration.cpp
@@ -193,4 +205,38 @@ target_compile_features(schnek_tests PRIVATE cxx_std_17)
 
 add_test(NAME test COMMAND schnek_tests)
 enable_testing()
+
+if(Kokkos_FOUND)
+  # Particle container benchmark (EXCLUDE_FROM_ALL; build with `make schnek_particle_bench`).
+  execute_process(
+      COMMAND git describe --always --dirty
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE SCHNEK_GIT_REVISION
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET
+  )
+  if(NOT SCHNEK_GIT_REVISION)
+    set(SCHNEK_GIT_REVISION "unknown")
+  endif()
+  if(NOT CMAKE_BUILD_TYPE)
+    set(SCHNEK_BUILD_TYPE_NAME "unspecified")
+  else()
+    set(SCHNEK_BUILD_TYPE_NAME "${CMAKE_BUILD_TYPE}")
+  endif()
+
+  add_executable(schnek_particle_bench EXCLUDE_FROM_ALL
+      benchmarks/particle_container_bench.cpp
+  )
+  set_source_files_properties(
+      benchmarks/particle_container_bench.cpp
+      PROPERTIES LANGUAGE ${Kokkos_COMPILE_LANGUAGE}
+  )
+  target_compile_definitions(schnek_particle_bench PRIVATE
+      SCHNEK_BENCH_GIT_REVISION="${SCHNEK_GIT_REVISION}"
+      SCHNEK_BENCH_BUILD_TYPE="${SCHNEK_BUILD_TYPE_NAME}"
+  )
+  target_link_libraries(schnek_particle_bench PRIVATE schnek)
+  target_compile_features(schnek_particle_bench PRIVATE cxx_std_17)
+  schnek_mark_kokkos_target(schnek_particle_bench)
+endif()
 

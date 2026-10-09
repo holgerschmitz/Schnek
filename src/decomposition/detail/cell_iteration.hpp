@@ -72,7 +72,7 @@ namespace schnek {
      */
     template<class GridType>
     struct IterationPolicyFor {
-        using type = GridType::IterationPolicyType;
+        using type = typename GridType::IterationPolicyType;
         /// Capture grids by value (true) or by reference (false) for the kernel.
         // static constexpr bool device_capture = false;
     };
