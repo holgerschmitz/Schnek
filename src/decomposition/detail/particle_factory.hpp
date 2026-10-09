@@ -26,6 +26,7 @@
 #ifndef SCHNEK_DECOMPOSITION_DETAIL_PARTICLE_FACTORY_HPP_
 #define SCHNEK_DECOMPOSITION_DETAIL_PARTICLE_FACTORY_HPP_
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstring>
@@ -39,7 +40,9 @@
 #include "../../grid/arraycheck.hpp"
 #include "../../grid/range.hpp"
 #include "../../macros.hpp"
+#include "../../util/exceptions.hpp"
 #include "../../util/unique.hpp"
+#include "block_particle_container.hpp"
 #include "grid-communication-traits.hpp"
 #include "particle_visitor.hpp"
 
@@ -49,14 +52,69 @@ namespace schnek {
 
   namespace internal {
 
+    /// True when `c.data()` is callable. The default device-resident traits require it.
+    template<class ContainerType, class = void>
+    struct has_data : std::false_type {};
+
+    template<class ContainerType>
+    struct has_data<ContainerType, std::void_t<decltype(std::declval<ContainerType &>().data())>> : std::true_type {};
+
+    /// Execution space declared by the memory space, or `void` when it declares none.
+    template<class MemorySpace, class = void>
+    struct MemorySpaceExecutionSpace {
+      using type = void;
+    };
+
+    template<class MemorySpace>
+    struct MemorySpaceExecutionSpace<MemorySpace, std::void_t<typename MemorySpace::execution_space>> {
+      using type = typename MemorySpace::execution_space;
+    };
+
+    /// `ContainerType::ExecutionSpace` when declared, otherwise the execution space of its memory space.
+    template<class ContainerType, class = void>
+    struct ContainerExecutionSpace {
+      using type = typename MemorySpaceExecutionSpace<typename ContainerType::MemorySpace>::type;
+    };
+
+    template<class ContainerType>
+    struct ContainerExecutionSpace<ContainerType, std::void_t<typename ContainerType::ExecutionSpace>> {
+      using type = typename ContainerType::ExecutionSpace;
+    };
+
+    /**
+     * Selects how the operations of a particle container run. A container that declares `MemorySpace` dispatches
+     * through Kokkos on `type`, which must be able to access that memory space. Other containers loop on the host.
+     */
+    template<class ContainerType, class = void>
+    struct ParticleExecutionSpace {
+      using type = void;
+      static constexpr bool kokkos_dispatch = false;
+    };
+
+    template<class ContainerType>
+    struct ParticleExecutionSpace<ContainerType, std::void_t<typename ContainerType::MemorySpace>> {
+      using memory_space = typename ContainerType::MemorySpace;
+      using type = typename ContainerExecutionSpace<ContainerType>::type;
+      static constexpr bool kokkos_dispatch = true;
+
+      static_assert(!std::is_void_v<type>, "particle container declares a MemorySpace without an execution space; declare ExecutionSpace");
+#ifdef SCHNEK_HAVE_KOKKOS
+      static_assert(
+          Kokkos::SpaceAccessibility<type, memory_space>::accessible,
+          "particle container execution space cannot access its memory space"
+      );
+#endif
+    };
+
 #ifdef SCHNEK_HAVE_KOKKOS
     /**
      * Deserialises `count` particles from the device-resident bytes `src` and appends them to `c`.
      *
      * `c.size()`, `c.resize(n)` (keeps existing elements) and `c.data()` address the container's memory space.
      */
-    template<class Serializer, class ContainerType>
+    template<class ExecSpace, class Serializer, class ContainerType>
     void deviceBulkInsert(ContainerType &c, const std::byte *src, std::size_t count) {
+      static_assert(has_data<ContainerType>::value, "device-resident containers must provide data() or specialise ParticleContainerTraits");
       if (count == 0) {
         return;
       }
@@ -69,7 +127,7 @@ namespace schnek {
       const std::size_t particleBytes = Serializer::size();
       Kokkos::parallel_for(
           "schnek:bulkInsertParticles",
-          Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, count),
+          Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, count),
           KOKKOS_LAMBDA(const std::size_t i) { dst[i] = Serializer::deserialize(src + i * particleBytes); }
       );
       Kokkos::fence();
@@ -78,14 +136,15 @@ namespace schnek {
     /**
      * Returns true when `pred(p)` holds for every particle in the device-resident container `c`.
      */
-    template<class ContainerType, class Predicate>
+    template<class ExecSpace, class ContainerType, class Predicate>
     bool deviceAllOf(const ContainerType &c, Predicate pred) {
+      static_assert(has_data<ContainerType>::value, "device-resident containers must provide data() or specialise ParticleContainerTraits");
       using Particle = typename ContainerType::value_type;
       const Particle *data = c.data();
       bool result = true;
       Kokkos::parallel_reduce(
           "schnek:allOfParticles",
-          Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, c.size()),
+          Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, c.size()),
           KOKKOS_LAMBDA(const std::size_t i, bool &ok) { ok = ok && pred(data[i]); },
           Kokkos::LAnd<bool>(result)
       );
@@ -95,17 +154,23 @@ namespace schnek {
     /**
      * Counts the particles of the device-resident container `c` that `classify` assigns to each bucket (1-based).
      */
-    template<std::size_t NumBuckets, class ContainerType, class Classifier>
-    void deviceCountBuckets(const ContainerType &c, const Classifier &classify, std::array<std::size_t, NumBuckets> &counts) {
+    template<class ExecSpace, class ContainerType, class Classifier>
+    void deviceCountBuckets(
+        const ContainerType &c, const Classifier &classify, std::size_t *counts, std::size_t numBuckets
+    ) {
+      static_assert(
+          has_data<ContainerType>::value,
+          "device-resident containers must provide data() or specialise ParticleContainerTraits"
+      );
       using Particle = typename ContainerType::value_type;
       const Particle *data = c.data();
       const std::size_t n = c.size();
-      for (std::size_t b = 0; b < NumBuckets; ++b) {
+      for (std::size_t b = 0; b < numBuckets; ++b) {
         const int bucket = static_cast<int>(b) + 1;
         std::size_t total = 0;
         Kokkos::parallel_reduce(
             "schnek:countBucketParticles",
-            Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, n),
+            Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
             KOKKOS_LAMBDA(const std::size_t i, std::size_t &acc) {
               if (classify(data[i]) == bucket) {
                 ++acc;
@@ -115,6 +180,23 @@ namespace schnek {
         );
         counts[b] = total;
       }
+
+#ifndef NDEBUG
+      // Bucket validation costs an extra pass, so it runs in debug builds only.
+      std::size_t invalid = 0;
+      Kokkos::parallel_reduce(
+          "schnek:checkBucketValues",
+          Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
+          KOKKOS_LAMBDA(const std::size_t i, std::size_t &acc) {
+            const int bucket = classify(data[i]);
+            if (bucket < 0 || bucket > static_cast<int>(numBuckets)) {
+              ++acc;
+            }
+          },
+          invalid
+      );
+      SCHNEK_ASSERT(invalid == 0, "particle classified outside buckets 0.." << numBuckets);
+#endif
     }
 
     /// Rounds `p` up to a multiple of `alignment`, which must be a power of two.
@@ -128,13 +210,15 @@ namespace schnek {
      * survivors are compacted in order. `scratch` holds the survivor and scan storage (see partitionScratchBytes).
      * Only the survivor count is copied back to the host.
      */
-    template<class Serializer, class ContainerType, class Classifier, std::size_t NumBuckets>
+    template<class ExecSpace, class Serializer, class ContainerType, class Classifier>
     void devicePartitionAndPack(
         ContainerType &c,
         const Classifier &classify,
-        const std::array<std::byte *, NumBuckets> &outPtrs,
+        std::byte *const *outPtrs,
+        std::size_t numBuckets,
         std::byte *scratch
     ) {
+      static_assert(has_data<ContainerType>::value, "device-resident containers must provide data() or specialise ParticleContainerTraits");
       using Particle = typename ContainerType::value_type;
       const std::size_t particleBytes = Serializer::size();
       const std::size_t n = c.size();
@@ -150,11 +234,11 @@ namespace schnek {
 
       // Target 0 gathers survivors; target b (1-based) packs removal bucket b.
       std::size_t survivorCount = 0;
-      for (int target = 0; target <= static_cast<int>(NumBuckets); ++target) {
+      for (int target = 0; target <= static_cast<int>(numBuckets); ++target) {
         std::size_t total = 0;
         Kokkos::parallel_scan(
             "schnek:exclusiveScanBucket",
-            Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, n),
+            Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
             KOKKOS_LAMBDA(const std::size_t i, std::size_t &update, const bool isFinal) {
               if (isFinal) {
                 position[i] = update;
@@ -169,7 +253,7 @@ namespace schnek {
         if (target == 0) {
           Kokkos::parallel_for(
               "schnek:gatherSurvivors",
-              Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, n),
+              Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
               KOKKOS_LAMBDA(const std::size_t i) {
                 if (classify(data[i]) == 0) {
                   survivors[position[i]] = data[i];
@@ -181,7 +265,7 @@ namespace schnek {
           std::byte *dst = outPtrs[static_cast<std::size_t>(target) - 1];
           Kokkos::parallel_for(
               "schnek:packBucket",
-              Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, n),
+              Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
               KOKKOS_LAMBDA(const std::size_t i) {
                 if (classify(data[i]) == target) {
                   Serializer::serialize(data[i], dst + position[i] * particleBytes);
@@ -193,31 +277,31 @@ namespace schnek {
 
       Kokkos::parallel_for(
           "schnek:compactSurvivors",
-          Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0}, survivorCount),
+          Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, survivorCount),
           KOKKOS_LAMBDA(const std::size_t i) { data[i] = survivors[i]; }
       );
       Kokkos::fence();
       c.resize(survivorCount);
     }
 #else
-    template<class Serializer, class ContainerType>
+    template<class ExecSpace, class Serializer, class ContainerType>
     void deviceBulkInsert(ContainerType &, const std::byte *, std::size_t) {
       static_assert(sizeof(ContainerType) == 0, "device-resident particle containers require Kokkos support");
     }
 
-    template<class ContainerType, class Predicate>
+    template<class ExecSpace, class ContainerType, class Predicate>
     bool deviceAllOf(const ContainerType &, Predicate) {
       static_assert(sizeof(ContainerType) == 0, "device-resident particle containers require Kokkos support");
       return false;
     }
 
-    template<std::size_t NumBuckets, class ContainerType, class Classifier>
-    void deviceCountBuckets(const ContainerType &, const Classifier &, std::array<std::size_t, NumBuckets> &) {
+    template<class ExecSpace, class ContainerType, class Classifier>
+    void deviceCountBuckets(const ContainerType &, const Classifier &, std::size_t *, std::size_t) {
       static_assert(sizeof(ContainerType) == 0, "device-resident particle containers require Kokkos support");
     }
 
-    template<class Serializer, class ContainerType, class Classifier, std::size_t NumBuckets>
-    void devicePartitionAndPack(ContainerType &, const Classifier &, const std::array<std::byte *, NumBuckets> &, std::byte *) {
+    template<class ExecSpace, class Serializer, class ContainerType, class Classifier>
+    void devicePartitionAndPack(ContainerType &, const Classifier &, std::byte *const *, std::size_t, std::byte *) {
       static_assert(sizeof(ContainerType) == 0, "device-resident particle containers require Kokkos support");
     }
 #endif
@@ -228,11 +312,23 @@ namespace schnek {
    * @brief Adapts an arbitrary particle container to the small set of
    * operations the domain decomposition requires.
    *
-   * The primary template provides a default implementation suitable for any
-   * array-of-structs (AoS) container that exposes `value_type`, `size()`,
-   * `push_back()`, random-access `operator[]` and `resize()` (e.g.
-   * `std::vector`). Users with bespoke storage specialise this trait rather
-   * than inheriting from an interface.
+   * Contract for every specialisation:
+   * - `size()` counts stored particles, not capacity.
+   * - `insert()` appends one particle. `forEach()` is host-only.
+   * - `countBuckets()` does not modify the container. Bucket 0 keeps a particle and buckets `1..numBuckets` remove it.
+   *   Any other value throws `ScheckException` on the host. Device containers check in debug builds only.
+   * - `partitionAndPack()` runs on the container unchanged since `countBuckets()`. It writes `countBuckets()[b] *
+   *   Serializer::size()` bytes per bucket into caller-owned buffers in `ParticleBufferMemorySpace`, which the
+   *   container must not retain. An exception leaves the container unspecified.
+   * - Both primitives take the bucket count at run time, so a caller can choose the number of destinations. The
+   *   `std::array` overloads are convenience forwarders for a compile-time count.
+   * - `bulkInsert()` appends `count` particles read from a buffer in `ParticleBufferMemorySpace`, in buffer order.
+   * - Survivor order is not part of the contract. Stable `Particle&` references and a single `data()` pointer are not required.
+   *
+   * The primary template is a contiguous AoS adapter. It needs `value_type`, `size()`, `push_back()`, `operator[]` and
+   * `resize()`. Containers that declare `MemorySpace` also need `data()`. Specialise this trait fully for segmented or non-AoS storage.
+   * Such containers dispatch on `execution_space`: `ExecutionSpace` if declared, otherwise the execution space of
+   * `MemorySpace`. The execution space must be able to access the memory space, which is checked at compile time.
    *
    * @tparam ContainerType the user's particle storage type
    */
@@ -240,14 +336,20 @@ namespace schnek {
   struct ParticleContainerTraits {
       using value_type = typename ContainerType::value_type;
 
+      /// Execution space of the Kokkos dispatch paths; `void` for host containers.
+      using execution_space = typename internal::ParticleExecutionSpace<ContainerType>::type;
+
+      /// True when operations dispatch through Kokkos on `execution_space`.
+      static constexpr bool kokkos_dispatch = internal::ParticleExecutionSpace<ContainerType>::kokkos_dispatch;
+
       /// Number of particles currently stored.
       static std::size_t size(const ContainerType &c) { return c.size(); }
 
-      /// Append a particle (used when inserting received particles).
+      /// Append a particle (used when inserting received particles). Host-only.
       static void insert(ContainerType &c, const value_type &p) { c.push_back(p); }
       static void insert(ContainerType &c, value_type &&p) { c.push_back(std::move(p)); }
 
-      /// Read-only visitation of every particle.
+      /// Read-only visitation of every particle. Host-only.
       template<class F>
       static void forEach(const ContainerType &c, F &&f) {
         for (const auto &p : c) {
@@ -258,8 +360,8 @@ namespace schnek {
       /// True when `pred(p)` holds for every particle. Device-resident containers require a device-callable `pred`.
       template<class Predicate>
       static bool allOf(const ContainerType &c, Predicate pred) {
-        if constexpr (detail::ParticleCommunicationTraits<ContainerType>::device_resident) {
-          return internal::deviceAllOf(c, pred);
+        if constexpr (kokkos_dispatch) {
+          return internal::deviceAllOf<execution_space>(c, pred);
         } else {
           for (const auto &p : c) {
             if (!pred(p)) {
@@ -274,23 +376,37 @@ namespace schnek {
        * Count the particles each removal bucket would take, without modifying
        * the container.
        *
-       * `classify(p)` returns `0` to keep a particle or `1 .. NumBuckets` to
+       * `classify(p)` returns `0` to keep a particle or `1 .. numBuckets` to
        * remove it into `counts[bucket - 1]`. The caller uses the counts to size
        * the byte buffers passed to `partitionAndPack()`.
        */
-      template<std::size_t NumBuckets, class Classifier>
-      static void countBuckets(const ContainerType &c, const Classifier &classify, std::array<std::size_t, NumBuckets> &counts) {
-        if constexpr (detail::ParticleCommunicationTraits<ContainerType>::device_resident) {
-          internal::deviceCountBuckets(c, classify, counts);
+      template<class Classifier>
+      static void countBuckets(
+          const ContainerType &c, const Classifier &classify, std::size_t *counts, std::size_t numBuckets
+      ) {
+        if constexpr (kokkos_dispatch) {
+          internal::deviceCountBuckets<execution_space>(c, classify, counts, numBuckets);
         } else {
-          counts.fill(0);
+          std::fill(counts, counts + numBuckets, std::size_t{0});
           for (const auto &p : c) {
             const int bkt = classify(p);
             if (bkt != 0) {
+              SCHNEK_ASSERT(
+                  bkt >= 1 && static_cast<std::size_t>(bkt) <= numBuckets,
+                  "particle bucket " << bkt << " outside 0.." << numBuckets
+              );
               ++counts[static_cast<std::size_t>(bkt) - 1];
             }
           }
         }
+      }
+
+      /// Convenience forwarder for a compile-time bucket count.
+      template<class Classifier, std::size_t NumBuckets>
+      static void countBuckets(
+          const ContainerType &c, const Classifier &classify, std::array<std::size_t, NumBuckets> &counts
+      ) {
+        countBuckets(c, classify, counts.data(), NumBuckets);
       }
 
       /**
@@ -298,7 +414,7 @@ namespace schnek {
        * Only device-resident containers use scratch; host containers need none.
        */
       static std::size_t partitionScratchBytes([[maybe_unused]] const ContainerType &c) {
-        if constexpr (detail::ParticleCommunicationTraits<ContainerType>::device_resident) {
+        if constexpr (kokkos_dispatch) {
           // Worst-case padding for the two alignment rounds in devicePartitionAndPack().
           return c.size() * (sizeof(value_type) + sizeof(std::size_t)) + alignof(value_type) + alignof(std::size_t);
         } else {
@@ -320,23 +436,23 @@ namespace schnek {
        * bytes in the buffer's memory space; host containers ignore it.
        *
        * @tparam Serializer  the particle serialiser (device-callable)
-       * @tparam NumBuckets  the number of removal buckets (deduced)
        * @tparam Classifier  the device-callable particle classifier (deduced)
        */
-      template<class Serializer, std::size_t NumBuckets, class Classifier>
+      template<class Serializer, class Classifier>
       static void partitionAndPack(
           ContainerType &c,
           const Classifier &classify,
-          const std::array<std::byte *, NumBuckets> &outPtrs,
+          std::byte *const *outPtrs,
+          std::size_t numBuckets,
           [[maybe_unused]] std::byte *scratch
       ) {
-        if constexpr (detail::ParticleCommunicationTraits<ContainerType>::device_resident) {
-          internal::devicePartitionAndPack<Serializer>(c, classify, outPtrs, scratch);
+        if constexpr (kokkos_dispatch) {
+          internal::devicePartitionAndPack<execution_space, Serializer>(c, classify, outPtrs, numBuckets, scratch);
         } else {
           constexpr std::size_t particleBytes = Serializer::size();
           const std::size_t n = c.size();
 
-          std::array<std::size_t, NumBuckets> offset{};
+          std::vector<std::size_t> offset(numBuckets, 0);
           std::size_t out = 0;
           for (std::size_t i = 0; i < n; ++i) {
             const int bkt = classify(c[i]);
@@ -346,6 +462,10 @@ namespace schnek {
               }
               ++out;
             } else {
+              SCHNEK_ASSERT(
+                  bkt >= 1 && static_cast<std::size_t>(bkt) <= numBuckets,
+                  "particle bucket " << bkt << " outside 0.." << numBuckets
+              );
               const std::size_t b = static_cast<std::size_t>(bkt) - 1;
               Serializer::serialize(c[i], outPtrs[b] + offset[b] * particleBytes);
               ++offset[b];
@@ -353,6 +473,17 @@ namespace schnek {
           }
           c.resize(out);
         }
+      }
+
+      /// Convenience forwarder for a compile-time bucket count.
+      template<class Serializer, class Classifier, std::size_t NumBuckets>
+      static void partitionAndPack(
+          ContainerType &c,
+          const Classifier &classify,
+          const std::array<std::byte *, NumBuckets> &outPtrs,
+          std::byte *scratch
+      ) {
+        partitionAndPack<Serializer>(c, classify, outPtrs.data(), NumBuckets, scratch);
       }
 
       /**
@@ -364,12 +495,128 @@ namespace schnek {
        */
       template<class Serializer>
       static void bulkInsert(ContainerType &c, const std::byte *src, std::size_t count) {
-        if constexpr (detail::ParticleCommunicationTraits<ContainerType>::device_resident) {
-          internal::deviceBulkInsert<Serializer>(c, src, count);
+        if constexpr (kokkos_dispatch) {
+          internal::deviceBulkInsert<execution_space, Serializer>(c, src, count);
         } else {
           for (std::size_t i = 0; i < count; ++i) {
             c.push_back(Serializer::deserialize(src + i * Serializer::size()));
           }
+        }
+      }
+  };
+
+  /**
+   * Host specialisation for `BlockParticleContainer`. Only occupied slots are visited. Departing particles are
+   * serialised as they are removed by `extractIf()`, which also returns emptied blocks to the pool. Survivors are not
+   * kept in their original order, which the contract permits. No block-sized or container-sized temporary is needed.
+   */
+  template<class Particle, class BlockGrid>
+  struct ParticleContainerTraits<BlockParticleContainer<Particle, BlockGrid>> {
+      using ContainerType = BlockParticleContainer<Particle, BlockGrid>;
+      using value_type = Particle;
+
+      /// Blocks are host-resident, so operations loop on the host.
+      using execution_space = void;
+      static constexpr bool kokkos_dispatch = false;
+
+      static std::size_t size(const ContainerType &c) { return c.size(); }
+
+      static void insert(ContainerType &c, const value_type &p) { c.push_back(p); }
+      static void insert(ContainerType &c, value_type &&p) { c.push_back(std::move(p)); }
+
+      template<class F>
+      static void forEach(const ContainerType &c, F &&f) {
+        c.forEach(std::forward<F>(f));
+      }
+
+      template<class Predicate>
+      static bool allOf(const ContainerType &c, Predicate pred) {
+        for (std::size_t b = 0; b < c.activeBlockCount(); ++b) {
+          const BlockGrid &data = c.block(b);
+          const std::size_t used = c.blockUsed(b);
+          for (std::size_t i = 0; i < used; ++i) {
+            if (!pred(data[static_cast<std::ptrdiff_t>(i)])) {
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+
+      template<class Classifier>
+      static void countBuckets(
+          const ContainerType &c, const Classifier &classify, std::size_t *counts, std::size_t numBuckets
+      ) {
+        std::fill(counts, counts + numBuckets, std::size_t{0});
+        c.forEachBlock([&](const BlockGrid &data, std::size_t used) {
+          for (std::size_t i = 0; i < used; ++i) {
+            const int bkt = classify(data[static_cast<std::ptrdiff_t>(i)]);
+            if (bkt != 0) {
+              SCHNEK_ASSERT(
+                  bkt >= 1 && static_cast<std::size_t>(bkt) <= numBuckets,
+                  "particle bucket " << bkt << " outside 0.." << numBuckets
+              );
+              ++counts[static_cast<std::size_t>(bkt) - 1];
+            }
+          }
+        });
+      }
+
+      template<class Classifier, std::size_t NumBuckets>
+      static void countBuckets(
+          const ContainerType &c, const Classifier &classify, std::array<std::size_t, NumBuckets> &counts
+      ) {
+        countBuckets(c, classify, counts.data(), NumBuckets);
+      }
+
+      /// Blocks pack directly into the caller's buffers, so no scratch is needed.
+      static std::size_t partitionScratchBytes([[maybe_unused]] const ContainerType &c) { return 0; }
+
+      template<class Serializer, class Classifier>
+      static void partitionAndPack(
+          ContainerType &c,
+          const Classifier &classify,
+          std::byte *const *outPtrs,
+          std::size_t numBuckets,
+          [[maybe_unused]] std::byte *scratch
+      ) {
+        constexpr std::size_t particleBytes = Serializer::size();
+        std::vector<std::size_t> offset(numBuckets, 0);
+        int bkt = 0;
+        c.extractIf(
+            [&](const value_type &p) {
+              bkt = classify(p);
+              SCHNEK_ASSERT(
+                  bkt == 0 || (bkt >= 1 && static_cast<std::size_t>(bkt) <= numBuckets),
+                  "particle bucket " << bkt << " outside 0.." << numBuckets
+              );
+              return bkt != 0;
+            },
+            [&](value_type &&p) {
+              // extractIf calls the sink directly after the predicate accepted this same particle, so `bkt` is current.
+              const std::size_t b = static_cast<std::size_t>(bkt) - 1;
+              Serializer::serialize(p, outPtrs[b] + offset[b] * particleBytes);
+              ++offset[b];
+            }
+        );
+      }
+
+      template<class Serializer, class Classifier, std::size_t NumBuckets>
+      static void partitionAndPack(
+          ContainerType &c,
+          const Classifier &classify,
+          const std::array<std::byte *, NumBuckets> &outPtrs,
+          std::byte *scratch
+      ) {
+        partitionAndPack<Serializer>(c, classify, outPtrs.data(), NumBuckets, scratch);
+      }
+
+      template<class Serializer>
+      static void bulkInsert(ContainerType &c, const std::byte *src, std::size_t count) {
+        // One capacity decision for the whole batch: free slots are counted, and only the missing blocks are added.
+        c.reserveParticles(c.size() + count);
+        for (std::size_t i = 0; i < count; ++i) {
+          c.push_back(Serializer::deserialize(src + i * Serializer::size()));
         }
       }
   };
@@ -525,6 +772,38 @@ namespace schnek {
         (void)domain;
         return ContainerType{};
       }
+  };
+
+  /**
+   * @brief Factory for `BlockParticleContainer` with a configurable block size.
+   *
+   * Has no default constructor, so every registration states its block capacity. Each registration keeps its own copy,
+   * so different registrations may use different block sizes.
+   */
+  template<class Particle, class BlockGrid>
+  class ParticleContainerFactory<BlockParticleContainer<Particle, BlockGrid>> {
+    public:
+      using Container = BlockParticleContainer<Particle, BlockGrid>;
+
+      /**
+       * @param blockCapacity number of particle slots per block, must be positive
+       * @param initialParticles number of particle slots to reserve in each new container
+       */
+      explicit ParticleContainerFactory(std::size_t blockCapacity, std::size_t initialParticles = 0)
+          : blockCapacity_(blockCapacity), initialParticles_(initialParticles) {}
+
+      template<typename RangeType, typename DomainType>
+      Container makeContainer(const RangeType &range, const DomainType &domain) const {
+        (void)range;
+        (void)domain;
+        Container container(blockCapacity_);
+        container.reserveParticles(initialParticles_);
+        return container;
+      }
+
+    private:
+      std::size_t blockCapacity_;
+      std::size_t initialParticles_;
   };
 
   /**

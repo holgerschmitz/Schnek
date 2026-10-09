@@ -1636,6 +1636,16 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       }
     };
 
+    /**
+     * Byte count for `count` serialised particles. Fails instead of wrapping on overflow.
+     */
+    inline std::size_t checkedParticleBytes(std::size_t count, std::size_t particleBytes) {
+      if (particleBytes != 0 && count > std::numeric_limits<std::size_t>::max() / particleBytes) {
+        SCHNECK_FAIL("Particle migration byte count overflows size_t");
+      }
+      return count * particleBytes;
+    }
+
     template<typename Traits, typename Serializer, typename ContainerType, std::size_t particleBytes>
     struct ExchangeParticle {
       MpiContext &mpi;
@@ -1654,6 +1664,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       // Phase B: downward movement. Send to `prevRank`, receive from `nextRank`.
       // Each phase first exchanges the particle count, then the payload, and
       // finally deserialises arrivals back into the container.
+      // A zero count is valid: the payload exchange still runs with null buffers.
       void operator()(const std::byte *sendBuffer, std::size_t sendCount, int sendRank, int recvRank) {
         int sendCountInt = toIntCount(sendCount);
         int recvCountInt = 0;
@@ -1661,20 +1672,27 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
             &sendCountInt, 1, MPI_INT, sendRank, 0, &recvCountInt, 1, MPI_INT, recvRank, 0, comm, MPI_STATUS_IGNORE
         );
 
+        // A negative count from the peer is a protocol error. It must not be widened to size_t.
+        if (recvCountInt < 0) {
+          SCHNECK_FAIL("Particle migration received a negative particle count");
+        }
         const std::size_t recvCount = static_cast<std::size_t>(recvCountInt);
-        const std::size_t recvBytes = recvCount * particleBytes;
+        const int sendByteCount = toIntCount(checkedParticleBytes(sendCount, particleBytes));
+        const std::size_t recvBytes = checkedParticleBytes(recvCount, particleBytes);
         const int recvByteCount = toIntCount(recvBytes);
         recvScratchBuffer.reserve_bytes(recvBytes);
         recvScratchBuffer.reset();
         auto recvBuffer = recvScratchBuffer.template make_vector<std::byte>(recvBytes);
 
         this->mpi.MPI_Sendrecv(
-            sendCount > 0 ? sendBuffer : nullptr, toIntCount(sendCount * particleBytes), MPI_BYTE, sendRank, 1,
+            sendCount > 0 ? sendBuffer : nullptr, sendByteCount, MPI_BYTE, sendRank, 1,
             recvCount > 0 ? recvBuffer.data() : nullptr, recvByteCount, MPI_BYTE, recvRank, 1,
             comm, MPI_STATUS_IGNORE
         );
 
-        Traits::template bulkInsert<Serializer>(container, recvBuffer.data(), recvCount);
+        if (recvCount > 0) {
+          Traits::template bulkInsert<Serializer>(container, recvBuffer.data(), recvCount);
+        }
       };
     };
 
@@ -1688,6 +1706,11 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     using Particle = typename Traits::value_type;
     using Serializer = ParticleSerializer<Particle>;
     using PositionAccessor = std::decay_t<decltype(wrapper.accessor)>;
+
+    static_assert(
+        detail::ParticleCommunicationTraits<ContainerType>::mpi_access == detail::DeviceMpiAccess::Direct,
+        "host-staged particle MPI communication is not implemented"
+    );
 
     auto &container = wrapper.container;
 
@@ -1725,12 +1748,23 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
 
       {
         // Down and up departures share one allocation: down first, then up.
-        auto sendBytes = sendScratchBuffer.template make_vector<std::byte>((downCount + upCount) * particleBytes);
-        std::byte *goingDown = sendBytes.data();
-        std::byte *goingUp = goingDown + downCount * particleBytes;
-        const std::array<std::byte *, 2> outPtrs{goingDown, goingUp};
-        auto partitionScratch = partitionScratchBuffer.template make_vector<std::byte>(Traits::partitionScratchBytes(container));
-        Traits::template partitionAndPack<Serializer>(container, classify, outPtrs, partitionScratch.data());
+        // Offsets are only formed for non-empty buckets, so no pointer arithmetic starts from null.
+        const std::size_t downBytes =
+            internal::mpi_cartesian_decomposition::checkedParticleBytes(downCount, particleBytes);
+        const std::size_t totalBytes =
+            internal::mpi_cartesian_decomposition::checkedParticleBytes(downCount + upCount, particleBytes);
+        auto sendBytes = sendScratchBuffer.template make_vector<std::byte>(totalBytes);
+        std::byte *goingDown = downCount > 0 ? sendBytes.data() : nullptr;
+        std::byte *goingUp = upCount > 0 ? sendBytes.data() + downBytes : nullptr;
+
+        // With no departures there is nothing to pack and no survivors to compact, so the local
+        // partition and its scratch are skipped. The exchanges below still run to accept arrivals.
+        if (downCount + upCount > 0) {
+          const std::array<std::byte *, 2> outPtrs{goingDown, goingUp};
+          auto partitionScratch =
+              partitionScratchBuffer.template make_vector<std::byte>(Traits::partitionScratchBytes(container));
+          Traits::template partitionAndPack<Serializer>(container, classify, outPtrs, partitionScratch.data());
+        }
 
         internal::mpi_cartesian_decomposition::ExchangeParticle<Traits, Serializer, ContainerType, particleBytes> exchange{
             this->mpi, comm, container, recvScratchBuffer
@@ -1819,69 +1853,47 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   }
 
   namespace internal::mpi_cartesian_decomposition {
-    template<size_t rank, typename Particle, typename LimitType, typename PositionAccessor>
-    struct OwningCell {
-      PositionAccessor accessor;
-      SCHNEK_FUNCTION LimitType operator()(const Particle &p) {
-        LimitType cell;
-        const auto pos = accessor(p);
-        for (size_t d = 0; d < rank; ++d) {
-          cell[d] = static_cast<ptrdiff_t>(std::floor(pos[d]));
-        }
-        return cell;
-      }
+    /// One send-plan block as the device-callable router reads it: a box and its removal bucket.
+    template<size_t rank>
+    struct RouteBlock {
+        ptrdiff_t lo[rank];
+        ptrdiff_t hi[rank];
+        int bucket;
     };
 
-    template<size_t rank, typename Traits, typename Particle, typename LimitType, typename PositionAccessor, typename SendPlanType, typename ContainerType, typename Serializer, std::size_t particleBytes>
-    struct RouteParticle {
-      OwningCell<rank, Particle, LimitType, PositionAccessor> owningCell;
-      const SendPlanType &sendPlan;
-      int localRank;
-      ContainerType &newContainer;
-      std::map<int, std::vector<std::byte>> &sendBuffers;
+    /**
+     * Routes a particle to the bucket of the send-plan block that contains its owning cell.
+     * Returns `0` if no block contains it; the caller treats that as an error.
+     * Device-callable, so it can drive a parallel partition on a device-resident container.
+     */
+    template<size_t rank, typename Particle, typename PositionAccessor>
+    struct RouteClassifier {
+        OwningCellDim<Particle, PositionAccessor> owningCell;
+        const RouteBlock<rank> *blocks;
+        std::size_t numBlocks;
 
-
-      bool blockContains(const typename SendPlanType::value_type &block, const LimitType &cell) {
-        for (size_t d = 0; d < rank; ++d) {
-          if (cell[d] < block.range.getLo()[d] || cell[d] > block.range.getHi()[d]) {
-            return false;
+        SCHNEK_FUNCTION int operator()(const Particle &p) const {
+          ptrdiff_t cell[rank];
+          for (size_t d = 0; d < rank; ++d) {
+            cell[d] = owningCell(p, d);
           }
-        }
-        return true;
-      };
-
-      // Route every old particle to its new owner: a local owner is inserted
-      // straight into the new container, a remote owner is serialised into the
-      // partner's send buffer.
-      void operator()(const Particle &p) {
-        const LimitType cell = owningCell(p);
-        int dest = 0;
-        bool found = false;
-        for (const auto &block : sendPlan) {
-          if (blockContains(block, cell)) {
-            dest = block.mpiRank;
-            found = true;
-            break;
+          for (std::size_t b = 0; b < numBlocks; ++b) {
+            bool inside = true;
+            for (size_t d = 0; d < rank; ++d) {
+              if (cell[d] < blocks[b].lo[d] || cell[d] > blocks[b].hi[d]) {
+                inside = false;
+                break;
+              }
+            }
+            if (inside) {
+              return blocks[b].bucket;
+            }
           }
+          return 0;
         }
-  
-        if (!found) {
-          SCHNECK_FAIL("Particle owning cell lies outside the old local range during redistribution");
-        }
-  
-        if (dest == localRank) {
-          Traits::insert(newContainer, p);
-          return;
-        }
-  
-        std::vector<std::byte> &buffer = sendBuffers[dest];
-        const std::size_t offset = buffer.size();
-        buffer.resize(offset + particleBytes);
-        Serializer::serialize(p, buffer.data() + offset);
-      }
     };
 
-  }
+  }  // namespace internal::mpi_cartesian_decomposition
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename WrapperImpl>
@@ -1896,11 +1908,16 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     using Particle = typename Traits::value_type;
     using Serializer = ParticleSerializer<Particle>;
     using PositionAccessor = std::decay_t<decltype(oldWrapper.accessor)>;
-    using SendPlanType = std::decay_t<decltype(sendPlan)>;
+    using RouteBlockType = internal::mpi_cartesian_decomposition::RouteBlock<rank>;
+    using internal::mpi_cartesian_decomposition::checkedParticleBytes;
+
+    static_assert(
+        detail::ParticleCommunicationTraits<ContainerType>::mpi_access == detail::DeviceMpiAccess::Direct,
+        "host-staged particle MPI communication is not implemented"
+    );
 
     auto &oldContainer = oldWrapper.container;
     auto &newContainer = newWrapper.container;
-    // auto &accessor = oldWrapper.accessor;
 
     constexpr std::size_t particleBytes = Serializer::size();
     const int localRank = ComRank;
@@ -1912,112 +1929,189 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       return static_cast<int>(count);
     };
 
-    // auto blockContains = [](const TransferBlock<rank, CheckingPolicy> &block, const LimitType &cell) -> bool {
-    //   for (size_t d = 0; d < rank; ++d) {
-    //     if (cell[d] < block.range.getLo()[d] || cell[d] > block.range.getHi()[d]) {
-    //       return false;
-    //     }
-    //   }
-    //   return true;
-    // };
-
-    // Partner ranks are taken from the transfer plan (not from the particle
-    // counts) so that the count exchange stays symmetric even when a block
-    // carries no particles.
-    std::set<int> sendRanks;
+    // Destination ranks are the distinct owners in the send plan, this process included.
+    // Destination i is removed into bucket i + 1, so every particle leaves the old container.
+    std::vector<int> destRanks;
     for (const auto &block : sendPlan) {
-      if (block.mpiRank != localRank) {
-        sendRanks.insert(block.mpiRank);
-      }
+      destRanks.push_back(block.mpiRank);
     }
-    std::set<int> recvRanks;
+    std::sort(destRanks.begin(), destRanks.end());
+    destRanks.erase(std::unique(destRanks.begin(), destRanks.end()), destRanks.end());
+    const std::size_t numBuckets = destRanks.size();
+
+    // Partner ranks come from the transfer plans (not from the particle counts) so that the
+    // count exchange stays symmetric even when a block carries no particles.
+    std::vector<int> recvPartners;
     for (const auto &block : recvPlan) {
       if (block.mpiRank != localRank) {
-        recvRanks.insert(block.mpiRank);
+        recvPartners.push_back(block.mpiRank);
       }
     }
+    std::sort(recvPartners.begin(), recvPartners.end());
+    recvPartners.erase(std::unique(recvPartners.begin(), recvPartners.end()), recvPartners.end());
 
-    std::map<int, std::vector<std::byte>> sendBuffers;
-    for (int r : sendRanks) {
-      sendBuffers[r];  // ensure an entry exists for every send partner
+    std::vector<RouteBlockType> routeTable;
+    routeTable.reserve(sendPlan.size());
+    for (const auto &block : sendPlan) {
+      RouteBlockType entry{};
+      for (size_t d = 0; d < rank; ++d) {
+        entry.lo[d] = static_cast<ptrdiff_t>(block.range.getLo()[d]);
+        entry.hi[d] = static_cast<ptrdiff_t>(block.range.getHi()[d]);
+      }
+      entry.bucket =
+          static_cast<int>(std::lower_bound(destRanks.begin(), destRanks.end(), block.mpiRank) - destRanks.begin()) + 1;
+      routeTable.push_back(entry);
     }
 
-    internal::mpi_cartesian_decomposition::RouteParticle<
-        rank, Traits, Particle, LimitType, PositionAccessor, SendPlanType, ContainerType, Serializer, particleBytes
-    > routeParticle{
-        {oldWrapper.accessor}, sendPlan, localRank, newContainer, sendBuffers
+    auto &bufferRegistry = mpiBufferRegistry.template get<detail::ParticleBufferMemorySpace<ContainerType>>();
+    auto &routeScratch = bufferRegistry.route();
+    auto &sendScratch = bufferRegistry.send();
+    auto &recvScratch = bufferRegistry.receive();
+    auto &partitionScratch = bufferRegistry.partition();
+    routeScratch.reset();
+    sendScratch.reset();
+    recvScratch.reset();
+    partitionScratch.reset();
+
+    auto waitAll = [&](std::vector<MPI_Request> &requests) {
+      if (!requests.empty()) {
+        int errorCode = mpi.MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during particle redistribution");
+      }
     };
-    Traits::forEach(oldContainer, routeParticle);
 
-    // Phase 1: exchange particle counts with every partner.
-    std::map<int, int> sendCounts;
-    std::map<int, int> recvCounts;
-    std::vector<MPI_Request> countRequests;
+    // All buffer views live in this block; the arenas are reset once they are out of scope.
+    {
+      // Classify every particle against the routing table and count per destination.
+      // Counting doubles as validation: each old particle must match a send-plan block.
+      const std::size_t numRouteBlocks = routeTable.size();
+      auto routeVec = routeScratch.template make_vector<RouteBlockType>(numRouteBlocks);
+      detail::copyHostToCommunicationBuffer(routeVec, routeTable.data(), numRouteBlocks);
+      const RouteBlockType *routeBlocks = numRouteBlocks > 0 ? routeVec.data() : nullptr;
 
-    for (int r : recvRanks) {
-      int &slot = recvCounts[r];
-      slot = 0;
-      MPI_Request req;
-      int errorCode = mpi.MPI_Irecv(&slot, 1, MPI_INT, r, 0, comm, &req);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during particle redistribution");
-      countRequests.push_back(req);
-    }
+      internal::mpi_cartesian_decomposition::RouteClassifier<rank, Particle, PositionAccessor> classify{
+          {oldWrapper.accessor}, routeBlocks, numRouteBlocks
+      };
 
-    for (int r : sendRanks) {
-      int &slot = sendCounts[r];
-      slot = toIntCount(sendBuffers[r].size() / particleBytes);
-      MPI_Request req;
-      int errorCode = mpi.MPI_Isend(&slot, 1, MPI_INT, r, 0, comm, &req);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during particle redistribution");
-      countRequests.push_back(req);
-    }
+      std::vector<std::size_t> counts(numBuckets, 0);
+      Traits::countBuckets(oldContainer, classify, counts.data(), numBuckets);
+      std::size_t routedCount = 0;
+      for (std::size_t c : counts) {
+        routedCount += c;
+      }
+      if (routedCount != Traits::size(oldContainer)) {
+        SCHNECK_FAIL("Particle owning cell lies outside the old local range during redistribution");
+      }
 
-    if (!countRequests.empty()) {
-      int errorCode =
-          mpi.MPI_Waitall(static_cast<int>(countRequests.size()), countRequests.data(), MPI_STATUSES_IGNORE);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during particle redistribution");
-    }
+      // Pack every bucket back to back in one send allocation. Bucket i starts at bucketStart[i].
+      std::vector<std::size_t> bucketStart(numBuckets, 0);
+      for (size_t i = 1; i < numBuckets; ++i) {
+        bucketStart[i] = bucketStart[i - 1] + counts[i - 1];
+      }
+      const std::size_t oldCount = Traits::size(oldContainer);
+      auto sendBytes = sendScratch.template make_vector<std::byte>(checkedParticleBytes(oldCount, particleBytes));
+      std::vector<std::byte *> outPtrs(numBuckets, nullptr);
+      for (size_t i = 0; i < numBuckets; ++i) {
+        if (counts[i] > 0) {
+          outPtrs[i] = sendBytes.data() + checkedParticleBytes(bucketStart[i], particleBytes);
+        }
+      }
+      if (oldCount > 0) {
+        auto partitionBytes =
+            partitionScratch.template make_vector<std::byte>(Traits::partitionScratchBytes(oldContainer));
+        Traits::template partitionAndPack<Serializer>(
+            oldContainer, classify, outPtrs.data(), numBuckets, partitionBytes.data()
+        );
+      }
 
-    // Phase 2: exchange the serialised payloads.
-    std::map<int, std::vector<std::byte>> recvBuffers;
-    std::vector<MPI_Request> payloadRequests;
-
-    for (int r : recvRanks) {
-      const std::size_t bytes = static_cast<std::size_t>(recvCounts[r]) * particleBytes;
-      std::vector<std::byte> &buffer = recvBuffers[r];
-      buffer.resize(bytes);
-      if (bytes > 0) {
+      // Phase 1: exchange particle counts with every partner.
+      std::vector<MPI_Request> requests;
+      std::vector<int> recvCounts(recvPartners.size(), 0);
+      for (size_t p = 0; p < recvPartners.size(); ++p) {
         MPI_Request req;
-        int errorCode = mpi.MPI_Irecv(buffer.data(), toIntCount(bytes), MPI_BYTE, r, 1, comm, &req);
+        int errorCode = mpi.MPI_Irecv(&recvCounts[p], 1, MPI_INT, recvPartners[p], 0, comm, &req);
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during particle redistribution");
-        payloadRequests.push_back(req);
+        requests.push_back(req);
       }
-    }
 
-    for (int r : sendRanks) {
-      std::vector<std::byte> &buffer = sendBuffers[r];
-      if (!buffer.empty()) {
+      std::vector<int> countMessages(numBuckets, 0);
+      for (size_t i = 0; i < numBuckets; ++i) {
+        if (destRanks[i] == localRank) {
+          continue;
+        }
+        countMessages[i] = toIntCount(counts[i]);
         MPI_Request req;
-        int errorCode = mpi.MPI_Isend(buffer.data(), toIntCount(buffer.size()), MPI_BYTE, r, 1, comm, &req);
+        int errorCode = mpi.MPI_Isend(&countMessages[i], 1, MPI_INT, destRanks[i], 0, comm, &req);
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during particle redistribution");
-        payloadRequests.push_back(req);
+        requests.push_back(req);
+      }
+      waitAll(requests);
+
+      for (int c : recvCounts) {
+        if (c < 0) {
+          SCHNECK_FAIL("Particle redistribution received a negative particle count");
+        }
+      }
+
+      // Phase 2: exchange the packed payloads. Arrivals from each partner are stored back to back.
+      std::vector<std::size_t> recvStart(recvPartners.size(), 0);
+      std::size_t recvTotal = 0;
+      for (size_t p = 0; p < recvPartners.size(); ++p) {
+        recvStart[p] = recvTotal;
+        recvTotal += static_cast<std::size_t>(recvCounts[p]);
+      }
+      auto recvBytes = recvScratch.template make_vector<std::byte>(checkedParticleBytes(recvTotal, particleBytes));
+
+      for (size_t p = 0; p < recvPartners.size(); ++p) {
+        const std::size_t count = static_cast<std::size_t>(recvCounts[p]);
+        if (count == 0) {
+          continue;
+        }
+        MPI_Request req;
+        int errorCode = mpi.MPI_Irecv(
+            recvBytes.data() + checkedParticleBytes(recvStart[p], particleBytes),
+            toIntCount(checkedParticleBytes(count, particleBytes)), MPI_BYTE, recvPartners[p], 1, comm, &req
+        );
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during particle redistribution");
+        requests.push_back(req);
+      }
+
+      for (size_t i = 0; i < numBuckets; ++i) {
+        if (destRanks[i] == localRank || counts[i] == 0) {
+          continue;
+        }
+        MPI_Request req;
+        int errorCode = mpi.MPI_Isend(
+            sendBytes.data() + checkedParticleBytes(bucketStart[i], particleBytes),
+            toIntCount(checkedParticleBytes(counts[i], particleBytes)), MPI_BYTE, destRanks[i], 1, comm, &req
+        );
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during particle redistribution");
+        requests.push_back(req);
+      }
+      waitAll(requests);
+
+      // Insert self-owned particles straight from the send buffer, then the arrivals from each partner.
+      for (size_t i = 0; i < numBuckets; ++i) {
+        if (destRanks[i] == localRank && counts[i] > 0) {
+          Traits::template bulkInsert<Serializer>(
+              newContainer, sendBytes.data() + checkedParticleBytes(bucketStart[i], particleBytes), counts[i]
+          );
+        }
+      }
+      for (size_t p = 0; p < recvPartners.size(); ++p) {
+        const std::size_t count = static_cast<std::size_t>(recvCounts[p]);
+        if (count > 0) {
+          Traits::template bulkInsert<Serializer>(
+              newContainer, recvBytes.data() + checkedParticleBytes(recvStart[p], particleBytes), count
+          );
+        }
       }
     }
 
-    if (!payloadRequests.empty()) {
-      int errorCode =
-          mpi.MPI_Waitall(static_cast<int>(payloadRequests.size()), payloadRequests.data(), MPI_STATUSES_IGNORE);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during particle redistribution");
-    }
-
-    // Deserialise arrivals into the new container.
-    for (int r : recvRanks) {
-      const std::vector<std::byte> &buffer = recvBuffers[r];
-      const std::size_t count = buffer.size() / particleBytes;
-      for (std::size_t i = 0; i < count; ++i) {
-        Traits::insert(newContainer, Serializer::deserialize(buffer.data() + i * particleBytes));
-      }
-    }
+    routeScratch.reset();
+    sendScratch.reset();
+    recvScratch.reset();
+    partitionScratch.reset();
 
 #ifndef NDEBUG
     // Every particle now in the new container must be owned by this process's
@@ -2041,7 +2135,9 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       for (size_t d = 0; d < rank; ++d) {
         const bool inside = Traits::allOf(
             newContainer,
-            internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{{oldWrapper.accessor}, newLo[d], newHi[d], d}
+            internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{
+                {oldWrapper.accessor}, newLo[d], newHi[d], d
+            }
         );
         SCHNEK_ASSERT(inside, "Redistributed particle is not owned by the new local range in dimension " << d);
       }
