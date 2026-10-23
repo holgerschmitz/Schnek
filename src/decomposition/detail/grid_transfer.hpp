@@ -29,8 +29,8 @@
 #include <cstddef>
 #include <type_traits>
 
-#include "config.hpp"
 #include "../../grid/gridstorage/grid-storage-concept.hpp"
+#include "config.hpp"
 #include "grid-communication-traits.hpp"
 
 #ifdef SCHNEK_HAVE_KOKKOS
@@ -132,20 +132,16 @@ namespace schnek {
        * actually provide `getKokkosView()`, so the trait is safe to instantiate
        * for every storage policy.
        */
-      template<
-          class Storage,
-          bool = concepts::GridStorageConceptCondition<Storage>::has_get_kokkos_view_method>
+      template<class Storage, bool = concepts::GridStorageConceptCondition<Storage>::has_get_kokkos_view_method>
       struct is_device_kokkos_storage : std::false_type {};
 
       template<class Storage>
-      struct is_device_kokkos_storage<Storage, true>
-          : std::integral_constant<bool, !Storage::host_accessible> {};
+      struct is_device_kokkos_storage<Storage, true> : std::integral_constant<bool, !Storage::host_accessible> {};
     }  // namespace internal
 
     /// True if `GridType` is backed by a Kokkos storage in a non-host-accessible memory space.
     template<class GridType>
-    struct is_device_kokkos_grid
-        : internal::is_device_kokkos_storage<typename GridType::storage_type> {};
+    struct is_device_kokkos_grid : internal::is_device_kokkos_storage<typename GridType::storage_type> {};
 
 #ifdef SCHNEK_HAVE_KOKKOS
 
@@ -153,9 +149,9 @@ namespace schnek {
      * @brief Device-aware `GridTransfer` specialisation for Kokkos grids whose
      *        memory space is not accessible from host code.
      *
-    * Pack and unpack gather/scatter the requested sub-range directly into the
-    * supplied communication buffer using `RangeKokkosIterationPolicy`. The
-    * local `copy` is a device-to-device sweep.
+     * Pack and unpack gather/scatter the requested sub-range directly into the
+     * supplied communication buffer using `RangeKokkosIterationPolicy`. The
+     * local `copy` is a device-to-device sweep.
      *
      * The element ordering inside the contiguous buffer is row-major over the
      * range extents (the last dimension varies fastest), matching the order of
@@ -171,6 +167,11 @@ namespace schnek {
         using ViewType = typename StorageType::ViewType;
         using MemorySpace = typename StorageType::MemorySpace;
         using ExecSpace = typename ViewType::execution_space;
+
+        static_assert(
+            Kokkos::SpaceAccessibility<ExecSpace, MemorySpace>::accessible,
+            "GridTransfer execution space must access the grid memory space"
+        );
 
         static constexpr std::size_t Rank = StorageType::rank;
 
@@ -225,8 +226,7 @@ namespace schnek {
                 std::size_t flat = 0;
                 for (std::size_t d = 0; d < Rank; ++d) {
                   offset += (pos[d] - gridLo[d]) * strides[d];
-                  flat = flat * static_cast<std::size_t>(extent[d]) +
-                         static_cast<std::size_t>(pos[d] - rangeLo[d]);
+                  flat = flat * static_cast<std::size_t>(extent[d]) + static_cast<std::size_t>(pos[d] - rangeLo[d]);
                 }
                 dst[flat] = viewData[offset];
               }
@@ -253,8 +253,7 @@ namespace schnek {
                 std::size_t flat = 0;
                 for (std::size_t d = 0; d < Rank; ++d) {
                   offset += (pos[d] - gridLo[d]) * strides[d];
-                  flat = flat * static_cast<std::size_t>(extent[d]) +
-                         static_cast<std::size_t>(pos[d] - rangeLo[d]);
+                  flat = flat * static_cast<std::size_t>(extent[d]) + static_cast<std::size_t>(pos[d] - rangeLo[d]);
                 }
                 viewData[offset] = src[flat];
               }
@@ -281,8 +280,7 @@ namespace schnek {
                 std::size_t flat = 0;
                 for (std::size_t d = 0; d < Rank; ++d) {
                   offset += (pos[d] - gridLo[d]) * strides[d];
-                  flat = flat * static_cast<std::size_t>(extent[d]) +
-                         static_cast<std::size_t>(pos[d] - rangeLo[d]);
+                  flat = flat * static_cast<std::size_t>(extent[d]) + static_cast<std::size_t>(pos[d] - rangeLo[d]);
                 }
                 viewData[offset] = viewData[offset] + src[flat];
                 result[flat] = viewData[offset];

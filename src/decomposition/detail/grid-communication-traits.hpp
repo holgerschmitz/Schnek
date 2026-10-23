@@ -19,17 +19,17 @@
 #ifndef SCHNEK_DECOMPOSITION_DETAIL_GRID_COMMUNICATION_TRAITS_HPP_
 #define SCHNEK_DECOMPOSITION_DETAIL_GRID_COMMUNICATION_TRAITS_HPP_
 
-#include <memory>
 #include <cstddef>
 #include <cstring>
 #include <limits>
+#include <memory>
 #include <stdexcept>
 #include <type_traits>
 #include <typeindex>
 #include <unordered_map>
 
-#include "config.hpp"
 #include "../../util/scratchbuffer.hpp"
+#include "config.hpp"
 
 #ifdef SCHNEK_HAVE_KOKKOS
 #include <Kokkos_Core.hpp>
@@ -66,18 +66,14 @@ namespace schnek {
       public:
         using ByteView = Kokkos::View<std::byte *, MemorySpace>;
 
-        explicit KokkosCommunicationBuffer(std::size_t initial_bytes = 0) {
-          reserve_bytes(initial_bytes);
-        }
+        explicit KokkosCommunicationBuffer(std::size_t initial_bytes = 0) { reserve_bytes(initial_bytes); }
 
         void reserve_bytes(std::size_t bytes) {
           if (bytes <= capacity_bytes_) {
             return;
           }
 
-          storage_ = ByteView(
-              Kokkos::view_alloc(Kokkos::WithoutInitializing, "schnek:communication-buffer"), bytes
-          );
+          storage_ = ByteView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "schnek:communication-buffer"), bytes);
           capacity_bytes_ = bytes;
         }
 
@@ -85,6 +81,13 @@ namespace schnek {
 
         void reset() {}
 
+        /**
+         * @brief Returns an unmanaged view of `n` elements of `T` at the start of the arena.
+         *
+         * Every call returns a view at the same address, so only one live view per
+         * arena may be used at a time. Use separate arenas for simultaneously live
+         * slabs. Growth reallocates the storage and invalidates views returned earlier.
+         */
         template<class T>
         auto make_vector(std::size_t n) {
           static_assert(alignof(T) <= alignof(std::max_align_t), "communication buffer type is over-aligned");
@@ -225,8 +228,8 @@ namespace schnek {
 
     /// How MPI accesses communication buffers in a device memory space.
     enum class DeviceMpiAccess {
-        Direct,      ///< MPI reads and writes device pointers; requires GPU-aware MPI.
-        HostStaged,  ///< Buffers are copied through host memory around each MPI call.
+      Direct,      ///< MPI reads and writes device pointers; requires GPU-aware MPI.
+      HostStaged,  ///< Buffers are copied through host memory around each MPI call.
     };
 
     /**

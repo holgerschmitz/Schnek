@@ -5,6 +5,8 @@
  *  Author: Holger Schmitz (holger@notjustphysics.com)
  */
 
+#include <mpi-ext.h>
+
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -14,9 +16,9 @@
 #include <set>
 #include <type_traits>
 #include <vector>
-#include <mpi-ext.h>
 
 #include "../diagnostic/diagnostic.hpp"
+#include "../util/array_io.hpp"
 #include "../util/exceptions.hpp"
 #include "../util/factor.hpp"
 #include "../util/interpolate1d.hpp"
@@ -25,8 +27,6 @@
 #include "detail/grid_transfer.hpp"
 #include "detail/redistribution.hpp"
 #include "mpi_cartesian_decomposition.hpp"
-
-#include "../util/array_io.hpp"
 
 #undef SCHNEK_LOGLEVEL
 #define SCHNEK_LOGLEVEL 0
@@ -150,8 +150,8 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  const std::array<Grid<Range<ptrdiff_t, 1>, 1>, rank> &MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getProcRanges(
-  ) {
+  const std::array<Grid<Range<ptrdiff_t, 1>, 1>, rank> &
+  MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getProcRanges() {
     return procRanges;
   }
 
@@ -605,318 +605,305 @@ namespace schnek {
     }
   }
 
-template<size_t rank, template<size_t> class CheckingPolicy>
-void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonLocalWeights(ProcRanges &ranges) {
-  const LimitType glo = this->globalRange.getLo();
-  const LimitType ghi = this->globalRange.getHi();
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonLocalWeights(ProcRanges &ranges) {
+    const LimitType glo = this->globalRange.getLo();
+    const LimitType ghi = this->globalRange.getHi();
 
-  auto toIntCount = [](size_t count, const char *what) -> int {
-    if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
-      SCHNECK_FAIL(what << " is too large for an MPI int count");
-    }
-    return static_cast<int>(count);
-  };
-
-  auto flattenOrthogonalCoord = [this](size_t excludedDim) -> int {
-    long color = 0;
-    for (size_t d = 0; d < rank; ++d) {
-      if (d == excludedDim) continue;
-
-      color = color * static_cast<long>(dims[d]) + static_cast<long>(myCoord[d]);
-
-      if (color > static_cast<long>(std::numeric_limits<int>::max())) {
-        SCHNECK_FAIL("Cartesian communicator colour overflow");
+    auto toIntCount = [](size_t count, const char *what) -> int {
+      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
+        SCHNECK_FAIL(what << " is too large for an MPI int count");
       }
-    }
-    return static_cast<int>(color);
-  };
+      return static_cast<int>(count);
+    };
 
-  auto setUniformRangesForDim = [&](size_t d) {
-    Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
-
-    const ptrdiff_t nProcs = dims[d];
-    const ptrdiff_t globalCells = ghi[d] - glo[d] + 1;
-
-    SCHNEK_ASSERT(nProcs > 0, "Invalid Cartesian process-grid dimension");
-    SCHNEK_ASSERT(globalCells >= nProcs, "Cannot assign non-empty ranges: more processes than cells");
-
-    dimRanges.resize(0, nProcs - 1);
-    dimRanges(0).getLo()[0] = glo[d];
-    dimRanges(nProcs - 1).getHi()[0] = ghi[d];
-
-    const ptrdiff_t q = globalCells / nProcs;
-    const ptrdiff_t r = globalCells % nProcs;
-
-    for (ptrdiff_t p = 1; p < nProcs; ++p) {
-      const ptrdiff_t cut = glo[d] + p * q + (p * r) / nProcs;
-      dimRanges(p - 1).getHi()[0] = cut - 1;
-      dimRanges(p).getLo()[0] = cut;
-    }
-  };
-
-  auto allreduceVectorSum = [&](const std::vector<double> &local, std::vector<double> &reduced, MPI_Comm c) {
-    SCHNEK_ASSERT(local.size() == reduced.size(), "Mismatched reduction buffer sizes");
-
-    size_t offset = 0;
-    while (offset < local.size()) {
-      const size_t remaining = local.size() - offset;
-      const size_t chunkSize =
-          std::min<size_t>(remaining, static_cast<size_t>(std::numeric_limits<int>::max()));
-
-      const int count = static_cast<int>(chunkSize);
-      int errorCode = mpi.MPI_Allreduce(
-          local.data() + offset,
-          reduced.data() + offset,
-          count,
-          MPI_DOUBLE,
-          MPI_SUM,
-          c
-      );
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while reducing local weight marginals");
-
-      offset += chunkSize;
-    }
-  };
-
-  // Current local range in global grid indices.
-  LimitType localLo;
-  LimitType localHi;
-  for (size_t d = 0; d < rank; ++d) {
-    localLo[d] = procRanges[d](myCoord[d]).getLo()[0];
-    localHi[d] = procRanges[d](myCoord[d]).getHi()[0];
-  }
-
-  const auto weightsDims = this->localWeights.getDims();
-  const LimitType weightsLo = this->localWeights.getLo();
-  const LimitType weightsHi = this->localWeights.getHi();
-
-  LimitType resolution;
-  for (size_t d = 0; d < rank; ++d) {
-    const ptrdiff_t localCells = localHi[d] - localLo[d] + 1;
-
-    SCHNEK_ASSERT(weightsDims[d] > 0, "Local weights must be non-empty");
-    SCHNEK_ASSERT(
-        localCells % ptrdiff_t(weightsDims[d]) == 0,
-        "Local weights dimensions must evenly divide the local range"
-    );
-
-    resolution[d] = localCells / ptrdiff_t(weightsDims[d]);
-
-    SCHNEK_ASSERT(resolution[d] > 0, "Invalid local weight coarsening factor");
-  }
-
-  // Local per-axis marginals. This is the only storage proportional to the
-  // local weight grid dimensions.
-  Array<std::vector<double>, rank> localMarginals;
-  for (size_t d = 0; d < rank; ++d) {
-    localMarginals[d].assign(static_cast<size_t>(weightsDims[d]), 0.0);
-  }
-
-  {
-    Range<ptrdiff_t, rank> wRange(weightsLo, weightsHi);
-
-    for (const LimitType &p : wRange) {
-      const double w = this->localWeights[p];
-
-      if (!(w >= 0.0)) {
-        SCHNECK_FAIL("Local weights must be finite and non-negative");
-      }
-
+    auto flattenOrthogonalCoord = [this](size_t excludedDim) -> int {
+      long color = 0;
       for (size_t d = 0; d < rank; ++d) {
-        localMarginals[d][static_cast<size_t>(p[d] - weightsLo[d])] += w;
+        if (d == excludedDim) continue;
+
+        color = color * static_cast<long>(dims[d]) + static_cast<long>(myCoord[d]);
+
+        if (color > static_cast<long>(std::numeric_limits<int>::max())) {
+          SCHNECK_FAIL("Cartesian communicator colour overflow");
+        }
       }
+      return static_cast<int>(color);
+    };
+
+    auto setUniformRangesForDim = [&](size_t d) {
+      Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
+
+      const ptrdiff_t nProcs = dims[d];
+      const ptrdiff_t globalCells = ghi[d] - glo[d] + 1;
+
+      SCHNEK_ASSERT(nProcs > 0, "Invalid Cartesian process-grid dimension");
+      SCHNEK_ASSERT(globalCells >= nProcs, "Cannot assign non-empty ranges: more processes than cells");
+
+      dimRanges.resize(0, nProcs - 1);
+      dimRanges(0).getLo()[0] = glo[d];
+      dimRanges(nProcs - 1).getHi()[0] = ghi[d];
+
+      const ptrdiff_t q = globalCells / nProcs;
+      const ptrdiff_t r = globalCells % nProcs;
+
+      for (ptrdiff_t p = 1; p < nProcs; ++p) {
+        const ptrdiff_t cut = glo[d] + p * q + (p * r) / nProcs;
+        dimRanges(p - 1).getHi()[0] = cut - 1;
+        dimRanges(p).getLo()[0] = cut;
+      }
+    };
+
+    auto allreduceVectorSum = [&](const std::vector<double> &local, std::vector<double> &reduced, MPI_Comm c) {
+      SCHNEK_ASSERT(local.size() == reduced.size(), "Mismatched reduction buffer sizes");
+
+      size_t offset = 0;
+      while (offset < local.size()) {
+        const size_t remaining = local.size() - offset;
+        const size_t chunkSize = std::min<size_t>(remaining, static_cast<size_t>(std::numeric_limits<int>::max()));
+
+        const int count = static_cast<int>(chunkSize);
+        int errorCode =
+            mpi.MPI_Allreduce(local.data() + offset, reduced.data() + offset, count, MPI_DOUBLE, MPI_SUM, c);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while reducing local weight marginals");
+
+        offset += chunkSize;
+      }
+    };
+
+    // Current local range in global grid indices.
+    LimitType localLo;
+    LimitType localHi;
+    for (size_t d = 0; d < rank; ++d) {
+      localLo[d] = procRanges[d](myCoord[d]).getLo()[0];
+      localHi[d] = procRanges[d](myCoord[d]).getHi()[0];
     }
-  }
 
-  for (size_t d = 0; d < rank; ++d) {
-    Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
+    const auto weightsDims = this->localWeights.getDims();
+    const LimitType weightsLo = this->localWeights.getLo();
+    const LimitType weightsHi = this->localWeights.getHi();
 
-    const ptrdiff_t nProcs = dims[d];
-    const ptrdiff_t globalCells = ghi[d] - glo[d] + 1;
+    LimitType resolution;
+    for (size_t d = 0; d < rank; ++d) {
+      const ptrdiff_t localCells = localHi[d] - localLo[d] + 1;
 
-    SCHNEK_ASSERT(nProcs > 0, "Invalid Cartesian process-grid dimension");
-    SCHNEK_ASSERT(globalCells >= nProcs, "Cannot assign non-empty ranges: more processes than cells");
+      SCHNEK_ASSERT(weightsDims[d] > 0, "Local weights must be non-empty");
+      SCHNEK_ASSERT(
+          localCells % ptrdiff_t(weightsDims[d]) == 0, "Local weights dimensions must evenly divide the local range"
+      );
 
-    dimRanges.resize(0, nProcs - 1);
-    dimRanges(0).getLo()[0] = glo[d];
-    dimRanges(nProcs - 1).getHi()[0] = ghi[d];
+      resolution[d] = localCells / ptrdiff_t(weightsDims[d]);
 
-    if (nProcs == 1) {
-      continue;
+      SCHNEK_ASSERT(resolution[d] > 0, "Invalid local weight coarsening factor");
     }
 
-    // ---------------------------------------------------------------------
-    // 1. Reduce this coordinate segment over the perpendicular Cartesian slice.
-    //    All ranks with the same coordinate in dimension d participate.
-    // ---------------------------------------------------------------------
-    MPI_Comm sliceComm = MPI_COMM_NULL;
+    // Local per-axis marginals. This is the only storage proportional to the
+    // local weight grid dimensions.
+    Array<std::vector<double>, rank> localMarginals;
+    for (size_t d = 0; d < rank; ++d) {
+      localMarginals[d].assign(static_cast<size_t>(weightsDims[d]), 0.0);
+    }
 
     {
-      int remainDims[rank];
-      for (size_t q = 0; q < rank; ++q) {
-        remainDims[q] = (q == d) ? 0 : 1;
-      }
+      Range<ptrdiff_t, rank> wRange(weightsLo, weightsHi);
 
-      int errorCode = mpi.MPI_Cart_sub(comm, remainDims, &sliceComm);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Cart_sub failed while creating local-weight slice communicator");
-    }
+      for (const LimitType &p : wRange) {
+        const double w = this->localWeights[p];
 
-    const long localBins = static_cast<long>(weightsDims[d]);
+        if (!(w >= 0.0)) {
+          SCHNECK_FAIL("Local weights must be finite and non-negative");
+        }
 
-#if defined(SCHNEK_DEBUG) || defined(SCHNEK_TRACE)
-    // Validate that all ranks in this perpendicular slice use the same number
-    // of local bins in direction d.  The vector Allreduce below requires equal
-    // counts on all participants.
-    long minBins = 0;
-    long maxBins = 0;
-
-    {
-      int errorCode =
-          mpi.MPI_Allreduce(&localBins, &minBins, 1, internal::mpiDatatypeFor<long>(), MPI_MIN, sliceComm);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating local weight shape");
-
-      errorCode =
-          mpi.MPI_Allreduce(&localBins, &maxBins, 1, internal::mpiDatatypeFor<long>(), MPI_MAX, sliceComm);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating local weight shape");
-
-      if (minBins != maxBins) {
-        SCHNECK_FAIL(
-            "Local weights must have the same extent in dimension "
-            << d << " for all ranks sharing the same Cartesian coordinate in that dimension"
-        );
-      }
-    }
-#endif
-
-    std::vector<double> reducedSegment(static_cast<size_t>(localBins), 0.0);
-    allreduceVectorSum(localMarginals[d], reducedSegment, sliceComm);
-
-    int errorCode = mpi.MPI_Comm_free(&sliceComm);
-    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight slice communicator");
-
-    double segmentTotal = 0.0;
-    for (double w : reducedSegment) {
-      segmentTotal += w;
-    }
-
-    // ---------------------------------------------------------------------
-    // 2. Build an axis communicator ordered by Cartesian coordinate d.
-    //    MPI_Exscan now gives the cumulative weight before this segment.
-    // ---------------------------------------------------------------------
-    MPI_Comm axisComm = MPI_COMM_NULL;
-
-    {
-      const int color = flattenOrthogonalCoord(d);
-      const int key = static_cast<int>(myCoord[d]);
-
-      errorCode = mpi.MPI_Comm_split(comm, color, key, &axisComm);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_split failed while creating local-weight axis communicator");
-    }
-
-    int axisRank = 0;
-    errorCode = mpi.MPI_Comm_rank(axisComm, &axisRank);
-    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_rank failed on local-weight axis communicator");
-
-    double segmentOffset = 0.0;
-    errorCode = mpi.MPI_Exscan(&segmentTotal, &segmentOffset, 1, MPI_DOUBLE, MPI_SUM, axisComm);
-    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Exscan failed while scanning local-weight segments");
-
-    if (axisRank == 0) {
-      segmentOffset = 0.0;
-    }
-
-    double totalWeight = 0.0;
-    errorCode = mpi.MPI_Allreduce(&segmentTotal, &totalWeight, 1, MPI_DOUBLE, MPI_SUM, axisComm);
-    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while computing total local weight");
-
-    if (!(totalWeight > 0.0)) {
-      setUniformRangesForDim(d);
-
-      errorCode = mpi.MPI_Comm_free(&axisComm);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight axis communicator");
-
-      continue;
-    }
-
-    // ---------------------------------------------------------------------
-    // 3. Locate the weighted quantile cuts.  A rank contributes a cut only if
-    //    the target cumulative weight lies inside its axis segment.
-    // ---------------------------------------------------------------------
-    const ptrdiff_t numCuts = nProcs - 1;
-    const long noCut = std::numeric_limits<long>::min();
-
-    std::vector<long> localCuts(static_cast<size_t>(numCuts), noCut);
-    std::vector<long> globalCuts(static_cast<size_t>(numCuts), noCut);
-
-    const double segmentEnd = segmentOffset + segmentTotal;
-
-    for (ptrdiff_t cutIndex = 1; cutIndex < nProcs; ++cutIndex) {
-      const double target = totalWeight * (double(cutIndex) / double(nProcs));
-
-      // The strict lower bound makes cuts that fall exactly on a segment
-      // boundary belong to the preceding segment, avoiding duplicate owners.
-      if ((target > segmentOffset) && (target <= segmentEnd)) {
-        double cumulative = segmentOffset;
-
-        for (ptrdiff_t k = 0; k < localBins; ++k) {
-          cumulative += reducedSegment[static_cast<size_t>(k)];
-
-          if (target <= cumulative) {
-            const ptrdiff_t cutCell = localLo[d] + resolution[d] * (k + 1);
-            localCuts[static_cast<size_t>(cutIndex - 1)] = static_cast<long>(cutCell);
-            break;
-          }
+        for (size_t d = 0; d < rank; ++d) {
+          localMarginals[d][static_cast<size_t>(p[d] - weightsLo[d])] += w;
         }
       }
     }
 
-    errorCode = mpi.MPI_Allreduce(
-        localCuts.data(),
-        globalCuts.data(),
-        toIntCount(globalCuts.size(), "Number of local-weight cuts"),
-        internal::mpiDatatypeFor<long>(),
-        MPI_MAX,
-        axisComm
-    );
-    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while collecting local-weight cuts");
+    for (size_t d = 0; d < rank; ++d) {
+      Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
 
-    errorCode = mpi.MPI_Comm_free(&axisComm);
-    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight axis communicator");
+      const ptrdiff_t nProcs = dims[d];
+      const ptrdiff_t globalCells = ghi[d] - glo[d] + 1;
 
-    // ---------------------------------------------------------------------
-    // 4. Convert cuts into ProcRanges.  The clamp enforces non-empty ranges
-    //    when globalCells >= nProcs, even for pathological weights concentrated
-    //    in one bin.
-    // ---------------------------------------------------------------------
-    ptrdiff_t previousCut = glo[d];
+      SCHNEK_ASSERT(nProcs > 0, "Invalid Cartesian process-grid dimension");
+      SCHNEK_ASSERT(globalCells >= nProcs, "Cannot assign non-empty ranges: more processes than cells");
 
-    for (ptrdiff_t cutIndex = 1; cutIndex < nProcs; ++cutIndex) {
-      long rawCut = globalCuts[static_cast<size_t>(cutIndex - 1)];
+      dimRanges.resize(0, nProcs - 1);
+      dimRanges(0).getLo()[0] = glo[d];
+      dimRanges(nProcs - 1).getHi()[0] = ghi[d];
 
-      if (rawCut == noCut) {
-        // Defensive fallback for numerical edge cases.  This should rarely be
-        // used unless the target landed in a zero-weight plateau.
-        const ptrdiff_t q = globalCells / nProcs;
-        const ptrdiff_t r = globalCells % nProcs;
-        rawCut = static_cast<long>(glo[d] + cutIndex * q + (cutIndex * r) / nProcs);
+      if (nProcs == 1) {
+        continue;
       }
 
-      ptrdiff_t cut = static_cast<ptrdiff_t>(rawCut);
+      // ---------------------------------------------------------------------
+      // 1. Reduce this coordinate segment over the perpendicular Cartesian slice.
+      //    All ranks with the same coordinate in dimension d participate.
+      // ---------------------------------------------------------------------
+      MPI_Comm sliceComm = MPI_COMM_NULL;
 
-      const ptrdiff_t minCut = glo[d] + cutIndex;
-      const ptrdiff_t maxCut = ghi[d] - (nProcs - cutIndex) + 1;
+      {
+        int remainDims[rank];
+        for (size_t q = 0; q < rank; ++q) {
+          remainDims[q] = (q == d) ? 0 : 1;
+        }
 
-      cut = std::max(cut, minCut);
-      cut = std::min(cut, maxCut);
-      cut = std::max(cut, previousCut + 1);
+        int errorCode = mpi.MPI_Cart_sub(comm, remainDims, &sliceComm);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Cart_sub failed while creating local-weight slice communicator");
+      }
 
-      dimRanges(cutIndex - 1).getHi()[0] = cut - 1;
-      dimRanges(cutIndex).getLo()[0] = cut;
+      const long localBins = static_cast<long>(weightsDims[d]);
 
-      previousCut = cut;
+#if defined(SCHNEK_DEBUG) || defined(SCHNEK_TRACE)
+      // Validate that all ranks in this perpendicular slice use the same number
+      // of local bins in direction d.  The vector Allreduce below requires equal
+      // counts on all participants.
+      long minBins = 0;
+      long maxBins = 0;
+
+      {
+        int errorCode =
+            mpi.MPI_Allreduce(&localBins, &minBins, 1, internal::mpiDatatypeFor<long>(), MPI_MIN, sliceComm);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating local weight shape");
+
+        errorCode = mpi.MPI_Allreduce(&localBins, &maxBins, 1, internal::mpiDatatypeFor<long>(), MPI_MAX, sliceComm);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating local weight shape");
+
+        if (minBins != maxBins) {
+          SCHNECK_FAIL(
+              "Local weights must have the same extent in dimension "
+              << d << " for all ranks sharing the same Cartesian coordinate in that dimension"
+          );
+        }
+      }
+#endif
+
+      std::vector<double> reducedSegment(static_cast<size_t>(localBins), 0.0);
+      allreduceVectorSum(localMarginals[d], reducedSegment, sliceComm);
+
+      int errorCode = mpi.MPI_Comm_free(&sliceComm);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight slice communicator");
+
+      double segmentTotal = 0.0;
+      for (double w : reducedSegment) {
+        segmentTotal += w;
+      }
+
+      // ---------------------------------------------------------------------
+      // 2. Build an axis communicator ordered by Cartesian coordinate d.
+      //    MPI_Exscan now gives the cumulative weight before this segment.
+      // ---------------------------------------------------------------------
+      MPI_Comm axisComm = MPI_COMM_NULL;
+
+      {
+        const int color = flattenOrthogonalCoord(d);
+        const int key = static_cast<int>(myCoord[d]);
+
+        errorCode = mpi.MPI_Comm_split(comm, color, key, &axisComm);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_split failed while creating local-weight axis communicator");
+      }
+
+      int axisRank = 0;
+      errorCode = mpi.MPI_Comm_rank(axisComm, &axisRank);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_rank failed on local-weight axis communicator");
+
+      double segmentOffset = 0.0;
+      errorCode = mpi.MPI_Exscan(&segmentTotal, &segmentOffset, 1, MPI_DOUBLE, MPI_SUM, axisComm);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Exscan failed while scanning local-weight segments");
+
+      if (axisRank == 0) {
+        segmentOffset = 0.0;
+      }
+
+      double totalWeight = 0.0;
+      errorCode = mpi.MPI_Allreduce(&segmentTotal, &totalWeight, 1, MPI_DOUBLE, MPI_SUM, axisComm);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while computing total local weight");
+
+      if (!(totalWeight > 0.0)) {
+        setUniformRangesForDim(d);
+
+        errorCode = mpi.MPI_Comm_free(&axisComm);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight axis communicator");
+
+        continue;
+      }
+
+      // ---------------------------------------------------------------------
+      // 3. Locate the weighted quantile cuts.  A rank contributes a cut only if
+      //    the target cumulative weight lies inside its axis segment.
+      // ---------------------------------------------------------------------
+      const ptrdiff_t numCuts = nProcs - 1;
+      const long noCut = std::numeric_limits<long>::min();
+
+      std::vector<long> localCuts(static_cast<size_t>(numCuts), noCut);
+      std::vector<long> globalCuts(static_cast<size_t>(numCuts), noCut);
+
+      const double segmentEnd = segmentOffset + segmentTotal;
+
+      for (ptrdiff_t cutIndex = 1; cutIndex < nProcs; ++cutIndex) {
+        const double target = totalWeight * (double(cutIndex) / double(nProcs));
+
+        // The strict lower bound makes cuts that fall exactly on a segment
+        // boundary belong to the preceding segment, avoiding duplicate owners.
+        if ((target > segmentOffset) && (target <= segmentEnd)) {
+          double cumulative = segmentOffset;
+
+          for (ptrdiff_t k = 0; k < localBins; ++k) {
+            cumulative += reducedSegment[static_cast<size_t>(k)];
+
+            if (target <= cumulative) {
+              const ptrdiff_t cutCell = localLo[d] + resolution[d] * (k + 1);
+              localCuts[static_cast<size_t>(cutIndex - 1)] = static_cast<long>(cutCell);
+              break;
+            }
+          }
+        }
+      }
+
+      errorCode = mpi.MPI_Allreduce(
+          localCuts.data(), globalCuts.data(), toIntCount(globalCuts.size(), "Number of local-weight cuts"),
+          internal::mpiDatatypeFor<long>(), MPI_MAX, axisComm
+      );
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while collecting local-weight cuts");
+
+      errorCode = mpi.MPI_Comm_free(&axisComm);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight axis communicator");
+
+      // ---------------------------------------------------------------------
+      // 4. Convert cuts into ProcRanges.  The clamp enforces non-empty ranges
+      //    when globalCells >= nProcs, even for pathological weights concentrated
+      //    in one bin.
+      // ---------------------------------------------------------------------
+      ptrdiff_t previousCut = glo[d];
+
+      for (ptrdiff_t cutIndex = 1; cutIndex < nProcs; ++cutIndex) {
+        long rawCut = globalCuts[static_cast<size_t>(cutIndex - 1)];
+
+        if (rawCut == noCut) {
+          // Defensive fallback for numerical edge cases.  This should rarely be
+          // used unless the target landed in a zero-weight plateau.
+          const ptrdiff_t q = globalCells / nProcs;
+          const ptrdiff_t r = globalCells % nProcs;
+          rawCut = static_cast<long>(glo[d] + cutIndex * q + (cutIndex * r) / nProcs);
+        }
+
+        ptrdiff_t cut = static_cast<ptrdiff_t>(rawCut);
+
+        const ptrdiff_t minCut = glo[d] + cutIndex;
+        const ptrdiff_t maxCut = ghi[d] - (nProcs - cutIndex) + 1;
+
+        cut = std::max(cut, minCut);
+        cut = std::min(cut, maxCut);
+        cut = std::max(cut, previousCut + 1);
+
+        dimRanges(cutIndex - 1).getHi()[0] = cut - 1;
+        dimRanges(cutIndex).getLo()[0] = cut;
+
+        previousCut = cut;
+      }
     }
   }
-}
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::ExchangeVisitor
@@ -1056,6 +1043,14 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   ) {
     using ValueType = typename GridType::value_type;
     using RangeTypeLocal = typename GridType::RangeType;
+    using MemorySpace = detail::GridBufferMemorySpace<GridType>;
+
+    if constexpr (detail::GridCommunicationTraits<GridType>::device_resident) {
+      static_assert(
+          std::is_same<MemorySpace, typename GridType::storage_type::MemorySpace>::value,
+          "Device grid communication buffers must use the grid storage memory space"
+      );
+    }
 
     const MPI_Datatype mpiType = internal::mpiDatatypeFor<ValueType>();
 
@@ -1067,89 +1062,113 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     };
 
     // Separate local copy blocks from remote transfers
-    int localRank = ComRank;
+    const int localRank = ComRank;
 
-    // Post non-blocking receives for remote blocks
-    std::vector<std::vector<ValueType>> recvBuffers;
-    std::vector<MPI_Request> requests;
+    // Remote blocks are stored back to back in one slab per direction, in plan order.
+    struct SlabBlock {
+        size_t planIndex;
+        size_t volume;
+        size_t offset;
+    };
 
+    std::vector<SlabBlock> recvBlocks;
+    size_t recvTotal = 0;
     for (size_t i = 0; i < recvPlan.size(); ++i) {
       if (recvPlan[i].mpiRank == localRank) {
         continue;  // local copy handled separately
       }
-
-      RangeTypeLocal recvRange(recvPlan[i].range);
-      size_t volume = schnek::volume(recvRange);
+      size_t volume = schnek::volume(RangeTypeLocal(recvPlan[i].range));
       if (volume == 0) {
         continue;
       }
-
-      recvBuffers.emplace_back(volume);
-      MPI_Request req;
-      int errorCode =
-          mpi.MPI_Irecv(recvBuffers.back().data(), toIntCount(volume), mpiType, recvPlan[i].mpiRank, 0, comm, &req);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during redistribution");
-      requests.push_back(req);
+      recvBlocks.push_back({i, volume, recvTotal});
+      recvTotal += volume;
     }
 
-    // Pack and post non-blocking sends for remote blocks
-    std::vector<std::vector<ValueType>> sendBuffers;
-
+    std::vector<SlabBlock> sendBlocks;
+    size_t sendTotal = 0;
     for (size_t i = 0; i < sendPlan.size(); ++i) {
       if (sendPlan[i].mpiRank == localRank) {
         continue;  // local copy handled separately
       }
-
-      RangeTypeLocal sendRange(sendPlan[i].range);
-      size_t volume = schnek::volume(sendRange);
+      size_t volume = schnek::volume(RangeTypeLocal(sendPlan[i].range));
       if (volume == 0) {
         continue;
       }
-
-      // Try to use the raw data pointer if the range is the entire grid
-      // Otherwise, pack into a temporary buffer
-      sendBuffers.emplace_back(volume);
-      auto &buffer = sendBuffers.back();
-      detail::GridTransfer<GridType>::pack(oldGrid, sendRange, buffer.data());
-
-      MPI_Request req;
-      int errorCode = mpi.MPI_Isend(buffer.data(), toIntCount(volume), mpiType, sendPlan[i].mpiRank, 0, comm, &req);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during redistribution");
-      requests.push_back(req);
+      sendBlocks.push_back({i, volume, sendTotal});
+      sendTotal += volume;
     }
 
-    // Copy local data (blocks where source == destination == this process)
-    for (size_t i = 0; i < recvPlan.size(); ++i) {
-      if (recvPlan[i].mpiRank != localRank) {
-        continue;
+    auto &bufferRegistry = mpiBufferRegistry.template get<MemorySpace>();
+    auto &sendScratch = bufferRegistry.send();
+    auto &recvScratch = bufferRegistry.receive();
+
+    // Capacity must be reserved before any view is created, because growth invalidates earlier views.
+    sendScratch.reset();
+    recvScratch.reset();
+    sendScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(sendTotal, sizeof(ValueType)));
+    recvScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(recvTotal, sizeof(ValueType)));
+
+    {
+      // One slab per direction. The views are only used inside this block.
+      auto sendSlab = sendScratch.template make_vector<ValueType>(sendTotal);
+      auto recvSlab = recvScratch.template make_vector<ValueType>(recvTotal);
+
+      // Post non-blocking receives for remote blocks
+      std::vector<MPI_Request> requests;
+
+      // MPI's non-overtaking rule matches same-source/tag messages by order; keep
+      // recvPlan order aligned with each sender's sendPlan.
+      for (const auto &block : recvBlocks) {
+        MPI_Request req;
+        int errorCode = mpi.MPI_Irecv(
+            recvSlab.data() + block.offset, toIntCount(block.volume), mpiType, recvPlan[block.planIndex].mpiRank, 0,
+            comm, &req
+        );
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during redistribution");
+        requests.push_back(req);
       }
 
-      RangeTypeLocal copyRange(recvPlan[i].range);
-      detail::GridTransfer<GridType>::copy(oldGrid, newGrid, copyRange);
-    }
+      // Pack and post non-blocking sends for remote blocks
+      for (const auto &block : sendBlocks) {
+        RangeTypeLocal sendRange(sendPlan[block.planIndex].range);
+        ValueType *blockData = sendSlab.data() + block.offset;
+        detail::GridTransfer<GridType>::pack(oldGrid, sendRange, blockData);
 
-    // Wait for all non-blocking operations to complete
-    if (!requests.empty()) {
-      int errorCode = mpi.MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
-      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during redistribution");
-    }
-
-    // Unpack received data into the new grid
-    size_t bufferIdx = 0;
-    for (size_t i = 0; i < recvPlan.size(); ++i) {
-      if (recvPlan[i].mpiRank == localRank) {
-        continue;
+        // GridTransfer::pack fences device work before MPI reads this slab.
+        MPI_Request req;
+        int errorCode = mpi.MPI_Isend(
+            blockData, toIntCount(block.volume), mpiType, sendPlan[block.planIndex].mpiRank, 0, comm, &req
+        );
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during redistribution");
+        requests.push_back(req);
       }
 
-      RangeTypeLocal recvRange(recvPlan[i].range);
-      size_t volume = schnek::volume(recvRange);
-      if (volume == 0) {
-        continue;
+      // Copy local data (blocks where source == destination == this process)
+      for (size_t i = 0; i < recvPlan.size(); ++i) {
+        if (recvPlan[i].mpiRank != localRank) {
+          continue;
+        }
+
+        RangeTypeLocal copyRange(recvPlan[i].range);
+        detail::GridTransfer<GridType>::copy(oldGrid, newGrid, copyRange);
       }
 
-      const auto &buffer = recvBuffers[bufferIdx++];
-      detail::GridTransfer<GridType>::unpack(newGrid, recvRange, buffer.data());
+      // Wait for all non-blocking operations to complete
+      if (!requests.empty()) {
+        int errorCode = mpi.MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
+        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during redistribution");
+      }
+
+      // Unpack received data into the new grid
+      for (const auto &block : recvBlocks) {
+        RangeTypeLocal recvRange(recvPlan[block.planIndex].range);
+        detail::GridTransfer<GridType>::unpack(newGrid, recvRange, recvSlab.data() + block.offset);
+      }
     }
+
+    sendScratch.reset();
+    recvScratch.reset();
   }
 
   // ---------------------------------------------------------------------------
@@ -1237,6 +1256,14 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   ) {
     using ValueType = typename GridType::value_type;
     constexpr size_t projRank = GridType::Rank;
+    using MemorySpace = detail::GridBufferMemorySpace<GridType>;
+
+    if constexpr (detail::GridCommunicationTraits<GridType>::device_resident) {
+      static_assert(
+          std::is_same<MemorySpace, typename GridType::storage_type::MemorySpace>::value,
+          "Device grid communication buffers must use the grid storage memory space"
+      );
+    }
 
     const MPI_Datatype mpiType = internal::mpiDatatypeFor<ValueType>();
 
@@ -1256,63 +1283,93 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       return typename GridType::RangeType(lo, hi);
     };
 
+    auto &bufferRegistry = mpiBufferRegistry.template get<MemorySpace>();
+    auto &sendScratch = bufferRegistry.send();
+    auto &recvScratch = bufferRegistry.receive();
+    sendScratch.reset();
+    recvScratch.reset();
+
     // Step 1: canonical-only point-to-point redistribution at projected rank.
     if (isCanonical) {
       const int localRank = ComRank;
 
-      std::vector<std::vector<ValueType>> recvBuffers;
-      std::vector<MPI_Request> requests;
+      struct SlabBlock {
+          size_t planIndex;
+          size_t volume;
+          size_t offset;
+      };
 
+      std::vector<SlabBlock> recvBlocks;
+      size_t recvTotal = 0;
       for (size_t i = 0; i < recvPlan.size(); ++i) {
         if (recvPlan[i].mpiRank == localRank) continue;
         size_t volume = schnek::volume(std::pair{recvPlan[i].lo, recvPlan[i].hi});
         if (volume == 0) continue;
-        recvBuffers.emplace_back(volume);
-        MPI_Request req;
-        int errorCode =
-            mpi.MPI_Irecv(recvBuffers.back().data(), toIntCount(volume), mpiType, recvPlan[i].mpiRank, 1, comm, &req);
-        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during projected redistribution");
-        requests.push_back(req);
+        recvBlocks.push_back({i, volume, recvTotal});
+        recvTotal += volume;
       }
 
-      std::vector<std::vector<ValueType>> sendBuffers;
+      std::vector<SlabBlock> sendBlocks;
+      size_t sendTotal = 0;
       for (size_t i = 0; i < sendPlan.size(); ++i) {
         if (sendPlan[i].mpiRank == localRank) continue;
         size_t volume = schnek::volume(std::pair{sendPlan[i].lo, sendPlan[i].hi});
         if (volume == 0) continue;
-        sendBuffers.emplace_back(volume);
-        auto &buf = sendBuffers.back();
-        auto sendRange = makeTypedRange(sendPlan[i]);
-        detail::GridTransfer<GridType>::pack(oldGrid, sendRange, buf.data());
-        MPI_Request req;
-        int errorCode = mpi.MPI_Isend(buf.data(), toIntCount(volume), mpiType, sendPlan[i].mpiRank, 1, comm, &req);
-        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during projected redistribution");
-        requests.push_back(req);
+        sendBlocks.push_back({i, volume, sendTotal});
+        sendTotal += volume;
       }
 
-      // Local copy
-      for (size_t i = 0; i < recvPlan.size(); ++i) {
-        if (recvPlan[i].mpiRank != localRank) continue;
-        auto copyRange = makeTypedRange(recvPlan[i]);
-        detail::GridTransfer<GridType>::copy(oldGrid, newGrid, copyRange);
-      }
+      sendScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(sendTotal, sizeof(ValueType)));
+      recvScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(recvTotal, sizeof(ValueType)));
 
-      if (!requests.empty()) {
-        int errorCode = mpi.MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
-        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during projected redistribution");
-      }
+      {
+        auto sendSlab = sendScratch.template make_vector<ValueType>(sendTotal);
+        auto recvSlab = recvScratch.template make_vector<ValueType>(recvTotal);
+        std::vector<MPI_Request> requests;
 
-      // Unpack received data
-      size_t bufferIdx = 0;
-      for (size_t i = 0; i < recvPlan.size(); ++i) {
-        if (recvPlan[i].mpiRank == localRank) continue;
-        size_t volume = schnek::volume(std::pair{recvPlan[i].lo, recvPlan[i].hi});
-        if (volume == 0) continue;
-        const auto &buf = recvBuffers[bufferIdx++];
-        auto recvRange = makeTypedRange(recvPlan[i]);
-        detail::GridTransfer<GridType>::unpack(newGrid, recvRange, buf.data());
+        for (const auto &block : recvBlocks) {
+          MPI_Request req;
+          int errorCode = mpi.MPI_Irecv(
+              recvSlab.data() + block.offset, toIntCount(block.volume), mpiType, recvPlan[block.planIndex].mpiRank, 1,
+              comm, &req
+          );
+          SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during projected redistribution");
+          requests.push_back(req);
+        }
+
+        for (const auto &block : sendBlocks) {
+          ValueType *blockData = sendSlab.data() + block.offset;
+          auto sendRange = makeTypedRange(sendPlan[block.planIndex]);
+          detail::GridTransfer<GridType>::pack(oldGrid, sendRange, blockData);
+          // GridTransfer::pack fences device work before MPI reads this slab.
+          MPI_Request req;
+          int errorCode = mpi.MPI_Isend(
+              blockData, toIntCount(block.volume), mpiType, sendPlan[block.planIndex].mpiRank, 1, comm, &req
+          );
+          SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during projected redistribution");
+          requests.push_back(req);
+        }
+
+        for (size_t i = 0; i < recvPlan.size(); ++i) {
+          if (recvPlan[i].mpiRank != localRank) continue;
+          auto copyRange = makeTypedRange(recvPlan[i]);
+          detail::GridTransfer<GridType>::copy(oldGrid, newGrid, copyRange);
+        }
+
+        if (!requests.empty()) {
+          int errorCode = mpi.MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
+          SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during projected redistribution");
+        }
+
+        for (const auto &block : recvBlocks) {
+          auto recvRange = makeTypedRange(recvPlan[block.planIndex]);
+          detail::GridTransfer<GridType>::unpack(newGrid, recvRange, recvSlab.data() + block.offset);
+        }
       }
     }
+
+    sendScratch.reset();
+    recvScratch.reset();
 
     // Step 2: broadcast the full new projected grid contents within the replica
     // sub-communicator so that non-canonical replicas see identical data.
@@ -1320,17 +1377,23 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       typename GridType::RangeType fullRange(newGrid.getLo(), newGrid.getHi());
       size_t volume = schnek::volume<projRank>(newGrid);
       if (volume > 0) {
-        std::vector<ValueType> buf(volume);
-        if (isCanonical) {
-          detail::GridTransfer<GridType>::pack(newGrid, fullRange, buf.data());
-        }
-        int errorCode = mpi.MPI_Bcast(buf.data(), toIntCount(volume), mpiType, 0, replicaComm);
-        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Bcast failed during projected redistribution");
-        if (!isCanonical) {
-          detail::GridTransfer<GridType>::unpack(newGrid, fullRange, buf.data());
+        sendScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(volume, sizeof(ValueType)));
+        {
+          auto buf = sendScratch.template make_vector<ValueType>(volume);
+          if (isCanonical) {
+            detail::GridTransfer<GridType>::pack(newGrid, fullRange, buf.data());
+          }
+          int errorCode = mpi.MPI_Bcast(buf.data(), toIntCount(volume), mpiType, 0, replicaComm);
+          SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Bcast failed during projected redistribution");
+          if (!isCanonical) {
+            detail::GridTransfer<GridType>::unpack(newGrid, fullRange, buf.data());
+          }
         }
       }
     }
+
+    sendScratch.reset();
+    recvScratch.reset();
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -1577,8 +1640,7 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::migrateParticles(
-      const internal::pParticleWrapper &wrapper
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::migrateParticles(const internal::pParticleWrapper &wrapper
   ) {
     if (migrateVisitor.get() == nullptr || migrateVisitor->empty()) {
       SCHNECK_FAIL("No registered particle containers available for migration");
@@ -1590,10 +1652,10 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
   namespace internal::mpi_cartesian_decomposition {
     template<typename Particle, typename PositionAccessor>
     struct OwningCellDim {
-      PositionAccessor accessor;
-      SCHNEK_FUNCTION ptrdiff_t operator()(const Particle &p, size_t dim) const {
-        return static_cast<ptrdiff_t>(std::floor(accessor(p)[dim]));
-      }
+        PositionAccessor accessor;
+        SCHNEK_FUNCTION ptrdiff_t operator()(const Particle &p, size_t dim) const {
+          return static_cast<ptrdiff_t>(std::floor(accessor(p)[dim]));
+        }
     };
 
     /**
@@ -1607,33 +1669,33 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
      */
     template<typename Particle, typename PositionAccessor>
     struct DimBucketClassifier {
-      OwningCellDim<Particle, PositionAccessor> owningCell;
-      ptrdiff_t lo;
-      ptrdiff_t hi;
-      size_t dim;
-      SCHNEK_FUNCTION int operator()(const Particle &p) const {
-        const ptrdiff_t cell = owningCell(p, dim);
-        if (cell < lo) {
-          return 1;
+        OwningCellDim<Particle, PositionAccessor> owningCell;
+        ptrdiff_t lo;
+        ptrdiff_t hi;
+        size_t dim;
+        SCHNEK_FUNCTION int operator()(const Particle &p) const {
+          const ptrdiff_t cell = owningCell(p, dim);
+          if (cell < lo) {
+            return 1;
+          }
+          if (cell > hi) {
+            return 2;
+          }
+          return 0;
         }
-        if (cell > hi) {
-          return 2;
-        }
-        return 0;
-      }
     };
 
     /// Device-callable predicate: the owning cell of a particle along `dim` lies in `[lo, hi]`.
     template<typename Particle, typename PositionAccessor>
     struct DimInRange {
-      OwningCellDim<Particle, PositionAccessor> owningCell;
-      ptrdiff_t lo;
-      ptrdiff_t hi;
-      size_t dim;
-      SCHNEK_FUNCTION bool operator()(const Particle &p) const {
-        const ptrdiff_t cell = owningCell(p, dim);
-        return cell >= lo && cell <= hi;
-      }
+        OwningCellDim<Particle, PositionAccessor> owningCell;
+        ptrdiff_t lo;
+        ptrdiff_t hi;
+        size_t dim;
+        SCHNEK_FUNCTION bool operator()(const Particle &p) const {
+          const ptrdiff_t cell = owningCell(p, dim);
+          return cell >= lo && cell <= hi;
+        }
     };
 
     /**
@@ -1648,55 +1710,54 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
 
     template<typename Traits, typename Serializer, typename ContainerType, std::size_t particleBytes>
     struct ExchangeParticle {
-      MpiContext &mpi;
-      MPI_Comm comm;
-      ContainerType &container;
-      schnek::detail::ParticleCommunicationBuffer<ContainerType> &recvScratchBuffer;
+        MpiContext &mpi;
+        MPI_Comm comm;
+        ContainerType &container;
+        schnek::detail::ParticleCommunicationBuffer<ContainerType> &recvScratchBuffer;
 
-      int toIntCount(std::size_t count) {
-        if (count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+        int toIntCount(std::size_t count) {
+          if (count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
             SCHNECK_FAIL("Particle migration block too large for MPI_Sendrecv count");
+          }
+          return static_cast<int>(count);
         }
-        return static_cast<int>(count);
-      }
 
-      // Phase A: upward movement. Send to `nextRank`, receive from `prevRank`.
-      // Phase B: downward movement. Send to `prevRank`, receive from `nextRank`.
-      // Each phase first exchanges the particle count, then the payload, and
-      // finally deserialises arrivals back into the container.
-      // A zero count is valid: the payload exchange still runs with null buffers.
-      void operator()(const std::byte *sendBuffer, std::size_t sendCount, int sendRank, int recvRank) {
-        int sendCountInt = toIntCount(sendCount);
-        int recvCountInt = 0;
-        this->mpi.MPI_Sendrecv(
-            &sendCountInt, 1, MPI_INT, sendRank, 0, &recvCountInt, 1, MPI_INT, recvRank, 0, comm, MPI_STATUS_IGNORE
-        );
+        // Phase A: upward movement. Send to `nextRank`, receive from `prevRank`.
+        // Phase B: downward movement. Send to `prevRank`, receive from `nextRank`.
+        // Each phase first exchanges the particle count, then the payload, and
+        // finally deserialises arrivals back into the container.
+        // A zero count is valid: the payload exchange still runs with null buffers.
+        void operator()(const std::byte *sendBuffer, std::size_t sendCount, int sendRank, int recvRank) {
+          int sendCountInt = toIntCount(sendCount);
+          int recvCountInt = 0;
+          this->mpi.MPI_Sendrecv(
+              &sendCountInt, 1, MPI_INT, sendRank, 0, &recvCountInt, 1, MPI_INT, recvRank, 0, comm, MPI_STATUS_IGNORE
+          );
 
-        // A negative count from the peer is a protocol error. It must not be widened to size_t.
-        if (recvCountInt < 0) {
-          SCHNECK_FAIL("Particle migration received a negative particle count");
-        }
-        const std::size_t recvCount = static_cast<std::size_t>(recvCountInt);
-        const int sendByteCount = toIntCount(checkedParticleBytes(sendCount, particleBytes));
-        const std::size_t recvBytes = checkedParticleBytes(recvCount, particleBytes);
-        const int recvByteCount = toIntCount(recvBytes);
-        recvScratchBuffer.reserve_bytes(recvBytes);
-        recvScratchBuffer.reset();
-        auto recvBuffer = recvScratchBuffer.template make_vector<std::byte>(recvBytes);
+          // A negative count from the peer is a protocol error. It must not be widened to size_t.
+          if (recvCountInt < 0) {
+            SCHNECK_FAIL("Particle migration received a negative particle count");
+          }
+          const std::size_t recvCount = static_cast<std::size_t>(recvCountInt);
+          const int sendByteCount = toIntCount(checkedParticleBytes(sendCount, particleBytes));
+          const std::size_t recvBytes = checkedParticleBytes(recvCount, particleBytes);
+          const int recvByteCount = toIntCount(recvBytes);
+          recvScratchBuffer.reserve_bytes(recvBytes);
+          recvScratchBuffer.reset();
+          auto recvBuffer = recvScratchBuffer.template make_vector<std::byte>(recvBytes);
 
-        this->mpi.MPI_Sendrecv(
-            sendCount > 0 ? sendBuffer : nullptr, sendByteCount, MPI_BYTE, sendRank, 1,
-            recvCount > 0 ? recvBuffer.data() : nullptr, recvByteCount, MPI_BYTE, recvRank, 1,
-            comm, MPI_STATUS_IGNORE
-        );
+          this->mpi.MPI_Sendrecv(
+              sendCount > 0 ? sendBuffer : nullptr, sendByteCount, MPI_BYTE, sendRank, 1,
+              recvCount > 0 ? recvBuffer.data() : nullptr, recvByteCount, MPI_BYTE, recvRank, 1, comm, MPI_STATUS_IGNORE
+          );
 
-        if (recvCount > 0) {
-          Traits::template bulkInsert<Serializer>(container, recvBuffer.data(), recvCount);
-        }
-      };
+          if (recvCount > 0) {
+            Traits::template bulkInsert<Serializer>(container, recvBuffer.data(), recvCount);
+          }
+        };
     };
 
-  }
+  }  // namespace internal::mpi_cartesian_decomposition
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename WrapperImpl>
@@ -1766,9 +1827,8 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
           Traits::template partitionAndPack<Serializer>(container, classify, outPtrs, partitionScratch.data());
         }
 
-        internal::mpi_cartesian_decomposition::ExchangeParticle<Traits, Serializer, ContainerType, particleBytes> exchange{
-            this->mpi, comm, container, recvScratchBuffer
-        };
+        internal::mpi_cartesian_decomposition::ExchangeParticle<Traits, Serializer, ContainerType, particleBytes>
+            exchange{this->mpi, comm, container, recvScratchBuffer};
 
         exchange(goingUp, upCount, nextRank, prevRank);
         exchange(goingDown, downCount, prevRank, nextRank);
@@ -1787,12 +1847,13 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     for (size_t d = 0; d < rank; ++d) {
       const bool inside = Traits::allOf(
           container,
-          internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{{wrapper.accessor}, lo[d], hi[d], d}
+          internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{
+              {wrapper.accessor}, lo[d], hi[d], d
+          }
       );
       SCHNEK_ASSERT(
-          inside,
-          "Particle migrated more than one process away in dimension "
-              << d << "; migration assumes particles move at most one sub-domain per step."
+          inside, "Particle migrated more than one process away in dimension "
+                      << d << "; migration assumes particles move at most one sub-domain per step."
       );
     }
 #endif
@@ -2345,9 +2406,9 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
     }
   }
 
-// ==============================================================================================================================
-// ==============================================================================================================================
-// ==============================================================================================================================
+  // ==============================================================================================================================
+  // ==============================================================================================================================
+  // ==============================================================================================================================
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
@@ -2463,9 +2524,9 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       }
 
       this->mpi.MPI_Sendrecv(
-          recvLowerCount > 0 ? sendBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType,
-          prevRank, 0, sendLowerCount > 0 ? recvBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType,
-          nextRank, 0, comm, MPI_STATUS_IGNORE
+          recvLowerCount > 0 ? sendBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType, prevRank, 0,
+          sendLowerCount > 0 ? recvBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType, nextRank, 0, comm,
+          MPI_STATUS_IGNORE
       );
       if (hiSourceRange && sendLowerCount > 0) {
         assignRange(*hiSourceRange, recvBuffer);
@@ -2487,14 +2548,14 @@ void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonL
       }
 
       this->mpi.MPI_Sendrecv(
-          recvUpperCount > 0 ? sendBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType,
-          nextRank, 0, sendUpperCount > 0 ? recvBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType,
-          prevRank, 0, comm, MPI_STATUS_IGNORE
+          recvUpperCount > 0 ? sendBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType, nextRank, 0,
+          sendUpperCount > 0 ? recvBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType, prevRank, 0, comm,
+          MPI_STATUS_IGNORE
       );
       if (loSourceRange && sendUpperCount > 0) {
         assignRange(*loSourceRange, recvBuffer);
       }
-      
+
       sendScratchBuffer.reset();
       recvScratchBuffer.reset();
     }

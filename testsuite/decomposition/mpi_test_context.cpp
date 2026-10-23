@@ -267,7 +267,7 @@ int MpiTestContextImpl::MPI_Irecv(
     auto retVal = ret_MPI_Irecv[std::min(argsCount, ret_MPI_Irecv.size() - 1)];
     const auto& payload = retVal.get<1>();
     if (buf != nullptr && !payload.empty()) {
-      std::memcpy(buf, payload.data(), payload.size());
+      mock_memcpy(buf, payload.data(), payload.size());
     }
     return retVal.get<0>();
   }

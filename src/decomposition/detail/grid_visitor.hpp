@@ -64,9 +64,7 @@ namespace schnek {
           });
         }
 
-        bool empty() const {
-          return dispatchers.empty();
-        }
+        bool empty() const { return dispatchers.empty(); }
 
       private:
         using Dispatcher = std::function<void(Derived &, void *, bool)>;

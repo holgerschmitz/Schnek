@@ -8,14 +8,14 @@
 #ifndef SCHNEK_DECOMPOSITION_SERIAL_DECOMPOSITION_HPP_
 #define SCHNEK_DECOMPOSITION_SERIAL_DECOMPOSITION_HPP_
 
+#include <functional>
+#include <map>
+#include <optional>
+#include <vector>
+
 #include "config.hpp"
 #include "detail/grid_visitor.hpp"
 #include "domaindecomposition.hpp"
-
-#include <functional>
-#include <map>
-#include <vector>
-#include <optional>
 
 namespace schnek {
 
@@ -31,13 +31,13 @@ namespace schnek {
 
       template<size_t projRank>
       using ProjectedRegistration = ProjectedGridRegistration<projRank, rank>;
-      
+
       /**
        * Constructor creating the domain decomposition object
        */
-      SerialDomainDecomposition() {};
+      SerialDomainDecomposition(){};
 
-      ~SerialDomainDecomposition() {};
+      ~SerialDomainDecomposition(){};
 
       SerialDomainDecomposition(const SerialDomainDecomposition &) = delete;
       SerialDomainDecomposition(SerialDomainDecomposition &&) = delete;
@@ -186,7 +186,7 @@ namespace schnek {
       void accumulateWithInteriorBounds(
           GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
       );
-      
+
       std::unique_ptr<ExchangeVisitor> exchangeVisitor;
       std::unique_ptr<AccumulateVisitor> accumulateVisitor;
   };
@@ -367,8 +367,7 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   class SerialDomainDecomposition<rank, CheckingPolicy>::AccumulateVisitor
-      : public internal::GridVisitor<
-            typename SerialDomainDecomposition<rank, CheckingPolicy>::AccumulateVisitor> {
+      : public internal::GridVisitor<typename SerialDomainDecomposition<rank, CheckingPolicy>::AccumulateVisitor> {
     public:
       explicit AccumulateVisitor(SerialDomainDecomposition &parentIn) : parent(parentIn) {}
 
@@ -422,8 +421,7 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  void SerialDomainDecomposition<rank, CheckingPolicy>::migrateParticles(
-      const internal::pParticleWrapper & /*wrapper*/
+  void SerialDomainDecomposition<rank, CheckingPolicy>::migrateParticles(const internal::pParticleWrapper & /*wrapper*/
   ) {
     // A single process owns the whole domain, so no particle can ever leave its
     // local range. Migration is a no-op for the serial backend.
@@ -457,8 +455,7 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
-  void
-  SerialDomainDecomposition<rank, CheckingPolicy>::handleGridExchange(GridType &grid, bool /*useFieldInfo*/) {
+  void SerialDomainDecomposition<rank, CheckingPolicy>::handleGridExchange(GridType &grid, bool /*useFieldInfo*/) {
     const auto localRange = getLocalInnerRange();
     typename GridType::IndexType innerLo(localRange.getLo());
     typename GridType::IndexType innerHi(localRange.getHi());
@@ -495,9 +492,7 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename FieldType>
-  void SerialDomainDecomposition<rank, CheckingPolicy>::handleFieldAccumulate(
-      FieldType &field, bool useFieldInfo
-  ) {
+  void SerialDomainDecomposition<rank, CheckingPolicy>::handleFieldAccumulate(FieldType &field, bool useFieldInfo) {
     typename FieldType::IndexType innerLo;
     typename FieldType::IndexType innerHi;
     if (useFieldInfo) {
@@ -596,7 +591,6 @@ namespace schnek {
     const IndexType gridHi = grid.getHi();
 
     auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
-
 
     // For the serial decomposition, we can simply copy and accumulate the ghost cells from the inner cells.
 

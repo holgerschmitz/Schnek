@@ -178,9 +178,8 @@ namespace schnek {
         typename Kernel,
         typename IteratorVec,
         std::size_t... Is>
-    void launchCellEntry(
-        const RangeType &range, Kernel &kernel, const IteratorVec &iterators, std::index_sequence<Is...>
-    ) {
+    void
+    launchCellEntry(const RangeType &range, Kernel &kernel, const IteratorVec &iterators, std::index_sequence<Is...>) {
       static_assert(
           ((detail::IterationPolicyFor<typename std::remove_const<typename std::remove_reference<
                 typename boost::mpl::at_c<ParameterSeq, Is>::type>::type>::type>::device_capture == deviceCapture) &&
@@ -191,15 +190,13 @@ namespace schnek {
       if constexpr (deviceCapture) {
 #ifdef SCHNEK_HAVE_KOKKOS
         detail::internal::forEachCellDevice<IterationPolicy>(
-            range,
-            kernel,
+            range, kernel,
             GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(*iterators[Is])...
         );
 #endif
       } else {
         detail::internal::forEachCellHost<IterationPolicy>(
-            range,
-            kernel,
+            range, kernel,
             GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(*iterators[Is])...
         );
       }
@@ -1282,9 +1279,7 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  void DomainDecomposition<rank, CheckingPolicy>::migrate(
-      std::initializer_list<ParticleRegistration> registrations
-  ) {
+  void DomainDecomposition<rank, CheckingPolicy>::migrate(std::initializer_list<ParticleRegistration> registrations) {
     for (const auto &registration : registrations) {
       migrate(registration);
     }
@@ -1544,8 +1539,8 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  std::map<long, std::vector<internal::pGridWrapper>> &DomainDecomposition<rank, CheckingPolicy>::getProjectedGridStorage(
-  ) {
+  std::map<long, std::vector<internal::pGridWrapper>> &
+  DomainDecomposition<rank, CheckingPolicy>::getProjectedGridStorage() {
     return projectedGrids;
   }
 

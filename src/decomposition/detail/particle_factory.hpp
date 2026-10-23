@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <type_traits>
@@ -46,8 +47,6 @@
 #include "grid-communication-traits.hpp"
 #include "particle_visitor.hpp"
 
-#include <cstdint>
-
 namespace schnek {
 
   namespace internal {
@@ -62,23 +61,23 @@ namespace schnek {
     /// Execution space declared by the memory space, or `void` when it declares none.
     template<class MemorySpace, class = void>
     struct MemorySpaceExecutionSpace {
-      using type = void;
+        using type = void;
     };
 
     template<class MemorySpace>
     struct MemorySpaceExecutionSpace<MemorySpace, std::void_t<typename MemorySpace::execution_space>> {
-      using type = typename MemorySpace::execution_space;
+        using type = typename MemorySpace::execution_space;
     };
 
     /// `ContainerType::ExecutionSpace` when declared, otherwise the execution space of its memory space.
     template<class ContainerType, class = void>
     struct ContainerExecutionSpace {
-      using type = typename MemorySpaceExecutionSpace<typename ContainerType::MemorySpace>::type;
+        using type = typename MemorySpaceExecutionSpace<typename ContainerType::MemorySpace>::type;
     };
 
     template<class ContainerType>
     struct ContainerExecutionSpace<ContainerType, std::void_t<typename ContainerType::ExecutionSpace>> {
-      using type = typename ContainerType::ExecutionSpace;
+        using type = typename ContainerType::ExecutionSpace;
     };
 
     /**
@@ -87,22 +86,25 @@ namespace schnek {
      */
     template<class ContainerType, class = void>
     struct ParticleExecutionSpace {
-      using type = void;
-      static constexpr bool kokkos_dispatch = false;
+        using type = void;
+        static constexpr bool kokkos_dispatch = false;
     };
 
     template<class ContainerType>
     struct ParticleExecutionSpace<ContainerType, std::void_t<typename ContainerType::MemorySpace>> {
-      using memory_space = typename ContainerType::MemorySpace;
-      using type = typename ContainerExecutionSpace<ContainerType>::type;
-      static constexpr bool kokkos_dispatch = true;
+        using memory_space = typename ContainerType::MemorySpace;
+        using type = typename ContainerExecutionSpace<ContainerType>::type;
+        static constexpr bool kokkos_dispatch = true;
 
-      static_assert(!std::is_void_v<type>, "particle container declares a MemorySpace without an execution space; declare ExecutionSpace");
+        static_assert(
+            !std::is_void_v<type>,
+            "particle container declares a MemorySpace without an execution space; declare ExecutionSpace"
+        );
 #ifdef SCHNEK_HAVE_KOKKOS
-      static_assert(
-          Kokkos::SpaceAccessibility<type, memory_space>::accessible,
-          "particle container execution space cannot access its memory space"
-      );
+        static_assert(
+            Kokkos::SpaceAccessibility<type, memory_space>::accessible,
+            "particle container execution space cannot access its memory space"
+        );
 #endif
     };
 
@@ -114,7 +116,10 @@ namespace schnek {
      */
     template<class ExecSpace, class Serializer, class ContainerType>
     void deviceBulkInsert(ContainerType &c, const std::byte *src, std::size_t count) {
-      static_assert(has_data<ContainerType>::value, "device-resident containers must provide data() or specialise ParticleContainerTraits");
+      static_assert(
+          has_data<ContainerType>::value,
+          "device-resident containers must provide data() or specialise ParticleContainerTraits"
+      );
       if (count == 0) {
         return;
       }
@@ -126,8 +131,7 @@ namespace schnek {
       Particle *dst = c.data() + offset;
       const std::size_t particleBytes = Serializer::size();
       Kokkos::parallel_for(
-          "schnek:bulkInsertParticles",
-          Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, count),
+          "schnek:bulkInsertParticles", Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, count),
           KOKKOS_LAMBDA(const std::size_t i) { dst[i] = Serializer::deserialize(src + i * particleBytes); }
       );
       Kokkos::fence();
@@ -138,15 +142,16 @@ namespace schnek {
      */
     template<class ExecSpace, class ContainerType, class Predicate>
     bool deviceAllOf(const ContainerType &c, Predicate pred) {
-      static_assert(has_data<ContainerType>::value, "device-resident containers must provide data() or specialise ParticleContainerTraits");
+      static_assert(
+          has_data<ContainerType>::value,
+          "device-resident containers must provide data() or specialise ParticleContainerTraits"
+      );
       using Particle = typename ContainerType::value_type;
       const Particle *data = c.data();
       bool result = true;
       Kokkos::parallel_reduce(
-          "schnek:allOfParticles",
-          Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, c.size()),
-          KOKKOS_LAMBDA(const std::size_t i, bool &ok) { ok = ok && pred(data[i]); },
-          Kokkos::LAnd<bool>(result)
+          "schnek:allOfParticles", Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, c.size()),
+          KOKKOS_LAMBDA(const std::size_t i, bool &ok) { ok = ok && pred(data[i]); }, Kokkos::LAnd<bool>(result)
       );
       return result;
     }
@@ -169,8 +174,7 @@ namespace schnek {
         const int bucket = static_cast<int>(b) + 1;
         std::size_t total = 0;
         Kokkos::parallel_reduce(
-            "schnek:countBucketParticles",
-            Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
+            "schnek:countBucketParticles", Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
             KOKKOS_LAMBDA(const std::size_t i, std::size_t &acc) {
               if (classify(data[i]) == bucket) {
                 ++acc;
@@ -185,8 +189,7 @@ namespace schnek {
       // Bucket validation costs an extra pass, so it runs in debug builds only.
       std::size_t invalid = 0;
       Kokkos::parallel_reduce(
-          "schnek:checkBucketValues",
-          Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
+          "schnek:checkBucketValues", Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
           KOKKOS_LAMBDA(const std::size_t i, std::size_t &acc) {
             const int bucket = classify(data[i]);
             if (bucket < 0 || bucket > static_cast<int>(numBuckets)) {
@@ -218,7 +221,10 @@ namespace schnek {
         std::size_t numBuckets,
         std::byte *scratch
     ) {
-      static_assert(has_data<ContainerType>::value, "device-resident containers must provide data() or specialise ParticleContainerTraits");
+      static_assert(
+          has_data<ContainerType>::value,
+          "device-resident containers must provide data() or specialise ParticleContainerTraits"
+      );
       using Particle = typename ContainerType::value_type;
       const std::size_t particleBytes = Serializer::size();
       const std::size_t n = c.size();
@@ -237,8 +243,7 @@ namespace schnek {
       for (int target = 0; target <= static_cast<int>(numBuckets); ++target) {
         std::size_t total = 0;
         Kokkos::parallel_scan(
-            "schnek:exclusiveScanBucket",
-            Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
+            "schnek:exclusiveScanBucket", Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
             KOKKOS_LAMBDA(const std::size_t i, std::size_t &update, const bool isFinal) {
               if (isFinal) {
                 position[i] = update;
@@ -252,8 +257,7 @@ namespace schnek {
 
         if (target == 0) {
           Kokkos::parallel_for(
-              "schnek:gatherSurvivors",
-              Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
+              "schnek:gatherSurvivors", Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
               KOKKOS_LAMBDA(const std::size_t i) {
                 if (classify(data[i]) == 0) {
                   survivors[position[i]] = data[i];
@@ -264,8 +268,7 @@ namespace schnek {
         } else {
           std::byte *dst = outPtrs[static_cast<std::size_t>(target) - 1];
           Kokkos::parallel_for(
-              "schnek:packBucket",
-              Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
+              "schnek:packBucket", Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, n),
               KOKKOS_LAMBDA(const std::size_t i) {
                 if (classify(data[i]) == target) {
                   Serializer::serialize(data[i], dst + position[i] * particleBytes);
@@ -276,8 +279,7 @@ namespace schnek {
       }
 
       Kokkos::parallel_for(
-          "schnek:compactSurvivors",
-          Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, survivorCount),
+          "schnek:compactSurvivors", Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, survivorCount),
           KOKKOS_LAMBDA(const std::size_t i) { data[i] = survivors[i]; }
       );
       Kokkos::fence();
@@ -323,12 +325,14 @@ namespace schnek {
    * - Both primitives take the bucket count at run time, so a caller can choose the number of destinations. The
    *   `std::array` overloads are convenience forwarders for a compile-time count.
    * - `bulkInsert()` appends `count` particles read from a buffer in `ParticleBufferMemorySpace`, in buffer order.
-   * - Survivor order is not part of the contract. Stable `Particle&` references and a single `data()` pointer are not required.
+   * - Survivor order is not part of the contract. Stable `Particle&` references and a single `data()` pointer are not
+   * required.
    *
    * The primary template is a contiguous AoS adapter. It needs `value_type`, `size()`, `push_back()`, `operator[]` and
-   * `resize()`. Containers that declare `MemorySpace` also need `data()`. Specialise this trait fully for segmented or non-AoS storage.
-   * Such containers dispatch on `execution_space`: `ExecutionSpace` if declared, otherwise the execution space of
-   * `MemorySpace`. The execution space must be able to access the memory space, which is checked at compile time.
+   * `resize()`. Containers that declare `MemorySpace` also need `data()`. Specialise this trait fully for segmented or
+   * non-AoS storage. Such containers dispatch on `execution_space`: `ExecutionSpace` if declared, otherwise the
+   * execution space of `MemorySpace`. The execution space must be able to access the memory space, which is checked at
+   * compile time.
    *
    * @tparam ContainerType the user's particle storage type
    */

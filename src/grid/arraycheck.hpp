@@ -30,8 +30,8 @@
 #include <cassert>
 #include <cstddef>
 
-#include "config.hpp"
 #include "../macros.hpp"
+#include "config.hpp"
 
 namespace schnek {
 

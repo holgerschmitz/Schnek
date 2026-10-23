@@ -31,9 +31,9 @@
 #include <initializer_list>
 #include <utility>
 
-#include "config.hpp"
 #include "../macros.hpp"
 #include "arraycheck.hpp"
+#include "config.hpp"
 
 namespace schnek {
 
