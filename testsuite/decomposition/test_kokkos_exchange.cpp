@@ -52,10 +52,10 @@ namespace {
     typedef Kokkos::Serial Execution;
 
     template <typename T, size_t rank>
-    using GridStorage = schnek::SingleArrayGridStorage<T, rank>;
+    using GridStorage = schnek::KokkosGridStorage<T, rank, Kokkos::HostSpace>;
 
-    typedef schnek::RangeCIterationPolicy<1> Iteration1d;
-    typedef schnek::RangeCIterationPolicy<2> Iteration2d;
+    typedef schnek::RangeKokkosIterationPolicy<1, Execution> Iteration1d;
+    typedef schnek::RangeKokkosIterationPolicy<2, Execution> Iteration2d;
 #endif
 }
 

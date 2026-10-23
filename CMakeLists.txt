@@ -175,6 +175,7 @@ if(Kokkos_FOUND)
   target_sources(schnek_tests PRIVATE
       testsuite/decomposition/detail/test_dense_kokkos_particle_container.cpp
       testsuite/decomposition/detail/test_device_blocked_particle_container.cpp
+      testsuite/decomposition/test_kokkos_redistribution.cpp
   )
 
   set_source_files_properties(
@@ -184,6 +185,7 @@ if(Kokkos_FOUND)
       testsuite/decomposition/test_domaindecomposition.cpp
       testsuite/decomposition/test_for_each_cell.cpp
       testsuite/decomposition/test_kokkos_exchange.cpp
+      testsuite/decomposition/test_kokkos_redistribution.cpp
       testsuite/decomposition/test_mpi_cartesian_decomposition.cpp
       testsuite/decomposition/test_serial_decomposition.cpp
       testsuite/decomposition/detail/test_grid_transfer.cpp
@@ -205,6 +207,19 @@ target_compile_features(schnek_tests PRIVATE cxx_std_17)
 
 add_test(NAME test COMMAND schnek_tests)
 enable_testing()
+
+if(Kokkos_FOUND AND MPI_CXX_FOUND AND Kokkos_COMPILE_LANGUAGE STREQUAL "CUDA")
+  add_test(
+      NAME kokkos_redistribution_cuda_two_rank
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+              $<TARGET_FILE:schnek_tests> ${MPIEXEC_POSTFLAGS}
+              --run_test=domain_decomposition/kokkos_redistribution/rebalance_cuda_space_two_rank_real_mpi_1d_2d
+  )
+  set_tests_properties(kokkos_redistribution_cuda_two_rank PROPERTIES
+      LABELS gpu
+      PROCESSORS 2
+  )
+endif()
 
 if(Kokkos_FOUND)
   # Particle container benchmark (EXCLUDE_FROM_ALL; build with `make schnek_particle_bench`).

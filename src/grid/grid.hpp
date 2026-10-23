@@ -84,12 +84,14 @@ namespace schnek {
     class GridBase {
       private:
         using PolicyList = generic::TypeList<Policies<T, rank>...>;
+
       public:
         using StoragePolicy = typename PolicyList::template getWithDefault<
             schnek::concepts::GridStorageConceptCondition,
             schnek::SingleArrayGridStorage<T, rank>>;
         using CheckingPolicy = typename PolicyList::
             template getWithDefault<schnek::concepts::GridCheckConceptCondition, schnek::GridNoArgCheck<T, rank>>;
+
       private:
         concepts::GridCheckConcept<CheckingPolicy> concept_check;
         concepts::GridStorageConcept<StoragePolicy> concept_storage;
@@ -159,17 +161,13 @@ namespace schnek {
 
         /// Get a raw pointer to the underlying data if provided by the storage policy
         template<typename S = StoragePolicy>
-        auto getRawData() -> std::enable_if_t<
-            concepts::GridStorageConceptCondition<S>::has_get_raw_data_method,
-            T*
-        > {
+        auto getRawData() -> std::enable_if_t<concepts::GridStorageConceptCondition<S>::has_get_raw_data_method, T*> {
           return this->storage.getRawData();
         }
 
         /// Fallback overload that triggers a compilation error when getRawData is unavailable
         template<typename S = StoragePolicy>
-        auto getRawData()
-            -> std::enable_if_t<!concepts::GridStorageConceptCondition<S>::has_get_raw_data_method, T*> {
+        auto getRawData() -> std::enable_if_t<!concepts::GridStorageConceptCondition<S>::has_get_raw_data_method, T*> {
           static_assert(
               concepts::GridStorageConceptCondition<S>::has_get_raw_data_method,
               "GridBase::getRawData() requires the storage policy to implement getRawData() returning a raw pointer"
@@ -180,15 +178,14 @@ namespace schnek {
         /// Get the size of the underlying data if provided by the storage policy
         template<typename S = StoragePolicy>
         auto getSize() const -> std::enable_if_t<
-                                               concepts::GridStorageConceptCondition<S>::has_get_size_method,
-                                               decltype(this->storage.getSize())> {
+                                 concepts::GridStorageConceptCondition<S>::has_get_size_method,
+                                 decltype(this->storage.getSize())> {
           return this->storage.getSize();
         }
 
         /// Fallback overload that triggers a compilation error when getSize is unavailable
         template<typename S = StoragePolicy>
-        auto getSize() const
-            -> std::enable_if_t<!concepts::GridStorageConceptCondition<S>::has_get_size_method, T*> {
+        auto getSize() const -> std::enable_if_t<!concepts::GridStorageConceptCondition<S>::has_get_size_method, T*> {
           static_assert(
               concepts::GridStorageConceptCondition<S>::has_get_size_method,
               "GridBase::getSize() requires the storage policy to implement getSize() returning a raw pointer"
@@ -198,19 +195,17 @@ namespace schnek {
 
         /// Get the underlying Kokkos view if provided by the storage policy
         template<typename S = StoragePolicy>
-        auto getKokkosView()
-            -> std::enable_if_t<
-                concepts::GridStorageConceptCondition<S>::has_get_kokkos_view_method,
-                decltype(std::declval<S&>().getKokkosView())> {
+        auto getKokkosView() -> std::enable_if_t<
+                                 concepts::GridStorageConceptCondition<S>::has_get_kokkos_view_method,
+                                 decltype(std::declval<S&>().getKokkosView())> {
           return this->storage.getKokkosView();
         }
 
         /// Get the underlying Kokkos view (const) if provided by the storage policy
         template<typename S = StoragePolicy>
-        auto getKokkosView() const
-            -> std::enable_if_t<
-                concepts::GridStorageConceptCondition<S>::has_get_kokkos_view_method,
-                decltype(std::declval<const S&>().getKokkosView())> {
+        auto getKokkosView() const -> std::enable_if_t<
+                                       concepts::GridStorageConceptCondition<S>::has_get_kokkos_view_method,
+                                       decltype(std::declval<const S&>().getKokkosView())> {
           return this->storage.getKokkosView();
         }
 
@@ -323,6 +318,7 @@ namespace schnek {
             template<typename, size_t>
             class StoragePolicy2>
         void resize(const GridBase<T2, rank, CheckingPolicy2, StoragePolicy2>& grid);
+
       protected:
         template<typename ExecutionSpace, typename GridType, typename ExecutionViewType>
         ExecutionViewType getExecutionViewImpl(GridType& grid) {
@@ -340,7 +336,11 @@ namespace schnek {
     };
 
     template<typename FallBack, typename ExecutionSpace, typename T>
-    struct ExecutionViewTypeOr<FallBack, ExecutionSpace, T, std::void_t<typename T::template ExecutionViewType<ExecutionSpace>>> {
+    struct ExecutionViewTypeOr<
+        FallBack,
+        ExecutionSpace,
+        T,
+        std::void_t<typename T::template ExecutionViewType<ExecutionSpace>>> {
         using type = typename T::template ExecutionViewType<ExecutionSpace>;
     };
   }  // namespace internal
@@ -353,11 +353,7 @@ namespace schnek {
    * @tparam CheckingPolicy a policy for checking index access operations
    * @tparam StoragePolicy a policy that defines how the data is stored in memory
    */
-  template<
-    typename T, 
-    size_t rank, 
-    template<typename, size_t> class... Policies
-  >
+  template<typename T, size_t rank, template<typename, size_t> class... Policies>
   class Grid : public internal::GridBase<T, rank, Policies...> {
     public:
       typedef T value_type;
@@ -368,11 +364,8 @@ namespace schnek {
       typedef internal::GridBase<T, rank, Policies...> BaseType;
 
       template<typename ExecutionSpace = void>
-      using ExecutionViewType = typename internal::ExecutionViewTypeOr<
-        GridType,
-        ExecutionSpace,
-        typename BaseType::StoragePolicy
-      >::type;
+      using ExecutionViewType =
+          typename internal::ExecutionViewTypeOr<GridType, ExecutionSpace, typename BaseType::StoragePolicy>::type;
 
       /// The natural iteration policy for sweeping this grid's cells, derived from the storage policy
       using IterationPolicyType = typename BaseType::IterationPolicyType;

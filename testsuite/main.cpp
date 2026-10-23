@@ -9,6 +9,10 @@
 
 #include <grid/iteration/kokkos-iteration.hpp>
 
+#ifdef SCHNEK_HAVE_HDF5
+#include <hdf5.h>
+#endif
+
 #ifdef SCHNEK_HAVE_MPI
 #include <mpi.h>
 #endif
@@ -57,6 +61,9 @@ struct MpiInitialiser {
             int finalized = 0;
             MPI_Finalized(&finalized);
             if (!finalized) {
+#ifdef SCHNEK_HAVE_HDF5
+                H5close();
+#endif
                 MPI_Finalize();
             }
         }

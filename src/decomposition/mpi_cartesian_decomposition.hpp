@@ -53,11 +53,11 @@ namespace schnek {
 
       /**
        * A type alias for the local ranges of the domain decomposition.
-       * 
+       *
        * For each dimension, the local ranges of all processes in that dimension are stored in a 1d Grid.
        */
       typedef std::array<Grid<Range<ptrdiff_t, 1>, 1>, rank> ProcRanges;
-      
+
       /**
        * Constructor creating the domain decomposition object
        *
@@ -284,7 +284,7 @@ namespace schnek {
       void accumulateWithInteriorBounds(
           GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
       );
-      
+
       std::unique_ptr<ExchangeVisitor> exchangeVisitor;
       std::unique_ptr<AccumulateVisitor> accumulateVisitor;
 

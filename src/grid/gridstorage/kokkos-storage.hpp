@@ -79,15 +79,12 @@ namespace schnek {
         typedef typename ViewType::memory_space MemorySpace;
 
         /// True if the underlying memory is accessible from host code
-        static constexpr bool host_accessible =
-            Kokkos::SpaceAccessibility<Kokkos::HostSpace, MemorySpace>::accessible;
+        static constexpr bool host_accessible = Kokkos::SpaceAccessibility<Kokkos::HostSpace, MemorySpace>::accessible;
 
         /// Set the flag to true, so that the encapsulating Grid class compiles with device annotations.
         static constexpr bool use_device_annotations =
-          Kokkos::SpaceAccessibility<
-              Kokkos::DefaultExecutionSpace,
-              MemorySpace
-          >::accessible;;
+            Kokkos::SpaceAccessibility<Kokkos::DefaultExecutionSpace, MemorySpace>::accessible;
+        ;
 
         /**
          * @brief The natural iteration policy for sweeping this storage's cells
@@ -96,7 +93,8 @@ namespace schnek {
          * space of the underlying `Kokkos::View`, so that cell iteration runs on whichever
          * execution space the view's memory space is associated with.
          */
-        using IterationPolicyType = RangeKokkosIterationPolicy<rank_t, typename ViewType::execution_space>;            
+        using IterationPolicyType = RangeKokkosIterationPolicy<rank_t, typename ViewType::execution_space>;
+
       protected:
         /// The lowest and highest coordinates in the grid (inclusive)
         RangeType range;
@@ -182,9 +180,9 @@ namespace schnek {
          * Only available when the memory space is accessible from host code.
          */
         template<typename V = ViewType>
-        auto getRawData() -> std::enable_if_t<
-            Kokkos::SpaceAccessibility<Kokkos::HostSpace, typename V::memory_space>::accessible, 
-            T *>{
+        auto getRawData()
+            -> std::
+                enable_if_t<Kokkos::SpaceAccessibility<Kokkos::HostSpace, typename V::memory_space>::accessible, T *> {
           return this->view.data();
         }
 
@@ -236,7 +234,7 @@ namespace schnek {
         SCHNEK_FUNCTION const T &getFromView(const IndexType &pos) const {
           return getFromViewImpl(pos, std::make_index_sequence<rank_t>{});
         }
-    };    
+    };
 
   }  // namespace internal
 
@@ -244,9 +242,9 @@ namespace schnek {
   class KokkosExecutionView : public internal::KokkosGridStorageBase<T, rank_t, ViewProperties...> {
     public:
       using BaseType = internal::KokkosGridStorageBase<T, rank_t, ViewProperties...>;
-      using typename BaseType::ViewType;
       using typename BaseType::IndexType;
       using typename BaseType::RangeType;
+      using typename BaseType::ViewType;
 
       /// The rank of the grid
       static constexpr size_t rank = rank_t;
@@ -270,25 +268,29 @@ namespace schnek {
 
       /** index operator, writing */
       template<template<size_t> class ArrayCheckingPolicy>
-      SCHNEK_FUNCTION T& operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos) { return this->get(pos); }  // write
+      SCHNEK_FUNCTION T &operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy> &pos) {
+        return this->get(pos);
+      }  // write
       /** index operator through a const view handle */
       template<template<size_t> class ArrayCheckingPolicy>
-      SCHNEK_FUNCTION T& operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy>& pos) const {
+      SCHNEK_FUNCTION T &operator[](const Array<ptrdiff_t, rank, ArrayCheckingPolicy> &pos) const {
         return const_cast<KokkosExecutionView *>(this)->get(pos);
       }
 
       /** index operator, writing */
       template<class Operator, size_t Length>
-      SCHNEK_FUNCTION T& operator[](const ArrayExpression<Operator, Length>& pos) { return this->get(pos); };  // write
+      SCHNEK_FUNCTION T &operator[](const ArrayExpression<Operator, Length> &pos) {
+        return this->get(pos);
+      };  // write
       /** index operator through a const view handle */
       template<class Operator, size_t Length>
-      SCHNEK_FUNCTION T& operator[](const ArrayExpression<Operator, Length>& pos) const {
+      SCHNEK_FUNCTION T &operator[](const ArrayExpression<Operator, Length> &pos) const {
         return const_cast<KokkosExecutionView *>(this)->get(pos);
       }
 
       /** index operator forwarding to the checking policy, writing */
       template<typename... Indices>
-      SCHNEK_FUNCTION T& operator()(Indices... indices) {
+      SCHNEK_FUNCTION T &operator()(Indices... indices) {
         static_assert(sizeof...(Indices) == rank, "KokkosExecutionView::operator() expects exactly rank indices");
         static_assert(
             (std::is_convertible_v<Indices, ptrdiff_t> && ...),
@@ -298,7 +300,7 @@ namespace schnek {
       }
       /** index operator forwarding through a const view handle */
       template<typename... Indices>
-      SCHNEK_FUNCTION T& operator()(Indices... indices) const {
+      SCHNEK_FUNCTION T &operator()(Indices... indices) const {
         static_assert(sizeof...(Indices) == rank, "KokkosExecutionView::operator() expects exactly rank indices");
         static_assert(
             (std::is_convertible_v<Indices, ptrdiff_t> && ...),
@@ -308,9 +310,9 @@ namespace schnek {
       }
 
       /** index operator, for 1D grids, writing */
-      SCHNEK_FUNCTION T& operator[](ptrdiff_t i) { return this->operator()(i); }
+      SCHNEK_FUNCTION T &operator[](ptrdiff_t i) { return this->operator()(i); }
       /** index operator, for 1D grids, through a const view handle */
-      SCHNEK_FUNCTION T& operator[](ptrdiff_t i) const { return this->operator()(i); }
+      SCHNEK_FUNCTION T &operator[](ptrdiff_t i) const { return this->operator()(i); }
   };
 
   /**
@@ -321,7 +323,7 @@ namespace schnek {
    * @tparam AllocationPolicy The allocation policy
    */
   template<typename T, size_t rank_t, class... ViewProperties>
-  class KokkosGridStorage: public internal::KokkosGridStorageBase<T, rank_t, ViewProperties...> {
+  class KokkosGridStorage : public internal::KokkosGridStorageBase<T, rank_t, ViewProperties...> {
     public:
       using BaseType = internal::KokkosGridStorageBase<T, rank_t, ViewProperties...>;
 
@@ -347,24 +349,23 @@ namespace schnek {
       typedef typename ViewType::memory_space MemorySpace;
 
       /// True if the underlying memory is accessible from host code
-      static constexpr bool host_accessible =
-          Kokkos::SpaceAccessibility<Kokkos::HostSpace, MemorySpace>::accessible;
+      static constexpr bool host_accessible = Kokkos::SpaceAccessibility<Kokkos::HostSpace, MemorySpace>::accessible;
 
       /// Set the flag to true, so that the encapsulating Grid class compiles with device annotations.
       static constexpr bool use_device_annotations =
-        Kokkos::SpaceAccessibility<
-            Kokkos::DefaultExecutionSpace,
-            MemorySpace
-        >::accessible;;
-      
+          Kokkos::SpaceAccessibility<Kokkos::DefaultExecutionSpace, MemorySpace>::accessible;
+      ;
+
       template<typename ExecutionSpace>
       using ExecutionViewType = KokkosExecutionView<T, rank_t, ViewProperties...>;
+
     private:
       typedef std::function<void(const RangeType &)> UpdaterType;
       typedef std::map<void *, UpdaterType> UpdaterMapType;
 
       /// A map of updaters that are called when the grid is resized
       std::shared_ptr<UpdaterMapType> updaters;
+
     public:
       /// Default constructor
       KokkosGridStorage();
@@ -412,7 +413,7 @@ namespace schnek {
        */
       template<typename GridT>
       KokkosExecutionView<T, rank_t, ViewProperties...> getExecutionView(GridT &grid) {
-        (void) grid;
+        (void)grid;
         return KokkosExecutionView<T, rank_t, ViewProperties...>(*this);
       }
 
@@ -461,8 +462,7 @@ namespace schnek {
     }
 
     template<typename T, size_t rank_t, class... ViewProperties>
-    KokkosGridStorageBase<T, rank_t, ViewProperties...>::KokkosGridStorageBase(const RangeType &range)
-        : range{range} {
+    KokkosGridStorageBase<T, rank_t, ViewProperties...>::KokkosGridStorageBase(const RangeType &range) : range{range} {
       dims = range.getHi() - range.getLo() + 1;
       view = createKokkosView(dims);
     }
@@ -489,15 +489,14 @@ namespace schnek {
     SCHNEK_INLINE ptrdiff_t KokkosGridStorageBase<T, rank_t, ViewProperties...>::stride(size_t dim) const {
       return this->view.stride(dim);
     }
-  }
+  }  // namespace internal
 
   //=================================================================
   //==================== KokkosGridStorage ==========================
   //=================================================================
 
   template<typename T, size_t rank_t, class... ViewProperties>
-  KokkosGridStorage<T, rank_t, ViewProperties...>::KokkosGridStorage()
-      : updaters{new UpdaterMapType} {
+  KokkosGridStorage<T, rank_t, ViewProperties...>::KokkosGridStorage() : updaters{new UpdaterMapType} {
     (*updaters)[this] = [this](const RangeType &range) { this->updateSizeInfo(range); };
   }
 

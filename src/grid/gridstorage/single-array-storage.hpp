@@ -66,6 +66,7 @@ namespace schnek {
 
       /// Set the flag to false, so that the encapsulating Grid class compiles without device annotations.
       static constexpr bool use_device_annotations = false;
+
     private:
       using PolicyList = generic::TypeList<Policies<T, rank>...>;
       using AllocationPolicy = typename PolicyList::template getWithDefault<

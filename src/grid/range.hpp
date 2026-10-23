@@ -52,12 +52,16 @@ namespace schnek {
 
       /// Construct with rectangle minimum and maximum
       template<template<size_t> class ArrayCheckingPolicy>
-      SCHNEK_INLINE Range(const Array<T, rank, ArrayCheckingPolicy> &lo_, const Array<T, rank, ArrayCheckingPolicy> &hi_)
+      SCHNEK_INLINE Range(
+          const Array<T, rank, ArrayCheckingPolicy> &lo_, const Array<T, rank, ArrayCheckingPolicy> &hi_
+      )
           : lo(lo_), hi(hi_) {}
 
       /// Construct with rectangle minimum and maximum from different numeric type
       template<typename T2, template<size_t> class ArrayCheckingPolicy>
-      SCHNEK_INLINE Range(const Array<T2, rank, ArrayCheckingPolicy> &lo_, const Array<T2, rank, ArrayCheckingPolicy> &hi_)
+      SCHNEK_INLINE Range(
+          const Array<T2, rank, ArrayCheckingPolicy> &lo_, const Array<T2, rank, ArrayCheckingPolicy> &hi_
+      )
           : lo(lo_), hi(hi_) {}
 
       /// Copy constructor
@@ -66,7 +70,8 @@ namespace schnek {
 
       /// Copy constructor from different numeric type
       template<typename T2, template<size_t> class ArrayCheckingPolicy>
-      SCHNEK_INLINE Range(const Range<T2, rank, ArrayCheckingPolicy> &domain) : lo(domain.getLo()), hi(domain.getHi()) {}
+      SCHNEK_INLINE Range(const Range<T2, rank, ArrayCheckingPolicy> &domain)
+          : lo(domain.getLo()), hi(domain.getHi()) {}
 
       /// Assignment operator
       SCHNEK_INLINE Range &operator=(const Range &domain) {

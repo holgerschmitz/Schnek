@@ -354,9 +354,7 @@ namespace schnek {
       class CheckingPolicy1,
       template<size_t>
       class CheckingPolicy2>
-  bool operator==(
-      const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2
-  ) {
+  bool operator==(const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2) {
     for (size_t i = 0; i < Length; ++i)
       if (arr1[i] != arr2[i]) return false;
     return true;
@@ -370,9 +368,7 @@ namespace schnek {
       class CheckingPolicy1,
       template<size_t>
       class CheckingPolicy2>
-  bool operator!=(
-      const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2
-  ) {
+  bool operator!=(const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2) {
     for (size_t i = 0; i < Length; ++i)
       if (arr1[i] != arr2[i]) return true;
     return false;
@@ -386,9 +382,7 @@ namespace schnek {
       class CheckingPolicy1,
       template<size_t>
       class CheckingPolicy2>
-  bool operator<(
-      const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2
-  ) {
+  bool operator<(const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2) {
     for (size_t i = 0; i < Length; ++i)
       if (arr1[i] >= arr2[i]) return false;
     return true;
@@ -402,9 +396,7 @@ namespace schnek {
       class CheckingPolicy1,
       template<size_t>
       class CheckingPolicy2>
-  bool operator<=(
-      const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2
-  ) {
+  bool operator<=(const Array<T1, Length, CheckingPolicy1>& arr1, const Array<T2, Length, CheckingPolicy2>& arr2) {
     for (size_t i = 0; i < Length; ++i)
       if (arr1[i] > arr2[i]) return false;
     return true;

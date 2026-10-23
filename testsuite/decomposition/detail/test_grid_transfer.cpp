@@ -8,6 +8,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <cstdint>
 #include <vector>
 
 namespace {
@@ -126,6 +127,40 @@ BOOST_AUTO_TEST_CASE(kokkos_communication_buffer_retains_and_grows_capacity) {
 
   buffer.reserve_bytes(4 * sizeof(int));
   BOOST_CHECK_EQUAL(buffer.capacity_bytes(), 4 * sizeof(int));
+}
+
+// Guards the slab assumption in the device rebalancing plan (section 2.2):
+// the send and receive slabs are live at the same time and must come from
+// separate arenas, so their storage must never overlap.
+BOOST_AUTO_TEST_CASE(kokkos_communication_buffer_slabs_do_not_alias) {
+  schnek::detail::BufferRegistry registry;
+  auto &buffers = registry.get<Kokkos::HostSpace>();
+  auto &sendArena = buffers.send();
+  auto &recvArena = buffers.receive();
+
+  constexpr std::size_t sendCount = 4;
+  constexpr std::size_t recvCount = 3;
+  sendArena.reserve_bytes(sendCount * sizeof(int));
+  recvArena.reserve_bytes(recvCount * sizeof(int));
+
+  auto sendSlab = sendArena.make_vector<int>(sendCount);
+  auto recvSlab = recvArena.make_vector<int>(recvCount);
+
+  const auto sendBegin = reinterpret_cast<std::uintptr_t>(sendSlab.data());
+  const auto sendEnd = sendBegin + sendCount * sizeof(int);
+  const auto recvBegin = reinterpret_cast<std::uintptr_t>(recvSlab.data());
+  const auto recvEnd = recvBegin + recvCount * sizeof(int);
+  BOOST_CHECK(sendEnd <= recvBegin || recvEnd <= sendBegin);
+
+  for (std::size_t i = 0; i < sendCount; ++i) {
+    sendSlab(i) = static_cast<int>(100 + i);
+  }
+  for (std::size_t i = 0; i < recvCount; ++i) {
+    recvSlab(i) = static_cast<int>(200 + i);
+  }
+  for (std::size_t i = 0; i < sendCount; ++i) {
+    BOOST_CHECK_EQUAL(sendSlab(i), static_cast<int>(100 + i));
+  }
 }
 #endif
 
