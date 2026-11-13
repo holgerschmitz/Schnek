@@ -73,6 +73,7 @@ int MpiTestContextImpl::MPI_Comm_rank(MPI_Comm comm, int* rank)
 
   auto retVal =  ret_MPI_Comm_rank[std::min(argsCount, ret_MPI_Comm_rank.size() - 1)];
   *rank = retVal.get<1>();
+  currentRank = *rank;
 
   return retVal.get<0>();
 }
@@ -201,9 +202,18 @@ int MpiTestContextImpl::MPI_Allreduce(
   size_t argsCount = args_MPI_Allreduce.size();
   args_MPI_Allreduce.push_back({sendbuf != nullptr, count, datatype, op, comm});
 
+  if (argsCount == 0) allreduceRetIndex = 0;
   if (!ret_MPI_Allreduce.empty()) {
-    auto retVal = ret_MPI_Allreduce[std::min(argsCount, ret_MPI_Allreduce.size() - 1)];
+    auto retVal = ret_MPI_Allreduce[std::min(allreduceRetIndex, ret_MPI_Allreduce.size() - 1)];
     const auto& payload = retVal.get<1>();
+    if (datatype == MPI_INT && count == 1 && payload.size() != sizeof(int)) {
+      // Older reduction scripts provide marginal buffers, not the new error flag.
+      if (sendbuf != nullptr && recvbuf != nullptr) {
+        std::memcpy(recvbuf, sendbuf, sizeof(int));
+      }
+      return retVal.get<0>();
+    }
+    ++allreduceRetIndex;
     if (recvbuf != nullptr && !payload.empty()) {
       std::memcpy(recvbuf, payload.data(), std::min(payload.size(), datatypeSize(datatype) * static_cast<size_t>(count)));
     }
@@ -220,12 +230,32 @@ int MpiTestContextImpl::MPI_Allreduce(
 int MpiTestContextImpl::MPI_Bcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
 {
   size_t argsCount = args_MPI_Bcast.size();
+  if (argsCount == 0) bcastRetIndex = 0;
 
   args_MPI_Bcast.push_back(boost::make_tuple(count, datatype, root, comm));
 
+  if (currentRank == root) return MPI_SUCCESS;
+
   if (!ret_MPI_Bcast.empty()) {
-    auto retVal =  ret_MPI_Bcast[std::min(argsCount, ret_MPI_Bcast.size() - 1)];
-    memcpy(buffer, retVal.get<1>(), retVal.get<2>());
+    auto retVal = ret_MPI_Bcast[std::min(bcastRetIndex, ret_MPI_Bcast.size() - 1)];
+    const size_t payloadSize = retVal.get<2>();
+    if (datatype == MPI_INT && count == 1 && payloadSize != sizeof(int)) {
+      // Preserve queued range data for the status-first broadcast protocol.
+      const int success = 1;
+      memcpy(buffer, &success, sizeof(success));
+      return retVal.get<0>();
+    }
+
+    ++bcastRetIndex;
+    if (datatype == MPI_LONG && count > 0 && payloadSize == static_cast<size_t>(count) * sizeof(int)) {
+      const auto* intData = static_cast<const int*>(retVal.get<1>());
+      auto* longData = static_cast<long*>(buffer);
+      for (int i = 0; i < count; ++i) {
+        longData[i] = static_cast<long>(intData[i]);
+      }
+    } else {
+      memcpy(buffer, retVal.get<1>(), std::min(payloadSize, datatypeSize(datatype) * static_cast<size_t>(count)));
+    }
 
     return retVal.get<0>();
   }

@@ -18,6 +18,9 @@ class MpiTestContextImpl : public schnek::MpiContext
 {
   public:
     MPI_Comm commWorld;
+    int currentRank = 0;
+    size_t bcastRetIndex = 0;
+    size_t allreduceRetIndex = 0;
 
     std::vector<MPI_Comm> args_MPI_Comm_size;
     std::vector<MPI_Comm> args_MPI_Comm_rank;

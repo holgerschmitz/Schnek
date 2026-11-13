@@ -13,6 +13,7 @@
 #include <util/factor.hpp>
 
 #include <decomposition/mpi_cartesian_decomposition.hpp>
+#include <decomposition/detail/weighted_partition.hpp>
 #ifdef SCHNEK_HAVE_KOKKOS
 #include <decomposition/detail/dense_kokkos_particle_container.hpp>
 #endif
@@ -608,6 +609,113 @@ struct MpiCartesianDomainDecompositionTestFixture
 
 BOOST_AUTO_TEST_SUITE( mpi_cartesian_domain_decomposition )
 
+BOOST_AUTO_TEST_CASE(weighted_cuts_cover_uniform_and_edge_cases) {
+  using WeightGrid = schnek::Grid<double, 1>;
+  using Index = WeightGrid::IndexType;
+
+  auto makeCumulativeWeights = [](const std::vector<double> &weights) {
+    WeightGrid cumulative(Index(-1), Index(static_cast<ptrdiff_t>(weights.size()) - 1));
+    cumulative(-1) = 0.0;
+    for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(weights.size()); ++i) {
+      cumulative(i) = cumulative(i - 1) + weights[static_cast<size_t>(i)];
+    }
+    return cumulative;
+  };
+
+  std::vector<ptrdiff_t> cuts;
+  std::string error;
+
+  const WeightGrid uniform = makeCumulativeWeights(std::vector<double>(8, 1.0));
+  BOOST_CHECK(schnek::internal::computeWeightedCuts(uniform, 1, 0, 7, 4, cuts, error));
+  const std::vector<ptrdiff_t> uniformCuts{2, 4, 6};
+  BOOST_CHECK_EQUAL_COLLECTIONS(cuts.begin(), cuts.end(), uniformCuts.begin(), uniformCuts.end());
+
+  const WeightGrid firstCellOnly = makeCumulativeWeights({1.0, 0.0, 0.0, 0.0});
+  BOOST_CHECK(!schnek::internal::computeWeightedCuts(firstCellOnly, 1, 0, 3, 2, cuts, error));
+  BOOST_CHECK(error.find("no coarse weight cell") != std::string::npos);
+
+  const WeightGrid firstCellBoundary = makeCumulativeWeights({0.5, 0.125, 0.125, 0.25});
+  BOOST_CHECK(schnek::internal::computeWeightedCuts(firstCellBoundary, 1, 0, 3, 2, cuts, error));
+  BOOST_REQUIRE_EQUAL(cuts.size(), static_cast<size_t>(1));
+  BOOST_CHECK_EQUAL(cuts[0], 1);
+
+  const WeightGrid lastCellHeavy = makeCumulativeWeights({0.1, 0.1, 0.1, 0.7});
+  BOOST_CHECK(schnek::internal::computeWeightedCuts(lastCellHeavy, 1, 0, 3, 2, cuts, error));
+  BOOST_REQUIRE_EQUAL(cuts.size(), static_cast<size_t>(1));
+  BOOST_CHECK_EQUAL(cuts[0], 3);
+
+  const WeightGrid twoCells = makeCumulativeWeights({1.0, 1.0});
+  BOOST_CHECK(!schnek::internal::computeWeightedCuts(twoCells, 1, 0, 1, 3, cuts, error));
+  BOOST_CHECK(error.find("more processes") != std::string::npos);
+}
+
+BOOST_FIXTURE_TEST_CASE(global_weight_failure_is_broadcast_before_throw, MpiCartesianDomainDecompositionTestFixture) {
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 2));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{1})
+  );
+  int failedStatus = 0;
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, &failedStatus, sizeof(failedStatus))
+  );
+
+  schnek::Range<ptrdiff_t, 1> globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(3));
+  schnek::Range<double, 1> globalDomain(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0));
+  schnek::Grid<double, 1> weights(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(3));
+  weights = 0.0;
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.setGlobalWeights(weights);
+
+  BOOST_CHECK_THROW(decomposition.init(), schnek::ScheckException);
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Bcast.size(), static_cast<size_t>(1));
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<3>(), testComm);
+}
+
+BOOST_FIXTURE_TEST_CASE(local_weight_failure_is_allreduced_before_throw, MpiCartesianDomainDecompositionTestFixture) {
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 2));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{0})
+  );
+
+  schnek::Range<ptrdiff_t, 1> globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  schnek::Range<double, 1> globalDomain(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0));
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  schnek::Grid<double, 1> localWeights(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(3));
+  localWeights = 1.0;
+  decomposition.setLocalWeights(localWeights);
+
+  const int remoteError = 1;
+  context.ret_MPI_Allreduce.push_back(
+      boost::tuple<int, std::vector<char>>(MPI_SUCCESS, toByteVectorScalar(remoteError))
+  );
+
+  BOOST_CHECK_THROW(decomposition.balanceLoad(), schnek::ScheckException);
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Allreduce.size(), static_cast<size_t>(1));
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].datatype, MPI_INT);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].op, MPI_MAX);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].comm, testComm);
+  BOOST_CHECK(context.args_MPI_Cart_sub.empty());
+}
+
 // ==========================================================================
 // 1 dimensional
 // ==========================================================================
@@ -1192,11 +1300,13 @@ BOOST_FIXTURE_TEST_CASE( single_process_1d_global, MpiCartesianDomainDecompositi
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), 0);
   BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 1);
 
-  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)1);
-  BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2);
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)2);
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 1);
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<3>(), testComm);
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<0>(), 2);
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<1>(), MPI_LONG);
 
   BOOST_CHECK_EQUAL(decomposition.master(), true);
   BOOST_CHECK_EQUAL(decomposition.numProcs(), 1);
@@ -1226,6 +1336,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d_global_master, MpiCartesianDomainDecom
       resetContext();
 
       int weightMax = (globalRangeMax - globalRangeMin + 1) / resolution - 1;
+      if (numProcs > weightMax + 1) continue;
 
       MPI_Comm testComm = (MPI_Comm)(void*)123;
       std::vector<int> coords(1, 0);
@@ -1279,11 +1390,15 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d_global_master, MpiCartesianDomainDecom
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)1);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*numProcs);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)2);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<3>(), testComm);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<0>(), 2*numProcs);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<1>(), MPI_LONG);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<2>(), 0);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<3>(), testComm);
 
       BOOST_CHECK_EQUAL(decomposition.master(), true);
       BOOST_CHECK_EQUAL(decomposition.numProcs(), numProcs);
@@ -1405,11 +1520,15 @@ BOOST_FIXTURE_TEST_CASE( multi_process_1d_global_child, MpiCartesianDomainDecomp
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), rank);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 1);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)1);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*numProcs);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)2);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<3>(), testComm);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<0>(), 2*numProcs);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<1>(), MPI_LONG);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<2>(), 0);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<3>(), testComm);
 
       BOOST_CHECK_EQUAL(decomposition.master(), false);
       BOOST_CHECK_EQUAL(decomposition.numProcs(), numProcs);
@@ -1869,6 +1988,10 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_master, MpiCartesianDomainDecom
       resetContext();
 
       int weightMax = (globalRangeMax - globalRangeMin + 1) / resolution - 1;
+      if (factors[0] > static_cast<size_t>((weightMax + 1) / 2) ||
+          factors[1] > static_cast<size_t>((weightMax + 1) / 2)) {
+        continue;
+      }
 
       MPI_Comm testComm = (MPI_Comm)(void*)123;
       std::vector<int> coords(2, 0);
@@ -1931,16 +2054,21 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_master, MpiCartesianDomainDecom
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 2);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)2);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*factors[0]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)3);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<3>(), testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<0>(), 2*factors[1]);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<1>(), MPI_INT);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<0>(), 2*factors[0]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<1>(), MPI_LONG);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<3>(), testComm);
+
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<0>(), 2*factors[1]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<1>(), MPI_LONG);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<2>(), 0);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<3>(), testComm);
 
       BOOST_CHECK_EQUAL(decomposition.master(), true);
       BOOST_CHECK_EQUAL(decomposition.numProcs(), numProcs);
@@ -2017,6 +2145,9 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_child, MpiCartesianDomainDecomp
       resetContext();
 
       int weightMax = (globalRangeMax - globalRangeMin + 1) / 4 - 1;
+      if (factors[0] > static_cast<size_t>(weightMax + 1) || factors[1] > static_cast<size_t>(weightMax + 1)) {
+        continue;
+      }
 
       MPI_Comm testComm = (MPI_Comm)(void*)123;
       std::vector<int> coords(2);
@@ -2089,16 +2220,21 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d_global_child, MpiCartesianDomainDecomp
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), rank);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 2);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)2);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*factors[0]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)3);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<3>(), testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<0>(), 2*factors[1]);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<1>(), MPI_INT);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<0>(), 2*factors[0]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<1>(), MPI_LONG);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<3>(), testComm);
+
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<0>(), 2*factors[1]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<1>(), MPI_LONG);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<2>(), 0);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<3>(), testComm);
 
       BOOST_CHECK_EQUAL(decomposition.master(), false);
       BOOST_CHECK_EQUAL(decomposition.numProcs(), numProcs);
@@ -2579,6 +2715,11 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_master, MpiCartesianDomainDecom
       resetContext();
 
       int weightMax = (globalRangeMax - globalRangeMin + 1) / resolution - 1;
+      if (factors[0] > static_cast<size_t>((weightMax + 1) / 2) ||
+          factors[1] > static_cast<size_t>((weightMax + 1) / 2) ||
+          factors[2] > static_cast<size_t>((weightMax + 1) / 2)) {
+        continue;
+      }
 
       MPI_Comm testComm = (MPI_Comm)(void*)123;
       std::vector<int> coords(3, 0);
@@ -2648,21 +2789,26 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_master, MpiCartesianDomainDecom
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 3);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)3);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*factors[0]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)4);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<3>(), testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<0>(), 2*factors[1]);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<1>(), MPI_INT);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<0>(), 2*factors[0]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<1>(), MPI_LONG);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<3>(), testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<0>(), 2*factors[2]);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<1>(), MPI_INT);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<0>(), 2*factors[1]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<1>(), MPI_LONG);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<3>(), testComm);
+
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[3].get<0>(), 2*factors[2]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[3].get<1>(), MPI_LONG);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[3].get<2>(), 0);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[3].get<3>(), testComm);
 
       BOOST_CHECK_EQUAL(decomposition.master(), true);
       BOOST_CHECK_EQUAL(decomposition.numProcs(), numProcs);
@@ -2741,6 +2887,10 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_child, MpiCartesianDomainDecomp
       resetContext();
 
       int weightMax = (globalRangeMax - globalRangeMin + 1) / 16 - 1;
+      if (factors[0] > static_cast<size_t>(weightMax + 1) || factors[1] > static_cast<size_t>(weightMax + 1) ||
+          factors[2] > static_cast<size_t>(weightMax + 1)) {
+        continue;
+      }
 
       MPI_Comm testComm = (MPI_Comm)(void*)123;
       std::vector<int> coords(3);
@@ -2824,21 +2974,26 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d_global_child, MpiCartesianDomainDecomp
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<1>(), rank);
       BOOST_CHECK_EQUAL(context.args_MPI_Cart_coords[0].get<2>(), 3);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)3);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 2*factors[0]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), (size_t)4);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<0>(), 1);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<1>(), MPI_INT);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[0].get<3>(), testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<0>(), 2*factors[1]);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<1>(), MPI_INT);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<0>(), 2*factors[0]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<1>(), MPI_LONG);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[1].get<3>(), testComm);
 
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<0>(), 2*factors[2]);
-      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<1>(), MPI_INT);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<0>(), 2*factors[1]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<1>(), MPI_LONG);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<2>(), 0);
       BOOST_CHECK_EQUAL(context.args_MPI_Bcast[2].get<3>(), testComm);
+
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[3].get<0>(), 2*factors[2]);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[3].get<1>(), MPI_LONG);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[3].get<2>(), 0);
+      BOOST_CHECK_EQUAL(context.args_MPI_Bcast[3].get<3>(), testComm);
 
       BOOST_CHECK_EQUAL(decomposition.master(), false);
       BOOST_CHECK_EQUAL(decomposition.numProcs(), numProcs);
@@ -4381,15 +4536,17 @@ BOOST_FIXTURE_TEST_CASE( balance_load_local_weights_shifts_cuts_shrink_1d, MpiCa
   });
   BOOST_CHECK_EQUAL(callCount, 1);
 
-  // calcGridDistributonLocalWeights should perform exactly one Allreduce per
-  // dimension (1 in this 1D case) over the full Cartesian communicator.
-  // Subsequent Allreduce calls may come from the redistribution machinery but
-  // the first one is the load-balancing reduction.
+  // The first Allreduce validates local weights; the next reduces the
+  // per-dimension marginal over the local-weight slice.
   BOOST_REQUIRE_GE(context.args_MPI_Allreduce.size(), static_cast<size_t>(1));
-  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, static_cast<int>(reduced.size()));
-  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].datatype, MPI_DOUBLE);
-  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].op, MPI_SUM);
-  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].comm, subComm);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].datatype, MPI_INT);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].op, MPI_MAX);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].comm, testComm);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[1].count, static_cast<int>(reduced.size()));
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[1].datatype, MPI_DOUBLE);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[1].op, MPI_SUM);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[1].comm, subComm);
 
   BOOST_CHECK_EQUAL(context.args_MPI_Irecv.size(), static_cast<size_t>(0));
   BOOST_CHECK_EQUAL(context.args_MPI_Isend.size(), static_cast<size_t>(1));
@@ -4479,15 +4636,17 @@ BOOST_FIXTURE_TEST_CASE( balance_load_local_weights_shifts_cuts_grow_1d, MpiCart
   });
   BOOST_CHECK_EQUAL(callCount, 1);
 
-  // calcGridDistributonLocalWeights should perform exactly one Allreduce per
-  // dimension (1 in this 1D case) over the full Cartesian communicator.
-  // Subsequent Allreduce calls may come from the redistribution machinery but
-  // the first one is the load-balancing reduction.
+  // The first Allreduce validates local weights; the next reduces the
+  // per-dimension marginal over the local-weight slice.
   BOOST_REQUIRE_GE(context.args_MPI_Allreduce.size(), static_cast<size_t>(1));
-  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, static_cast<int>(reduced.size()));
-  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].datatype, MPI_DOUBLE);
-  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].op, MPI_SUM);
-  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].comm, subComm);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].datatype, MPI_INT);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].op, MPI_MAX);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].comm, testComm);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[1].count, static_cast<int>(reduced.size()));
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[1].datatype, MPI_DOUBLE);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[1].op, MPI_SUM);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[1].comm, subComm);
 
   BOOST_CHECK_EQUAL(context.args_MPI_Irecv.size(), static_cast<size_t>(1));
   BOOST_CHECK_EQUAL(context.args_MPI_Isend.size(), static_cast<size_t>(0));
@@ -4562,10 +4721,12 @@ BOOST_FIXTURE_TEST_CASE( balance_load_local_weights_uniform_keeps_layout_1d, Mpi
   });
   BOOST_CHECK_EQUAL(callCount, 1);
 
-  // One Allreduce on a buffer of length 20 with MPI_SUM over the Cartesian comm.
-  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce.size(), static_cast<size_t>(3));
-  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, 5);
-  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].op, MPI_SUM);
+  // One weight-validation Allreduce and three local-weight reductions.
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce.size(), static_cast<size_t>(4));
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, 1);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].op, MPI_MAX);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[1].count, 5);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[1].op, MPI_SUM);
 
   BOOST_CHECK_EQUAL(context.args_MPI_Irecv.size(), static_cast<size_t>(0));
   BOOST_CHECK_EQUAL(context.args_MPI_Isend.size(), static_cast<size_t>(0));
