@@ -217,6 +217,7 @@ namespace schnek {
     // 2. Compute new grid distribution
     ProcRanges newRanges;
     calcGridDistributon(newRanges);
+    validateProcRanges(newRanges);
 
     // 3. Compute new local range and domain
     RangeType newLocalRange;
@@ -387,6 +388,7 @@ namespace schnek {
 
     // Determine the sizes of the local grids
     calcGridDistributon(procRanges);
+    validateProcRanges(procRanges);
 
     RangeType localRange(this->globalRange);
     DomainType localDomain(this->globalDomain);
@@ -442,6 +444,13 @@ namespace schnek {
     const LimitType dm = hi - lo + 1;
 
     for (size_t d = 0; d < rank; ++d) {
+      const ptrdiff_t processCount = static_cast<ptrdiff_t>(dims[d]);
+      if (dm[d] < processCount) {
+        SCHNECK_FAIL(
+            "Cannot partition dimension " << d << ": " << dm[d] << " cells for " << processCount << " processes"
+        );
+      }
+
       // finding cut points in the cumulative weights
       Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
 
@@ -453,6 +462,36 @@ namespace schnek {
         int cut = lo[d] + (long(i) * long(dm[d])) / dims[d];
         dimRanges(i - 1).getHi()[0] = cut - 1;
         dimRanges(i).getLo()[0] = cut;
+      }
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::validateProcRanges(const ProcRanges &ranges) const {
+    for (size_t d = 0; d < rank; ++d) {
+      const auto &dimRanges = ranges[d];
+      const ptrdiff_t processCount = static_cast<ptrdiff_t>(dims[d]);
+
+      SCHNEK_ASSERT(
+          processCount > 0 && dimRanges.getLo()[0] == 0 && dimRanges.getHi()[0] == processCount - 1,
+          "Invalid process range table in dimension " << d
+      );
+
+      ptrdiff_t expectedLo = dimRanges(0).getLo()[0];
+      for (ptrdiff_t c = 0; c < processCount; ++c) {
+        const auto &range = dimRanges(c);
+        const ptrdiff_t rangeLo = range.getLo()[0];
+        const ptrdiff_t rangeHi = range.getHi()[0];
+        const ptrdiff_t extent = rangeHi - rangeLo + 1;
+
+        if (extent < 1 || rangeLo != expectedLo) {
+          SCHNECK_FAIL(
+              "Invalid process range in dimension " << d << ": process " << c << " has extent " << extent << " (range ["
+                                                    << rangeLo << ", " << rangeHi
+                                                    << "]); expected a non-empty contiguous partition"
+          );
+        }
+        expectedLo = rangeHi + 1;
       }
     }
   }
@@ -2344,6 +2383,19 @@ namespace schnek {
 
       ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
       ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
+      SCHNEK_ASSERT(
+          lowerHalo == upperHalo, "MPI halo exchange requires symmetric halo widths in dimension "
+                                      << dim << " (lower=" << lowerHalo << ", upper=" << upperHalo << ")"
+      );
+#ifndef NDEBUG
+      const ptrdiff_t innerExtent = innerHi[dim] - innerLo[dim] + 1;
+      SCHNEK_ASSERT(
+          innerExtent > 0 && innerExtent >= lowerHalo && innerExtent >= upperHalo,
+          "Halo width exceeds the local inner extent in dimension "
+              << dim << " (inner extent=" << innerExtent << ", lower halo=" << lowerHalo << ", upper halo=" << upperHalo
+              << ")"
+      );
+#endif
 
       std::optional<RangeTypeLocal> loGhostRange;
       if (lowerHalo > 0) {
@@ -2478,6 +2530,19 @@ namespace schnek {
 
       ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
       ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
+      SCHNEK_ASSERT(
+          lowerHalo == upperHalo, "MPI halo accumulate requires symmetric halo widths in dimension "
+                                      << dim << " (lower=" << lowerHalo << ", upper=" << upperHalo << ")"
+      );
+#ifndef NDEBUG
+      const ptrdiff_t innerExtent = innerHi[dim] - innerLo[dim] + 1;
+      SCHNEK_ASSERT(
+          innerExtent > 0 && innerExtent >= lowerHalo && innerExtent >= upperHalo,
+          "Halo width exceeds the local inner extent in dimension "
+              << dim << " (inner extent=" << innerExtent << ", lower halo=" << lowerHalo << ", upper halo=" << upperHalo
+              << ")"
+      );
+#endif
 
       std::optional<RangeTypeLocal> loGhostRange;
       if (lowerHalo > 0) {

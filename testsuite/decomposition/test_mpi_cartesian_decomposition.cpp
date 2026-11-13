@@ -649,6 +649,174 @@ BOOST_AUTO_TEST_CASE(weighted_cuts_cover_uniform_and_edge_cases) {
   BOOST_CHECK(error.find("more processes") != std::string::npos);
 }
 
+BOOST_FIXTURE_TEST_CASE(uniform_partition_rejects_empty_process_ranges, MpiCartesianDomainDecompositionTestFixture) {
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  const MPI_Comm worldComm = (MPI_Comm)(void *)574;
+  const schnek::Range<double, 2> globalDomain(
+      schnek::Array<double, 2>(0.0, 0.0), schnek::Array<double, 2>(1.0, 1.0)
+  );
+
+  auto initialize = [&](ptrdiff_t xCells, bool shouldFail) {
+    resetContext();
+    context.commWorld = worldComm;
+    context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 4));
+    context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+    context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+    context.ret_MPI_Cart_coords.push_back(
+        boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{0, 0})
+    );
+
+    schnek::Range<ptrdiff_t, 2> globalRange(
+        schnek::Array<ptrdiff_t, 2>(0, 0), schnek::Array<ptrdiff_t, 2>(xCells - 1, 0)
+    );
+    schnek::MpiCartesianDomainDecomposition<2> decomposition(context);
+    decomposition.setGlobalRange(globalRange);
+    decomposition.setGlobalDomain(globalDomain);
+
+    if (shouldFail) {
+      try {
+        decomposition.init();
+        BOOST_FAIL("Expected init() to reject a dimension with fewer cells than processes");
+      } catch (const schnek::ScheckException &error) {
+        const std::string message(error.what());
+        BOOST_CHECK(message.find("dimension 0") != std::string::npos);
+        BOOST_CHECK(message.find(std::to_string(xCells)) != std::string::npos);
+        BOOST_CHECK(message.find("4 processes") != std::string::npos);
+      }
+    } else {
+      decomposition.init();
+      const auto &ranges = decomposition.getProcRanges();
+      BOOST_CHECK_EQUAL(ranges[0].getDims()[0], 4);
+      BOOST_CHECK_EQUAL(ranges[1].getDims()[0], 1);
+    }
+
+    BOOST_REQUIRE_EQUAL(context.args_MPI_Cart_create.size(), static_cast<size_t>(1));
+    BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<2>()[0], 4);
+    BOOST_CHECK_EQUAL(context.args_MPI_Cart_create[0].get<2>()[1], 1);
+  };
+
+  initialize(3, true);
+  initialize(4, false);
+}
+
+BOOST_FIXTURE_TEST_CASE(balance_load_rejects_zero_width_weighted_range, MpiCartesianDomainDecompositionTestFixture) {
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 2));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{1})
+  );
+
+  const schnek::Range<ptrdiff_t, 1> globalRange(
+      schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7)
+  );
+  const schnek::Range<double, 1> globalDomain(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0));
+  schnek::Grid<double, 1> weights(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  weights = 1.0;
+
+  int success = 1;
+  int validRanges[] = {0, 3, 4, 7};
+  int invalidRanges[] = {0, 3, 4, 3};
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, &success, sizeof(success))
+  );
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, validRanges, sizeof(validRanges))
+  );
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, &success, sizeof(success))
+  );
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, invalidRanges, sizeof(invalidRanges))
+  );
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.setGlobalWeights(weights);
+  decomposition.init();
+
+  try {
+    decomposition.balanceLoad();
+    BOOST_FAIL("Expected balanceLoad() to reject a zero-width weighted range");
+  } catch (const schnek::ScheckException &error) {
+    BOOST_CHECK(std::string(error.what()).find("extent 0") != std::string::npos);
+  }
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), static_cast<size_t>(4));
+}
+
+#ifndef NDEBUG
+BOOST_FIXTURE_TEST_CASE(exchange_rejects_halo_wider_than_local_inner_range, MpiCartesianDomainDecompositionTestFixture) {
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{0})
+  );
+
+  using FieldType = schnek::Field<double, 1>;
+  using StaggerType = FieldType::StaggerType;
+  const schnek::Range<ptrdiff_t, 1> globalRange(
+      schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(0)
+  );
+  const schnek::Range<double, 1> globalDomain(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0));
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  StaggerType noStagger(false);
+  schnek::GridFactory<FieldType> factory(noStagger, 2);
+  const auto registration = decomposition.registerField(factory);
+  BOOST_CHECK_THROW(decomposition.exchange(registration), schnek::ScheckException);
+  BOOST_CHECK_THROW(accumulateRegistration(decomposition, registration), schnek::ScheckException);
+  BOOST_CHECK(context.args_MPI_Sendrecv.empty());
+}
+#endif
+
+BOOST_FIXTURE_TEST_CASE(exchange_rejects_asymmetric_halo_widths, MpiCartesianDomainDecompositionTestFixture) {
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{0})
+  );
+
+  using GridType = schnek::Grid<double, 1>;
+  using IndexType = GridType::IndexType;
+  const schnek::Range<ptrdiff_t, 1> globalRange(
+      schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(3)
+  );
+  const schnek::Range<double, 1> globalDomain(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0));
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  const auto registration = decomposition.registerField(schnek::GridFactory<GridType>());
+  auto gridContext = decomposition.getGridContext({registration});
+  gridContext.forEach([&](const schnek::Range<ptrdiff_t, 1> &, GridType &grid) {
+    grid.resize(IndexType(-1), IndexType(5));
+  });
+
+  try {
+    decomposition.exchange(registration);
+    BOOST_FAIL("Expected exchange() to reject asymmetric halo widths");
+  } catch (const schnek::ScheckException &error) {
+    BOOST_CHECK(std::string(error.what()).find("symmetric halo widths") != std::string::npos);
+  }
+  BOOST_CHECK_THROW(accumulateRegistration(decomposition, registration), schnek::ScheckException);
+  BOOST_CHECK(context.args_MPI_Sendrecv.empty());
+}
+
 BOOST_FIXTURE_TEST_CASE(global_weight_failure_is_broadcast_before_throw, MpiCartesianDomainDecompositionTestFixture) {
   const MPI_Comm testComm = (MPI_Comm)(void *)123;
   context.commWorld = (MPI_Comm)(void *)574;
@@ -1833,6 +2001,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_2d, MpiCartesianDomainDecompositionTestFi
       std::vector<size_t> factors;
       std::vector<size_t> weights(2, 10001);
       schnek::equalFactors(numProcs, 2, factors, weights);
+      if (factors[0] > 10001 || factors[1] > 10001) continue;
 
       resetContext();
 
@@ -2553,6 +2722,7 @@ BOOST_FIXTURE_TEST_CASE( multi_process_3d, MpiCartesianDomainDecompositionTestFi
       std::vector<size_t> factors;
       std::vector<size_t> weights(3, 10001);
       schnek::equalFactors(numProcs, 3, factors, weights);
+      if (factors[0] > 10001 || factors[1] > 10001 || factors[2] > 10001) continue;
 
       resetContext();
       MPI_Comm testComm = (MPI_Comm)(void*)123;

@@ -36,6 +36,8 @@ namespace schnek {
    * here.  All internal helpers (`balanceLoad`, `exchangeGrid`, etc.) rely on
    * this single-region invariant and will assert in debug builds if it is
    * violated.
+   * Halo exchange and accumulation require symmetric lower and upper halo widths
+   * in every dimension.
    *
    * Future backends that support multiple regions per process (e.g. SFC, AMR)
    * must not derive from this class; they should derive from
@@ -253,6 +255,11 @@ namespace schnek {
        * Determine the new grid layout based on the local weights
        */
       void calcGridDistributonLocalWeights(ProcRanges &ranges);
+
+      /**
+       * Validate that every process range is non-empty and that the cuts form a contiguous partition.
+       */
+      void validateProcRanges(const ProcRanges &ranges) const;
 
       template<typename T>
       T allReduce(T value, MPI_Op op) const;
