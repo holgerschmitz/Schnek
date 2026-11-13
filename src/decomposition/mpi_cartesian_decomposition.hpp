@@ -361,8 +361,8 @@ namespace schnek {
       void registerRedistributeHandler();
       template<typename GridType>
       void redistributeTyped(
-          GridType &oldGrid,
-          GridType &newGrid,
+          GridType *oldGrid,
+          GridType *newGrid,
           const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan,
           const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
       );

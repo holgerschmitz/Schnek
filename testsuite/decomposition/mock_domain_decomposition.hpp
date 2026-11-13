@@ -29,7 +29,11 @@ namespace schnek {
 
         MockDomainDecomposition() : Base() {}
 
-        void init() override {}
+        void init() override {
+          if (this->localRangeCount() == 0) {
+            this->addLocalRange(this->globalRange, this->globalDomain);
+          }
+        }
         void balanceLoad() override {}
         int getUniqueId() const override { return 0; }
         bool master() const override { return true; }

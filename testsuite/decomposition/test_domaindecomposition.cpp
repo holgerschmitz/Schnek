@@ -182,6 +182,45 @@ BOOST_AUTO_TEST_CASE( register_subrange_no_overlap_skips_ranges )
   BOOST_CHECK_EQUAL(callCount, 0);
 }
 
+BOOST_AUTO_TEST_CASE( register_subrange_before_init )
+{
+  using FieldType = schnek::Field<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 1>;
+  using IndexType = schnek::Array<ptrdiff_t, 1>;
+  using DomainLimitType = schnek::Array<double, 1>;
+  using StaggerType = typename FieldType::StaggerType;
+
+  MockDomainDecomposition<1> decomposition;
+  decomposition.setGlobalRange(RangeType(IndexType(0), IndexType(14)));
+  decomposition.setGlobalDomain(DomainType(DomainLimitType(0.0), DomainLimitType(15.0)));
+
+  StaggerType noStagger(false);
+  schnek::GridFactory<FieldType> factory(noStagger, 0);
+  const RangeType subRange(IndexType(2), IndexType(7));
+  const RangeType outsideRange(IndexType(20), IndexType(25));
+  const auto registration = decomposition.registerField(factory, subRange);
+  const auto outsideRegistration = decomposition.registerField(factory, outsideRange);
+
+  decomposition.init();
+
+  auto context = decomposition.getGridContext({registration});
+  int callCount = 0;
+  context.forEach([&](const RangeType &range, FieldType &field) {
+    ++callCount;
+    BOOST_CHECK_EQUAL(range.getLo()[0], 2);
+    BOOST_CHECK_EQUAL(range.getHi()[0], 7);
+    BOOST_CHECK_EQUAL(field.getLo()[0], 2);
+    BOOST_CHECK_EQUAL(field.getHi()[0], 7);
+  });
+  BOOST_CHECK_EQUAL(callCount, 1);
+
+  auto outsideContext = decomposition.getGridContext({outsideRegistration});
+  callCount = 0;
+  outsideContext.forEach([&](const RangeType &, FieldType &) { ++callCount; });
+  BOOST_CHECK_EQUAL(callCount, 0);
+}
+
 BOOST_AUTO_TEST_CASE( register_projection_1d_from_2d )
 {
   using FullGridType = schnek::Grid<double, 2>;

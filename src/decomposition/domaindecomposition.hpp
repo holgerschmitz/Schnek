@@ -48,6 +48,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -557,6 +558,8 @@ namespace schnek {
        * This allows implementations to add a local range for grid allocation
        */
       void addLocalRange(RangeType range, DomainType domain);
+
+      std::optional<RangeType> getRegisteredFieldSubRange(long id) const { return registeredFields.at(id)->subRange; }
 
       /**
        * Clear all local allocation ranges and associated grids.
@@ -1111,7 +1114,7 @@ namespace schnek {
     std::vector<internal::pGridWrapper> gridList;
     gridList.reserve(ranges.size());
     for (const auto &localRange : ranges) {
-      gridList.push_back(registration->makeGrid(localRange.range, localRange.domain));
+      gridList.push_back(registration->makeGridForLocalRange(localRange.range, localRange.domain));
     }
 
     grids[id] = std::move(gridList);
@@ -1125,49 +1128,14 @@ namespace schnek {
       const GridFactory<GridType> &factory, const RangeType &subRange
   ) {
     using Registration = internal::GridRegistrationImpl<rank, CheckingPolicy, GridType>;
-    auto registration = std::make_shared<Registration>(factory);
+    auto registration = std::make_shared<Registration>(factory, subRange);
     long id = registration->getId();
     registeredFields[id] = registration;
 
     std::vector<internal::pGridWrapper> gridList;
     gridList.reserve(ranges.size());
     for (const auto &localRange : ranges) {
-      RangeType intersection;
-      bool overlaps = true;
-      for (size_t d = 0; d < rank; ++d) {
-        const auto lo = std::max(localRange.range.getLo()[d], subRange.getLo()[d]);
-        const auto hi = std::min(localRange.range.getHi()[d], subRange.getHi()[d]);
-        if (lo > hi) {
-          overlaps = false;
-          break;
-        }
-        intersection.getLo()[d] = lo;
-        intersection.getHi()[d] = hi;
-      }
-
-      if (!overlaps) {
-        gridList.push_back(nullptr);
-        continue;
-      }
-
-      DomainType subDomain(localRange.domain);
-      for (size_t d = 0; d < rank; ++d) {
-        const ptrdiff_t localCells = localRange.range.getHi()[d] - localRange.range.getLo()[d] + 1;
-        const ptrdiff_t subCells = intersection.getHi()[d] - intersection.getLo()[d] + 1;
-
-        if (localCells <= 0) {
-          continue;
-        }
-
-        const double cellSize =
-            (localRange.domain.getHi()[d] - localRange.domain.getLo()[d]) / static_cast<double>(localCells);
-        const ptrdiff_t offsetLo = intersection.getLo()[d] - localRange.range.getLo()[d];
-
-        subDomain.getLo()[d] = localRange.domain.getLo()[d] + cellSize * static_cast<double>(offsetLo);
-        subDomain.getHi()[d] = subDomain.getLo()[d] + cellSize * static_cast<double>(subCells);
-      }
-
-      gridList.push_back(registration->makeGrid(intersection, subDomain));
+      gridList.push_back(registration->makeGridForLocalRange(localRange.range, localRange.domain));
     }
 
     grids[id] = std::move(gridList);
@@ -1455,7 +1423,7 @@ namespace schnek {
     ranges.push_back(LocalRangeInfo{range, domain});
     for (auto &reg : registeredFields) {
       long id = reg.first;
-      grids[id].push_back(reg.second->makeGrid(range, domain));
+      grids[id].push_back(reg.second->makeGridForLocalRange(range, domain));
     }
     for (auto &reg : projectedRegisteredFields) {
       long id = reg.first;

@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cstring>
 #include <stdexcept>
+#include <utility>
 
 #ifdef SCHNEK_HAVE_KOKKOS
 #include <Kokkos_Core.hpp>
@@ -269,7 +270,13 @@ int MpiTestContextImpl::MPI_Isend(
     const void* buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request* request
 ) {
   size_t argsCount = args_MPI_Isend.size();
-  args_MPI_Isend.push_back({buf != nullptr, count, datatype, dest, tag, comm});
+  IsendCallInfo call{buf != nullptr, count, datatype, dest, tag, comm, {}};
+  if (buf != nullptr && count > 0) {
+    const size_t bytes = datatypeSize(datatype) * static_cast<size_t>(count);
+    call.payload.resize(bytes);
+    std::memcpy(call.payload.data(), buf, bytes);
+  }
+  args_MPI_Isend.push_back(std::move(call));
 
   if (request) {
     *request = MPI_REQUEST_NULL;

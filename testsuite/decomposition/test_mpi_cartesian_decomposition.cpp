@@ -1139,6 +1139,138 @@ BOOST_FIXTURE_TEST_CASE( foreach_single_process_1d_subrange_no_overlap, MpiCarte
   BOOST_CHECK_EQUAL(callCount, 0);
 }
 
+BOOST_FIXTURE_TEST_CASE(balance_load_receives_subrange_without_old_grid, MpiCartesianDomainDecompositionTestFixture) {
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.currentRank = 1;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 2));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{1})
+  );
+
+  using GridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  const RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  const schnek::Range<double, 1> globalDomain(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0));
+  GridType weights(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  weights = 1.0;
+
+  int success = 1;
+  long initialRanges[] = {0, 3, 4, 7};
+  long rebalancedRanges[] = {0, 1, 2, 7};
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, &success, sizeof(success))
+  );
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, initialRanges, sizeof(initialRanges))
+  );
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, &success, sizeof(success))
+  );
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, rebalancedRanges, sizeof(rebalancedRanges))
+  );
+  context.ret_MPI_Irecv.push_back(
+      boost::tuple<int, std::vector<char>>(MPI_SUCCESS, toByteVector(std::vector<double>{202.0, 303.0}))
+  );
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.setGlobalWeights(weights);
+  const RangeType subRange(schnek::Array<ptrdiff_t, 1>(2), schnek::Array<ptrdiff_t, 1>(3));
+  const auto registration = decomposition.registerField(schnek::GridFactory<GridType>(), subRange);
+  decomposition.init();
+
+  int oldGridCount = 0;
+  decomposition.getGridContext({registration}).forEach(
+      [&](const RangeType &, GridType &) { ++oldGridCount; }
+  );
+  BOOST_CHECK_EQUAL(oldGridCount, 0);
+
+  decomposition.balanceLoad();
+  int newGridCount = 0;
+  decomposition.getGridContext({registration}).forEach([&](const RangeType &range, GridType &grid) {
+    ++newGridCount;
+    BOOST_CHECK_EQUAL(range.getLo()[0], 2);
+    BOOST_CHECK_EQUAL(range.getHi()[0], 3);
+    BOOST_CHECK_EQUAL(grid(2), 202.0);
+    BOOST_CHECK_EQUAL(grid(3), 303.0);
+  });
+
+  BOOST_CHECK_EQUAL(newGridCount, 1);
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Irecv.size(), static_cast<size_t>(1));
+  BOOST_CHECK_EQUAL(context.args_MPI_Irecv[0].count, 2);
+  BOOST_CHECK_EQUAL(context.args_MPI_Irecv[0].source, 0);
+  BOOST_CHECK(context.args_MPI_Isend.empty());
+}
+
+BOOST_FIXTURE_TEST_CASE(balance_load_sends_subrange_without_new_grid, MpiCartesianDomainDecompositionTestFixture) {
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.currentRank = 1;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 2));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{1})
+  );
+
+  using GridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  const RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  const schnek::Range<double, 1> globalDomain(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0));
+  GridType weights(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  weights = 1.0;
+
+  int success = 1;
+  long initialRanges[] = {0, 3, 4, 7};
+  long rebalancedRanges[] = {0, 5, 6, 7};
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, &success, sizeof(success))
+  );
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, initialRanges, sizeof(initialRanges))
+  );
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, &success, sizeof(success))
+  );
+  context.ret_MPI_Bcast.push_back(
+      boost::tuple<int, void *, size_t>(MPI_SUCCESS, rebalancedRanges, sizeof(rebalancedRanges))
+  );
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.setGlobalWeights(weights);
+  const RangeType subRange(schnek::Array<ptrdiff_t, 1>(4), schnek::Array<ptrdiff_t, 1>(5));
+  const auto registration = decomposition.registerField(schnek::GridFactory<GridType>(), subRange);
+  decomposition.init();
+  decomposition.getGridContext({registration}).forEach([&](const RangeType &, GridType &grid) {
+    grid(4) = 104.0;
+    grid(5) = 105.0;
+  });
+
+  decomposition.balanceLoad();
+  int newGridCount = 0;
+  decomposition.getGridContext({registration}).forEach(
+      [&](const RangeType &, GridType &) { ++newGridCount; }
+  );
+
+  BOOST_CHECK_EQUAL(newGridCount, 0);
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Isend.size(), static_cast<size_t>(1));
+  BOOST_CHECK_EQUAL(context.args_MPI_Isend[0].count, 2);
+  BOOST_CHECK_EQUAL(context.args_MPI_Isend[0].dest, 0);
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Isend[0].payload.size(), 2 * sizeof(double));
+  std::vector<double> sentValues(2);
+  std::memcpy(sentValues.data(), context.args_MPI_Isend[0].payload.data(), context.args_MPI_Isend[0].payload.size());
+  BOOST_CHECK_EQUAL(sentValues[0], 104.0);
+  BOOST_CHECK_EQUAL(sentValues[1], 105.0);
+  BOOST_CHECK(context.args_MPI_Irecv.empty());
+}
+
 BOOST_FIXTURE_TEST_CASE( multi_process_1d, MpiCartesianDomainDecompositionTestFixture )
 {
   std::vector<int> numProcsArray;
