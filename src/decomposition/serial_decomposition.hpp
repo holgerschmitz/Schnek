@@ -514,7 +514,6 @@ namespace schnek {
   ) {
     using IndexType = typename GridType::IndexType;
     using RangeTypeLocal = typename GridType::RangeType;
-    using ValueType = typename GridType::value_type;
 
     const IndexType gridLo = grid.getLo();
     const IndexType gridHi = grid.getHi();
@@ -543,35 +542,35 @@ namespace schnek {
       }
 
       std::optional<RangeTypeLocal> loSourceRange;
-      if (lowerHalo > 0) {
+      if (upperHalo > 0) {
         IndexType lo = gridLo;
         IndexType hi = gridHi;
         lo[dim] = innerLo[dim];
-        hi[dim] = innerLo[dim] + lowerHalo - 1;
+        hi[dim] = innerLo[dim] + upperHalo - 1;
         loSourceRange = makeRange(lo, hi);
       }
 
       std::optional<RangeTypeLocal> hiSourceRange;
-      if (upperHalo > 0) {
+      if (lowerHalo > 0) {
         IndexType lo = gridLo;
         IndexType hi = gridHi;
-        lo[dim] = innerHi[dim] - upperHalo + 1;
+        lo[dim] = innerHi[dim] - lowerHalo + 1;
         hi[dim] = innerHi[dim];
         hiSourceRange = makeRange(lo, hi);
       }
 
-      if (loGhostRange && loSourceRange) {
+      if (loGhostRange && hiSourceRange) {
         auto itGhost = loGhostRange->begin();
-        auto itSource = loSourceRange->begin();
-        for (; itGhost != loGhostRange->end() && itSource != loSourceRange->end(); ++itGhost, ++itSource) {
+        auto itSource = hiSourceRange->begin();
+        for (; itGhost != loGhostRange->end() && itSource != hiSourceRange->end(); ++itGhost, ++itSource) {
           grid[*itGhost] = grid[*itSource];
         }
       }
 
-      if (hiGhostRange && hiSourceRange) {
+      if (hiGhostRange && loSourceRange) {
         auto itGhost = hiGhostRange->begin();
-        auto itSource = hiSourceRange->begin();
-        for (; itGhost != hiGhostRange->end() && itSource != hiSourceRange->end(); ++itGhost, ++itSource) {
+        auto itSource = loSourceRange->begin();
+        for (; itGhost != hiGhostRange->end() && itSource != loSourceRange->end(); ++itGhost, ++itSource) {
           grid[*itGhost] = grid[*itSource];
         }
       }
@@ -585,14 +584,13 @@ namespace schnek {
   ) {
     using IndexType = typename GridType::IndexType;
     using RangeTypeLocal = typename GridType::RangeType;
-    using ValueType = typename GridType::value_type;
 
     const IndexType gridLo = grid.getLo();
     const IndexType gridHi = grid.getHi();
 
     auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
 
-    // For the serial decomposition, we can simply copy and accumulate the ghost cells from the inner cells.
+    // Periodic ghost cells and their matching interior images both receive the accumulated sum.
 
     for (size_t dim = 0; dim < rank; ++dim) {
       ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
@@ -616,36 +614,38 @@ namespace schnek {
       }
 
       std::optional<RangeTypeLocal> loSourceRange;
-      if (lowerHalo > 0) {
+      if (upperHalo > 0) {
         IndexType lo = gridLo;
         IndexType hi = gridHi;
         lo[dim] = innerLo[dim];
-        hi[dim] = innerLo[dim] + lowerHalo - 1;
+        hi[dim] = innerLo[dim] + upperHalo - 1;
         loSourceRange = makeRange(lo, hi);
       }
 
       std::optional<RangeTypeLocal> hiSourceRange;
-      if (upperHalo > 0) {
+      if (lowerHalo > 0) {
         IndexType lo = gridLo;
         IndexType hi = gridHi;
-        lo[dim] = innerHi[dim] - upperHalo + 1;
+        lo[dim] = innerHi[dim] - lowerHalo + 1;
         hi[dim] = innerHi[dim];
         hiSourceRange = makeRange(lo, hi);
       }
 
-      if (loGhostRange && loSourceRange) {
+      if (loGhostRange && hiSourceRange) {
         auto itGhost = loGhostRange->begin();
-        auto itSource = loSourceRange->begin();
-        for (; itGhost != loGhostRange->end() && itSource != loSourceRange->end(); ++itGhost, ++itSource) {
+        auto itSource = hiSourceRange->begin();
+        for (; itGhost != loGhostRange->end() && itSource != hiSourceRange->end(); ++itGhost, ++itSource) {
           grid[*itGhost] += grid[*itSource];
+          grid[*itSource] = grid[*itGhost];
         }
       }
 
-      if (hiGhostRange && hiSourceRange) {
+      if (hiGhostRange && loSourceRange) {
         auto itGhost = hiGhostRange->begin();
-        auto itSource = hiSourceRange->begin();
-        for (; itGhost != hiGhostRange->end() && itSource != hiSourceRange->end(); ++itGhost, ++itSource) {
+        auto itSource = loSourceRange->begin();
+        for (; itGhost != hiGhostRange->end() && itSource != loSourceRange->end(); ++itGhost, ++itSource) {
           grid[*itGhost] += grid[*itSource];
+          grid[*itSource] = grid[*itGhost];
         }
       }
     }
