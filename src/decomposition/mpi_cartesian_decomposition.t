@@ -14,6 +14,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -21,11 +22,11 @@
 #include "../util/array_io.hpp"
 #include "../util/exceptions.hpp"
 #include "../util/factor.hpp"
-#include "../util/interpolate1d.hpp"
 #include "../util/logger.hpp"
 #include "../util/volume.hpp"
 #include "detail/grid_transfer.hpp"
 #include "detail/redistribution.hpp"
+#include "detail/weighted_partition.hpp"
 #include "mpi_cartesian_decomposition.hpp"
 
 #undef SCHNEK_LOGLEVEL
@@ -535,14 +536,26 @@ namespace schnek {
     typedef Grid<double, 1> Weights;
     typedef Weights::IndexType Index;
 
+    static_assert(sizeof(ptrdiff_t) == sizeof(long), "MPI_LONG must match ptrdiff_t for weighted cuts");
+
+    std::vector<long> transfer;
+    size_t transferSize = 0;
+    for (size_t d = 0; d < rank; ++d) {
+      transferSize += 2 * static_cast<size_t>(dims[d]);
+    }
+    transfer.resize(transferSize);
+
+    int status = 1;
+    std::string error;
     if (master()) {
+      size_t transferOffset = 0;
       LimitType lo = this->globalWeights.getLo();
       LimitType hi = this->globalWeights.getHi();
       LimitType glo = this->globalRange.getLo();
       LimitType ghi = this->globalRange.getHi();
 
       for (size_t d = 0; d < rank; ++d) {
-        int resolution = (ghi[d] - glo[d] + 1) / (hi[d] - lo[d] + 1);
+        const ptrdiff_t resolution = (ghi[d] - glo[d] + 1) / (hi[d] - lo[d] + 1);
         Weights weights(Index(lo[d] - 1), hi[d]);
         double sumTotal;
         if constexpr (rank == 1) {
@@ -551,56 +564,55 @@ namespace schnek {
           sumGlobalWeights<rank, CheckingPolicy>(this->globalWeights, lo, hi, d, weights, sumTotal);
         }
 
-        // normalised cumulative sum
-        for (int i = lo[d]; i <= hi[d]; ++i) {
-          weights(i) = weights(i) / sumTotal;
+        std::vector<ptrdiff_t> cuts;
+        std::string dimensionError;
+        if (!internal::computeWeightedCuts(weights, resolution, glo[d], ghi[d], dims[d], cuts, dimensionError)) {
+          if (status != 0) {
+            error = "dimension " + std::to_string(d) + ": " + dimensionError;
+          }
+          status = 0;
+          continue;
         }
 
-        // finding cut points in the cumulative weights
         Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
         dimRanges.resize(0, dims[d] - 1);
         dimRanges(0).getLo()[0] = glo[d];
         dimRanges(dims[d] - 1).getHi()[0] = ghi[d];
-
-        double delta = 1.0 / double(dims[d]);
-        for (ptrdiff_t i = 1; i < dims[d]; ++i) {
-          int ins = findInsertIndex(weights, i * delta);
-          if ((ins <= lo[d]) || (ins + 1 >= hi[d])) {
-            for (int k = lo[d] - 1; k <= hi[d]; ++k) {
-              std::cout << "w: " << k << " " << weights(k) << std::endl;
-            }
-            std::cout << "FAIL: " << d << " " << dims[d] << " " << delta << " " << i * delta << std::endl;
-            std::cout << "      " << lo[d] - 1 << " " << hi[d] << " " << ins << std::endl;
-
-            SCHNECK_FAIL("Invalid range when attempting to balance load: dim=" << i);
-          }
-
-          int cut = glo[d] + resolution * (ins - lo[d] + 1);
-
-          dimRanges(i - 1).getHi()[0] = cut - 1;
-          dimRanges(i).getLo()[0] = cut;
+        for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(cuts.size()); ++i) {
+          dimRanges(i).getHi()[0] = cuts[static_cast<size_t>(i)] - 1;
+          dimRanges(i + 1).getLo()[0] = cuts[static_cast<size_t>(i)];
         }
 
-        // broadcasting the layout in dimRanges to other processes
-        std::vector<int> transfer(2 * dims[d]);
         for (ptrdiff_t i = 0; i < dims[d]; ++i) {
-          transfer[2 * i] = dimRanges(i).getLo()[0];
-          transfer[2 * i + 1] = dimRanges(i).getHi()[0];
+          transfer[transferOffset++] = static_cast<long>(dimRanges(i).getLo()[0]);
+          transfer[transferOffset++] = static_cast<long>(dimRanges(i).getHi()[0]);
         }
-        mpi.MPI_Bcast(transfer.data(), 2 * dims[d], MPI_INT, 0, comm);
       }
-    } else {
-      // receiving dim ranges for each dimension from the master process
-      for (size_t d = 0; d < rank; ++d) {
-        Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
-        dimRanges.resize(0, dims[d] - 1);
+    }
 
-        std::vector<int> transfer(2 * dims[d]);
-        mpi.MPI_Bcast(transfer.data(), 2 * dims[d], MPI_INT, 0, comm);
-        for (ptrdiff_t i = 0; i < dims[d]; ++i) {
-          dimRanges(i).getLo()[0] = transfer[2 * i];
-          dimRanges(i).getHi()[0] = transfer[2 * i + 1];
-        }
+    int errorCode = mpi.MPI_Bcast(&status, 1, MPI_INT, 0, comm);
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Bcast failed while validating global-weight cuts");
+    if (status == 0) {
+      if (master()) {
+        SCHNECK_FAIL("Invalid range when attempting to balance load: " << error);
+      }
+      SCHNECK_FAIL("Invalid range when attempting to balance load from global weights");
+    }
+
+    size_t offset = 0;
+    for (size_t d = 0; d < rank; ++d) {
+      const size_t count = 2 * static_cast<size_t>(dims[d]);
+      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
+        SCHNECK_FAIL("Global-weight process ranges exceed the MPI count limit");
+      }
+      errorCode = mpi.MPI_Bcast(transfer.data() + offset, static_cast<int>(count), MPI_LONG, 0, comm);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Bcast failed while distributing global-weight ranges");
+
+      Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
+      dimRanges.resize(0, dims[d] - 1);
+      for (ptrdiff_t i = 0; i < dims[d]; ++i) {
+        dimRanges(i).getLo()[0] = static_cast<ptrdiff_t>(transfer[offset++]);
+        dimRanges(i).getHi()[0] = static_cast<ptrdiff_t>(transfer[offset++]);
       }
     }
   }
@@ -704,20 +716,29 @@ namespace schnek {
       localMarginals[d].assign(static_cast<size_t>(weightsDims[d]), 0.0);
     }
 
+    int localWeightError = 0;
     {
       Range<ptrdiff_t, rank> wRange(weightsLo, weightsHi);
 
       for (const LimitType &p : wRange) {
         const double w = this->localWeights[p];
 
-        if (!(w >= 0.0)) {
-          SCHNECK_FAIL("Local weights must be finite and non-negative");
+        if (!std::isfinite(w) || w < 0.0) {
+          localWeightError = 1;
+          continue;
         }
 
         for (size_t d = 0; d < rank; ++d) {
           localMarginals[d][static_cast<size_t>(p[d] - weightsLo[d])] += w;
         }
       }
+    }
+
+    int globalWeightError = 0;
+    int errorCode = mpi.MPI_Allreduce(&localWeightError, &globalWeightError, 1, MPI_INT, MPI_MAX, comm);
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating local weights");
+    if (globalWeightError != 0) {
+      SCHNECK_FAIL("Local weights must be finite and non-negative on every process");
     }
 
     for (size_t d = 0; d < rank; ++d) {
@@ -749,7 +770,7 @@ namespace schnek {
           remainDims[q] = (q == d) ? 0 : 1;
         }
 
-        int errorCode = mpi.MPI_Cart_sub(comm, remainDims, &sliceComm);
+        errorCode = mpi.MPI_Cart_sub(comm, remainDims, &sliceComm);
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Cart_sub failed while creating local-weight slice communicator");
       }
 
