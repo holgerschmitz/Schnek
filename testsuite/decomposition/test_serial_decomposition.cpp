@@ -28,20 +28,6 @@ using namespace boost::assign; // bring 'operator+=()' into scope
 
 namespace {
 
-  template<typename RangeType>
-  size_t rangeVolume(const RangeType &range) {
-    constexpr size_t dims = RangeType::LimitType::length;
-    size_t volume = 1;
-    for (size_t dim = 0; dim < dims; ++dim) {
-      ptrdiff_t extent = range.getHi()[dim] - range.getLo()[dim] + 1;
-      if (extent <= 0) {
-        return 0;
-      }
-      volume *= static_cast<size_t>(extent);
-    }
-    return volume;
-  }
-
   template<typename T>
   std::vector<char> toByteVector(const std::vector<T> &values) {
     std::vector<char> bytes(values.size() * sizeof(T));
@@ -59,68 +45,25 @@ namespace {
   }
 
   template<typename FieldType>
-  struct GhostSliceExpectation {
-    using RangeType = typename FieldType::RangeType;
-    RangeType range;
-    std::vector<typename FieldType::value_type> values;
-  };
-
-  template<typename FieldType>
-  struct GhostExchangeSetupResult {
-      std::vector<GhostSliceExpectation<FieldType>> expectations;
-  };
-
-  template<typename FieldType>
-  GhostExchangeSetupResult<FieldType> buildGhostExchangeSetup(FieldType &field) {
-    using RangeType = typename FieldType::RangeType;
-    using IndexType = typename FieldType::IndexType;
-
-    GhostExchangeSetupResult<FieldType> result;
-
-    IndexType gridLo = field.getLo();
-    IndexType gridHi = field.getHi();
-  IndexType innerLo = field.getInnerLo();
-  IndexType innerHi = field.getInnerHi();
-
-    constexpr size_t dims = RangeType::LimitType::length;
-
-    auto makeRange = [](const IndexType &lo, const IndexType &hi) { return RangeType(lo, hi); };
-
-    double seed = 1.0;
-    auto makeValues = [&](const RangeType &range) {
-      RangeType rangeCopy(range);
-      std::vector<typename FieldType::value_type> values;
-      values.reserve(rangeVolume(rangeCopy));
-      for (auto it = rangeCopy.begin(); it != rangeCopy.end(); ++it) {
-        values.push_back(static_cast<typename FieldType::value_type>(seed));
-        seed += 1.0;
-      }
-      return values;
-    };
-
-    for (size_t dim = 0; dim < dims; ++dim) {
-      ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
-      if (lowerHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        hi[dim] = gridLo[dim] + lowerHalo - 1;
-        RangeType ghostRange = makeRange(lo, hi);
-        auto values = makeValues(ghostRange);
-        result.expectations.push_back({ghostRange, values});
-      }
-
-      ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
-      if (upperHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = gridHi[dim] - upperHalo + 1;
-        RangeType ghostRange = makeRange(lo, hi);
-        auto values = makeValues(ghostRange);
-        result.expectations.push_back({ghostRange, values});
-      }
+  void fillField(FieldType &field, typename FieldType::value_type value) {
+    typename FieldType::RangeType range(field.getLo(), field.getHi());
+    for (auto it = range.begin(); it != range.end(); ++it) {
+      field[*it] = value;
     }
+  }
 
-    return result;
+  template<typename FieldType>
+  FieldType deepCopyField(FieldType &field) {
+    auto innerLo = field.getInnerLo();
+    auto innerHi = field.getInnerHi();
+    const size_t ghostCells = static_cast<size_t>(innerLo[0] - field.getLo()[0]);
+    FieldType copy(innerLo, innerHi, field.getDomain(), field.getStagger(), ghostCells);
+
+    typename FieldType::RangeType range(field.getLo(), field.getHi());
+    for (auto it = range.begin(); it != range.end(); ++it) {
+      copy[*it] = field[*it];
+    }
+    return copy;
   }
 
   template<typename FieldType>
@@ -133,42 +76,14 @@ namespace {
     using RangeType = typename FieldType::RangeType;
     using IndexType = typename FieldType::IndexType;
 
-    GhostAccumulateSetupResult<FieldType> result;
-    result.expectedField = field;
-
+    GhostAccumulateSetupResult<FieldType> result{deepCopyField(field)};
     IndexType gridLo = field.getLo();
     IndexType gridHi = field.getHi();
     IndexType innerLo = field.getInnerLo();
     IndexType innerHi = field.getInnerHi();
 
     constexpr size_t dims = RangeType::LimitType::length;
-
     auto makeRange = [](const IndexType &lo, const IndexType &hi) { return RangeType(lo, hi); };
-
-    double seed = 1.0;
-    auto nextValues = [&](const RangeType &range) {
-      std::vector<typename FieldType::value_type> values;
-      values.reserve(rangeVolume(range));
-      for (auto it = range.begin(); it != range.end(); ++it) {
-        values.push_back(static_cast<typename FieldType::value_type>(seed));
-        seed += 1.0;
-      }
-      return values;
-    };
-
-    auto addInto = [&](const RangeType &range, const std::vector<typename FieldType::value_type> &values) {
-      size_t idx = 0;
-      for (auto it = range.begin(); it != range.end(); ++it) {
-        result.expectedField[*it] += values[idx++];
-      }
-    };
-
-    auto assignInto = [&](const RangeType &range, const std::vector<typename FieldType::value_type> &values) {
-      size_t idx = 0;
-      for (auto it = range.begin(); it != range.end(); ++it) {
-        result.expectedField[*it] = values[idx++];
-      }
-    };
 
     for (size_t dim = 0; dim < dims; ++dim) {
       ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
@@ -176,8 +91,8 @@ namespace {
 
       std::optional<RangeType> loGhostRange;
       std::optional<RangeType> hiGhostRange;
-      std::optional<RangeType> loSourceRange;
       std::optional<RangeType> hiSourceRange;
+      std::optional<RangeType> loSourceRange;
 
       if (lowerHalo > 0) {
         IndexType lo = gridLo;
@@ -185,77 +100,44 @@ namespace {
         hi[dim] = gridLo[dim] + lowerHalo - 1;
         loGhostRange = makeRange(lo, hi);
 
-        lo = gridLo;
-        hi = gridHi;
-        lo[dim] = innerLo[dim];
-        hi[dim] = innerLo[dim] + lowerHalo - 1;
-        loSourceRange = makeRange(lo, hi);
+        lo[dim] = innerHi[dim] - lowerHalo + 1;
+        hi[dim] = innerHi[dim];
+        hiSourceRange = makeRange(lo, hi);
       }
 
       if (upperHalo > 0) {
         IndexType lo = gridLo;
         IndexType hi = gridHi;
         lo[dim] = gridHi[dim] - upperHalo + 1;
-        hi[dim] = gridHi[dim];
         hiGhostRange = makeRange(lo, hi);
 
         lo = gridLo;
         hi = gridHi;
-        lo[dim] = innerHi[dim] - upperHalo + 1;
-        hi[dim] = innerHi[dim];
-        hiSourceRange = makeRange(lo, hi);
+        lo[dim] = innerLo[dim];
+        hi[dim] = innerLo[dim] + upperHalo - 1;
+        loSourceRange = makeRange(lo, hi);
       }
 
-      // == lower side ==
-      size_t recvLowerCount = loGhostRange ? rangeVolume(*loGhostRange) : 0;
-      if (recvLowerCount > 0) {
-        auto values = nextValues(*loGhostRange);
-        addInto(*loGhostRange, values);
+      if (loGhostRange && hiSourceRange) {
+        auto itGhost = loGhostRange->begin();
+        auto itSource = hiSourceRange->begin();
+        for (; itGhost != loGhostRange->end(); ++itGhost, ++itSource) {
+          result.expectedField[*itGhost] += result.expectedField[*itSource];
+          result.expectedField[*itSource] = result.expectedField[*itGhost];
+        }
       }
 
-      size_t recvBackLowerCount = hiSourceRange ? rangeVolume(*hiSourceRange) : 0;
-      if (recvBackLowerCount > 0) {
-        auto values = nextValues(*hiSourceRange);
-        assignInto(*hiSourceRange, values);
-      }
-
-      // == upper side ==
-      size_t recvUpperCount = hiGhostRange ? rangeVolume(*hiGhostRange) : 0;
-      if (recvUpperCount > 0) {
-        auto values = nextValues(*hiGhostRange);
-        addInto(*hiGhostRange, values);
-      }
-
-      size_t recvBackUpperCount = loSourceRange ? rangeVolume(*loSourceRange) : 0;
-      if (recvBackUpperCount > 0) {
-        auto values = nextValues(*loSourceRange);
-        assignInto(*loSourceRange, values);
+      if (hiGhostRange && loSourceRange) {
+        auto itGhost = hiGhostRange->begin();
+        auto itSource = loSourceRange->begin();
+        for (; itGhost != hiGhostRange->end(); ++itGhost, ++itSource) {
+          result.expectedField[*itGhost] += result.expectedField[*itSource];
+          result.expectedField[*itSource] = result.expectedField[*itGhost];
+        }
       }
     }
 
     return result;
-  }
-
-  template<typename FieldType>
-  void fillField(FieldType &field, typename FieldType::value_type value) {
-    typename FieldType::RangeType range(field.getLo(), field.getHi());
-    for (auto it = range.begin(); it != range.end(); ++it) {
-      field[*it] = value;
-    }
-  }
-
-  template<typename FieldType>
-  void applyGhostExpectations(
-      FieldType &field,
-      const GhostExchangeSetupResult<FieldType> &ghostSetup
-  ) {
-    for (const auto &expectation : ghostSetup.expectations) {
-      size_t idx = 0;
-      auto rangeCopy = expectation.range;
-      for (auto it = rangeCopy.begin(); it != rangeCopy.end(); ++it) {
-        field[*it] = expectation.values[idx++];
-      }
-    }
   }
 
   template<size_t Rank>
@@ -459,16 +341,179 @@ BOOST_AUTO_TEST_CASE( ghost_exchange_updates_ghost_cells_1d )
 
   fillField(*field, -42.0);
 
-  FieldType expectedField(*field);
-  auto ghostSetup = buildGhostExchangeSetup(*field);
-  applyGhostExpectations(expectedField, ghostSetup);
-
   exchangeRegistration<1>(decomposition, registration, false);  
   
   typename FieldType::RangeType verificationRange(field->getLo(), field->getHi());
   for (auto it = verificationRange.begin(); it != verificationRange.end(); ++it) {
-    BOOST_CHECK_EQUAL((*field)[*it], expectedField[*it]);
+    BOOST_CHECK_EQUAL((*field)[*it], -42.0);
   }
+}
+
+BOOST_AUTO_TEST_CASE( ghost_exchange_uses_opposite_interior_edge_1d )
+{
+  using FieldType = schnek::Field<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 1>;
+  using StaggerType = typename FieldType::StaggerType;
+
+  RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  DomainType globalDomain(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0));
+
+  schnek::SerialDomainDecomposition<1> decomposition;
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  StaggerType noStagger(false);
+  schnek::GridFactory<FieldType> factory(noStagger, 2);
+  schnek::GridRegistration registration = decomposition.registerField(factory);
+  auto gridContext = decomposition.getGridContext({registration});
+  FieldType *field = nullptr;
+  gridContext.forEach([&](const RangeType &, FieldType &localField) { field = &localField; });
+  BOOST_REQUIRE(field != nullptr);
+
+  fillField(*field, -1.0);
+  for (ptrdiff_t i = 0; i <= 7; ++i) {
+    (*field)[i] = 100.0 + i;
+  }
+
+  exchangeRegistration<1>(decomposition, registration, false);
+
+  BOOST_CHECK_EQUAL((*field)[-2], 106.0);
+  BOOST_CHECK_EQUAL((*field)[-1], 107.0);
+  BOOST_CHECK_EQUAL((*field)[8], 100.0);
+  BOOST_CHECK_EQUAL((*field)[9], 101.0);
+}
+
+BOOST_AUTO_TEST_CASE( ghost_exchange_fills_periodic_2d_corners )
+{
+  using FieldType = schnek::Field<double, 2>;
+  using RangeType = schnek::Range<ptrdiff_t, 2>;
+  using DomainType = schnek::Range<double, 2>;
+  using StaggerType = typename FieldType::StaggerType;
+
+  RangeType globalRange(schnek::Array<ptrdiff_t, 2>(0, 0), schnek::Array<ptrdiff_t, 2>(3, 2));
+  DomainType globalDomain(schnek::Array<double, 2>(0.0, 0.0), schnek::Array<double, 2>(1.0, 1.0));
+
+  schnek::SerialDomainDecomposition<2> decomposition;
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  StaggerType noStagger(false);
+  schnek::GridFactory<FieldType> factory(noStagger, 1);
+  schnek::GridRegistration registration = decomposition.registerField(factory);
+  auto gridContext = decomposition.getGridContext({registration});
+  FieldType *field = nullptr;
+  gridContext.forEach([&](const RangeType &, FieldType &localField) { field = &localField; });
+  BOOST_REQUIRE(field != nullptr);
+
+  fillField(*field, -1.0);
+  for (ptrdiff_t i = 0; i <= 3; ++i) {
+    for (ptrdiff_t j = 0; j <= 2; ++j) {
+      (*field)[schnek::Array<ptrdiff_t, 2>(i, j)] = 1000.0 * i + j;
+    }
+  }
+
+  exchangeRegistration<2>(decomposition, registration, false);
+
+  BOOST_CHECK_EQUAL((*field)(-1, -1), 3002.0);
+  BOOST_CHECK_EQUAL((*field)(-1, 3), 3000.0);
+  BOOST_CHECK_EQUAL((*field)(4, -1), 2.0);
+  BOOST_CHECK_EQUAL((*field)(4, 3), 0.0);
+  BOOST_CHECK_EQUAL((*field)(-1, 0), 3000.0);
+  BOOST_CHECK_EQUAL((*field)(4, 1), 1.0);
+}
+
+BOOST_AUTO_TEST_CASE( ghost_accumulate_combines_periodic_images_1d )
+{
+  using FieldType = schnek::Field<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 1>;
+  using StaggerType = typename FieldType::StaggerType;
+
+  RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  DomainType globalDomain(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0));
+
+  schnek::SerialDomainDecomposition<1> decomposition;
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  StaggerType noStagger(false);
+  schnek::GridFactory<FieldType> factory(noStagger, 2);
+  schnek::GridRegistration registration = decomposition.registerField(factory);
+  auto gridContext = decomposition.getGridContext({registration});
+  FieldType *field = nullptr;
+  gridContext.forEach([&](const RangeType &, FieldType &localField) { field = &localField; });
+  BOOST_REQUIRE(field != nullptr);
+
+  fillField(*field, -1.0);
+  for (ptrdiff_t i = 0; i <= 7; ++i) {
+    (*field)[i] = i + 1.0;
+  }
+  (*field)[-2] = 10.0;
+  (*field)[-1] = 20.0;
+  (*field)[8] = 80.0;
+  (*field)[9] = 90.0;
+
+  accumulateRegistration<1>(decomposition, registration, false);
+
+  BOOST_CHECK_EQUAL((*field)[-2], 17.0);
+  BOOST_CHECK_EQUAL((*field)[-1], 28.0);
+  BOOST_CHECK_EQUAL((*field)[0], 81.0);
+  BOOST_CHECK_EQUAL((*field)[1], 92.0);
+  BOOST_CHECK_EQUAL((*field)[6], 17.0);
+  BOOST_CHECK_EQUAL((*field)[7], 28.0);
+  BOOST_CHECK_EQUAL((*field)[8], 81.0);
+  BOOST_CHECK_EQUAL((*field)[9], 92.0);
+}
+
+BOOST_AUTO_TEST_CASE( asymmetric_grid_halos_remain_paired_1d )
+{
+  using GridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 1>;
+
+  RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  DomainType globalDomain(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0));
+
+  schnek::SerialDomainDecomposition<1> decomposition;
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  schnek::GridFactory<GridType> factory;
+  schnek::GridRegistration registration = decomposition.registerField(factory);
+  auto gridContext = decomposition.getGridContext({registration});
+  GridType *grid = nullptr;
+  gridContext.forEach([&](const RangeType &, GridType &localGrid) { grid = &localGrid; });
+  BOOST_REQUIRE(grid != nullptr);
+  grid->resize(schnek::Array<ptrdiff_t, 1>(-1), schnek::Array<ptrdiff_t, 1>(9));
+
+  fillField(*grid, -1.0);
+  for (ptrdiff_t i = 0; i <= 7; ++i) {
+    (*grid)[i] = 100.0 + i;
+  }
+  exchangeRegistration<1>(decomposition, registration, false);
+  BOOST_CHECK_EQUAL((*grid)[-1], 107.0);
+  BOOST_CHECK_EQUAL((*grid)[8], 100.0);
+  BOOST_CHECK_EQUAL((*grid)[9], 101.0);
+
+  fillField(*grid, -1.0);
+  for (ptrdiff_t i = 0; i <= 7; ++i) {
+    (*grid)[i] = i + 1.0;
+  }
+  (*grid)[-1] = 10.0;
+  (*grid)[8] = 80.0;
+  (*grid)[9] = 90.0;
+  accumulateRegistration<1>(decomposition, registration, false);
+  BOOST_CHECK_EQUAL((*grid)[-1], 18.0);
+  BOOST_CHECK_EQUAL((*grid)[7], 18.0);
+  BOOST_CHECK_EQUAL((*grid)[8], 81.0);
+  BOOST_CHECK_EQUAL((*grid)[9], 92.0);
+  BOOST_CHECK_EQUAL((*grid)[0], 81.0);
+  BOOST_CHECK_EQUAL((*grid)[1], 92.0);
 }
 
   BOOST_AUTO_TEST_CASE( ghost_accumulate_updates_ghost_and_inner_cells_1d )
@@ -585,15 +630,11 @@ BOOST_AUTO_TEST_CASE( foreach_2d )
 
   fillField(*field, -13.0);
 
-  FieldType expectedField(*field);
-  auto ghostSetup = buildGhostExchangeSetup(*field);
-  applyGhostExpectations(expectedField, ghostSetup);
-
     exchangeRegistration<2>(decomposition, registration, false);
 
     typename FieldType::RangeType verificationRange(field->getLo(), field->getHi());
     for (auto it = verificationRange.begin(); it != verificationRange.end(); ++it) {
-      BOOST_CHECK_EQUAL((*field)[*it], expectedField[*it]);
+      BOOST_CHECK_EQUAL((*field)[*it], -13.0);
     }
   }
 
@@ -711,15 +752,11 @@ BOOST_AUTO_TEST_CASE( foreach_3d )
 
     fillField(*field, -7.0);
 
-    FieldType expectedField(*field);
-    auto ghostSetup = buildGhostExchangeSetup(*field);
-    applyGhostExpectations(expectedField, ghostSetup);
-
     exchangeRegistration<3>(decomposition, registration, false);
 
     typename FieldType::RangeType verificationRange(field->getLo(), field->getHi());
     for (auto it = verificationRange.begin(); it != verificationRange.end(); ++it) {
-      BOOST_CHECK_EQUAL((*field)[*it], expectedField[*it]);
+      BOOST_CHECK_EQUAL((*field)[*it], -7.0);
     }
   }
 
