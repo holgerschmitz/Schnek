@@ -69,6 +69,7 @@ class MpiTestContextImpl : public schnek::MpiContext
       int dest;
       int tag;
       MPI_Comm comm;
+      std::vector<char> payload;
     };
     std::vector<IsendCallInfo> args_MPI_Isend;
 

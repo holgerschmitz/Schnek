@@ -27,9 +27,11 @@
 #ifndef SCHNEK_DECOMPOSITION_DETAIL_GRID_FACTORY_HPP_
 #define SCHNEK_DECOMPOSITION_DETAIL_GRID_FACTORY_HPP_
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <type_traits>
 #include <typeinfo>
 #include <utility>
@@ -71,6 +73,9 @@ namespace schnek {
 
         virtual ~GridRegistrationInterface() = default;
         virtual pGridWrapper makeGrid(const RangeType &range, const DomainType &domain) = 0;
+        virtual pGridWrapper makeGridForLocalRange(const RangeType &range, const DomainType &domain) = 0;
+
+        std::optional<RangeType> subRange;
     };
 
     template<size_t rank, template<size_t> class CheckingPolicy = ArrayNoArgCheck>
@@ -141,10 +146,46 @@ namespace schnek {
         using RangeType = typename Base::RangeType;
         using DomainType = typename Base::DomainType;
 
-        explicit GridRegistrationImpl(const GridFactory<GridType> &factoryIn) : factory(factoryIn) {}
+        explicit GridRegistrationImpl(
+            const GridFactory<GridType> &factoryIn, std::optional<RangeType> subRangeIn = std::nullopt
+        )
+            : factory(factoryIn) {
+          this->subRange = std::move(subRangeIn);
+        }
 
         pGridWrapper makeGrid(const RangeType &range, const DomainType &domain) override {
           return factory.newGrid(range, domain);
+        }
+
+        pGridWrapper makeGridForLocalRange(const RangeType &range, const DomainType &domain) override {
+          if (!this->subRange) {
+            return makeGrid(range, domain);
+          }
+
+          RangeType intersection;
+          for (size_t d = 0; d < rank; ++d) {
+            intersection.getLo()[d] = std::max(range.getLo()[d], this->subRange->getLo()[d]);
+            intersection.getHi()[d] = std::min(range.getHi()[d], this->subRange->getHi()[d]);
+            if (intersection.getLo()[d] > intersection.getHi()[d]) {
+              return nullptr;
+            }
+          }
+
+          DomainType subDomain(domain);
+          for (size_t d = 0; d < rank; ++d) {
+            const ptrdiff_t localCells = range.getHi()[d] - range.getLo()[d] + 1;
+            const ptrdiff_t subCells = intersection.getHi()[d] - intersection.getLo()[d] + 1;
+            if (localCells <= 0) {
+              continue;
+            }
+
+            const double cellSize = (domain.getHi()[d] - domain.getLo()[d]) / static_cast<double>(localCells);
+            const ptrdiff_t offsetLo = intersection.getLo()[d] - range.getLo()[d];
+            subDomain.getLo()[d] = domain.getLo()[d] + cellSize * static_cast<double>(offsetLo);
+            subDomain.getHi()[d] = subDomain.getLo()[d] + cellSize * static_cast<double>(subCells);
+          }
+
+          return makeGrid(intersection, subDomain);
         }
 
         GridFactory<GridType> factory;

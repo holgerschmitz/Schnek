@@ -281,8 +281,35 @@ namespace schnek {
       auto oldWrapper = oldGridIt->second.front();
       auto newWrapper = newGridList.front();
 
-      if (oldWrapper && newWrapper) {
-        redistributeGrid(oldWrapper, newWrapper, sendPlan, recvPlan);
+      auto registrationSubRange = this->getRegisteredFieldSubRange(id);
+      auto registrationSendPlan = sendPlan;
+      auto registrationRecvPlan = recvPlan;
+      if (registrationSubRange) {
+        auto clipPlan = [&](std::vector<TransferBlockType> &plan) {
+          std::vector<TransferBlockType> clippedPlan;
+          clippedPlan.reserve(plan.size());
+          for (const auto &block : plan) {
+            RangeType clippedRange;
+            if (rangeIntersection(block.range, *registrationSubRange, clippedRange)) {
+              clippedPlan.push_back({block.mpiRank, clippedRange});
+            }
+          }
+          plan = std::move(clippedPlan);
+        };
+        clipPlan(registrationSendPlan);
+        clipPlan(registrationRecvPlan);
+      }
+
+      SCHNEK_ASSERT(
+          !oldWrapper || !registrationSendPlan.empty(),
+          "Sub-range registration has an old grid but no clipped send blocks"
+      );
+      SCHNEK_ASSERT(
+          !newWrapper || !registrationRecvPlan.empty(),
+          "Sub-range registration has a new grid but no clipped receive blocks"
+      );
+      if (oldWrapper || newWrapper) {
+        redistributeGrid(oldWrapper, newWrapper, registrationSendPlan, registrationRecvPlan);
       }
     }
 
@@ -1046,21 +1073,32 @@ namespace schnek {
     public:
       RedistributeVisitor(
           MpiCartesianDomainDecomposition &parentIn,
+          internal::pGridWrapper oldWrapperIn,
           internal::pGridWrapper newWrapperIn,
           const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlanIn,
           const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlanIn
       )
-          : parent(parentIn), newWrapper(std::move(newWrapperIn)), sendPlan(sendPlanIn), recvPlan(recvPlanIn) {}
+          : parent(parentIn),
+            oldWrapper(std::move(oldWrapperIn)),
+            newWrapper(std::move(newWrapperIn)),
+            sendPlan(sendPlanIn),
+            recvPlan(recvPlanIn) {}
 
       template<typename GridType>
-      void handle(GridType &oldGrid, bool /*flag*/) {
+      void handle(GridType & /*grid*/, bool /*flag*/) {
+        auto typedOldWrapper = std::dynamic_pointer_cast<internal::GridWrapperImpl<GridType>>(oldWrapper);
         auto typedNewWrapper = std::dynamic_pointer_cast<internal::GridWrapperImpl<GridType>>(newWrapper);
-        SCHNEK_ASSERT(typedNewWrapper, "Grid type mismatch during redistribution");
-        parent.template redistributeTyped<GridType>(oldGrid, typedNewWrapper->grid, sendPlan, recvPlan);
+        SCHNEK_ASSERT(!oldWrapper || typedOldWrapper, "Old grid type mismatch during redistribution");
+        SCHNEK_ASSERT(!newWrapper || typedNewWrapper, "New grid type mismatch during redistribution");
+        parent.template redistributeTyped<GridType>(
+            typedOldWrapper ? &typedOldWrapper->grid : nullptr, typedNewWrapper ? &typedNewWrapper->grid : nullptr,
+            sendPlan, recvPlan
+        );
       }
 
     private:
       MpiCartesianDomainDecomposition &parent;
+      internal::pGridWrapper oldWrapper;
       internal::pGridWrapper newWrapper;
       const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan;
       const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan;
@@ -1085,19 +1123,24 @@ namespace schnek {
       SCHNECK_FAIL("No registered grids available for redistribution");
     }
 
-    RedistributeVisitor visitor(*this, newWrapper, sendPlan, recvPlan);
+    if (!oldWrapper && !newWrapper) {
+      SCHNEK_ASSERT(sendPlan.empty() && recvPlan.empty(), "Cannot redistribute non-empty plans without a grid");
+      return;
+    }
+
+    RedistributeVisitor visitor(*this, oldWrapper, newWrapper, sendPlan, recvPlan);
     for (auto &initializer : redistributeInitializers) {
       initializer(visitor);
     }
 
-    oldWrapper->accept(visitor, false);
+    (oldWrapper ? oldWrapper : newWrapper)->accept(visitor, false);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::redistributeTyped(
-      GridType &oldGrid,
-      GridType &newGrid,
+      GridType *oldGrid,
+      GridType *newGrid,
       const std::vector<TransferBlock<rank, CheckingPolicy>> &sendPlan,
       const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
   ) {
@@ -1193,7 +1236,8 @@ namespace schnek {
       for (const auto &block : sendBlocks) {
         RangeTypeLocal sendRange(sendPlan[block.planIndex].range);
         ValueType *blockData = sendSlab.data() + block.offset;
-        detail::GridTransfer<GridType>::pack(oldGrid, sendRange, blockData);
+        SCHNEK_ASSERT(oldGrid != nullptr, "Send plan requires an old grid during redistribution");
+        detail::GridTransfer<GridType>::pack(*oldGrid, sendRange, blockData);
 
         // GridTransfer::pack fences device work before MPI reads this slab.
         MPI_Request req;
@@ -1211,7 +1255,8 @@ namespace schnek {
         }
 
         RangeTypeLocal copyRange(recvPlan[i].range);
-        detail::GridTransfer<GridType>::copy(oldGrid, newGrid, copyRange);
+        SCHNEK_ASSERT(oldGrid != nullptr && newGrid != nullptr, "Local copy requires both grids");
+        detail::GridTransfer<GridType>::copy(*oldGrid, *newGrid, copyRange);
       }
 
       // Wait for all non-blocking operations to complete
@@ -1223,7 +1268,8 @@ namespace schnek {
       // Unpack received data into the new grid
       for (const auto &block : recvBlocks) {
         RangeTypeLocal recvRange(recvPlan[block.planIndex].range);
-        detail::GridTransfer<GridType>::unpack(newGrid, recvRange, recvSlab.data() + block.offset);
+        SCHNEK_ASSERT(newGrid != nullptr, "Receive plan requires a new grid during redistribution");
+        detail::GridTransfer<GridType>::unpack(*newGrid, recvRange, recvSlab.data() + block.offset);
       }
     }
 
