@@ -28,6 +28,13 @@ using namespace boost::assign; // bring 'operator+=()' into scope
 
 namespace {
 
+  struct SerialWrapParticle {
+      std::array<double, 1> position;
+      int id;
+  };
+
+  using SerialWrapAccessor = schnek::MemberPositionAccessor<&SerialWrapParticle::position>;
+
   template<typename T>
   std::vector<char> toByteVector(const std::vector<T> &values) {
     std::vector<char> bytes(values.size() * sizeof(T));
@@ -186,6 +193,42 @@ BOOST_AUTO_TEST_CASE( init_1d )
   BOOST_CHECK_EQUAL(decomposition.master(), true);
   BOOST_CHECK_EQUAL(decomposition.numProcs(), 1);
   BOOST_CHECK_EQUAL(decomposition.getUniqueId(), 0);
+}
+
+BOOST_AUTO_TEST_CASE( migrate_wraps_periodic_particle_positions )
+{
+  using Container = std::vector<SerialWrapParticle>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  const RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(9));
+  const schnek::Range<double, 1> globalDomain(
+      schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0)
+  );
+  schnek::SerialDomainDecomposition<1> decomposition;
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  schnek::ParticleContainerFactory<Container> factory;
+  const SerialWrapAccessor accessor;
+  decomposition.registerParticleData(factory, accessor);
+
+  Container particles{
+      SerialWrapParticle{{-0.5}, 1},
+      SerialWrapParticle{{-0.01}, 2},
+      SerialWrapParticle{{9.99}, 3},
+      SerialWrapParticle{{10.3}, 4}
+  };
+  auto wrapper = std::make_shared<schnek::internal::ParticleWrapperImpl<Container, SerialWrapAccessor>>(
+      std::move(particles), accessor
+  );
+  decomposition.migrateParticles(wrapper);
+
+  BOOST_REQUIRE_EQUAL(wrapper->container.size(), 4u);
+  BOOST_CHECK_CLOSE(wrapper->container[0].position[0], 9.5, 1e-12);
+  BOOST_CHECK_CLOSE(wrapper->container[1].position[0], 9.99, 1e-12);
+  BOOST_CHECK_CLOSE(wrapper->container[2].position[0], 9.99, 1e-12);
+  BOOST_CHECK_CLOSE(wrapper->container[3].position[0], 0.3, 1e-12);
 }
 
 BOOST_AUTO_TEST_CASE( reductions_use_allreduce )

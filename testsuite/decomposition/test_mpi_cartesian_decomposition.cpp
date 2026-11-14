@@ -55,6 +55,17 @@ namespace {
     return volume;
   }
 
+  void scriptTwoRank1D(MpiTestContextImpl &context, int coord) {
+    MPI_Comm testComm = (MPI_Comm)(void*)123;
+    context.commWorld = (MPI_Comm)(void*)574;
+    context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 2));
+    context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, coord));
+    context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+    context.ret_MPI_Cart_coords.push_back(
+        boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{coord})
+    );
+  }
+
   template<typename T>
   std::vector<char> toByteVector(const std::vector<T> &values) {
     std::vector<char> bytes(values.size() * sizeof(T));
@@ -244,6 +255,11 @@ namespace {
         }
         return position;
       }
+
+      template<typename Particle>
+      SCHNEK_FUNCTION void shift(Particle &p, size_t dim, double delta) const {
+        p.pos[dim] += delta;
+      }
     };
   } // namespace schnek_test
 
@@ -255,6 +271,32 @@ namespace {
       std::memcpy(bytes.data(), particles.data(), bytes.size());
     }
     return bytes;
+  }
+
+  void scriptTwoByTwoRank(MpiTestContextImpl &context, int coordX, int coordY) {
+    const int rank = coordX * 2 + coordY;
+    MPI_Comm testComm = (MPI_Comm)(void*)123;
+    std::vector<int> coords{coordX, coordY};
+    context.commWorld = (MPI_Comm)(void*)574;
+    context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 4));
+    context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, rank));
+    context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+    context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
+  }
+
+  void scriptSweep(
+      MpiTestContextImpl &context,
+      const std::vector<schnek_test::TestParticle> &fromPrev,
+      const std::vector<schnek_test::TestParticle> &fromNext
+  ) {
+    context.ret_MPI_Sendrecv.push_back(
+        boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(static_cast<int>(fromPrev.size())))
+    );
+    context.ret_MPI_Sendrecv.push_back(boost::make_tuple(MPI_SUCCESS, toParticleBytes(fromPrev)));
+    context.ret_MPI_Sendrecv.push_back(
+        boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(static_cast<int>(fromNext.size())))
+    );
+    context.ret_MPI_Sendrecv.push_back(boost::make_tuple(MPI_SUCCESS, toParticleBytes(fromNext)));
   }
 
   template<typename FieldType>
@@ -5068,6 +5110,151 @@ BOOST_FIXTURE_TEST_CASE( set_local_weights_rejects_misaligned_shape, MpiCartesia
 // Particle migration
 // ==========================================================================
 
+BOOST_FIXTURE_TEST_CASE(particle_migration_wraps_periodic_1d_two_ranks, MpiCartesianDomainDecompositionTestFixture) {
+  using Container = std::vector<schnek_test::TestParticle>;
+  using Accessor = schnek_test::TestPositionAccessor<1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  auto makeParticle = [](double x, int id) {
+    schnek_test::TestParticle particle{};
+    particle.pos[0] = x;
+    particle.id = id;
+    return particle;
+  };
+  const RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  const schnek::Range<double, 1> globalDomain(
+      schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0)
+  );
+
+  for (int coord = 0; coord < 2; ++coord) {
+    resetContext();
+    scriptTwoRank1D(context, coord);
+    schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+    decomposition.setGlobalRange(globalRange);
+    decomposition.setGlobalDomain(globalDomain);
+    decomposition.init();
+
+    schnek::ParticleContainerFactory<Container> factory;
+    const Accessor accessor;
+    decomposition.registerParticleData(factory, accessor);
+
+    Container particles;
+    std::vector<schnek_test::TestParticle> fromPrev;
+    std::vector<schnek_test::TestParticle> fromNext;
+    if (coord == 0) {
+      particles.push_back(makeParticle(-0.5, 1));
+      fromNext.push_back(makeParticle(8.25, 2));
+    } else {
+      particles.push_back(makeParticle(8.25, 2));
+      fromPrev.push_back(makeParticle(-0.5, 1));
+    }
+
+    auto wrapper = std::make_shared<schnek::internal::ParticleWrapperImpl<Container, Accessor>>(
+        std::move(particles), accessor
+    );
+    context.ret_MPI_Cart_shift.push_back(boost::make_tuple(MPI_SUCCESS, 1 - coord, 1 - coord));
+    scriptSweep(context, fromPrev, fromNext);
+    decomposition.migrateParticles(wrapper);
+
+    BOOST_REQUIRE_EQUAL(wrapper->container.size(), 1u);
+    BOOST_CHECK_EQUAL(wrapper->container[0].id, coord == 0 ? 2 : 1);
+    BOOST_CHECK_CLOSE(wrapper->container[0].pos[0], coord == 0 ? 0.25 : 7.5, 1e-12);
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE(particle_migration_wraps_periodic_when_dimension_has_one_rank, MpiCartesianDomainDecompositionTestFixture) {
+  using Container = std::vector<schnek_test::TestParticle>;
+  using Accessor = schnek_test::TestPositionAccessor<1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  MPI_Comm testComm = (MPI_Comm)(void*)123;
+  context.commWorld = (MPI_Comm)(void*)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{0})
+  );
+
+  const RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  const schnek::Range<double, 1> globalDomain(
+      schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0)
+  );
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  schnek::ParticleContainerFactory<Container> factory;
+  const Accessor accessor;
+  decomposition.registerParticleData(factory, accessor);
+
+  auto makeParticle = [](double x, int id) {
+    schnek_test::TestParticle particle{};
+    particle.pos[0] = x;
+    particle.id = id;
+    return particle;
+  };
+  Container particles{makeParticle(-0.5, 1), makeParticle(8.25, 2)};
+  auto wrapper = std::make_shared<schnek::internal::ParticleWrapperImpl<Container, Accessor>>(
+      std::move(particles), accessor
+  );
+  context.ret_MPI_Cart_shift.push_back(boost::make_tuple(MPI_SUCCESS, 0, 0));
+  scriptSweep(context, {makeParticle(-0.5, 1)}, {makeParticle(8.25, 2)});
+  decomposition.migrateParticles(wrapper);
+
+  BOOST_REQUIRE_EQUAL(wrapper->container.size(), 2u);
+  std::sort(wrapper->container.begin(), wrapper->container.end(), [](const auto &a, const auto &b) {
+    return a.id < b.id;
+  });
+  BOOST_CHECK_CLOSE(wrapper->container[0].pos[0], 7.5, 1e-12);
+  BOOST_CHECK_CLOSE(wrapper->container[1].pos[0], 0.25, 1e-12);
+}
+
+BOOST_FIXTURE_TEST_CASE(particle_migration_wraps_periodic_corner_2d, MpiCartesianDomainDecompositionTestFixture) {
+  scriptTwoByTwoRank(context, 0, 0);
+
+  using Container = std::vector<schnek_test::TestParticle>;
+  using Accessor = schnek_test::TestPositionAccessor<2>;
+  const schnek::Range<ptrdiff_t, 2> globalRange(
+      schnek::Array<ptrdiff_t, 2>(0, 0), schnek::Array<ptrdiff_t, 2>(7, 7)
+  );
+  const schnek::Range<double, 2> globalDomain(
+      schnek::Array<double, 2>(0.0, 0.0), schnek::Array<double, 2>(1.0, 1.0)
+  );
+  schnek::MpiCartesianDomainDecomposition<2> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  schnek::ParticleContainerFactory<Container> factory;
+  const Accessor accessor;
+  decomposition.registerParticleData(factory, accessor);
+
+  auto makeParticle = [](double x, double y, int id) {
+    schnek_test::TestParticle particle{};
+    particle.pos[0] = x;
+    particle.pos[1] = y;
+    particle.id = id;
+    return particle;
+  };
+  Container particles{makeParticle(8.5, 8.5, 1)};
+  auto wrapper = std::make_shared<schnek::internal::ParticleWrapperImpl<Container, Accessor>>(
+      std::move(particles), accessor
+  );
+
+  const schnek_test::TestParticle corner = makeParticle(8.5, 8.5, 1);
+  context.ret_MPI_Cart_shift.push_back(boost::make_tuple(MPI_SUCCESS, 1, 1));
+  scriptSweep(context, {corner}, {});
+  context.ret_MPI_Cart_shift.push_back(boost::make_tuple(MPI_SUCCESS, 2, 2));
+  scriptSweep(context, {}, {makeParticle(0.5, 8.5, 1)});
+  decomposition.migrateParticles(wrapper);
+
+  BOOST_REQUIRE_EQUAL(wrapper->container.size(), 1u);
+  BOOST_CHECK_CLOSE(wrapper->container[0].pos[0], 0.5, 1e-12);
+  BOOST_CHECK_CLOSE(wrapper->container[0].pos[1], 0.5, 1e-12);
+}
+
 BOOST_FIXTURE_TEST_CASE_TEMPLATE( particle_migration_1d, TestType, schnek_test::PlainMigrationContainers, MpiCartesianDomainDecompositionTestFixture )
 {
   MPI_Comm testComm = (MPI_Comm)(void*)123;
@@ -5849,29 +6036,6 @@ schnek_test::TestParticle makeMigrationParticle(double x, double y, int id) {
   p.pos[1] = y;
   p.id = id;
   return p;
-}
-
-// Scripts a 2x2 process grid in which this rank sits at (coordX, coordY).
-void scriptTwoByTwoRank(MpiTestContextImpl &context, int coordX, int coordY) {
-  const int rank = coordX * 2 + coordY;
-  MPI_Comm testComm = (MPI_Comm)(void*)123;
-  std::vector<int> coords{coordX, coordY};
-  context.commWorld = (MPI_Comm)(void*)574;
-  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 4));
-  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, rank));
-  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
-  context.ret_MPI_Cart_coords.push_back(boost::tuple<int, std::vector<int>>(MPI_SUCCESS, coords));
-}
-
-// Scripts the four MPI_Sendrecv replies of one dimension's sweep, in the order
-// migrateTyped issues them: upward count, upward payload, downward count, downward payload.
-void scriptSweep(MpiTestContextImpl &context,
-                 const std::vector<schnek_test::TestParticle> &fromPrev,
-                 const std::vector<schnek_test::TestParticle> &fromNext) {
-  context.ret_MPI_Sendrecv.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(static_cast<int>(fromPrev.size()))));
-  context.ret_MPI_Sendrecv.push_back(boost::make_tuple(MPI_SUCCESS, toParticleBytes(fromPrev)));
-  context.ret_MPI_Sendrecv.push_back(boost::make_tuple(MPI_SUCCESS, toByteVectorScalar(static_cast<int>(fromNext.size()))));
-  context.ret_MPI_Sendrecv.push_back(boost::make_tuple(MPI_SUCCESS, toParticleBytes(fromNext)));
 }
 
 template<typename Container>

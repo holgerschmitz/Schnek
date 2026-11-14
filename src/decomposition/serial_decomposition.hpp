@@ -13,8 +13,11 @@
 #include <optional>
 #include <vector>
 
+#include "../util/exceptions.hpp"
 #include "config.hpp"
 #include "detail/grid_visitor.hpp"
+#include "detail/particle_visitor.hpp"
+#include "detail/particle_wrap.hpp"
 #include "domaindecomposition.hpp"
 
 namespace schnek {
@@ -147,13 +150,17 @@ namespace schnek {
        * accessor.
        *
        * The serial decomposition creates a single container covering the global
-       * range.
+       * range. Accessors that provide `shift(p, dim, delta)` enable automatic
+       * periodic position wrapping; otherwise wrapping remains the user's
+       * responsibility.
        */
       template<class ContainerType, class PositionAccessor>
       ParticleRegistration registerParticleData(
           const ParticleContainerFactory<ContainerType> &factory, PositionAccessor accessor
       ) {
-        return this->registerParticleDataImpl(factory, std::move(accessor));
+        auto registration = this->registerParticleDataImpl(factory, std::move(accessor));
+        registerMigrateHandler<ContainerType, PositionAccessor>();
+        return registration;
       }
 
       void migrateParticles(const internal::pParticleWrapper &wrapper) override;
@@ -177,6 +184,13 @@ namespace schnek {
       void handleGridAccumulate(GridType &grid, bool useFieldInfo);
       template<typename FieldType>
       void handleFieldAccumulate(FieldType &field, bool useFieldInfo);
+      class MigrateVisitor;
+      template<class ContainerType, class PositionAccessor>
+      void registerMigrateHandler();
+      template<typename WrapperImpl>
+      void migrateTyped(WrapperImpl &wrapper);
+
+      std::unique_ptr<MigrateVisitor> migrateVisitor;
       RangeType getLocalInnerRange() const;
       template<typename GridType>
       void exchangeWithInteriorBounds(
@@ -381,6 +395,53 @@ namespace schnek {
   };
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  class SerialDomainDecomposition<rank, CheckingPolicy>::MigrateVisitor
+      : public internal::ParticleVisitor<typename SerialDomainDecomposition<rank, CheckingPolicy>::MigrateVisitor> {
+    public:
+      explicit MigrateVisitor(SerialDomainDecomposition &parentIn) : parent(parentIn) {}
+
+      template<typename WrapperImpl>
+      void handle(WrapperImpl &wrapper) {
+        parent.template migrateTyped<WrapperImpl>(wrapper);
+      }
+
+    private:
+      SerialDomainDecomposition &parent;
+  };
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<class ContainerType, class PositionAccessor>
+  void SerialDomainDecomposition<rank, CheckingPolicy>::registerMigrateHandler() {
+    if (migrateVisitor.get() == nullptr) {
+      migrateVisitor = std::make_unique<MigrateVisitor>(*this);
+    }
+    migrateVisitor->template registerHandler<internal::ParticleWrapperImpl<ContainerType, PositionAccessor>>();
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename WrapperImpl>
+  void SerialDomainDecomposition<rank, CheckingPolicy>::migrateTyped(WrapperImpl &wrapper) {
+    using ContainerType = std::decay_t<decltype(wrapper.container)>;
+    using Traits = ParticleContainerTraits<ContainerType>;
+    using Particle = typename Traits::value_type;
+    using PositionAccessor = std::decay_t<decltype(wrapper.accessor)>;
+
+    if constexpr (internal::has_position_shift<PositionAccessor, Particle>::value) {
+      for (std::size_t dim = 0; dim < rank; ++dim) {
+        const ptrdiff_t globalLo = this->globalRange.getLo()[dim];
+        const ptrdiff_t globalHi = this->globalRange.getHi()[dim];
+        Traits::forEachParticle(
+            wrapper.container,
+            internal::WrapDim<Particle, PositionAccessor>{
+                wrapper.accessor, dim, static_cast<double>(globalLo), static_cast<double>(globalHi),
+                static_cast<double>(globalHi - globalLo + 1)
+            }
+        );
+      }
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   template<class GridType>
   void SerialDomainDecomposition<rank, CheckingPolicy>::registerExchangeHandler() {
     if (exchangeVisitor.get() == nullptr) {
@@ -421,10 +482,12 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  void SerialDomainDecomposition<rank, CheckingPolicy>::migrateParticles(const internal::pParticleWrapper & /*wrapper*/
-  ) {
-    // A single process owns the whole domain, so no particle can ever leave its
-    // local range. Migration is a no-op for the serial backend.
+  void SerialDomainDecomposition<rank, CheckingPolicy>::migrateParticles(const internal::pParticleWrapper &wrapper) {
+    if (migrateVisitor.get() == nullptr || migrateVisitor->empty()) {
+      SCHNECK_FAIL("No registered particle containers available for migration");
+    }
+
+    wrapper->accept(*migrateVisitor);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>

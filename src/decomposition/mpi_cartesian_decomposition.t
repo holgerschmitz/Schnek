@@ -25,6 +25,7 @@
 #include "../util/logger.hpp"
 #include "../util/volume.hpp"
 #include "detail/grid_transfer.hpp"
+#include "detail/particle_wrap.hpp"
 #include "detail/redistribution.hpp"
 #include "detail/weighted_partition.hpp"
 #include "mpi_cartesian_decomposition.hpp"
@@ -1944,6 +1945,20 @@ namespace schnek {
       sendScratchBuffer.reset();
       recvScratchBuffer.reset();
       partitionScratchBuffer.reset();
+
+      if constexpr (internal::has_position_shift<PositionAccessor, Particle>::value) {
+        if (myCoord[dim] == 0 || myCoord[dim] == dims[dim] - 1) {
+          const ptrdiff_t globalLo = this->globalRange.getLo()[dim];
+          const ptrdiff_t globalHi = this->globalRange.getHi()[dim];
+          Traits::forEachParticle(
+              container,
+              internal::WrapDim<Particle, PositionAccessor>{
+                  wrapper.accessor, dim, static_cast<double>(globalLo), static_cast<double>(globalHi),
+                  static_cast<double>(globalHi - globalLo + 1)
+              }
+          );
+        }
+      }
     }
 
 #ifndef NDEBUG

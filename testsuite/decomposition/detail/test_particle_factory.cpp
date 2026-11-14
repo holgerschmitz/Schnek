@@ -1,6 +1,7 @@
 #include "../../utility.hpp"
 
 #include <decomposition/detail/particle_factory.hpp>
+#include <decomposition/detail/particle_wrap.hpp>
 #include <util/exceptions.hpp>
 
 #include <boost/test/unit_test.hpp>
@@ -26,6 +27,12 @@ struct TestParticle {
 
 using VectorTraits = schnek::ParticleContainerTraits<std::vector<TestParticle>>;
 using WireFormat = schnek::ParticleSerializer<TestParticle>;
+
+struct WrapParticle {
+  std::array<double, 1> position;
+};
+
+using WrapAccessor = schnek::MemberPositionAccessor<&WrapParticle::position>;
 
 // Bucket 0 keeps a particle. Buckets 1 and 2 remove it.
 const auto classifyModulo = [](const TestParticle &p) { return p.id % 3; };
@@ -88,6 +95,15 @@ struct ParticleContainerTraits<::SegmentedParticles> {
     for (const auto &block : c.blocks) {
       for (const auto &p : block) {
         f(p);
+      }
+    }
+  }
+
+  template<class Functor>
+  static void forEachParticle(ContainerType &c, Functor functor) {
+    for (auto &block : c.blocks) {
+      for (auto &particle : block) {
+        functor(particle);
       }
     }
   }
@@ -272,6 +288,30 @@ BOOST_AUTO_TEST_CASE(host_container_has_no_kokkos_dispatch) {
   BOOST_CHECK(!VectorTraits::kokkos_dispatch);
   BOOST_CHECK((std::is_void<VectorTraits::execution_space>::value));
   BOOST_CHECK(Comm::mpi_access == schnek::detail::DeviceMpiAccess::Direct);
+}
+
+BOOST_AUTO_TEST_CASE(for_each_particle_mutates_host_particles) {
+  std::vector<TestParticle> particles{{0, 1.0}, {1, 2.0}};
+  VectorTraits::forEachParticle(particles, [](TestParticle &p) { p.x += 3.0; });
+
+  BOOST_CHECK_EQUAL(particles[0].x, 4.0);
+  BOOST_CHECK_EQUAL(particles[1].x, 5.0);
+}
+
+BOOST_AUTO_TEST_CASE(periodic_wrap_functor_wraps_only_outside_global_cells) {
+  constexpr double length = 10.0;
+  std::vector<WrapParticle> particles{
+      {{-0.5}}, {{-0.01}}, {{length - 0.01}}, {{length + 0.3}}
+  };
+  const schnek::internal::WrapDim<WrapParticle, WrapAccessor> wrap{WrapAccessor{}, 0, 0.0, 9.0, length};
+
+  schnek::ParticleContainerTraits<std::vector<WrapParticle>>::forEachParticle(particles, wrap);
+
+  BOOST_CHECK_CLOSE(particles[0].position[0], 9.5, 1e-12);
+  BOOST_CHECK_CLOSE(particles[1].position[0], 9.99, 1e-12);
+  BOOST_CHECK_CLOSE(particles[2].position[0], 9.99, 1e-12);
+  BOOST_CHECK_CLOSE(particles[3].position[0], 0.3, 1e-12);
+  static_assert(schnek::internal::has_position_shift<WrapAccessor, WrapParticle>::value);
 }
 
 #ifdef SCHNEK_HAVE_KOKKOS
@@ -468,6 +508,16 @@ BOOST_AUTO_TEST_CASE(block_traits_size_and_scratch_need_no_storage) {
   BOOST_CHECK_EQUAL(BlockTraits::size(container), 7u);
   BOOST_CHECK_EQUAL(BlockTraits::partitionScratchBytes(container), 0u);
   BOOST_CHECK(!BlockTraits::kokkos_dispatch);
+}
+
+BOOST_AUTO_TEST_CASE(block_traits_for_each_particle_mutates_only_active_slots) {
+  auto container = makeBlockContainer(5, 2);
+  BlockTraits::forEachParticle(container, [](TestParticle &p) { p.x += 4.0; });
+
+  std::vector<double> values;
+  container.forEach([&values](const TestParticle &p) { values.push_back(p.x); });
+  const std::vector<double> expected{4.0, 4.5, 5.0, 5.5, 6.0};
+  BOOST_CHECK_EQUAL_COLLECTIONS(values.begin(), values.end(), expected.begin(), expected.end());
 }
 
 BOOST_AUTO_TEST_CASE(block_traits_count_buckets_matches_vector_and_keeps_container) {
