@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <decomposition/detail/device_blocked_particle_container.hpp>
 #include <decomposition/detail/particle_factory.hpp>
+#include <decomposition/detail/particle_wrap.hpp>
 #include <random>
 #include <type_traits>
 #include <utility>
@@ -44,6 +45,16 @@ namespace {
 
   struct NonNegativeIdPredicate {
       KOKKOS_INLINE_FUNCTION bool operator()(const BlockTestParticle &p) const { return p.id >= 0; }
+  };
+
+  struct BlockPositionValue {
+      double value;
+      KOKKOS_INLINE_FUNCTION double operator[](std::size_t) const { return value; }
+  };
+
+  struct BlockPositionAccessor {
+      KOKKOS_INLINE_FUNCTION BlockPositionValue operator()(const BlockTestParticle &p) const { return {p.x}; }
+      KOKKOS_INLINE_FUNCTION void shift(BlockTestParticle &p, std::size_t, double delta) const { p.x += delta; }
   };
 
   static_assert(HostBlocked::host_accessible, "HostSpace storage must be host accessible");
@@ -437,6 +448,52 @@ BOOST_AUTO_TEST_CASE(host_move_leaves_source_empty) {
 
 BOOST_AUTO_TEST_CASE(host_parallel_for_each_updates_particles) {
   parallelForEachUpdatesParticles<HostBlocked>();
+}
+
+BOOST_AUTO_TEST_CASE(traits_for_each_particle_updates_host_and_device_containers) {
+  using HostTraits = schnek::ParticleContainerTraits<HostBlocked>;
+  HostBlocked host(4);
+  host.push_back(BlockTestParticle{1, 2.0});
+  host.push_back(BlockTestParticle{2, 4.0});
+  HostTraits::forEachParticle(host, IncrementIdHalveX{});
+  const auto hostResult = host.copyToHost();
+  BOOST_REQUIRE_EQUAL(hostResult.size(), 2u);
+  BOOST_CHECK_EQUAL(hostResult[0].id, 2);
+  BOOST_CHECK_EQUAL(hostResult[0].x, 1.0);
+  BOOST_CHECK_EQUAL(hostResult[1].id, 3);
+  BOOST_CHECK_EQUAL(hostResult[1].x, 2.0);
+
+  if (deviceTestsEnabled()) {
+    DefaultBlocked device(4);
+    device.push_back(BlockTestParticle{3, 6.0});
+    schnek::ParticleContainerTraits<DefaultBlocked>::forEachParticle(device, IncrementIdHalveX{});
+    const auto deviceResult = device.copyToHost();
+    BOOST_REQUIRE_EQUAL(deviceResult.size(), 1u);
+    BOOST_CHECK_EQUAL(deviceResult[0].id, 4);
+    BOOST_CHECK_EQUAL(deviceResult[0].x, 3.0);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(periodic_wrap_functor_runs_on_device_blocked_containers) {
+  const BlockPositionAccessor accessor;
+  const schnek::internal::WrapDim<BlockTestParticle, BlockPositionAccessor> wrap{accessor, 0, 0.0, 9.0, 10.0};
+  HostBlocked host(2);
+  host.push_back(BlockTestParticle{1, -0.5});
+  host.push_back(BlockTestParticle{2, 10.3});
+  schnek::ParticleContainerTraits<HostBlocked>::forEachParticle(host, wrap);
+  const auto hostResult = host.copyToHost();
+  BOOST_CHECK_CLOSE(hostResult[0].x, 9.5, 1e-12);
+  BOOST_CHECK_CLOSE(hostResult[1].x, 0.3, 1e-12);
+
+  if (deviceTestsEnabled()) {
+    DefaultBlocked device(2);
+    device.push_back(BlockTestParticle{3, -0.5});
+    device.push_back(BlockTestParticle{4, 10.3});
+    schnek::ParticleContainerTraits<DefaultBlocked>::forEachParticle(device, wrap);
+    const auto deviceResult = device.copyToHost();
+    BOOST_CHECK_CLOSE(deviceResult[0].x, 9.5, 1e-12);
+    BOOST_CHECK_CLOSE(deviceResult[1].x, 0.3, 1e-12);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(default_space_parallel_for_each_updates_particles) {

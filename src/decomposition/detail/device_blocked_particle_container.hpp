@@ -517,6 +517,11 @@ namespace schnek {
         c.forEach(std::forward<F>(f));
       }
 
+      template<class Functor>
+      static void forEachParticle(ContainerType &c, Functor functor) {
+        c.parallelForEach(functor);
+      }
+
       template<class Predicate>
       static bool allOf(const ContainerType &c, Predicate pred) {
         return c.allOf(pred);

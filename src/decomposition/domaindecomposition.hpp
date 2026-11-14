@@ -662,6 +662,9 @@ namespace schnek {
        * The decomposition will create one container instance for each local
        * range. The accessor maps a particle to its continuous grid position and
        * is captured into the wrapper type so that bounds tests inline.
+       * Accessors that provide `shift(p, dim, delta)` enable automatic periodic
+       * position wrapping during migration. Without it, wrapping remains the
+       * user's responsibility.
        *
        * A `ParticleRegistration` is passed back for future reference, used with
        * `migrate` and the particle iteration contexts.

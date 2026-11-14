@@ -198,7 +198,9 @@ namespace schnek {
        *
        * The decomposition creates one container per local range (one for this
        * single-region backend). The accessor maps a particle to its continuous
-       * grid position.
+       * grid position. Accessors that provide `shift(p, dim, delta)` enable
+       * automatic periodic position wrapping; otherwise wrapping remains the
+       * user's responsibility.
        */
       template<class ContainerType, class PositionAccessor>
       ParticleRegistration registerParticleData(

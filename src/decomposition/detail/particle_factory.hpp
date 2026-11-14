@@ -157,6 +157,27 @@ namespace schnek {
     }
 
     /**
+     * Apply `functor(p)` to every particle in the device-resident container `c`.
+     */
+    template<class ExecSpace, class ContainerType, class Functor>
+    void deviceForEachParticle(ContainerType &c, Functor functor) {
+      static_assert(
+          has_data<ContainerType>::value,
+          "device-resident containers must provide data() or specialise ParticleContainerTraits"
+      );
+      if (c.size() == 0) {
+        return;
+      }
+      using Particle = typename ContainerType::value_type;
+      Particle *data = c.data();
+      Kokkos::parallel_for(
+          "schnek:forEachParticles", Kokkos::RangePolicy<ExecSpace>(std::size_t{0}, c.size()),
+          KOKKOS_LAMBDA(const std::size_t i) { functor(data[i]); }
+      );
+      Kokkos::fence();
+    }
+
+    /**
      * Counts the particles of the device-resident container `c` that `classify` assigns to each bucket (1-based).
      */
     template<class ExecSpace, class ContainerType, class Classifier>
@@ -325,6 +346,7 @@ namespace schnek {
    * - Both primitives take the bucket count at run time, so a caller can choose the number of destinations. The
    *   `std::array` overloads are convenience forwarders for a compile-time count.
    * - `bulkInsert()` appends `count` particles read from a buffer in `ParticleBufferMemorySpace`, in buffer order.
+   * - `forEachParticle()` applies a device-callable functor to every particle in place.
    * - Survivor order is not part of the contract. Stable `Particle&` references and a single `data()` pointer are not
    * required.
    *
@@ -358,6 +380,18 @@ namespace schnek {
       static void forEach(const ContainerType &c, F &&f) {
         for (const auto &p : c) {
           f(p);
+        }
+      }
+
+      /// Apply `functor(p)` to every particle in place.
+      template<class Functor>
+      static void forEachParticle(ContainerType &c, Functor functor) {
+        if constexpr (kokkos_dispatch) {
+          internal::deviceForEachParticle<execution_space>(c, functor);
+        } else {
+          for (auto &p : c) {
+            functor(p);
+          }
         }
       }
 
@@ -533,6 +567,11 @@ namespace schnek {
         c.forEach(std::forward<F>(f));
       }
 
+      template<class Functor>
+      static void forEachParticle(ContainerType &c, Functor functor) {
+        c.forEach(functor);
+      }
+
       template<class Predicate>
       static bool allOf(const ContainerType &c, Predicate pred) {
         for (std::size_t b = 0; b < c.activeBlockCount(); ++b) {
@@ -695,9 +734,25 @@ namespace schnek {
       SCHNEK_FUNCTION auto operator()(const Particle &p) const -> decltype(p.*MemberPtr) {
         return p.*MemberPtr;
       }
+
+      template<class Particle>
+      SCHNEK_FUNCTION void shift(Particle &p, std::size_t dim, double delta) const {
+        (p.*MemberPtr)[dim] += delta;
+      }
   };
 
   namespace internal {
+
+    template<class Accessor, class Particle, class = void>
+    struct has_position_shift : std::false_type {};
+
+    template<class Accessor, class Particle>
+    struct has_position_shift<
+        Accessor,
+        Particle,
+        std::void_t<decltype(std::declval<const Accessor &>().shift(
+            std::declval<Particle &>(), std::declval<std::size_t>(), std::declval<double>()
+        ))>> : std::true_type {};
 
     /**
      * @brief Type-erased handle to a particle container plus its position

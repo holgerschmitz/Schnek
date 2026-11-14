@@ -1,9 +1,11 @@
 #include <algorithm>
+#include <array>
 #include <boost/test/unit_test.hpp>
 #include <cstddef>
 #include <cstdlib>
 #include <decomposition/detail/dense_kokkos_particle_container.hpp>
 #include <decomposition/detail/particle_factory.hpp>
+#include <decomposition/detail/particle_wrap.hpp>
 #include <random>
 #include <type_traits>
 #include <utility>
@@ -16,6 +18,20 @@ namespace {
       double x;
 
       bool operator==(const DenseTestParticle &other) const { return id == other.id && x == other.x; }
+  };
+
+  struct AddToX {
+      KOKKOS_INLINE_FUNCTION void operator()(DenseTestParticle &p) const { p.x += 2.0; }
+  };
+
+  struct DensePositionValue {
+      double value;
+      KOKKOS_INLINE_FUNCTION double operator[](std::size_t) const { return value; }
+  };
+
+  struct DensePositionAccessor {
+      KOKKOS_INLINE_FUNCTION DensePositionValue operator()(const DenseTestParticle &p) const { return {p.x}; }
+      KOKKOS_INLINE_FUNCTION void shift(DenseTestParticle &p, std::size_t, double delta) const { p.x += delta; }
   };
 
   using HostDenseContainer = schnek::DenseKokkosParticleContainer<DenseTestParticle, Kokkos::Serial, Kokkos::HostSpace>;
@@ -175,6 +191,45 @@ BOOST_AUTO_TEST_CASE(host_container_element_access) {
   }
   const std::vector<int> expected{1, 7};
   BOOST_CHECK_EQUAL_COLLECTIONS(ids.begin(), ids.end(), expected.begin(), expected.end());
+}
+
+BOOST_AUTO_TEST_CASE(for_each_particle_updates_host_and_device_containers) {
+  using Traits = schnek::ParticleContainerTraits<HostDenseContainer>;
+  HostDenseContainer host;
+  host.push_back(DenseTestParticle{1, 0.5});
+  host.push_back(DenseTestParticle{2, 1.5});
+  Traits::forEachParticle(host, AddToX{});
+  BOOST_CHECK(host.copyToHost() == (std::vector<DenseTestParticle>{{1, 2.5}, {2, 3.5}}));
+
+  if (deviceTestsEnabled()) {
+    DefaultDenseContainer device;
+    device.push_back(DenseTestParticle{3, 2.5});
+    device.push_back(DenseTestParticle{4, 3.5});
+    schnek::ParticleContainerTraits<DefaultDenseContainer>::forEachParticle(device, AddToX{});
+    BOOST_CHECK(device.copyToHost() == (std::vector<DenseTestParticle>{{3, 4.5}, {4, 5.5}}));
+  }
+}
+
+BOOST_AUTO_TEST_CASE(periodic_wrap_functor_runs_on_dense_kokkos_containers) {
+  const DensePositionAccessor accessor;
+  const schnek::internal::WrapDim<DenseTestParticle, DensePositionAccessor> wrap{accessor, 0, 0.0, 9.0, 10.0};
+  HostDenseContainer host;
+  host.push_back(DenseTestParticle{1, -0.5});
+  host.push_back(DenseTestParticle{2, 10.3});
+  schnek::ParticleContainerTraits<HostDenseContainer>::forEachParticle(host, wrap);
+  auto hostResult = host.copyToHost();
+  BOOST_CHECK_CLOSE(hostResult[0].x, 9.5, 1e-12);
+  BOOST_CHECK_CLOSE(hostResult[1].x, 0.3, 1e-12);
+
+  if (deviceTestsEnabled()) {
+    DefaultDenseContainer device;
+    device.push_back(DenseTestParticle{3, -0.5});
+    device.push_back(DenseTestParticle{4, 10.3});
+    schnek::ParticleContainerTraits<DefaultDenseContainer>::forEachParticle(device, wrap);
+    const auto deviceResult = device.copyToHost();
+    BOOST_CHECK_CLOSE(deviceResult[0].x, 9.5, 1e-12);
+    BOOST_CHECK_CLOSE(deviceResult[1].x, 0.3, 1e-12);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(host_growth_preserves_particles) {
