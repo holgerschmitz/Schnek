@@ -5138,6 +5138,7 @@ BOOST_FIXTURE_TEST_CASE(particle_migration_wraps_periodic_1d_two_ranks, MpiCarte
     schnek::ParticleContainerFactory<Container> factory;
     const Accessor accessor;
     decomposition.registerParticleData(factory, accessor);
+    context.args_MPI_Allreduce.clear();
 
     Container particles;
     std::vector<schnek_test::TestParticle> fromPrev;
@@ -5157,10 +5158,114 @@ BOOST_FIXTURE_TEST_CASE(particle_migration_wraps_periodic_1d_two_ranks, MpiCarte
     scriptSweep(context, fromPrev, fromNext);
     decomposition.migrateParticles(wrapper);
 
+    BOOST_REQUIRE_EQUAL(context.args_MPI_Allreduce.size(), 1u);
+    BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, 2);
+    BOOST_CHECK_EQUAL(context.args_MPI_Sendrecv.size(), 4u);
+    BOOST_CHECK(context.args_MPI_Isend.empty());
+
     BOOST_REQUIRE_EQUAL(wrapper->container.size(), 1u);
     BOOST_CHECK_EQUAL(wrapper->container[0].id, coord == 0 ? 2 : 1);
     BOOST_CHECK_CLOSE(wrapper->container[0].pos[0], coord == 0 ? 0.25 : 7.5, 1e-12);
   }
+}
+
+BOOST_FIXTURE_TEST_CASE(particle_migration_routes_multi_hop_stragglers, MpiCartesianDomainDecompositionTestFixture) {
+  using Container = std::vector<schnek_test::TestParticle>;
+  using Accessor = schnek_test::TestPositionAccessor<1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 4));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{1})
+  );
+
+  const RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  const schnek::Range<double, 1> globalDomain(
+      schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0)
+  );
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+  context.args_MPI_Allreduce.clear();
+  decomposition.setParticleChecks(true);
+
+  schnek::ParticleContainerFactory<Container> factory;
+  const Accessor accessor;
+  decomposition.registerParticleData(factory, accessor);
+
+  schnek_test::TestParticle fastParticle{};
+  fastParticle.pos[0] = 6.5;
+  fastParticle.id = 42;
+  auto wrapper = std::make_shared<schnek::internal::ParticleWrapperImpl<Container, Accessor>>(Container{}, accessor);
+
+  // This rank receives a particle from rank 0 during the neighbour sweep. Its owner is rank 3.
+  context.ret_MPI_Cart_shift.push_back(boost::make_tuple(MPI_SUCCESS, 0, 2));
+  scriptSweep(context, {fastParticle}, {});
+  decomposition.migrateParticles(wrapper);
+
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Allreduce.size(), 2u);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, 2);
+  const auto payloadSend = std::find_if(
+      context.args_MPI_Isend.begin(), context.args_MPI_Isend.end(), [](const auto &call) {
+        return call.datatype == MPI_BYTE && call.count == static_cast<int>(sizeof(schnek_test::TestParticle)) &&
+               call.dest == 3;
+      }
+  );
+  BOOST_REQUIRE(payloadSend != context.args_MPI_Isend.end());
+  BOOST_REQUIRE_EQUAL(payloadSend->payload.size(), sizeof(schnek_test::TestParticle));
+  schnek_test::TestParticle routed{};
+  std::memcpy(&routed, payloadSend->payload.data(), sizeof(routed));
+  BOOST_CHECK_EQUAL(routed.id, 42);
+  BOOST_CHECK_CLOSE(routed.pos[0], 6.5, 1e-12);
+}
+
+BOOST_FIXTURE_TEST_CASE(particle_migration_rejects_nan_collectively, MpiCartesianDomainDecompositionTestFixture) {
+  using Container = std::vector<schnek_test::TestParticle>;
+  using Accessor = schnek_test::TestPositionAccessor<1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{0})
+  );
+
+  const RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7));
+  const schnek::Range<double, 1> globalDomain(
+      schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0)
+  );
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+  context.args_MPI_Allreduce.clear();
+  decomposition.setParticleChecks(true);
+
+  schnek::ParticleContainerFactory<Container> factory;
+  const Accessor accessor;
+  decomposition.registerParticleData(factory, accessor);
+
+  schnek_test::TestParticle invalid{};
+  invalid.pos[0] = std::numeric_limits<double>::quiet_NaN();
+  auto wrapper = std::make_shared<schnek::internal::ParticleWrapperImpl<Container, Accessor>>(
+      Container{invalid}, accessor
+  );
+  context.ret_MPI_Cart_shift.push_back(boost::make_tuple(MPI_SUCCESS, 0, 0));
+  scriptSweep(context, {}, {});
+
+  BOOST_CHECK_THROW(decomposition.migrateParticles(wrapper), schnek::ScheckException);
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Allreduce.size(), 1u);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].count, 2);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].datatype, MPI_INT);
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce[0].op, MPI_MAX);
 }
 
 BOOST_FIXTURE_TEST_CASE(particle_migration_wraps_periodic_when_dimension_has_one_rank, MpiCartesianDomainDecompositionTestFixture) {
