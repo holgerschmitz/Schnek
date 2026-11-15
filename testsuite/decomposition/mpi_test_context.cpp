@@ -274,7 +274,7 @@ int MpiTestContextImpl::MPI_Isend(
   if (buf != nullptr && count > 0) {
     const size_t bytes = datatypeSize(datatype) * static_cast<size_t>(count);
     call.payload.resize(bytes);
-    std::memcpy(call.payload.data(), buf, bytes);
+    mock_memcpy(call.payload.data(), buf, bytes);
   }
   args_MPI_Isend.push_back(std::move(call));
 
