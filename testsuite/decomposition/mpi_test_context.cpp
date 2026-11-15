@@ -22,7 +22,9 @@
 
 namespace {
   size_t datatypeSize(MPI_Datatype type) {
-    if (type == MPI_CHAR) {
+    if (type == MPI_BYTE) {
+      return sizeof(char);
+    } else if (type == MPI_CHAR) {
       return sizeof(char);
     } else if (type == MPI_SHORT) {
       return sizeof(short);

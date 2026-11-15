@@ -10,6 +10,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <map>
 #include <optional>
@@ -1757,11 +1758,34 @@ namespace schnek {
   }
 
   namespace internal::mpi_cartesian_decomposition {
+    SCHNEK_FUNCTION inline bool finitePositionValue(double value) {
+      const double lowerBound = static_cast<double>(PTRDIFF_MIN);
+      const double upperBoundExclusive = -lowerBound;
+      return value >= lowerBound && value < upperBoundExclusive;
+    }
+
+    template<typename Particle, typename PositionAccessor, size_t rank>
+    struct FinitePosition {
+        PositionAccessor accessor;
+        SCHNEK_FUNCTION bool operator()(const Particle &p) const {
+          for (size_t d = 0; d < rank; ++d) {
+            if (!finitePositionValue(accessor(p)[d])) {
+              return false;
+            }
+          }
+          return true;
+        }
+    };
+
     template<typename Particle, typename PositionAccessor>
     struct OwningCellDim {
         PositionAccessor accessor;
         SCHNEK_FUNCTION ptrdiff_t operator()(const Particle &p, size_t dim) const {
-          return static_cast<ptrdiff_t>(std::floor(accessor(p)[dim]));
+          const double value = accessor(p)[dim];
+          if (!finitePositionValue(value)) {
+            return PTRDIFF_MIN;
+          }
+          return static_cast<ptrdiff_t>(std::floor(value));
         }
     };
 
@@ -1781,6 +1805,9 @@ namespace schnek {
         ptrdiff_t hi;
         size_t dim;
         SCHNEK_FUNCTION int operator()(const Particle &p) const {
+          if (!finitePositionValue(owningCell.accessor(p)[dim])) {
+            return 0;
+          }
           const ptrdiff_t cell = owningCell(p, dim);
           if (cell < lo) {
             return 1;
@@ -1800,6 +1827,9 @@ namespace schnek {
         ptrdiff_t hi;
         size_t dim;
         SCHNEK_FUNCTION bool operator()(const Particle &p) const {
+          if (!finitePositionValue(owningCell.accessor(p)[dim])) {
+            return false;
+          }
           const ptrdiff_t cell = owningCell(p, dim);
           return cell >= lo && cell <= hi;
         }
@@ -1961,23 +1991,105 @@ namespace schnek {
       }
     }
 
-#ifndef NDEBUG
-    // After all sweeps every surviving particle must lie inside the local inner
-    // range. A particle still out of bounds travelled more than one process
-    // away, violating the migration precondition.
-    for (size_t d = 0; d < rank; ++d) {
-      const bool inside = Traits::allOf(
+    // The neighbour sweeps are the fast path: they forward particles one
+    // process at a time. Any stragglers are routed directly to their owner.
+    int localStatus[2]{};
+    if (particleChecks) {
+      localStatus[0] = !Traits::allOf(
           container,
-          internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{
-              {wrapper.accessor}, lo[d], hi[d], d
-          }
-      );
-      SCHNEK_ASSERT(
-          inside, "Particle migrated more than one process away in dimension "
-                      << d << "; migration assumes particles move at most one sub-domain per step."
+          internal::mpi_cartesian_decomposition::FinitePosition<Particle, PositionAccessor, rank>{wrapper.accessor}
       );
     }
-#endif
+    for (size_t d = 0; d < rank; ++d) {
+      if (!Traits::allOf(
+              container,
+              internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{
+                  {wrapper.accessor}, lo[d], hi[d], d
+              }
+          )) {
+        localStatus[1] = 1;
+      }
+    }
+
+    int globalStatus[2]{};
+    const int errorCode = this->mpi.MPI_Allreduce(localStatus, globalStatus, 2, MPI_INT, MPI_MAX, comm);
+    if (errorCode != MPI_SUCCESS) {
+      SCHNECK_FAIL("MPI_Allreduce failed while validating particle migration");
+    }
+    if (globalStatus[0] != 0) {
+      SCHNECK_FAIL("non-finite particle position");
+    }
+    if (globalStatus[1] != 0) {
+      routeStragglingParticles(wrapper);
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename WrapperImpl>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::routeStragglingParticles(WrapperImpl &wrapper) {
+    using ContainerType = std::decay_t<decltype(wrapper.container)>;
+    using Particle = typename ParticleContainerTraits<ContainerType>::value_type;
+    using PositionAccessor = std::decay_t<decltype(wrapper.accessor)>;
+    using TransferBlockType = TransferBlock<rank, CheckingPolicy>;
+
+    // When optional checks are disabled, still reject non-finite positions
+    // collectively before the owner router classifies them.
+    if (!particleChecks) {
+      const bool allFinite = ParticleContainerTraits<ContainerType>::allOf(
+          wrapper.container,
+          internal::mpi_cartesian_decomposition::FinitePosition<Particle, PositionAccessor, rank>{wrapper.accessor}
+      );
+      const int localInvalid = allFinite ? 0 : 1;
+      const int globalInvalid = allReduce(localInvalid, MPI_MAX);
+      if (globalInvalid != 0) {
+        SCHNECK_FAIL("non-finite particle position");
+      }
+    }
+
+    const LimitType globalLo = this->globalRange.getLo();
+    const LimitType globalHi = this->globalRange.getHi();
+    int localOutOfGlobal = 0;
+    for (size_t d = 0; d < rank; ++d) {
+      if (!ParticleContainerTraits<ContainerType>::allOf(
+              wrapper.container,
+              internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{
+                  {wrapper.accessor}, globalLo[d], globalHi[d], d
+              }
+          )) {
+        localOutOfGlobal = 1;
+      }
+    }
+    if (allReduce(localOutOfGlobal, MPI_MAX) != 0) {
+      SCHNECK_FAIL("Particle owning cell lies outside the global range during multi-hop migration");
+    }
+
+    std::vector<TransferBlockType> ownerPlan;
+    LimitType coord(0);
+    bool done = false;
+    while (!done) {
+      LimitType lo(0);
+      LimitType hi(0);
+      for (size_t d = 0; d < rank; ++d) {
+        const auto &range = procRanges[d](coord[d]);
+        lo[d] = range.getLo()[0];
+        hi[d] = range.getHi()[0];
+      }
+      ownerPlan.push_back({coordToMpiRank(coord), RangeType(lo, hi)});
+
+      for (size_t d = rank; d > 0; --d) {
+        const size_t axis = d - 1;
+        if (coord[axis] + 1 < dims[axis]) {
+          ++coord[axis];
+          break;
+        }
+        coord[axis] = 0;
+        if (axis == 0) {
+          done = true;
+        }
+      }
+    }
+
+    redistributeParticlesTyped(wrapper, wrapper, ownerPlan, ownerPlan);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -2057,6 +2169,9 @@ namespace schnek {
         SCHNEK_FUNCTION int operator()(const Particle &p) const {
           ptrdiff_t cell[rank];
           for (size_t d = 0; d < rank; ++d) {
+            if (!FinitePosition<Particle, PositionAccessor, rank>{owningCell.accessor}(p)) {
+              return 0;
+            }
             cell[d] = owningCell(p, d);
           }
           for (std::size_t b = 0; b < numBlocks; ++b) {

@@ -214,6 +214,12 @@ namespace schnek {
 
       void migrateParticles(const internal::pParticleWrapper &wrapper) override;
 
+      /**
+       * Enable or disable the optional non-finite position validation pass.
+       * Invalid positions are still handled safely when checks are disabled.
+       */
+      void setParticleChecks(bool enabled) { particleChecks = enabled; }
+
     private:
       /// The MPI context
       MpiContext &mpi;
@@ -237,6 +243,13 @@ namespace schnek {
        * The grid index ranges of each process coordinates in each direction
        */
       ProcRanges procRanges;
+
+      bool particleChecks =
+#ifndef NDEBUG
+          true;
+#else
+          false;
+#endif
 
       /**
        * Determine the new grid layout based on the local or global weights
@@ -307,6 +320,8 @@ namespace schnek {
       void registerMigrateHandler();
       template<typename WrapperImpl>
       void migrateTyped(WrapperImpl &wrapper);
+      template<typename WrapperImpl>
+      void routeStragglingParticles(WrapperImpl &wrapper);
 
       std::unique_ptr<MigrateVisitor> migrateVisitor;
 
