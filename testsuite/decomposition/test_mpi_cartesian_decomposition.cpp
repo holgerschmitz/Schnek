@@ -4472,9 +4472,9 @@ BOOST_FIXTURE_TEST_CASE(
   BOOST_CHECK_EQUAL(context.args_MPI_Isend.size(), static_cast<size_t>(0));
   BOOST_CHECK_EQUAL(context.args_MPI_Waitall.size(), static_cast<size_t>(1));
 
-  // 3 Bcasts total: 2 layout (balance) + 1 projected data.
+  // 4 Bcasts total: 1 validation status + 2 layout + 1 projected data.
   // (No init Bcasts because calcGridDistributonUniform was used at init.)
-  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), static_cast<size_t>(3));
+  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), static_cast<size_t>(4));
   // The last Bcast was the projected data on the replica sub-communicator.
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast.back().get<0>(), 6);        // 6 elements
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast.back().get<2>(), 0);        // root = 0
@@ -4614,9 +4614,10 @@ BOOST_FIXTURE_TEST_CASE(
   BOOST_CHECK_EQUAL(context.args_MPI_Waitall.size(), static_cast<size_t>(2));
 
   // As master and canonical sender, rank 0 calls Bcast for:
-  //   [0,1]: layout broadcasts (one per axis, count=4 each)
-  //   [2]  : projected data broadcast to replica sub-comm, 6 doubles
-  BOOST_REQUIRE_EQUAL(context.args_MPI_Bcast.size(), static_cast<size_t>(3));
+  //   [0]    : weighted-cut validation status
+  //   [1,2]  : layout broadcasts (one per axis, count=4 each)
+  //   [3]    : projected data broadcast to replica sub-comm, 6 doubles
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Bcast.size(), static_cast<size_t>(4));
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast.back().get<0>(), 6);        // 6 elements
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast.back().get<2>(), 0);        // root = 0
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast.back().get<3>(), subComm);  // replica comm
