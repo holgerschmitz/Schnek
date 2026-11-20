@@ -532,6 +532,38 @@ BOOST_AUTO_TEST_CASE( projection_add_local_range_updates_shared_grid )
   BOOST_CHECK_EQUAL(sharedGridPtr->getHi()[0], localRange2.getHi()[0]);
 }
 
+BOOST_AUTO_TEST_CASE( projected_grid_cannot_expand_after_context_use )
+{
+  using ProjectedGridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 2>;
+  using DomainType = schnek::Range<double, 2>;
+  using IndexType = schnek::Array<ptrdiff_t, 2>;
+  using DomainLimitType = schnek::Array<double, 2>;
+
+  MockDomainDecomposition<2> decomposition;
+  decomposition.setGlobalRange(RangeType(IndexType(0, 0), IndexType(9, 9)));
+  decomposition.setGlobalDomain(DomainType(DomainLimitType(0.0, 0.0), DomainLimitType(10.0, 10.0)));
+
+  decomposition.testAddLocalRange(
+      RangeType(IndexType(0, 0), IndexType(4, 4)), DomainType(DomainLimitType(0.0, 0.0), DomainLimitType(5.0, 5.0))
+  );
+  schnek::GridFactory<ProjectedGridType> projectedFactory;
+  const auto projectedRegistration = decomposition.registerProjection(projectedFactory, {0});
+
+  auto context = decomposition.getProjectedGridContext<1>({projectedRegistration});
+
+  BOOST_CHECK_THROW(
+      decomposition.testAddLocalRange(
+          RangeType(IndexType(6, 5), IndexType(8, 9)), DomainType(DomainLimitType(6.0, 5.0), DomainLimitType(9.0, 10.0))
+      ),
+      schnek::ScheckException
+  );
+
+  int callCount = 0;
+  context.forEach([&](const schnek::Range<ptrdiff_t, 1> &, ProjectedGridType &) { ++callCount; });
+  BOOST_CHECK_EQUAL(callCount, 1);
+}
+
 BOOST_AUTO_TEST_CASE( projected_grid_context_unique_ranges )
 {
   using ProjectedGridType = schnek::Grid<double, 1>;
