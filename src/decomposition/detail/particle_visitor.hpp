@@ -78,6 +78,11 @@ namespace schnek {
           });
         }
 
+        template<typename WrapperImpl>
+        bool hasHandler() const {
+          return dispatchers.find(std::type_index(typeid(WrapperImpl))) != dispatchers.end();
+        }
+
         bool empty() const { return dispatchers.empty(); }
 
       private:
