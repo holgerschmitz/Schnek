@@ -351,4 +351,72 @@ BOOST_AUTO_TEST_CASE(too_small_subdomain_throws_on_every_rank) {
   BOOST_CHECK_EQUAL(caughtOnEveryRank, 1);
 }
 
+BOOST_AUTO_TEST_CASE(halo_wider_than_one_rank_inner_extent_throws_on_every_rank) {
+  if (worldSize() != 2) return;
+
+  using Field = schnek::Field<double, 1>;
+  using RangeType = Range<ptrdiff_t, 1>;
+  using DomainType = Range<double, 1>;
+  const RangeType globalRange(Array<ptrdiff_t, 1>(0), Array<ptrdiff_t, 1>(2));
+  const DomainType globalDomain(Array<double, 1>(0.0), Array<double, 1>(3.0));
+
+  schnek::MpiContextImpl mpi(MPI_COMM_WORLD);
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(mpi);
+  configure(decomposition, globalRange, globalDomain);
+
+  schnek::GridFactory<Field> factory(Array<bool, 1>(false), 2);
+  const auto registration = decomposition.registerField(factory);
+  auto checkAllRanksThrow = [](auto &&operation) {
+    int localCaught = 0;
+    try {
+      operation();
+    } catch (const schnek::ScheckException &) {
+      localCaught = 1;
+    }
+
+    int caughtOnEveryRank = 0;
+    MPI_Allreduce(&localCaught, &caughtOnEveryRank, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+    BOOST_CHECK_EQUAL(caughtOnEveryRank, 1);
+  };
+  checkAllRanksThrow([&] { decomposition.exchange(registration); });
+  checkAllRanksThrow([&] { static_cast<schnek::DomainDecomposition<1> &>(decomposition).accumulate(registration); });
+}
+
+BOOST_AUTO_TEST_CASE(halo_width_equal_to_inner_extent_works) {
+  if (worldSize() != 2) return;
+
+  using Field = schnek::Field<double, 1>;
+  using RangeType = Range<ptrdiff_t, 1>;
+  using DomainType = Range<double, 1>;
+  const RangeType globalRange(Array<ptrdiff_t, 1>(0), Array<ptrdiff_t, 1>(3));
+  const DomainType globalDomain(Array<double, 1>(0.0), Array<double, 1>(4.0));
+
+  schnek::MpiContextImpl mpi(MPI_COMM_WORLD);
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(mpi);
+  configure(decomposition, globalRange, globalDomain);
+
+  schnek::GridFactory<Field> factory(Array<bool, 1>(false), 2);
+  const auto registration = decomposition.registerField(factory);
+  decomposition.getGridContext({registration}).forEach([&](const RangeType &, Field &field) {
+    const ptrdiff_t innerLo = field.getInnerLo()[0];
+    const ptrdiff_t innerHi = field.getInnerHi()[0];
+    for (ptrdiff_t i = innerLo; i <= innerHi; ++i) {
+      field(i) = fieldValue(i);
+    }
+  });
+
+  decomposition.exchange(registration);
+  decomposition.getGridContext({registration}).forEach([&](const RangeType &, Field &field) {
+    const ptrdiff_t innerLo = field.getInnerLo()[0];
+    const ptrdiff_t innerHi = field.getInnerHi()[0];
+    for (ptrdiff_t i = field.getLo()[0]; i <= field.getHi()[0]; ++i) {
+      if (i < innerLo || i > innerHi) {
+        BOOST_CHECK_EQUAL(field(i), fieldValue(periodicIndex(i, 4)));
+      }
+    }
+  });
+
+  static_cast<schnek::DomainDecomposition<1> &>(decomposition).accumulate(registration);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

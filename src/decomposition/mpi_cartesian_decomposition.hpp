@@ -295,6 +295,10 @@ namespace schnek {
       template<typename FieldType>
       void handleFieldAccumulate(FieldType &field, bool useFieldInfo);
       RangeType getLocalInnerRange() const;
+      template<typename IndexType>
+      void validateHaloWidths(
+          const IndexType &gridLo, const IndexType &gridHi, const IndexType &innerLo, const IndexType &innerHi
+      ) const;
       template<typename GridType>
       void exchangeWithInteriorBounds(
           GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
