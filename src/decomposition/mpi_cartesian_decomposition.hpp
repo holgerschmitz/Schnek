@@ -11,6 +11,7 @@
 #include "config.hpp"
 #include "detail/grid-communication-traits.hpp"
 #include "detail/redistribution.hpp"
+#include "detail/visitor_handler_registry.hpp"
 #include "domaindecomposition.hpp"
 #include "mpi_context.hpp"
 
@@ -20,7 +21,6 @@
 
 #include <cmath>
 #include <cstddef>
-#include <functional>
 #include <map>
 #include <set>
 #include <vector>
@@ -355,7 +355,7 @@ namespace schnek {
           const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
       );
 
-      std::vector<std::function<void(RedistributeParticleVisitor &)>> redistributeParticleInitializers;
+      internal::VisitorHandlerRegistry<RedistributeParticleVisitor> redistributeParticleInitializers;
 
       detail::BufferRegistry mpiBufferRegistry;
 
@@ -394,7 +394,7 @@ namespace schnek {
           const std::vector<TransferBlock<rank, CheckingPolicy>> &recvPlan
       );
 
-      std::vector<std::function<void(RedistributeVisitor &)>> redistributeInitializers;
+      internal::VisitorHandlerRegistry<RedistributeVisitor> redistributeInitializers;
 
       /// Dynamic-rank transfer block used for projected-grid redistribution.
       struct DynProjTransferBlock {
@@ -445,7 +445,7 @@ namespace schnek {
           const std::vector<DynProjTransferBlock> &recvPlan
       );
 
-      std::vector<std::function<void(RedistributeProjectedVisitor &)>> redistributeProjectedInitializers;
+      internal::VisitorHandlerRegistry<RedistributeProjectedVisitor> redistributeProjectedInitializers;
   };
 
 }  // namespace schnek

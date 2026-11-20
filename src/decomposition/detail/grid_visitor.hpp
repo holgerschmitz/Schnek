@@ -64,6 +64,11 @@ namespace schnek {
           });
         }
 
+        template<typename GridType>
+        bool hasHandler() const {
+          return dispatchers.find(std::type_index(typeid(GridType))) != dispatchers.end();
+        }
+
         bool empty() const { return dispatchers.empty(); }
 
       private:

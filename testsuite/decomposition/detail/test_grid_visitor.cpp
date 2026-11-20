@@ -2,6 +2,7 @@
 
 #include <decomposition/detail/grid_factory.hpp>
 #include <decomposition/detail/grid_visitor.hpp>
+#include <decomposition/detail/visitor_handler_registry.hpp>
 #include <grid/array.hpp>
 #include <grid/grid.hpp>
 #include <grid/range.hpp>
@@ -140,6 +141,22 @@ BOOST_AUTO_TEST_CASE(grid_visitor_reuses_handle)
   for (ptrdiff_t i = lo[0]; i <= hi[0]; ++i) {
     BOOST_CHECK_EQUAL(typed->grid(i), 3);
   }
+}
+
+BOOST_AUTO_TEST_CASE(visitor_handler_registry_deduplicates_types)
+{
+  using GridType = schnek::Grid<int, 1>;
+
+  schnek::internal::VisitorHandlerRegistry<EmptyVisitor> registry;
+  registry.addHandler<GridType>();
+  registry.addHandler<GridType>();
+  registry.addHandler<GridType>();
+
+  BOOST_CHECK_EQUAL(registry.size(), static_cast<std::size_t>(1));
+
+  EmptyVisitor visitor;
+  registry.initialize(visitor);
+  BOOST_CHECK(visitor.hasHandler<GridType>());
 }
 
 BOOST_AUTO_TEST_CASE(grid_visitor_allows_const_readers)

@@ -4058,8 +4058,9 @@ BOOST_FIXTURE_TEST_CASE( balance_load_multiple_grids_preserved, MpiCartesianDoma
   schnek::GridFactory<GridType> factory;
   schnek::GridRegistration regA = decomposition.registerField(factory);
   schnek::GridRegistration regB = decomposition.registerField(factory);
+  schnek::GridRegistration regC = decomposition.registerField(factory);
 
-  // Fill grids with different values
+  // Fill all three grids with different values.
   auto ctxA = decomposition.getGridContext({regA});
   ctxA.forEach([&](const RangeType &range, GridType &grid) {
     for (auto it = range.begin(); it != range.end(); ++it) {
@@ -4071,6 +4072,13 @@ BOOST_FIXTURE_TEST_CASE( balance_load_multiple_grids_preserved, MpiCartesianDoma
   ctxB.forEach([&](const RangeType &range, GridType &grid) {
     for (auto it = range.begin(); it != range.end(); ++it) {
       grid[*it] = 2000.0 + (*it)[0];
+    }
+  });
+
+  auto ctxC = decomposition.getGridContext({regC});
+  ctxC.forEach([&](const RangeType &range, GridType &grid) {
+    for (auto it = range.begin(); it != range.end(); ++it) {
+      grid[*it] = 3000.0 + (*it)[0];
     }
   });
 
@@ -4088,6 +4096,13 @@ BOOST_FIXTURE_TEST_CASE( balance_load_multiple_grids_preserved, MpiCartesianDoma
   newCtxB.forEach([&](const RangeType &range, GridType &grid) {
     for (auto it = range.begin(); it != range.end(); ++it) {
       BOOST_CHECK_EQUAL(grid[*it], 2000.0 + (*it)[0]);
+    }
+  });
+
+  auto newCtxC = decomposition.getGridContext({regC});
+  newCtxC.forEach([&](const RangeType &range, GridType &grid) {
+    for (auto it = range.begin(); it != range.end(); ++it) {
+      BOOST_CHECK_EQUAL(grid[*it], 3000.0 + (*it)[0]);
     }
   });
 }

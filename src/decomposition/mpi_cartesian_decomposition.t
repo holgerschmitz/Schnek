@@ -1028,7 +1028,9 @@ namespace schnek {
     if (exchangeVisitor.get() == nullptr) {
       exchangeVisitor = std::make_unique<ExchangeVisitor>(*this);
     }
-    exchangeVisitor->template registerHandler<GridType>();
+    if (!exchangeVisitor->template hasHandler<GridType>()) {
+      exchangeVisitor->template registerHandler<GridType>();
+    }
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -1037,7 +1039,9 @@ namespace schnek {
     if (accumulateVisitor.get() == nullptr) {
       accumulateVisitor = std::make_unique<AccumulateVisitor>(*this);
     }
-    accumulateVisitor->template registerHandler<GridType>();
+    if (!accumulateVisitor->template hasHandler<GridType>()) {
+      accumulateVisitor->template registerHandler<GridType>();
+    }
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -1062,7 +1066,10 @@ namespace schnek {
     if (migrateVisitor.get() == nullptr) {
       migrateVisitor = std::make_unique<MigrateVisitor>(*this);
     }
-    migrateVisitor->template registerHandler<internal::ParticleWrapperImpl<ContainerType, PositionAccessor>>();
+    using WrapperImpl = internal::ParticleWrapperImpl<ContainerType, PositionAccessor>;
+    if (!migrateVisitor->template hasHandler<WrapperImpl>()) {
+      migrateVisitor->template registerHandler<WrapperImpl>();
+    }
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -1106,9 +1113,7 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<class GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerRedistributeHandler() {
-    redistributeInitializers.emplace_back([](RedistributeVisitor &visitor) {
-      visitor.template registerHandler<GridType>();
-    });
+    redistributeInitializers.template addHandler<GridType>();
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -1128,9 +1133,7 @@ namespace schnek {
     }
 
     RedistributeVisitor visitor(*this, oldWrapper, newWrapper, sendPlan, recvPlan);
-    for (auto &initializer : redistributeInitializers) {
-      initializer(visitor);
-    }
+    redistributeInitializers.initialize(visitor);
 
     (oldWrapper ? oldWrapper : newWrapper)->accept(visitor, false);
   }
@@ -1321,9 +1324,7 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<class GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerRedistributeProjectedHandler() {
-    redistributeProjectedInitializers.emplace_back([](RedistributeProjectedVisitor &visitor) {
-      visitor.template registerHandler<GridType>();
-    });
+    redistributeProjectedInitializers.template addHandler<GridType>();
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -1342,9 +1343,7 @@ namespace schnek {
     );
 
     RedistributeProjectedVisitor visitor(*this, newWrapper, replicaComm, isCanonical, sendPlan, recvPlan);
-    for (auto &initializer : redistributeProjectedInitializers) {
-      initializer(visitor);
-    }
+    redistributeProjectedInitializers.initialize(visitor);
 
     oldWrapper->accept(visitor, false);
   }
@@ -2163,9 +2162,8 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<class ContainerType, class PositionAccessor>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerRedistributeParticleHandler() {
-    redistributeParticleInitializers.emplace_back([](RedistributeParticleVisitor &visitor) {
-      visitor.template registerHandler<internal::ParticleWrapperImpl<ContainerType, PositionAccessor>>();
-    });
+    using WrapperImpl = internal::ParticleWrapperImpl<ContainerType, PositionAccessor>;
+    redistributeParticleInitializers.template addHandler<WrapperImpl>();
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -2180,9 +2178,7 @@ namespace schnek {
     }
 
     RedistributeParticleVisitor visitor(*this, newWrapper, sendPlan, recvPlan);
-    for (auto &initializer : redistributeParticleInitializers) {
-      initializer(visitor);
-    }
+    redistributeParticleInitializers.initialize(visitor);
 
     oldWrapper->accept(visitor);
   }
