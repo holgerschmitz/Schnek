@@ -1476,22 +1476,22 @@ namespace schnek {
     sendScratch.reset();
     recvScratch.reset();
 
-    // Step 2: broadcast the full new projected grid contents within the replica
+    // Step 2: broadcast the new projected grid's inner range within the replica
     // sub-communicator so that non-canonical replicas see identical data.
     if (replicaComm != MPI_COMM_NULL) {
-      typename GridType::RangeType fullRange(newGrid.getLo(), newGrid.getHi());
-      size_t volume = schnek::volume<projRank>(newGrid);
+      auto innerRange = internal::RangeGetter<GridType>::get(newGrid);
+      size_t volume = schnek::volume<projRank>(innerRange);
       if (volume > 0) {
         sendScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(volume, sizeof(ValueType)));
         {
           auto buf = sendScratch.template make_vector<ValueType>(volume);
           if (isCanonical) {
-            detail::GridTransfer<GridType>::pack(newGrid, fullRange, buf.data());
+            detail::GridTransfer<GridType>::pack(newGrid, innerRange, buf.data());
           }
           int errorCode = mpi.MPI_Bcast(buf.data(), toIntCount(volume), mpiType, 0, replicaComm);
           SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Bcast failed during projected redistribution");
           if (!isCanonical) {
-            detail::GridTransfer<GridType>::unpack(newGrid, fullRange, buf.data());
+            detail::GridTransfer<GridType>::unpack(newGrid, innerRange, buf.data());
           }
         }
       }
