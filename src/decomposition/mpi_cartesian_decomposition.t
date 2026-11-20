@@ -428,25 +428,16 @@ namespace schnek {
     calcGridDistributon(procRanges);
     validateProcRanges(procRanges);
 
-    RangeType localRange(this->globalRange);
-    DomainType localDomain(this->globalDomain);
     const LimitType &globalLo = this->globalRange.getLo();
     const LimitType &globalHi = this->globalRange.getHi();
 
+    RangeType localRange;
     for (size_t d = 0; d < rank; ++d) {
       const Range<ptrdiff_t, 1> &dimRange = procRanges[d](myCoord[d]);
       localRange.getLo()[d] = dimRange.getLo()[0];
       localRange.getHi()[d] = dimRange.getHi()[0];
-
-      const ptrdiff_t globalCells = globalHi[d] - globalLo[d] + 1;
-      const ptrdiff_t localCells = localRange.getHi()[d] - localRange.getLo()[d] + 1;
-      const double cellSize =
-          globalCells > 0 ? (this->globalDomain.getHi()[d] - this->globalDomain.getLo()[d]) / double(globalCells) : 0.0;
-      const ptrdiff_t startOffset = localRange.getLo()[d] - globalLo[d];
-
-      localDomain.getLo()[d] = this->globalDomain.getLo()[d] + cellSize * double(startOffset);
-      localDomain.getHi()[d] = localDomain.getLo()[d] + cellSize * double(localCells);
     }
+    DomainType localDomain = this->computeLocalDomain(localRange);
 
     this->addLocalRange(localRange, localDomain);
     initialised = true;
@@ -474,10 +465,6 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonUniform(ProcRanges &ranges) {
-    // typedef Grid<double, 1> Weights;
-    // typedef Weights::IndexType Index;
-    // typedef Range<size_t, rank - 1> Orth;
-
     const LimitType lo = this->globalRange.getLo();
     const LimitType hi = this->globalRange.getHi();
     const LimitType dm = hi - lo + 1;

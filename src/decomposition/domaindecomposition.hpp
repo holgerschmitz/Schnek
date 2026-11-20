@@ -36,7 +36,6 @@
 #ifndef SCHNEK_DOMAINDECOMPOSITION_HPP
 #define SCHNEK_DOMAINDECOMPOSITION_HPP
 
-#include <algorithm>
 #include <array>
 #include <boost/function_types/parameter_types.hpp>
 #include <boost/mpl/at.hpp>
@@ -687,19 +686,6 @@ namespace schnek {
       std::map<long, std::vector<internal::pParticleWrapper>> &getParticleStorage();
 
       /**
-       * Copy overlapping data from old projected grids into the newly-allocated
-       * projected grids.
-       *
-       * This must be called after clearLocalRanges() + addLocalRange() have
-       * rebuilt the projected grid storage so that data from unchanged projection
-       * regions is preserved across a load rebalance.
-       *
-       * @param oldProjectedGrids  The projected grid storage snapshot saved
-       *        before clearLocalRanges() was called.
-       */
-      void copyProjectedGridOverlaps(const std::map<long, std::vector<internal::pGridWrapper>> &oldProjectedGrids);
-
-      /**
        * This allows implementations to add a local range for iteration
        */
       void addLocalIterationRange(RangeType range);
@@ -800,22 +786,26 @@ namespace schnek {
       struct ProjectedRegistrationInterface : public Unique<ProjectedRegistrationInterface> {
           virtual ~ProjectedRegistrationInterface() = default;
           virtual internal::pGridWrapper makeGrid(const RangeType &fullRange, const DomainType &fullDomain) = 0;
+          /**
+           * Ensure the shared projected grid covers a local range.
+           *
+           * This is only for layout setup, before projected-grid data is written.
+           * After a projected context has been requested, expanding the union is
+           * an error. Rebuilding after resetUnion() starts a new setup cycle.
+           * Backends that need to grow a populated grid must preserve its contents
+           * with GridTransfer::copy rather than host element access.
+           */
           virtual internal::pGridWrapper ensureSharedGrid(
               const RangeType &fullRange, const DomainType &fullDomain, std::vector<internal::pGridWrapper> &gridList
           ) = 0;
+          virtual void validateRange(const RangeType &fullRange, const DomainType &fullDomain) const = 0;
           /**
            * Reset the union range state so that the next ensureSharedGrid call
            * creates a fresh grid for the new range rather than reusing stale data.
            * Must be called during clearLocalRanges() before new addLocalRange() calls.
            */
           virtual void resetUnion() = 0;
-          /**
-           * Copy overlapping cells from @p oldWrapper into @p newWrapper.
-           * Cells outside the new grid range are silently dropped.
-           */
-          virtual void copyOverlap(
-              const internal::pGridWrapper &oldWrapper, const internal::pGridWrapper &newWrapper
-          ) = 0;
+          virtual void markUsed() = 0;
           /// Number of axes the projection retains.
           virtual size_t getProjRank() const = 0;
           /// The full-rank axes (size == getProjRank()) that the projection keeps.
@@ -828,7 +818,7 @@ namespace schnek {
           using ProjectedDomainType = Range<double, projRank, CheckingPolicy>;
 
           ProjectedRegistrationImpl(const GridFactory<GridType> &factoryIn, const std::array<size_t, projRank> &axesIn)
-              : factory(factoryIn), axes(axesIn), hasUnion(false) {}
+              : factory(factoryIn), axes(axesIn), hasUnion(false), hasBeenUsed(false) {}
 
           internal::pGridWrapper makeGrid(const RangeType &fullRange, const DomainType &fullDomain) override {
             typename ProjectedRangeType::LimitType lo;
@@ -865,34 +855,38 @@ namespace schnek {
           void resetUnion() override {
             hasUnion = false;
             sharedGrid.reset();
+            hasBeenUsed = false;
           }
 
-          void copyOverlap(const internal::pGridWrapper &oldWrapper, const internal::pGridWrapper &newWrapper)
-              override {
-            if (!oldWrapper || !newWrapper) return;
-            auto oldTyped = std::dynamic_pointer_cast<internal::GridWrapperImpl<GridType>>(oldWrapper);
-            auto newTyped = std::dynamic_pointer_cast<internal::GridWrapperImpl<GridType>>(newWrapper);
-            if (!oldTyped || !newTyped) return;
+          void markUsed() override { hasBeenUsed = true; }
 
-            typename GridType::IndexType lo, hi;
-            bool hasOverlap = true;
+          void validateRange(const RangeType &fullRange, const DomainType &fullDomain) const override {
+            SCHNEK_ASSERT(
+                !hasBeenUsed || !unionWouldExpand(fullRange, fullDomain),
+                "Cannot grow a projected grid after its context has been requested; rebuild the layout before use"
+            );
+          }
+
+          bool unionWouldExpand(const RangeType &fullRange, const DomainType &fullDomain) const {
+            if (!hasUnion) return true;
             for (size_t d = 0; d < projRank; ++d) {
-              lo[d] = std::max(oldTyped->grid.getLo()[d], newTyped->grid.getLo()[d]);
-              hi[d] = std::min(oldTyped->grid.getHi()[d], newTyped->grid.getHi()[d]);
-              if (lo[d] > hi[d]) {
-                hasOverlap = false;
-                break;
+              const size_t axis = axes[d];
+              if (fullRange.getLo()[axis] < unionRange.getLo()[axis] ||
+                  fullRange.getHi()[axis] > unionRange.getHi()[axis] ||
+                  fullDomain.getLo()[axis] < unionDomain.getLo()[axis] ||
+                  fullDomain.getHi()[axis] > unionDomain.getHi()[axis]) {
+                return true;
               }
             }
-            if (!hasOverlap) return;
-
-            typename GridType::RangeType overlap(lo, hi);
-            for (auto it = overlap.begin(); it != overlap.end(); ++it) {
-              newTyped->grid[*it] = oldTyped->grid[*it];
-            }
+            return false;
           }
 
           bool updateUnion(const RangeType &fullRange, const DomainType &fullDomain) {
+            const bool expanded = unionWouldExpand(fullRange, fullDomain);
+            SCHNEK_ASSERT(
+                !expanded || !hasBeenUsed,
+                "Cannot grow a projected grid after its context has been requested; rebuild the layout before use"
+            );
             if (!hasUnion) {
               unionRange = fullRange;
               unionDomain = fullDomain;
@@ -900,33 +894,29 @@ namespace schnek {
               return true;
             }
 
-            bool changed = false;
             for (size_t d = 0; d < projRank; ++d) {
               const size_t axis = axes[d];
               if (fullRange.getLo()[axis] < unionRange.getLo()[axis]) {
                 unionRange.getLo()[axis] = fullRange.getLo()[axis];
-                changed = true;
               }
               if (fullRange.getHi()[axis] > unionRange.getHi()[axis]) {
                 unionRange.getHi()[axis] = fullRange.getHi()[axis];
-                changed = true;
               }
               if (fullDomain.getLo()[axis] < unionDomain.getLo()[axis]) {
                 unionDomain.getLo()[axis] = fullDomain.getLo()[axis];
-                changed = true;
               }
               if (fullDomain.getHi()[axis] > unionDomain.getHi()[axis]) {
                 unionDomain.getHi()[axis] = fullDomain.getHi()[axis];
-                changed = true;
               }
             }
 
-            return changed;
+            return expanded;
           }
 
           GridFactory<GridType> factory;
           std::array<size_t, projRank> axes;
           bool hasUnion;
+          bool hasBeenUsed;
           RangeType unionRange;
           DomainType unionDomain;
           internal::pGridWrapper sharedGrid;
@@ -1526,6 +1516,15 @@ namespace schnek {
       }
     }
 
+    for (const auto &registration : registrations) {
+      auto registrationIt = projectedRegisteredFields.find(registration.id);
+      SCHNEK_ASSERT(
+          registrationIt != projectedRegisteredFields.end(),
+          "Unknown projected grid registration id: " << registration.id
+      );
+      registrationIt->second->markUsed();
+    }
+
     return ProjectedGridContext<projRank>{
         std::move(uniqueRanges), std::move(uniqueEntries), layoutGeneration, &layoutGeneration
     };
@@ -1533,6 +1532,10 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void DomainDecomposition<rank, CheckingPolicy>::addLocalRange(RangeType range, DomainType domain) {
+    for (const auto &registration : projectedRegisteredFields) {
+      registration.second->validateRange(range, domain);
+    }
+
     ++layoutGeneration;
     ranges.push_back(LocalRangeInfo{range, domain});
     for (auto &reg : registeredFields) {
@@ -1598,7 +1601,6 @@ namespace schnek {
   void DomainDecomposition<rank, CheckingPolicy>::clearLocalRanges() {
     ++layoutGeneration;
     ranges.clear();
-    iterationRanges.clear();
     for (auto &g : grids) {
       g.second.clear();
     }
@@ -1631,44 +1633,6 @@ namespace schnek {
   std::map<long, std::vector<internal::pParticleWrapper>> &
   DomainDecomposition<rank, CheckingPolicy>::getParticleStorage() {
     return particleContainers;
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  void DomainDecomposition<rank, CheckingPolicy>::copyProjectedGridOverlaps(
-      const std::map<long, std::vector<internal::pGridWrapper>> &oldProjectedGrids
-  ) {
-    for (const auto &oldEntry : oldProjectedGrids) {
-      long id = oldEntry.first;
-      const auto &oldList = oldEntry.second;
-
-      auto newIt = projectedGrids.find(id);
-      if (newIt == projectedGrids.end()) continue;
-      const auto &newList = newIt->second;
-
-      auto regIt = projectedRegisteredFields.find(id);
-      if (regIt == projectedRegisteredFields.end()) continue;
-
-      // All entries in a projected list point to the same shared grid; find
-      // the first non-null wrapper from each list and copy once.
-      const internal::pGridWrapper *oldWrapper = nullptr;
-      for (const auto &w : oldList) {
-        if (w) {
-          oldWrapper = &w;
-          break;
-        }
-      }
-      const internal::pGridWrapper *newWrapper = nullptr;
-      for (const auto &w : newList) {
-        if (w) {
-          newWrapper = &w;
-          break;
-        }
-      }
-
-      if (oldWrapper && newWrapper) {
-        regIt->second->copyOverlap(*oldWrapper, *newWrapper);
-      }
-    }
   }
 
 }  // namespace schnek
