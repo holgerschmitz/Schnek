@@ -6626,14 +6626,6 @@ namespace {
       return 5.0 * (id / 1000) + std::fmod(0.37 * (id % 1000) + 0.5, 5.0);
     }
 
-    // Exposes the registered particle storage. balanceLoad() rebuilds the local containers, so the test needs the
-    // registered wrapper to see the particles that are actually redistributed.
-    struct ExposedDecomposition : schnek::MpiCartesianDomainDecomposition<1> {
-      using Base = schnek::MpiCartesianDomainDecomposition<1>;
-      explicit ExposedDecomposition(schnek::MpiContextImpl &ctx) : Base(ctx) {}
-      using Base::getParticleStorage;
-    };
-
     // Load balancing with shifted weights moves the cut, so particles must be redistributed to their new owners.
     template<class Container>
     void runBalanceRedistribution() {
@@ -6649,7 +6641,7 @@ namespace {
       using RangeType = schnek::Range<ptrdiff_t, 1>;
 
       schnek::MpiContextImpl mpiContext(MPI_COMM_WORLD);
-      ExposedDecomposition decomposition(mpiContext);
+      schnek::MpiCartesianDomainDecomposition<1> decomposition(mpiContext);
       decomposition.setGlobalRange(RangeType(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(9)));
       decomposition.setGlobalDomain(
           schnek::Range<double, 1>(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(10.0))
@@ -6666,23 +6658,25 @@ namespace {
       BOOST_REQUIRE_EQUAL(rangeBefore.getLo(0), worldRank * 5);
       BOOST_REQUIRE_EQUAL(rangeBefore.getHi(0), worldRank * 5 + 4);
 
-      auto registeredWrapper = [&]() {
-        return std::dynamic_pointer_cast<schnek::internal::ParticleWrapperImpl<Container, Accessor>>(
-            decomposition.getParticleStorage().at(registration.id).front()
+      auto registeredContainer = [&]() {
+        Container *container = nullptr;
+        decomposition.getGridContext({registration}).forEach(
+            [&](const RangeType &, Container &localContainer) { container = &localContainer; }
         );
+        return container;
       };
-      auto wrapper = registeredWrapper();
-      BOOST_REQUIRE(wrapper);
+      auto *container = registeredContainer();
+      BOOST_REQUIRE(container);
       for (int j = 0; j < 60; ++j) {
         const int id = worldRank * 1000 + j;
         TestParticle value{};
         value.pos[0] = initialPosition(id);
         value.id = id;
-        wrapper->container.push_back(value);
+        container->push_back(value);
       }
       Kokkos::fence();
 
-      const std::vector<TestParticle> before = wrapper->container.copyToHost();
+      const std::vector<TestParticle> before = container->copyToHost();
       const std::vector<int> idsBefore = gatherGlobalIds(before);
 
       // Cells on the left are four times heavier, so the balanced cut moves towards the left.
@@ -6695,13 +6689,13 @@ namespace {
       Kokkos::fence();
 
       // balanceLoad() recreates the local containers, so the registered wrapper must be fetched again.
-      wrapper = registeredWrapper();
-      BOOST_REQUIRE(wrapper);
+      container = registeredContainer();
+      BOOST_REQUIRE(container);
 
       const RangeType rangeAfter = localRange();
       BOOST_CHECK(rangeAfter.getLo(0) != rangeBefore.getLo(0) || rangeAfter.getHi(0) != rangeBefore.getHi(0));
 
-      const std::vector<TestParticle> after = wrapper->container.copyToHost();
+      const std::vector<TestParticle> after = container->copyToHost();
       BOOST_CHECK(gatherGlobalIds(after) == idsBefore);
 
       // At least one particle must have changed rank, otherwise the test would not exercise redistribution.

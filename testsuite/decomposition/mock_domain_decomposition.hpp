@@ -85,6 +85,13 @@ namespace schnek {
           return this->registerFieldImpl(factory, subRange);
         }
 
+        template<class ContainerType, class PositionAccessor>
+        schnek::ParticleRegistration registerParticleData(
+            const schnek::ParticleContainerFactory<ContainerType> &factory, PositionAccessor accessor
+        ) {
+          return this->registerParticleDataImpl(factory, std::move(accessor));
+        }
+
         template<class GridType>
         typename Base::template ProjectedRegistration<GridType::Rank> registerProjection(
             schnek::GridFactory<GridType> &factory,

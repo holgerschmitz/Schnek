@@ -15,11 +15,29 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <array>
+#include <vector>
+
 //
 // run only these tests:
 // ./schnek_tests --log_level=test_suite --run_test=domain_decomposition
 
 using schnek::test::MockDomainDecomposition;
+
+namespace {
+  struct ContextParticle {
+      std::array<double, 1> position{};
+      int id = 0;
+  };
+
+  struct ContextOtherParticle {
+      std::array<double, 1> position{};
+      int id = 0;
+  };
+
+  using ContextParticleAccessor = schnek::MemberPositionAccessor<&ContextParticle::position>;
+  using ContextOtherParticleAccessor = schnek::MemberPositionAccessor<&ContextOtherParticle::position>;
+}  // namespace
 
 BOOST_AUTO_TEST_SUITE( domain_decomposition )
 
@@ -963,6 +981,125 @@ BOOST_AUTO_TEST_CASE( foreach_mixed_registration_and_ranges_with_convolution )
   });
 
   BOOST_CHECK_EQUAL(rangeCount, 3);
+}
+
+BOOST_AUTO_TEST_CASE(particle_registration_context_access) {
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 1>;
+  using IndexType = schnek::Array<ptrdiff_t, 1>;
+  using DomainLimitType = schnek::Array<double, 1>;
+  using Container = std::vector<ContextParticle>;
+
+  MockDomainDecomposition<1> decomposition;
+  decomposition.testAddLocalRange(
+      RangeType(IndexType(0), IndexType(9)), DomainType(DomainLimitType(0.0), DomainLimitType(10.0))
+  );
+  schnek::ParticleContainerFactory<Container> factory;
+  const auto registration = decomposition.registerParticleData(factory, ContextParticleAccessor{});
+
+  auto context = decomposition.getGridContext({registration});
+  context.forEach([](const RangeType &, Container &particles) {
+    particles.push_back(ContextParticle{{0.5}, 1234});
+  });
+  context.forEach([](const RangeType &, Container &particles) {
+    BOOST_REQUIRE_EQUAL(particles.size(), 1u);
+    BOOST_CHECK_EQUAL(particles.front().id, 1234);
+  });
+}
+
+BOOST_AUTO_TEST_CASE(mixed_grid_particle_registration_order_and_null_skip) {
+  using FieldType = schnek::Field<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 1>;
+  using IndexType = schnek::Array<ptrdiff_t, 1>;
+  using DomainLimitType = schnek::Array<double, 1>;
+  using Container = std::vector<ContextParticle>;
+
+  MockDomainDecomposition<1> decomposition;
+  const RangeType local0(IndexType(0), IndexType(4));
+  const RangeType local1(IndexType(5), IndexType(9));
+  decomposition.testAddLocalRange(local0, DomainType(DomainLimitType(0.0), DomainLimitType(5.0)));
+  decomposition.testAddLocalRange(local1, DomainType(DomainLimitType(5.0), DomainLimitType(10.0)));
+  typename FieldType::StaggerType noStagger(false);
+  schnek::GridFactory<FieldType> gridFactory(noStagger, 0);
+  schnek::ParticleContainerFactory<Container> particleFactory;
+  const auto gridRegistration = decomposition.registerField(gridFactory, RangeType(IndexType(2), IndexType(7)));
+  const auto particleRegistration = decomposition.registerParticleData(particleFactory, ContextParticleAccessor{});
+
+  auto gridFirst = decomposition.getGridContext({gridRegistration, particleRegistration});
+  int gridFirstCalls = 0;
+  gridFirst.forEach([&](const RangeType &range, FieldType &grid, Container &) {
+    const RangeType expected(IndexType(gridFirstCalls == 0 ? 2 : 5), IndexType(gridFirstCalls == 0 ? 4 : 7));
+    BOOST_CHECK_EQUAL(range.getLo()[0], expected.getLo()[0]);
+    BOOST_CHECK_EQUAL(range.getHi()[0], expected.getHi()[0]);
+    BOOST_CHECK_EQUAL(grid.getLo()[0], expected.getLo()[0]);
+    BOOST_CHECK_EQUAL(grid.getHi()[0], expected.getHi()[0]);
+    ++gridFirstCalls;
+  });
+  BOOST_CHECK_EQUAL(gridFirstCalls, 2);
+
+  auto particleFirst = decomposition.getGridContext({particleRegistration, gridRegistration});
+  int particleFirstCalls = 0;
+  particleFirst.forEach([&](const RangeType &range, Container &, FieldType &grid) {
+    const RangeType expected = particleFirstCalls == 0 ? local0 : local1;
+    BOOST_CHECK_EQUAL(range.getLo()[0], expected.getLo()[0]);
+    BOOST_CHECK_EQUAL(range.getHi()[0], expected.getHi()[0]);
+    BOOST_CHECK_EQUAL(grid.getLo()[0], particleFirstCalls == 0 ? 2 : 5);
+    ++particleFirstCalls;
+  });
+  BOOST_CHECK_EQUAL(particleFirstCalls, 2);
+
+  const auto nullGridRegistration =
+      decomposition.registerField(gridFactory, RangeType(IndexType(1), IndexType(4)));
+  auto nullContext = decomposition.getGridContext({nullGridRegistration, particleRegistration});
+  int nonNullCalls = 0;
+  nullContext.forEach([&](const RangeType &, FieldType &, Container &) { ++nonNullCalls; });
+  BOOST_CHECK_EQUAL(nonNullCalls, 1);
+}
+
+BOOST_AUTO_TEST_CASE(two_particle_registrations_and_type_validation) {
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 1>;
+  using IndexType = schnek::Array<ptrdiff_t, 1>;
+  using DomainLimitType = schnek::Array<double, 1>;
+  using ContainerA = std::vector<ContextParticle>;
+  using ContainerB = std::vector<ContextOtherParticle>;
+  using GridType = schnek::Grid<double, 1>;
+
+  MockDomainDecomposition<1> decomposition;
+  decomposition.testAddLocalRange(
+      RangeType(IndexType(0), IndexType(9)), DomainType(DomainLimitType(0.0), DomainLimitType(10.0))
+  );
+  schnek::ParticleContainerFactory<ContainerA> factoryA;
+  schnek::ParticleContainerFactory<ContainerB> factoryB;
+  const auto registrationA = decomposition.registerParticleData(factoryA, ContextParticleAccessor{});
+  const auto registrationB = decomposition.registerParticleData(factoryB, ContextOtherParticleAccessor{});
+
+  auto context = decomposition.getGridContext({registrationA, registrationB});
+  context.forEach([](const RangeType &, ContainerA &particlesA, ContainerB &particlesB) {
+    particlesA.push_back(ContextParticle{{0.5}, 21});
+    particlesB.push_back(ContextOtherParticle{{0.5}, 42});
+  });
+  context.forEach([](const RangeType &, ContainerA &particlesA, ContainerB &particlesB) {
+    BOOST_REQUIRE_EQUAL(particlesA.size(), 1u);
+    BOOST_REQUIRE_EQUAL(particlesB.size(), 1u);
+    BOOST_CHECK_EQUAL(particlesA.front().id, 21);
+    BOOST_CHECK_EQUAL(particlesB.front().id, 42);
+  });
+
+  BOOST_CHECK_THROW(context.forEach([](const RangeType &, ContainerB &, ContainerA &) {}), schnek::ScheckException);
+  BOOST_CHECK_THROW(context.forEach([](const RangeType &) {}), schnek::ScheckException);
+
+  schnek::GridFactory<GridType> gridFactory;
+  const auto gridRegistration = decomposition.registerField(gridFactory);
+  auto gridAsParticle = decomposition.getGridContext({gridRegistration});
+  BOOST_CHECK_THROW(gridAsParticle.forEach([](const RangeType &, ContainerA &) {}), schnek::ScheckException);
+
+  auto particleAsGrid = decomposition.getGridContext({registrationA});
+  BOOST_CHECK_THROW(particleAsGrid.forEach([](const RangeType &, GridType &) {}), schnek::ScheckException);
+  BOOST_CHECK_THROW(
+      decomposition.getGridContext({schnek::ParticleRegistration{-987654}}), schnek::ScheckException
+  );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

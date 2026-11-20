@@ -33,6 +33,7 @@
 #include <cstring>
 #include <memory>
 #include <type_traits>
+#include <typeindex>
 #include <typeinfo>
 #include <utility>
 #include <vector>
@@ -764,6 +765,8 @@ namespace schnek {
     struct ParticleWrapper {
         virtual ~ParticleWrapper() = default;
         virtual void accept(ParticleVisitorBase &visitor) = 0;
+        virtual std::type_index containerType() const = 0;
+        virtual void *containerPtr() = 0;
     };
 
     using pParticleWrapper = std::shared_ptr<ParticleWrapper>;
@@ -782,6 +785,8 @@ namespace schnek {
             : container(std::move(containerIn)), accessor(std::move(accessorIn)) {}
 
         void accept(ParticleVisitorBase &visitor) override { visitor.visit(typeid(ParticleWrapperImpl), this); }
+        std::type_index containerType() const override { return typeid(ContainerType); }
+        void *containerPtr() override { return &container; }
 
         ContainerType container;
         PositionAccessor accessor;
