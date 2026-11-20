@@ -118,7 +118,7 @@ namespace schnek {
       }
 
       /**
-       * Register a grid or field by passing a factory, but only allocate for a sub-range.
+       * Register a lower-rank projected grid or field by selecting axes from the full-rank domain.
        */
       template<class GridType>
       ProjectedRegistration<GridType::Rank> registerFieldProjection(
