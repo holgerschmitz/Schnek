@@ -106,18 +106,79 @@ namespace schnek {
         }
     };
 
+    template<typename T, typename = void>
+    struct is_grid_argument : std::false_type {};
+
+    template<typename T>
+    struct is_grid_argument<T, std::void_t<decltype(std::remove_cv_t<std::remove_reference_t<T>>::Rank)>>
+        : std::true_type {};
+
+    template<typename ParameterSeq, typename Indices>
+    struct AreGridArguments;
+
+    template<typename ParameterSeq, std::size_t... Is>
+    struct AreGridArguments<ParameterSeq, std::index_sequence<Is...>>
+        : std::conjunction<is_grid_argument<typename boost::mpl::at_c<ParameterSeq, Is>::type>...> {};
+
+    using RegistrationList = std::variant<const std::vector<pGridWrapper> *, const std::vector<pParticleWrapper> *>;
+
+    inline std::size_t listSize(const RegistrationList &list) {
+      return std::visit([](const auto *entries) { return entries->size(); }, list);
+    }
+
+    inline bool isNull(const RegistrationList &list, std::size_t entry) {
+      return std::visit([entry](const auto *entries) { return !(*entries)[entry]; }, list);
+    }
+
+    template<typename Param>
+    struct ParticleReferenceExtractor {
+        static_assert(std::is_lvalue_reference<Param>::value, "Function parameters must be lvalue references");
+        using Reference = Param;
+        using ContainerType = std::remove_const_t<std::remove_reference_t<Param>>;
+
+        static Reference extract(const pParticleWrapper &wrapper) {
+          if (std::type_index(typeid(ContainerType)) != wrapper->containerType()) {
+            SCHNECK_FAIL("Particle container type mismatch for registered particles");
+          }
+          return *static_cast<std::remove_reference_t<Reference> *>(wrapper->containerPtr());
+        }
+    };
+
+    template<typename Param>
+    struct LocalArgumentExtractor {
+        using ValueType = std::remove_cv_t<std::remove_reference_t<Param>>;
+
+        static decltype(auto) extract(const RegistrationList &list, std::size_t entry, std::size_t argument) {
+          if constexpr (is_grid_argument<ValueType>::value) {
+            const auto *gridList = std::get_if<const std::vector<pGridWrapper> *>(&list);
+            if (!gridList) {
+              SCHNECK_FAIL("Registration kind mismatch at argument " << argument);
+            }
+            return GridReferenceExtractor<Param>::extract((**gridList)[entry]);
+          } else {
+            const auto *particleList = std::get_if<const std::vector<pParticleWrapper> *>(&list);
+            if (!particleList) {
+              SCHNECK_FAIL("Registration kind mismatch at argument " << argument);
+            }
+            return ParticleReferenceExtractor<Param>::extract((**particleList)[entry]);
+          }
+        }
+    };
+
     template<typename ParameterSeq>
-    struct GridArgumentBuilder {
-        template<typename IteratorVec, std::size_t... Is>
-        static auto buildImpl(const IteratorVec &iterators, std::index_sequence<Is...>) {
+    struct LocalArgumentBuilder {
+        template<typename ListVec, std::size_t... Is>
+        static auto buildImpl(const ListVec &lists, std::size_t entry, std::index_sequence<Is...>) {
           return std::tuple<typename boost::mpl::at_c<ParameterSeq, Is>::type...>(
-              GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(*iterators[Is])...
+              LocalArgumentExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(
+                  lists[Is], entry, Is
+              )...
           );
         }
 
-        template<typename IteratorVec>
-        static auto build(const IteratorVec &iterators) {
-          return buildImpl(iterators, std::make_index_sequence<boost::mpl::size<ParameterSeq>::value>{});
+        template<typename ListVec>
+        static auto build(const ListVec &lists, std::size_t entry) {
+          return buildImpl(lists, entry, std::make_index_sequence<boost::mpl::size<ParameterSeq>::value>{});
         }
     };
 
@@ -147,18 +208,22 @@ namespace schnek {
           return true;
         }
 
-        template<std::size_t I, typename IteratorVec>
-        static void check(const RangeType &rangeRef, const IteratorVec &iters) {
+        template<std::size_t I, typename ListVec>
+        static void check(const RangeType &rangeRef, const ListVec &lists, std::size_t entry) {
           if constexpr (I < boost::mpl::size<ParameterSeq>::value) {
             using Param = typename boost::mpl::at_c<ParameterSeq, I>::type;
-            const auto &gridRef = GridReferenceExtractor<Param>::extract(*iters[I]);
-            if constexpr (std::is_constructible<RangeType, decltype(gridRef.getRange())>::value) {
-              SCHNEK_ASSERT(
-                  rangeSubset(rangeRef, RangeType(gridRef.getRange())),
-                  "First grid range must be a subset of all full-rank grid ranges in GridContext::forEach"
-              );
+            if constexpr (is_grid_argument<Param>::value) {
+              const auto &gridRef = LocalArgumentExtractor<Param>::extract(lists[I], entry, I);
+              using GridType = std::decay_t<decltype(gridRef)>;
+              using GridRange = decltype(RangeGetter<GridType>::get(gridRef));
+              if constexpr (std::is_constructible<RangeType, GridRange>::value) {
+                SCHNEK_ASSERT(
+                    rangeSubset(rangeRef, RangeType(RangeGetter<GridType>::get(gridRef))),
+                    "First grid range must be a subset of all full-rank grid ranges in GridContext::forEach"
+                );
+              }
             }
-            check<I + 1>(rangeRef, iters);
+            check<I + 1>(rangeRef, lists, entry);
           }
         }
     };
@@ -230,7 +295,8 @@ namespace schnek {
       struct RegistrationVariantBuilder;
       template<size_t FullRank, size_t... Indices>
       struct RegistrationVariantBuilder<FullRank, std::index_sequence<Indices...>> {
-          using type = std::variant<GridRegistration, ProjectedGridRegistration<Indices + 1, FullRank>...>;
+          using type =
+              std::variant<GridRegistration, ProjectedGridRegistration<Indices + 1, FullRank>..., ParticleRegistration>;
       };
       using RegistrationVariant =
           typename RegistrationVariantBuilder<rank, std::make_index_sequence<(rank > 1 ? rank - 1 : 0)>>::type;
@@ -239,15 +305,14 @@ namespace schnek {
         private:
           friend class DomainDecomposition;
           /**
-           * For each registration, contains a list of pointers to the grids allocated for each range.
+           * For each registration, contains a pointer to the local grid or particle containers.
            * Each list has the same length.
-           * If a grid is defined on a sub-range that does not intersect with the corresponding range, NULL_PTR is
-           * stored.
+           * A null grid is stored when a sub-range registration does not intersect a local range.
            */
-          std::vector<const std::vector<internal::pGridWrapper> *> gridLists;
+          std::vector<internal::RegistrationList> registrationLists;
           std::vector<RangeType> ranges;
-          GridContext(std::vector<const std::vector<internal::pGridWrapper> *> gridLists, std::vector<RangeType> ranges)
-              : gridLists(std::move(gridLists)), ranges(std::move(ranges)) {}
+          GridContext(std::vector<internal::RegistrationList> registrationLists, std::vector<RangeType> ranges)
+              : registrationLists(std::move(registrationLists)), ranges(std::move(ranges)) {}
 
         public:
           GridContext() = delete;
@@ -256,16 +321,17 @@ namespace schnek {
           /**
            * @brief Calls the function for each local domain.
            *
-           * The arguments to the function are the local grids corresponding to the registrations.
+           * The callback arguments correspond to the registrations, in registration order. Grid and
+           * particle registrations may be mixed; particle arguments are references to the local containers.
            *
            * The `RangeType` passed to the callback is derived from the first grid argument
            * (the first entry in the registration list) when that grid exposes a compatible
-           * full-rank range. Otherwise the local range is used. In debug builds, the method
-           * asserts that the first full-rank grid range is a subset of every other full-rank
-           * grid range.
+           * full-rank range. Otherwise the local range is used. In debug builds, when the first argument
+           * is a grid with a compatible range, the method asserts that its range is a subset of every
+           * other full-rank grid range. An entry is skipped if any registration is null.
            *
            * @tparam Func the function type
-           * @param func a function taking the grids corrsponding to the registrations
+           * @param func a function taking the registered grids and/or particle containers
            */
           template<typename Func>
           void forEach(Func func);
@@ -473,9 +539,11 @@ namespace schnek {
       virtual long minReduce(long) const = 0;
 
       /**
-       * Get a grid context for calling a function over all local domains
+       * Get a context for calling a function over all local domains.
        *
-       * multiple contexts can be created
+       * Grid, projected-grid and particle registrations may be mixed. The context
+       * holds references to backend storage; recreate it after `balanceLoad()` or
+       * `clearLocalRanges()`, which rebuild the local registration lists.
        */
       GridContext getGridContext(std::initializer_list<RegistrationVariant> registrations);
 
@@ -898,71 +966,61 @@ namespace schnek {
     using ParameterSeq = typename boost::mpl::pop_front<AllParameters>::type;
     constexpr std::size_t paramCount = boost::mpl::size<ParameterSeq>::value;
 
-    if (gridLists.size() != paramCount) {
+    if (registrationLists.size() != paramCount) {
       SCHNECK_FAIL(
-          "Grid registration count (" << gridLists.size() << ") does not match function arity (" << paramCount << ")"
+          "Grid registration count (" << registrationLists.size() << ") does not match function arity (" << paramCount
+                                      << ")"
       );
     }
 
-    const auto &selectedLists = gridLists;
-
-    // checking that all gridLists have the same number of entries that are equal to the number of ranges
+    // Every registration list must have one entry per local range.
     std::size_t entryCount = ranges.size();
-    if (!selectedLists.empty()) {
-      entryCount = selectedLists.front()->size();
-      for (std::size_t i = 1; i < selectedLists.size(); ++i) {
-        if (selectedLists[i]->size() != entryCount) {
+    if (!registrationLists.empty()) {
+      entryCount = internal::listSize(registrationLists.front());
+      for (std::size_t i = 1; i < registrationLists.size(); ++i) {
+        if (internal::listSize(registrationLists[i]) != entryCount) {
           SCHNECK_FAIL("Grid list size mismatch for registration index " << i);
         }
       }
       if (ranges.size() != entryCount) {
-        SCHNECK_FAIL("Range list size mismatch with registered grids");
+        SCHNECK_FAIL("Range list size mismatch with registered registrations");
       }
     }
 
-    // iterators contains an iterator for each grid registration
-    // Each iterator iterates over the range allocations
-    using ListIterator = typename std::vector<internal::pGridWrapper>::const_iterator;
-    std::vector<ListIterator> iterators;
-    iterators.reserve(selectedLists.size());
-    for (auto listPtr : selectedLists) {
-      iterators.push_back(listPtr->begin());
-    }
-
     for (std::size_t entry = 0; entry < entryCount; ++entry) {
-      bool hasNullGrid = false;
-      for (auto &it : iterators) {
-        if (!(*it)) {
-          hasNullGrid = true;
+      bool hasNullRegistration = false;
+      for (const auto &list : registrationLists) {
+        if (internal::isNull(list, entry)) {
+          hasNullRegistration = true;
           break;
         }
       }
 
-      // If any of the grids are null, we don't do anything
-      if (!hasNullGrid) {
+      if (!hasNullRegistration) {
         RangeType rangeRef = ranges[entry];
         bool hasFullRange = false;
         if constexpr (paramCount > 0) {
           using FirstParam = typename boost::mpl::at_c<ParameterSeq, 0>::type;
-          const auto &firstGrid = internal::GridReferenceExtractor<FirstParam>::extract(*iterators.front());
-          if constexpr (std::is_constructible<
-                            RangeType, decltype(internal::RangeGetter<std::decay_t<decltype(firstGrid)>>::get(firstGrid)
-                                       )>::value) {
-            rangeRef = RangeType(internal::RangeGetter<std::decay_t<decltype(firstGrid)>>::get(firstGrid));
-            hasFullRange = true;
+          if constexpr (internal::is_grid_argument<FirstParam>::value) {
+            const auto &firstGrid =
+                internal::LocalArgumentExtractor<FirstParam>::extract(registrationLists.front(), entry, 0);
+            using FirstGrid = std::decay_t<decltype(firstGrid)>;
+            using FirstGridRange = decltype(internal::RangeGetter<FirstGrid>::get(firstGrid));
+            if constexpr (std::is_constructible<RangeType, FirstGridRange>::value) {
+              rangeRef = RangeType(internal::RangeGetter<FirstGrid>::get(firstGrid));
+              hasFullRange = true;
+            }
           }
 #ifndef NDEBUG
           if (hasFullRange) {
-            internal::RangeSubsetChecker<RangeType, rank, ParameterSeq>::template check<0>(rangeRef, iterators);
+            internal::RangeSubsetChecker<RangeType, rank, ParameterSeq>::template check<0>(
+                rangeRef, registrationLists, entry
+            );
           }
 #endif
         }
-        auto args = internal::GridArgumentBuilder<ParameterSeq>::build(iterators);
-        std::apply([&](auto &&...gridArgs) { func(rangeRef, std::forward<decltype(gridArgs)>(gridArgs)...); }, args);
-      }
-
-      for (auto &it : iterators) {
-        ++it;
+        auto args = internal::LocalArgumentBuilder<ParameterSeq>::build(registrationLists, entry);
+        std::apply([&](auto &&...localArgs) { func(rangeRef, std::forward<decltype(localArgs)>(localArgs)...); }, args);
       }
     }
   }
@@ -978,19 +1036,37 @@ namespace schnek {
     using ParameterSeq = typename boost::mpl::pop_front<AllParameters>::type;
     constexpr std::size_t paramCount = boost::mpl::size<ParameterSeq>::value;
 
+    static_assert(
+        internal::is_grid_argument<typename boost::mpl::at_c<ParameterSeq, 0>::type>::value,
+        "GridContext::forEachCell only accepts grid registrations"
+    );
+    static_assert(
+        internal::AreGridArguments<ParameterSeq, std::make_index_sequence<paramCount>>::value,
+        "GridContext::forEachCell only accepts grid registrations"
+    );
+
     using FirstGridParam = typename boost::mpl::at_c<ParameterSeq, 0>::type;
     using FirstGrid = typename std::remove_const<typename std::remove_reference<FirstGridParam>::type>::type;
     using PolicyInfo = detail::IterationPolicyFor<FirstGrid>;
     using IterationPolicy = typename PolicyInfo::type;
     // constexpr bool deviceCapture = PolicyInfo::device_capture;
 
-    if (gridLists.size() != paramCount) {
+    if (registrationLists.size() != paramCount) {
       SCHNECK_FAIL(
-          "Grid registration count (" << gridLists.size() << ") does not match kernel arity (" << paramCount << ")"
+          "Grid registration count (" << registrationLists.size() << ") does not match kernel arity (" << paramCount
+                                      << ")"
       );
     }
 
-    const auto &selectedLists = gridLists;
+    std::vector<const std::vector<internal::pGridWrapper> *> selectedLists;
+    selectedLists.reserve(registrationLists.size());
+    for (std::size_t i = 0; i < registrationLists.size(); ++i) {
+      const auto *gridList = std::get_if<const std::vector<internal::pGridWrapper> *>(&registrationLists[i]);
+      if (!gridList) {
+        SCHNECK_FAIL("GridContext::forEachCell does not accept particle registrations");
+      }
+      selectedLists.push_back(*gridList);
+    }
 
     std::size_t entryCount = ranges.size();
     if (!selectedLists.empty()) {
@@ -1005,17 +1081,10 @@ namespace schnek {
       }
     }
 
-    using ListIterator = typename std::vector<internal::pGridWrapper>::const_iterator;
-    std::vector<ListIterator> iterators;
-    iterators.reserve(selectedLists.size());
-    for (auto listPtr : selectedLists) {
-      iterators.push_back(listPtr->begin());
-    }
-
     for (std::size_t entry = 0; entry < entryCount; ++entry) {
       bool hasNullGrid = false;
-      for (auto &it : iterators) {
-        if (!(*it)) {
+      for (const auto *list : selectedLists) {
+        if (!(*list)[entry]) {
           hasNullGrid = true;
           break;
         }
@@ -1024,12 +1093,8 @@ namespace schnek {
       if (!hasNullGrid) {
         RangeType rangeRef = ranges[entry];
         // internal::launchCellEntry<IterationPolicy, deviceCapture, ParameterSeq>(
-        //     rangeRef, kernel, iterators, std::make_index_sequence<paramCount>{}
+        //     rangeRef, kernel, entry, std::make_index_sequence<paramCount>{}
         // );
-      }
-
-      for (auto &it : iterators) {
-        ++it;
       }
     }
   }
@@ -1286,25 +1351,33 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   typename DomainDecomposition<rank, CheckingPolicy>::GridContext
   DomainDecomposition<rank, CheckingPolicy>::getGridContext(std::initializer_list<RegistrationVariant> registrations) {
-    std::vector<const std::vector<internal::pGridWrapper> *> selectedLists;
+    std::vector<internal::RegistrationList> selectedLists;
     selectedLists.reserve(registrations.size());
 
     for (const auto &registration : registrations) {
       std::visit(
           [&](const auto &typedReg) {
             using RegType = std::decay_t<decltype(typedReg)>;
-            const std::map<long, std::vector<internal::pGridWrapper>> *targetMap = nullptr;
-            if constexpr (std::is_same<RegType, GridRegistration>::value) {
-              targetMap = &grids;
+            if constexpr (std::is_same<RegType, ParticleRegistration>::value) {
+              auto particleIt = particleContainers.find(typedReg.id);
+              if (particleIt == particleContainers.end()) {
+                SCHNECK_FAIL("Unknown particle registration id: " << typedReg.id);
+              }
+              selectedLists.emplace_back(&particleIt->second);
             } else {
-              targetMap = &projectedGrids;
-            }
+              const std::map<long, std::vector<internal::pGridWrapper>> *targetMap = nullptr;
+              if constexpr (std::is_same<RegType, GridRegistration>::value) {
+                targetMap = &grids;
+              } else {
+                targetMap = &projectedGrids;
+              }
 
-            auto gridIt = targetMap->find(typedReg.id);
-            if (gridIt == targetMap->end()) {
-              SCHNECK_FAIL("Unknown grid registration id: " << typedReg.id);
+              auto gridIt = targetMap->find(typedReg.id);
+              if (gridIt == targetMap->end()) {
+                SCHNECK_FAIL("Unknown grid registration id: " << typedReg.id);
+              }
+              selectedLists.emplace_back(&gridIt->second);
             }
-            selectedLists.push_back(&gridIt->second);
           },
           registration
       );
