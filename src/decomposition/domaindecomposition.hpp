@@ -310,8 +310,18 @@ namespace schnek {
            */
           std::vector<internal::RegistrationList> registrationLists;
           std::vector<RangeType> ranges;
-          GridContext(std::vector<internal::RegistrationList> registrationLists, std::vector<RangeType> ranges)
-              : registrationLists(std::move(registrationLists)), ranges(std::move(ranges)) {}
+          unsigned long generation;
+          const unsigned long *ownerGeneration;
+          GridContext(
+              std::vector<internal::RegistrationList> registrationLists,
+              std::vector<RangeType> ranges,
+              unsigned long generation,
+              const unsigned long *ownerGeneration
+          )
+              : registrationLists(std::move(registrationLists)),
+                ranges(std::move(ranges)),
+                generation(generation),
+                ownerGeneration(ownerGeneration) {}
 
         public:
           GridContext() = delete;
@@ -371,10 +381,18 @@ namespace schnek {
           using ProjectedRangeType = Range<ptrdiff_t, projRank, CheckingPolicy>;
           std::vector<ProjectedRangeType> ranges;
           std::vector<std::vector<internal::pGridWrapper>> gridEntries;
+          unsigned long generation;
+          const unsigned long *ownerGeneration;
           ProjectedGridContext(
-              std::vector<ProjectedRangeType> ranges, std::vector<std::vector<internal::pGridWrapper>> gridEntries
+              std::vector<ProjectedRangeType> ranges,
+              std::vector<std::vector<internal::pGridWrapper>> gridEntries,
+              unsigned long generation,
+              const unsigned long *ownerGeneration
           )
-              : ranges(std::move(ranges)), gridEntries(std::move(gridEntries)) {}
+              : ranges(std::move(ranges)),
+                gridEntries(std::move(gridEntries)),
+                generation(generation),
+                ownerGeneration(ownerGeneration) {}
 
         public:
           ProjectedGridContext() = delete;
@@ -945,6 +963,8 @@ namespace schnek {
       void checkGlobalWeights();
 
       void checkLocalWeights();
+
+      unsigned long layoutGeneration = 0;
   };
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -953,6 +973,8 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename Func>
   void DomainDecomposition<rank, CheckingPolicy>::GridContext::forEach(Func func) {
+    SCHNEK_ASSERT(generation == *ownerGeneration, "GridContext is stale: recreate it after balanceLoad()");
+
     using AllParameters = internal::FunctionParameterTypesT<Func>;
     constexpr std::size_t totalParams = boost::mpl::size<AllParameters>::value;
     static_assert(totalParams >= 1, "Function must take at least a RangeType argument");
@@ -1030,6 +1052,8 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename... GridTypes, typename Kernel>
   void DomainDecomposition<rank, CheckingPolicy>::GridContext::forEachCell(Kernel kernel) {
+    SCHNEK_ASSERT(generation == *ownerGeneration, "GridContext is stale: recreate it after balanceLoad()");
+
     static_assert(sizeof...(GridTypes) > 0, "GridContext::forEachCell requires at least one grid type");
     using ParameterSeq = boost::mpl::vector<GridTypes &...>;
     constexpr std::size_t paramCount = sizeof...(GridTypes);
@@ -1106,6 +1130,8 @@ namespace schnek {
   template<size_t projRank>
   template<typename Func>
   void DomainDecomposition<rank, CheckingPolicy>::ProjectedGridContext<projRank>::forEach(Func func) {
+    SCHNEK_ASSERT(generation == *ownerGeneration, "GridContext is stale: recreate it after balanceLoad()");
+
     using AllParameters = internal::FunctionParameterTypesT<Func>;
     constexpr std::size_t totalParams = boost::mpl::size<AllParameters>::value;
     static_assert(totalParams >= 1, "Function must take at least a RangeType argument");
@@ -1397,7 +1423,7 @@ namespace schnek {
     for (const auto &localRange : ranges) {
       rangeCopies.push_back(localRange.range);
     }
-    return GridContext{std::move(selectedLists), std::move(rangeCopies)};
+    return GridContext{std::move(selectedLists), std::move(rangeCopies), layoutGeneration, &layoutGeneration};
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -1500,11 +1526,14 @@ namespace schnek {
       }
     }
 
-    return ProjectedGridContext<projRank>{std::move(uniqueRanges), std::move(uniqueEntries)};
+    return ProjectedGridContext<projRank>{
+        std::move(uniqueRanges), std::move(uniqueEntries), layoutGeneration, &layoutGeneration
+    };
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void DomainDecomposition<rank, CheckingPolicy>::addLocalRange(RangeType range, DomainType domain) {
+    ++layoutGeneration;
     ranges.push_back(LocalRangeInfo{range, domain});
     for (auto &reg : registeredFields) {
       long id = reg.first;
@@ -1567,6 +1596,7 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void DomainDecomposition<rank, CheckingPolicy>::clearLocalRanges() {
+    ++layoutGeneration;
     ranges.clear();
     iterationRanges.clear();
     for (auto &g : grids) {

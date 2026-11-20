@@ -41,6 +41,62 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE( domain_decomposition )
 
+BOOST_AUTO_TEST_CASE( stale_grid_contexts_are_rejected_after_layout_change )
+{
+  using GridType = schnek::Grid<double, 2>;
+  using ProjectedGridType = schnek::Grid<double, 1>;
+  using RangeType = schnek::Range<ptrdiff_t, 2>;
+  using ProjectedRangeType = schnek::Range<ptrdiff_t, 1>;
+  using DomainType = schnek::Range<double, 2>;
+  using IndexType = schnek::Array<ptrdiff_t, 2>;
+  using DomainLimitType = schnek::Array<double, 2>;
+
+  MockDomainDecomposition<2> decomposition;
+  const RangeType range(IndexType(0, 0), IndexType(7, 7));
+  const DomainType domain(DomainLimitType(0.0, 0.0), DomainLimitType(1.0, 1.0));
+  decomposition.setGlobalRange(range);
+  decomposition.setGlobalDomain(domain);
+
+  schnek::GridFactory<GridType> factory;
+  const auto registration = decomposition.registerField(factory);
+  auto preAddContext = decomposition.getGridContext({registration});
+  decomposition.testAddLocalRange(range, domain);
+  BOOST_CHECK_THROW(preAddContext.forEach([](const RangeType &, GridType &) {}), schnek::ScheckException);
+  auto staleContext = decomposition.getGridContext({registration});
+
+  schnek::GridFactory<ProjectedGridType> projectedFactory;
+  const auto projectedRegistration = decomposition.registerProjection(
+      projectedFactory, std::array<size_t, 1>{0}
+  );
+  auto staleProjectedContext = decomposition.getProjectedGridContext<1>({projectedRegistration});
+  auto staleCellContext = decomposition.getGridContext({registration});
+  decomposition.testClearLocalRanges();
+
+  BOOST_CHECK_THROW(
+      staleContext.forEach([](const RangeType &, GridType &) {}), schnek::ScheckException
+  );
+  BOOST_CHECK_THROW(
+      staleProjectedContext.forEach([](const ProjectedRangeType &, ProjectedGridType &) {}),
+      schnek::ScheckException
+  );
+  BOOST_CHECK_THROW(
+      staleCellContext.forEachCell<GridType>([](const GridType::IndexType &, auto &) {}),
+      schnek::ScheckException
+  );
+
+  decomposition.testAddLocalRange(range, domain);
+  auto freshContext = decomposition.getGridContext({registration});
+  int calls = 0;
+  freshContext.forEach([&](const RangeType &, GridType &) { ++calls; });
+  BOOST_CHECK_EQUAL(calls, 1);
+
+  auto freshProjectedContext = decomposition.getProjectedGridContext<1>({projectedRegistration});
+  freshProjectedContext.forEach([&](const ProjectedRangeType &, ProjectedGridType &) { ++calls; });
+  auto freshCellContext = decomposition.getGridContext({registration});
+  freshCellContext.forEachCell<GridType>([](const GridType::IndexType &, auto &) {});
+  BOOST_CHECK_EQUAL(calls, 2);
+}
+
 // ==========================================================================
 // Basic grid registration tests
 // ==========================================================================

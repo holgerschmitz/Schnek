@@ -71,6 +71,10 @@ namespace schnek {
           this->addLocalRange(range, domain);
         }
 
+        void testClearLocalRanges() {
+          this->clearLocalRanges();
+        }
+
         void testAddLocalIterationRange(RangeType range) {
           this->addLocalIterationRange(range);
         }
