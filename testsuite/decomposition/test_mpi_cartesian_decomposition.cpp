@@ -630,6 +630,7 @@ struct MpiCartesianDomainDecompositionTestFixture
 
       context.args_MPI_Cart_sub.clear();
       context.args_MPI_Comm_free.clear();
+      context.args_MPI_Finalized.clear();
 
       context.ret_MPI_Comm_size.clear();
       context.ret_MPI_Comm_rank.clear();
@@ -646,10 +647,68 @@ struct MpiCartesianDomainDecompositionTestFixture
 
       context.ret_MPI_Cart_sub.clear();
       context.ret_MPI_Comm_free.clear();
+      context.finalizedFlag = 0;
     }
 };
 
 BOOST_AUTO_TEST_SUITE( mpi_cartesian_domain_decomposition )
+
+BOOST_FIXTURE_TEST_CASE(uninitialised_decomposition_does_not_call_mpi, MpiCartesianDomainDecompositionTestFixture) {
+  {
+    schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  }
+
+  BOOST_CHECK(context.args_MPI_Finalized.empty());
+  BOOST_CHECK(context.args_MPI_Comm_free.empty());
+  BOOST_CHECK(context.args_MPI_Comm_size.empty());
+  BOOST_CHECK(context.args_MPI_Cart_create.empty());
+}
+
+BOOST_FIXTURE_TEST_CASE(master_before_init_throws, MpiCartesianDomainDecompositionTestFixture) {
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  BOOST_CHECK_THROW(decomposition.master(), schnek::ScheckException);
+}
+
+BOOST_FIXTURE_TEST_CASE(init_creates_and_frees_cartesian_communicator, MpiCartesianDomainDecompositionTestFixture) {
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{0})
+  );
+
+  {
+    schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+    decomposition.setGlobalRange(schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7)));
+    decomposition.setGlobalDomain(schnek::Range<double, 1>(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0)));
+    decomposition.init();
+  }
+
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Finalized.size(), static_cast<size_t>(1));
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Comm_free.size(), static_cast<size_t>(1));
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_free[0], testComm);
+}
+
+BOOST_FIXTURE_TEST_CASE(init_twice_throws, MpiCartesianDomainDecompositionTestFixture) {
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.ret_MPI_Comm_size.push_back(boost::tuple<int, int>(MPI_SUCCESS, 1));
+  context.ret_MPI_Comm_rank.push_back(boost::tuple<int, int>(MPI_SUCCESS, 0));
+  context.ret_MPI_Cart_create.push_back(boost::tuple<int, MPI_Comm>(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(
+      boost::tuple<int, std::vector<int>>(MPI_SUCCESS, std::vector<int>{0})
+  );
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7)));
+  decomposition.setGlobalDomain(schnek::Range<double, 1>(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0)));
+  decomposition.init();
+
+  BOOST_CHECK_THROW(decomposition.init(), schnek::ScheckException);
+  BOOST_CHECK_EQUAL(context.args_MPI_Cart_create.size(), static_cast<size_t>(1));
+}
 
 BOOST_AUTO_TEST_CASE(weighted_cuts_cover_uniform_and_edge_cases) {
   using WeightGrid = schnek::Grid<double, 1>;
@@ -4677,9 +4736,10 @@ BOOST_FIXTURE_TEST_CASE(
     BOOST_CHECK_EQUAL(context.args_MPI_Comm_free.size(), static_cast<size_t>(0));
   }  // decomposition goes out of scope here → destructor runs.
 
-  // Destructor must have freed the cached replica sub-communicator.
-  BOOST_REQUIRE_EQUAL(context.args_MPI_Comm_free.size(), static_cast<size_t>(1));
+  // Destructor frees the cached replica sub-communicator before the Cartesian communicator.
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Comm_free.size(), static_cast<size_t>(2));
   BOOST_CHECK_EQUAL(context.args_MPI_Comm_free[0], subComm);
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_free[1], testComm);
 }
 
 BOOST_FIXTURE_TEST_CASE(
