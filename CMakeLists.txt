@@ -208,6 +208,39 @@ target_compile_features(schnek_tests PRIVATE cxx_std_17)
 add_test(NAME test COMMAND schnek_tests)
 enable_testing()
 
+if(MPI_CXX_FOUND)
+  add_executable(schnek_mpi_tests EXCLUDE_FROM_ALL
+      testsuite/decomposition/mpi_integration_main.cpp
+      testsuite/decomposition/test_mpi_integration.cpp
+  )
+  target_link_libraries(schnek_mpi_tests PRIVATE schnek)
+  target_compile_features(schnek_mpi_tests PRIVATE cxx_std_17)
+
+  if(Kokkos_FOUND)
+    if(Kokkos_COMPILE_LANGUAGE)
+      set_source_files_properties(
+          testsuite/decomposition/mpi_integration_main.cpp
+          testsuite/decomposition/test_mpi_integration.cpp
+          PROPERTIES LANGUAGE ${Kokkos_COMPILE_LANGUAGE}
+      )
+    endif()
+    schnek_mark_kokkos_target(schnek_mpi_tests)
+  endif()
+
+  foreach(process_count IN ITEMS 2 4)
+    add_test(
+        NAME mpi_np${process_count}
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${process_count} ${MPIEXEC_PREFLAGS}
+                $<TARGET_FILE:schnek_mpi_tests> ${MPIEXEC_POSTFLAGS}
+    )
+    set_tests_properties(mpi_np${process_count} PROPERTIES
+        PROCESSORS ${process_count}
+        TIMEOUT 60
+        ENVIRONMENT "OMPI_ALLOW_RUN_AS_ROOT=1;OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1"
+    )
+  endforeach()
+endif()
+
 if(Kokkos_FOUND AND MPI_CXX_FOUND AND Kokkos_COMPILE_LANGUAGE STREQUAL "CUDA")
   add_test(
       NAME kokkos_redistribution_cuda_two_rank
