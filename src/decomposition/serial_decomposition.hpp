@@ -428,17 +428,49 @@ namespace schnek {
     using Particle = typename Traits::value_type;
     using PositionAccessor = std::decay_t<decltype(wrapper.accessor)>;
 
+    for (std::size_t dim = 0; dim < rank; ++dim) {
+      if (!Traits::allOf(
+              wrapper.container, internal::FinitePositionValue<Particle, PositionAccessor>{wrapper.accessor, dim}
+          )) {
+        SCHNECK_FAIL("non-finite particle position");
+      }
+    }
+
     if constexpr (internal::has_position_shift<PositionAccessor, Particle>::value) {
       for (std::size_t dim = 0; dim < rank; ++dim) {
         const ptrdiff_t globalLo = this->globalRange.getLo()[dim];
         const ptrdiff_t globalHi = this->globalRange.getHi()[dim];
+        const double length = static_cast<double>(globalHi - globalLo + 1);
+        if (!Traits::allOf(
+                wrapper.container,
+                internal::ValidWrapPeriods<Particle, PositionAccessor>{
+                    wrapper.accessor, dim, static_cast<double>(globalLo), length
+                }
+            )) {
+          SCHNECK_FAIL("Particle periodic wrap count exceeds the supported magnitude");
+        }
         Traits::forEachParticle(
             wrapper.container,
             internal::WrapDim<Particle, PositionAccessor>{
-                wrapper.accessor, dim, static_cast<double>(globalLo), static_cast<double>(globalHi),
-                static_cast<double>(globalHi - globalLo + 1)
+                wrapper.accessor, dim, static_cast<double>(globalLo), static_cast<double>(globalHi), length
             }
         );
+      }
+    } else {
+      for (std::size_t dim = 0; dim < rank; ++dim) {
+        const ptrdiff_t globalLo = this->globalRange.getLo()[dim];
+        const ptrdiff_t globalHi = this->globalRange.getHi()[dim];
+        if (!Traits::allOf(
+                wrapper.container,
+                internal::PositionCellInRange<Particle, PositionAccessor>{
+                    wrapper.accessor, dim, static_cast<double>(globalLo), static_cast<double>(globalHi)
+                }
+            )) {
+          SCHNECK_FAIL(
+              "Particle left the global domain and the position accessor has no shift(); either provide "
+              "shift(p, dim, delta) for periodic wrapping or handle the boundary (absorb/reflect) before migrate()"
+          );
+        }
       }
     }
   }

@@ -596,12 +596,17 @@ namespace schnek {
 
       /**
        * Migrate every particle of a registration that has left its owning local
-       * range, using a single registration.
+       * range, using a single registration. Periodic wrapping is supported when
+       * the position accessor provides `shift(p, dim, delta)`. Other boundary
+       * behaviours (such as absorbing or reflecting particles) must be handled
+       * by the application before calling `migrate()`.
        */
       void migrate(ParticleRegistration registration);
 
       /**
        * Migrate the particles of multiple registrations.
+       * The same periodic and non-periodic boundary requirements apply as for
+       * the single-registration overload.
        */
       void migrate(std::initializer_list<ParticleRegistration> registrations);
 
