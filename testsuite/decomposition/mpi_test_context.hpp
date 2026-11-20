@@ -92,6 +92,8 @@ class MpiTestContextImpl : public schnek::MpiContext
 
     std::vector<boost::tuple<MPI_Comm, std::vector<int>>> args_MPI_Cart_sub;
     std::vector<MPI_Comm> args_MPI_Comm_free;
+    std::vector<int> args_MPI_Finalized;
+    int finalizedFlag = 0;
 
     std::vector<boost::tuple<MPI_Comm, int, int>> args_MPI_Comm_split;
     std::vector<boost::tuple<MPI_Comm, bool, bool, int, MPI_Datatype, MPI_Op>> args_MPI_Exscan;
@@ -118,6 +120,7 @@ class MpiTestContextImpl : public schnek::MpiContext
     std::vector<int> ret_MPI_Comm_free;
 
     MPI_Comm getCommWorld();
+    int MPI_Finalized(int *flag);
     int MPI_Comm_size(MPI_Comm comm, int *commSize );
     int MPI_Comm_rank(MPI_Comm comm, int *rank );
     int MPI_Cart_create(MPI_Comm comm_old,

@@ -25,6 +25,7 @@ namespace schnek {
     public:
       virtual ~MpiContext() {}
       virtual MPI_Comm getCommWorld() = 0;
+      virtual int MPI_Finalized(int *flag) = 0;
       virtual int MPI_Comm_size(MPI_Comm comm, int *commSize) = 0;
       virtual int MPI_Comm_rank(MPI_Comm comm, int *rank) = 0;
       virtual int MPI_Cart_create(
@@ -76,6 +77,7 @@ namespace schnek {
     public:
       MpiContextImpl(MPI_Comm commWorld);
       MPI_Comm getCommWorld();
+      int MPI_Finalized(int *flag);
       int MPI_Comm_size(MPI_Comm comm, int *commSize);
       int MPI_Comm_rank(MPI_Comm comm, int *rank);
       int MPI_Cart_create(

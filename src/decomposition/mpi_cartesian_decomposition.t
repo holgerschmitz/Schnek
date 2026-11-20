@@ -72,17 +72,20 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   bool MpiCartesianDomainDecomposition<rank, CheckingPolicy>::master() const {
+    SCHNEK_ASSERT(initialised, "MpiCartesianDomainDecomposition has not been initialised");
     return ComRank == 0;
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::numProcs() const {
+    SCHNEK_ASSERT(initialised, "MpiCartesianDomainDecomposition has not been initialised");
     return ComSize;
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename T>
   T MpiCartesianDomainDecomposition<rank, CheckingPolicy>::allReduce(T value, MPI_Op op) const {
+    SCHNEK_ASSERT(initialised, "MpiCartesianDomainDecomposition has not been initialised");
     T result{};
     int errorCode = mpi.MPI_Allreduce(&value, &result, 1, internal::mpiDatatypeFor<T>(), op, comm);
     SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed");
@@ -91,18 +94,21 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   double MpiCartesianDomainDecomposition<rank, CheckingPolicy>::avgReduce(double value) const {
+    SCHNEK_ASSERT(initialised, "MpiCartesianDomainDecomposition has not been initialised");
     SCHNEK_ASSERT(ComSize > 0, "MPI communicator size is zero");
     return allReduce(value, MPI_SUM) / double(ComSize);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::avgReduce(int value) const {
+    SCHNEK_ASSERT(initialised, "MpiCartesianDomainDecomposition has not been initialised");
     SCHNEK_ASSERT(ComSize > 0, "MPI communicator size is zero");
     return static_cast<int>(allReduce(value, MPI_SUM) / double(ComSize));
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   long MpiCartesianDomainDecomposition<rank, CheckingPolicy>::avgReduce(long value) const {
+    SCHNEK_ASSERT(initialised, "MpiCartesianDomainDecomposition has not been initialised");
     SCHNEK_ASSERT(ComSize > 0, "MPI communicator size is zero");
     return static_cast<long>(allReduce(value, MPI_SUM) / double(ComSize));
   }
@@ -348,6 +354,7 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::getUniqueId() const {
+    SCHNEK_ASSERT(initialised, "MpiCartesianDomainDecomposition has not been initialised");
     int id = myCoord[0];
     for (size_t i = 1; i < rank; ++i) id = dims[i] * id + myCoord[i];
 
@@ -357,6 +364,8 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::init() {
+    SCHNEK_ASSERT(!initAttempted, "MpiCartesianDomainDecomposition::init() may only be called once");
+    initAttempted = true;
     int errorCode;
     // Arrange the processes in a Cartesian grid topology
     LimitType lo = this->globalRange.getLo();
@@ -440,6 +449,7 @@ namespace schnek {
     }
 
     this->addLocalRange(localRange, localDomain);
+    initialised = true;
 
 #ifndef NDEBUG
     // Invariant: init() must add exactly one local range.
@@ -615,7 +625,7 @@ namespace schnek {
 
     int status = 1;
     std::string error;
-    if (master()) {
+    if (ComRank == 0) {
       size_t transferOffset = 0;
       LimitType lo = this->globalWeights.getLo();
       LimitType hi = this->globalWeights.getHi();
@@ -661,7 +671,7 @@ namespace schnek {
     int errorCode = mpi.MPI_Bcast(&status, 1, MPI_INT, 0, comm);
     SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Bcast failed while validating global-weight cuts");
     if (status == 0) {
-      if (master()) {
+      if (ComRank == 0) {
         SCHNECK_FAIL("Invalid range when attempting to balance load: " << error);
       }
       SCHNECK_FAIL("Invalid range when attempting to balance load from global weights");
@@ -1698,10 +1708,27 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   MpiCartesianDomainDecomposition<rank, CheckingPolicy>::~MpiCartesianDomainDecomposition() {
-    for (auto &entry : projectedReplicaComms) {
-      if (entry.second != MPI_COMM_NULL) {
-        mpi.MPI_Comm_free(&entry.second);
+    if (comm == MPI_COMM_NULL && projectedReplicaComms.empty()) return;
+
+    try {
+      int finalized = 0;
+      if (mpi.MPI_Finalized(&finalized) != MPI_SUCCESS || finalized) return;
+
+      for (auto &entry : projectedReplicaComms) {
+        if (entry.second != MPI_COMM_NULL) {
+          try {
+            mpi.MPI_Comm_free(&entry.second);
+          } catch (...) {
+          }
+        }
       }
+      if (comm != MPI_COMM_NULL) {
+        try {
+          mpi.MPI_Comm_free(&comm);
+        } catch (...) {
+        }
+      }
+    } catch (...) {
     }
   }
 

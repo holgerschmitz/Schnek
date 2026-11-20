@@ -78,7 +78,8 @@ namespace schnek {
        * Initialisation and load balancing based on global weights
        *
        * The processor layout is determined by the global grid size or, if specified, by the
-       * global weights.
+       * global weights. This may only be called once; reinitialising would require clearing
+       * local ranges, registrations, and replica communicators.
        */
       void init() override;
 
@@ -216,19 +217,22 @@ namespace schnek {
       MpiContext &mpi;
 
       /// The number of processes
-      int ComSize;
+      int ComSize = 0;
 
       /// The rank of the current process
-      int ComRank;
+      int ComRank = 0;
 
       /// The Comm object referring to the Cartesian process grid
-      MPI_Comm comm;
+      MPI_Comm comm = MPI_COMM_NULL;
 
       /// Dimensions of the Cartesian topology
-      LimitType dims;
+      LimitType dims{};
 
       /// The Cartesian coordinates of this process
-      LimitType myCoord;
+      LimitType myCoord{};
+
+      bool initialised = false;
+      bool initAttempted = false;
 
       /**
        * The grid index ranges of each process coordinates in each direction

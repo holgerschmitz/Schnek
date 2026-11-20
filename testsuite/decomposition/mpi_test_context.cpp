@@ -56,6 +56,15 @@ MPI_Comm MpiTestContextImpl::getCommWorld()
   return commWorld;
 }
 
+int MpiTestContextImpl::MPI_Finalized(int *flag)
+{
+  args_MPI_Finalized.push_back(1);
+  if (flag) {
+    *flag = finalizedFlag;
+  }
+  return MPI_SUCCESS;
+}
+
 int MpiTestContextImpl::MPI_Comm_size(MPI_Comm comm, int *commSize)
 {
   size_t argsCount = args_MPI_Comm_size.size();

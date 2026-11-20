@@ -13,6 +13,10 @@ MPI_Comm schnek::MpiContextImpl::getCommWorld() {
   return commWorld;
 }
 
+int schnek::MpiContextImpl::MPI_Finalized(int* flag) {
+  return ::MPI_Finalized(flag);
+}
+
 int schnek::MpiContextImpl::MPI_Comm_size(MPI_Comm comm, int* commSize) {
   return ::MPI_Comm_size(comm, commSize);
 }
