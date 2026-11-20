@@ -95,6 +95,9 @@ namespace schnek {
          */
         using IterationPolicyType = RangeKokkosIterationPolicy<rank_t, typename ViewType::execution_space>;
 
+        /// Execution views are captured by value for Kokkos cell iteration.
+        static constexpr bool iteration_device_capture = true;
+
       protected:
         /// The lowest and highest coordinates in the grid (inclusive)
         RangeType range;

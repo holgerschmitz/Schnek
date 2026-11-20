@@ -43,6 +43,7 @@
 #include <boost/mpl/front.hpp>
 #include <boost/mpl/pop_front.hpp>
 #include <boost/mpl/size.hpp>
+#include <boost/mpl/vector.hpp>
 #include <iostream>
 #include <iterator>
 #include <list>
@@ -254,16 +255,14 @@ namespace schnek {
       );
 
       if constexpr (deviceCapture) {
-#ifdef SCHNEK_HAVE_KOKKOS
         detail::internal::forEachCellDevice<IterationPolicy>(
             range, kernel,
-            GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(*iterators[Is])...
+            GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(iterators[Is])...
         );
-#endif
       } else {
         detail::internal::forEachCellHost<IterationPolicy>(
             range, kernel,
-            GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(*iterators[Is])...
+            GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(iterators[Is])...
         );
       }
     }
@@ -341,29 +340,27 @@ namespace schnek {
            *
            * Unlike `forEach`, which invokes the callback once per local range with
            * whole-grid references, `forEachCell` launches a parallel sweep over the
-           * cells of each local range and invokes the kernel once per cell. The
-           * first kernel argument is the cell position (`RangeType::LimitType`),
-           * followed by the local grids corresponding to the registrations.
+           * cells of each local range and invokes the kernel once per cell. Supply
+           * the registered grid types explicitly; the first kernel argument is
+           * the cell position (`RangeType::LimitType`), followed by an execution
+           * view for each grid in registration order.
            *
-           * The iteration policy and the grid capture mode are deduced at compile
-           * time from the registered grid types via `detail::IterationPolicyFor`:
-           * host-backed grids are swept in C-order with the grids captured by
-           * reference; Kokkos-backed grids are swept with the grid's execution
-           * space (`Kokkos::parallel_for`) and the grids captured by value (a
-           * shallow, view-sharing copy) so the kernel body runs on the device.
-           * Switching a registered grid's storage policy to a device memory space
-           * is therefore sufficient to move the kernel to the GPU; the kernel must
-           * be marked `SCHNEK_INLINE` to be callable on the device.
+           * The iteration policy and capture mode are selected at compile time
+           * from those grid types. Host-backed grids use the host policy;
+           * Kokkos-backed grids use their execution space and pass views by value,
+           * including views in host-accessible memory spaces. All kernels take
+           * execution-view references, and device-callable kernels must be marked
+           * `SCHNEK_INLINE`.
            *
-           * All registered grids in the context must share the same execution
-           * space (all host or all device); this is enforced with a static
-           * assertion.
+           * All registered grids must have compatible iteration policies and
+           * capture modes. Particle registrations are not supported.
            *
+           * @tparam GridTypes registered grid types, in registration order
            * @tparam Kernel the kernel type
-           * @param kernel a function taking the cell position followed by the grids
-           *     corresponding to the registrations
+           * @param kernel a callable taking the cell position followed by
+           *     `GridTypes::ExecutionViewType<void>&` arguments
            */
-          template<typename Kernel>
+          template<typename... GridTypes, typename Kernel>
           void forEachCell(Kernel kernel);
       };
 
@@ -1026,30 +1023,26 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  template<typename Kernel>
+  template<typename... GridTypes, typename Kernel>
   void DomainDecomposition<rank, CheckingPolicy>::GridContext::forEachCell(Kernel kernel) {
-    using AllParameters = internal::FunctionParameterTypesT<Kernel>;
-    constexpr std::size_t totalParams = boost::mpl::size<AllParameters>::value;
-    static_assert(totalParams >= 2, "Kernel must take a cell position argument and at least one grid argument");
+    static_assert(sizeof...(GridTypes) > 0, "GridContext::forEachCell requires at least one grid type");
+    using ParameterSeq = boost::mpl::vector<GridTypes &...>;
+    constexpr std::size_t paramCount = sizeof...(GridTypes);
 
-    // The first parameter is the cell position; the remaining parameters are the grids.
-    using ParameterSeq = typename boost::mpl::pop_front<AllParameters>::type;
-    constexpr std::size_t paramCount = boost::mpl::size<ParameterSeq>::value;
-
-    static_assert(
-        internal::is_grid_argument<typename boost::mpl::at_c<ParameterSeq, 0>::type>::value,
-        "GridContext::forEachCell only accepts grid registrations"
-    );
     static_assert(
         internal::AreGridArguments<ParameterSeq, std::make_index_sequence<paramCount>>::value,
         "GridContext::forEachCell only accepts grid registrations"
     );
 
-    using FirstGridParam = typename boost::mpl::at_c<ParameterSeq, 0>::type;
-    using FirstGrid = typename std::remove_const<typename std::remove_reference<FirstGridParam>::type>::type;
+    using FirstGrid = std::tuple_element_t<0, std::tuple<GridTypes...>>;
     using PolicyInfo = detail::IterationPolicyFor<FirstGrid>;
     using IterationPolicy = typename PolicyInfo::type;
-    // constexpr bool deviceCapture = PolicyInfo::device_capture;
+    constexpr bool deviceCapture = PolicyInfo::device_capture;
+
+    static_assert(
+        (std::is_same_v<IterationPolicy, typename detail::IterationPolicyFor<GridTypes>::type> && ...),
+        "All grids registered in a GridContext::forEachCell must use the same iteration policy"
+    );
 
     if (registrationLists.size() != paramCount) {
       SCHNECK_FAIL(
@@ -1092,9 +1085,14 @@ namespace schnek {
 
       if (!hasNullGrid) {
         RangeType rangeRef = ranges[entry];
-        // internal::launchCellEntry<IterationPolicy, deviceCapture, ParameterSeq>(
-        //     rangeRef, kernel, entry, std::make_index_sequence<paramCount>{}
-        // );
+        std::vector<internal::pGridWrapper> entryGrids;
+        entryGrids.reserve(paramCount);
+        for (const auto *list : selectedLists) {
+          entryGrids.push_back((*list)[entry]);
+        }
+        internal::launchCellEntry<IterationPolicy, deviceCapture, ParameterSeq>(
+            rangeRef, kernel, entryGrids, std::make_index_sequence<paramCount>{}
+        );
       }
     }
   }

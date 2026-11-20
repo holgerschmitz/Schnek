@@ -27,6 +27,7 @@
 #define SCHNEK_DECOMPOSITION_DETAIL_CELL_ITERATION_HPP_
 
 #include <cstddef>
+#include <tuple>
 #include <type_traits>
 
 #include "../../grid/gridstorage/grid-storage-concept.hpp"
@@ -41,50 +42,32 @@
 
 namespace schnek {
   namespace detail {
-
-    // namespace internal {
-    //   /**
-    //    * @brief Detects whether a storage policy is backed by a Kokkos view, i.e.
-    //    *        it exposes a `getKokkosView()` accessor.
-    //    */
-    //   template<
-    //       class Storage,
-    //       bool = concepts::GridStorageConceptCondition<Storage>::has_get_kokkos_view_method>
-    //   struct is_kokkos_storage : std::false_type {};
-
-    //   template<class Storage>
-    //   struct is_kokkos_storage<Storage, true> : std::true_type {};
-    // }  // namespace internal
-
-    // /// True if `GridType` is backed by a Kokkos storage policy.
-    // template<class GridType>
-    // struct is_kokkos_grid : internal::is_kokkos_storage<typename GridType::storage_type> {};
+    template<class...>
+    inline constexpr bool dependent_false_v = false;
 
     /**
      * @brief Maps a grid type to the iteration policy used to sweep its cells.
      *
-     * For host (non-Kokkos) storage the C-order host policy is selected and the
-     * grids are captured by reference, so writes hit the registered grid. For
-     * Kokkos storage the execution-space-aware policy is selected and the grids
-     * are captured by value: a Kokkos grid copy is shallow (it shares the
-     * underlying view handle), which is required so the view can be captured into
-     * a device kernel while writes still target the shared device memory.
+     * The grid's storage selects the iteration policy and whether execution
+     * views must be captured by value for a Kokkos kernel.
      */
     template<class GridType>
     struct IterationPolicyFor {
         using type = typename GridType::IterationPolicyType;
-        /// Capture grids by value (true) or by reference (false) for the kernel.
-        // static constexpr bool device_capture = false;
+        /// Pass execution views by value to a Kokkos kernel.
+        static constexpr bool device_capture = GridType::iteration_device_capture;
     };
     namespace internal {
       /**
-       * @brief Host launch: sweep `range` with `IterationPolicy`, capturing the
-       *        kernel and the grids by reference so writes reach the registered
-       *        grids.
+       * @brief Host launch: sweep `range` and pass stable execution-view
+       *        references to the kernel.
        */
       template<class IterationPolicy, class RangeType, class Kernel, class... Grids>
       void forEachCellHost(const RangeType &range, Kernel &kernel, Grids &...grids) {
-        IterationPolicy::forEach(range, [&](const typename RangeType::LimitType &pos) { kernel(pos, grids...); });
+        auto views = std::make_tuple(grids.template getExecutionView<void>()...);
+        IterationPolicy::forEach(range, [&](const typename RangeType::LimitType &pos) {
+          std::apply([&](auto &...view) { kernel(pos, view...); }, views);
+        });
       }
 
 #ifdef SCHNEK_HAVE_KOKKOS
@@ -136,9 +119,9 @@ namespace schnek {
       /**
        * @brief Device launch: sweep `range` with the Kokkos `IterationPolicy`.
        *
-       * The kernel and grids are passed by value and captured by value into the
-       * `KOKKOS_LAMBDA`. For Kokkos grids the copy is shallow (it shares the
-       * view), so the kernel writes through the shared (possibly device) memory.
+       * The kernel and execution views are captured by value into the
+       * `KOKKOS_LAMBDA`. Kokkos view copies are shallow, so the kernel writes
+       * through the shared (possibly device) memory.
        * On a host Kokkos backend `KOKKOS_LAMBDA` expands to a plain `[=]` lambda,
        * so the same code compiles and runs on CPU-only builds.
        */
@@ -146,6 +129,14 @@ namespace schnek {
       void forEachCellDevice(const RangeType &range, Kernel kernel, Grids... grids) {
         using Functor = ForEachCellDeviceFunctor<RangeType, Kernel, std::decay_t<Grids>...>;
         IterationPolicy::forEach(range, Functor(kernel, grids...));
+      }
+#else
+      template<class IterationPolicy, class RangeType, class Kernel, class... Grids>
+      void forEachCellDevice(const RangeType &, Kernel, Grids...) {
+        static_assert(
+            dependent_false_v<IterationPolicy>,
+            "GridContext::forEachCell requires a build with Kokkos for Kokkos-backed grids"
+        );
       }
 #endif  // SCHNEK_HAVE_KOKKOS
 
