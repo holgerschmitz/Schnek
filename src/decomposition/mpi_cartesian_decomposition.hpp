@@ -129,15 +129,6 @@ namespace schnek {
       long minReduce(long value) const override;
 
       /**
-       * Exchange halo cells between processes. Function overload accepting a single grid registration.
-       *
-       * The extent of the halo is determined by the the `useFieldInfo` flag. If false, the halo is determined
-       * by the size of the grid in relation to the local index range. If true (default), for `Field`-type grids,
-       * it is taken from `ghostCells` parameter of the field. For plain `Grid`-type grids, the flag has no effect.
-       */
-      //   void exchange(std::initializer_list<GridRegistration> registrations, bool useFieldInfo = true) override;
-
-      /**
        * Return the grid index ranges of each process coordinates in each direction
        *
        * @return An array with an entry for each dimension. For each dimension multiple ranges
@@ -163,7 +154,7 @@ namespace schnek {
       }
 
       /**
-       * Register a grid or field by passing a factory, but only allocate for a sub-range.
+       * Register a lower-rank projected grid or field by selecting axes from the full-rank domain.
        */
       template<class GridType>
       ProjectedRegistration<GridType::Rank> registerFieldProjection(
