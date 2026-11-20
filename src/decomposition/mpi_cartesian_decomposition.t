@@ -2540,6 +2540,59 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename IndexType>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::validateHaloWidths(
+      const IndexType &gridLo, const IndexType &gridHi, const IndexType &innerLo, const IndexType &innerHi
+  ) const {
+    int localOk = 1;
+    size_t invalidDim = rank;
+    ptrdiff_t invalidExtent = 0;
+    ptrdiff_t invalidLowerHalo = 0;
+    ptrdiff_t invalidUpperHalo = 0;
+
+    for (size_t dim = 0; dim < rank; ++dim) {
+      const ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
+      const ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
+      const ptrdiff_t innerExtent = innerHi[dim] - innerLo[dim] + 1;
+      if (innerExtent <= 0 || innerExtent < lowerHalo || innerExtent < upperHalo) {
+        localOk = 0;
+        if (invalidDim == rank) {
+          invalidDim = dim;
+          invalidExtent = innerExtent;
+          invalidLowerHalo = lowerHalo;
+          invalidUpperHalo = upperHalo;
+        }
+      }
+    }
+
+    // Agree before any rank enters point-to-point halo communication.
+    int globalOk = 0;
+    const int errorCode = mpi.MPI_Allreduce(&localOk, &globalOk, 1, MPI_INT, MPI_MIN, comm);
+    SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating halo widths");
+    if (globalOk != 0) return;
+
+    std::string rankCoordinates = "(";
+    for (size_t dim = 0; dim < rank; ++dim) {
+      if (dim > 0) rankCoordinates += ",";
+      rankCoordinates += std::to_string(myCoord[dim]);
+    }
+    rankCoordinates += ")";
+
+    if (invalidDim != rank) {
+      SCHNECK_FAIL(
+          "Halo width exceeds the local inner extent in dimension "
+          << invalidDim << " (inner extent=" << invalidExtent << ", lower halo=" << invalidLowerHalo
+          << ", upper halo=" << invalidUpperHalo << ") at rank coordinates " << rankCoordinates
+      );
+    }
+    SCHNECK_FAIL(
+        "Halo width exceeds the local inner extent in dimension unknown (failure detected on another rank; "
+        "local rank coordinates "
+        << rankCoordinates << ")"
+    );
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchangeWithInteriorBounds(
       GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
@@ -2555,6 +2608,7 @@ namespace schnek {
 
     const IndexType gridLo = grid.getLo();
     const IndexType gridHi = grid.getHi();
+    validateHaloWidths(gridLo, gridHi, innerLo, innerHi);
 
     auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
 
@@ -2590,15 +2644,6 @@ namespace schnek {
           lowerHalo == upperHalo, "MPI halo exchange requires symmetric halo widths in dimension "
                                       << dim << " (lower=" << lowerHalo << ", upper=" << upperHalo << ")"
       );
-#ifndef NDEBUG
-      const ptrdiff_t innerExtent = innerHi[dim] - innerLo[dim] + 1;
-      SCHNEK_ASSERT(
-          innerExtent > 0 && innerExtent >= lowerHalo && innerExtent >= upperHalo,
-          "Halo width exceeds the local inner extent in dimension "
-              << dim << " (inner extent=" << innerExtent << ", lower halo=" << lowerHalo << ", upper halo=" << upperHalo
-              << ")"
-      );
-#endif
 
       std::optional<RangeTypeLocal> loGhostRange;
       if (lowerHalo > 0) {
@@ -2702,6 +2747,7 @@ namespace schnek {
 
     const IndexType gridLo = grid.getLo();
     const IndexType gridHi = grid.getHi();
+    validateHaloWidths(gridLo, gridHi, innerLo, innerHi);
 
     auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
 
@@ -2737,15 +2783,6 @@ namespace schnek {
           lowerHalo == upperHalo, "MPI halo accumulate requires symmetric halo widths in dimension "
                                       << dim << " (lower=" << lowerHalo << ", upper=" << upperHalo << ")"
       );
-#ifndef NDEBUG
-      const ptrdiff_t innerExtent = innerHi[dim] - innerLo[dim] + 1;
-      SCHNEK_ASSERT(
-          innerExtent > 0 && innerExtent >= lowerHalo && innerExtent >= upperHalo,
-          "Halo width exceeds the local inner extent in dimension "
-              << dim << " (inner extent=" << innerExtent << ", lower halo=" << lowerHalo << ", upper halo=" << upperHalo
-              << ")"
-      );
-#endif
 
       std::optional<RangeTypeLocal> loGhostRange;
       if (lowerHalo > 0) {

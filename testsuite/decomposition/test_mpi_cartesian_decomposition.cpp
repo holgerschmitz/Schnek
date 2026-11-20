@@ -848,7 +848,6 @@ BOOST_FIXTURE_TEST_CASE(balance_load_rejects_zero_width_weighted_range, MpiCarte
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), static_cast<size_t>(4));
 }
 
-#ifndef NDEBUG
 BOOST_FIXTURE_TEST_CASE(exchange_rejects_halo_wider_than_local_inner_range, MpiCartesianDomainDecompositionTestFixture) {
   const MPI_Comm testComm = (MPI_Comm)(void *)123;
   context.commWorld = (MPI_Comm)(void *)574;
@@ -874,11 +873,17 @@ BOOST_FIXTURE_TEST_CASE(exchange_rejects_halo_wider_than_local_inner_range, MpiC
   StaggerType noStagger(false);
   schnek::GridFactory<FieldType> factory(noStagger, 2);
   const auto registration = decomposition.registerField(factory);
-  BOOST_CHECK_THROW(decomposition.exchange(registration), schnek::ScheckException);
+  try {
+    decomposition.exchange(registration);
+    BOOST_FAIL("Expected exchange() to reject a halo wider than the local inner range");
+  } catch (const schnek::ScheckException &error) {
+    BOOST_CHECK(std::string(error.what()).find("dimension 0") != std::string::npos);
+    BOOST_CHECK(std::string(error.what()).find("rank coordinates (0)") != std::string::npos);
+  }
   BOOST_CHECK_THROW(accumulateRegistration(decomposition, registration), schnek::ScheckException);
   BOOST_CHECK(context.args_MPI_Sendrecv.empty());
+  BOOST_CHECK_EQUAL(context.args_MPI_Allreduce.size(), static_cast<size_t>(2));
 }
-#endif
 
 BOOST_FIXTURE_TEST_CASE(exchange_rejects_asymmetric_halo_widths, MpiCartesianDomainDecompositionTestFixture) {
   const MPI_Comm testComm = (MPI_Comm)(void *)123;
