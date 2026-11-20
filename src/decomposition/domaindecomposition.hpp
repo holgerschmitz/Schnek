@@ -1255,11 +1255,14 @@ namespace schnek {
     if (gridIt == grids.end()) {
       SCHNECK_FAIL("Unknown grid registration id: " << registration.id);
     }
+    if (this->getRegisteredFieldSubRange(registration.id)) {
+      SCHNECK_FAIL(
+          "exchange is not supported for sub-range registrations (registration id: " << registration.id << ")"
+      );
+    }
 
     for (const auto &wrapper : gridIt->second) {
-      if (!wrapper) {
-        continue;
-      }
+      SCHNEK_ASSERT(wrapper, "Unexpected null wrapper for a full-range grid registration");
       this->exchangeGrid(wrapper, useFieldInfo);
     }
   }
@@ -1279,11 +1282,14 @@ namespace schnek {
     if (gridIt == grids.end()) {
       SCHNECK_FAIL("Unknown grid registration id: " << registration.id);
     }
+    if (this->getRegisteredFieldSubRange(registration.id)) {
+      SCHNECK_FAIL(
+          "accumulate is not supported for sub-range registrations (registration id: " << registration.id << ")"
+      );
+    }
 
     for (const auto &wrapper : gridIt->second) {
-      if (!wrapper) {
-        continue;
-      }
+      SCHNEK_ASSERT(wrapper, "Unexpected null wrapper for a full-range grid registration");
       this->accumulate(wrapper, useFieldInfo);
     }
   }

@@ -286,6 +286,43 @@ BOOST_AUTO_TEST_CASE(subrange_field_keeps_data_after_local_weight_balance) {
   BOOST_CHECK_EQUAL(globalCellCount, 22);
 }
 
+BOOST_AUTO_TEST_CASE(subrange_exchange_and_accumulate_fail_consistently) {
+  using Field = schnek::Field<double, 1>;
+  using RangeType = Range<ptrdiff_t, 1>;
+  using DomainType = Range<double, 1>;
+
+  const RangeType globalRange(Array<ptrdiff_t, 1>(0), Array<ptrdiff_t, 1>(31));
+  const DomainType globalDomain(Array<double, 1>(0.0), Array<double, 1>(32.0));
+  const RangeType subRange(Array<ptrdiff_t, 1>(0), Array<ptrdiff_t, 1>(7));
+  schnek::MpiContextImpl mpi(MPI_COMM_WORLD);
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(mpi);
+  configure(decomposition, globalRange, globalDomain);
+
+  schnek::GridFactory<Field> factory(Array<bool, 1>(false), 1);
+  const auto registration = decomposition.registerField(factory, subRange);
+
+  int localCaught = 0;
+  try {
+    decomposition.exchange(registration);
+  } catch (const schnek::ScheckException &) {
+    localCaught = 1;
+  }
+
+  int caughtOnEveryRank = 0;
+  MPI_Allreduce(&localCaught, &caughtOnEveryRank, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+  BOOST_CHECK_EQUAL(caughtOnEveryRank, 1);
+
+  localCaught = 0;
+  try {
+    static_cast<schnek::DomainDecomposition<1> &>(decomposition).accumulate(registration);
+  } catch (const schnek::ScheckException &) {
+    localCaught = 1;
+  }
+
+  MPI_Allreduce(&localCaught, &caughtOnEveryRank, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+  BOOST_CHECK_EQUAL(caughtOnEveryRank, 1);
+}
+
 BOOST_AUTO_TEST_CASE(too_small_subdomain_throws_on_every_rank) {
   const int size = worldSize();
   if (size < 2) {

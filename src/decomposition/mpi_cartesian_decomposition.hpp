@@ -168,6 +168,8 @@ namespace schnek {
 
       /**
        * Register a grid or field by passing a factory, but only allocate for a sub-range.
+       *
+       * Sub-range registrations are not supported by `exchange` or `accumulate`.
        */
       template<class GridType>
       GridRegistration registerField(
