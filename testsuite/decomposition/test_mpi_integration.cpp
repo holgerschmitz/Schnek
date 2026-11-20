@@ -14,6 +14,7 @@
 #include <grid/field.hpp>
 #include <grid/grid.hpp>
 #include <grid/range.hpp>
+#include <string>
 #include <vector>
 
 namespace {
@@ -28,13 +29,19 @@ namespace {
 
   struct PositionAccessor {
       template<typename Particle>
-      schnek::Array<double, 2> operator()(const Particle &particle) const {
+      SCHNEK_FUNCTION schnek::Array<double, 2> operator()(const Particle &particle) const {
         return schnek::Array<double, 2>(particle.pos[0], particle.pos[1]);
       }
 
       template<typename Particle>
-      void shift(Particle &particle, std::size_t dim, double delta) const {
+      SCHNEK_FUNCTION void shift(Particle &particle, std::size_t dim, double delta) const {
         particle.pos[dim] += delta;
+      }
+  };
+
+  struct NoShiftPositionAccessor {
+      SCHNEK_FUNCTION schnek::Array<double, 2> operator()(const TestParticle &particle) const {
+        return schnek::Array<double, 2>(particle.pos[0], particle.pos[1]);
       }
   };
 
@@ -244,6 +251,81 @@ BOOST_AUTO_TEST_CASE(periodic_particle_migration_crosses_corner) {
   MPI_Allreduce(&localBadParticleCount, &globalBadParticleCount, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
   BOOST_CHECK_EQUAL(globalParticleCount, 1);
   BOOST_CHECK_EQUAL(globalBadParticleCount, 0);
+}
+
+BOOST_AUTO_TEST_CASE(periodic_particle_migration_wraps_multiple_periods) {
+  using RangeType = Range<ptrdiff_t, 2>;
+  using DomainType = Range<double, 2>;
+  using Container = std::vector<TestParticle>;
+
+  const RangeType globalRange(Array<ptrdiff_t, 2>(0, 0), Array<ptrdiff_t, 2>(7, 7));
+  const DomainType globalDomain(Array<double, 2>(0.0, 0.0), Array<double, 2>(8.0, 8.0));
+  schnek::MpiContextImpl mpi(MPI_COMM_WORLD);
+  schnek::MpiCartesianDomainDecomposition<2> decomposition(mpi);
+  configure(decomposition, globalRange, globalDomain);
+
+  schnek::ParticleContainerFactory<Container> factory;
+  const auto registration = decomposition.registerParticleData(factory, PositionAccessor{});
+  decomposition.getGridContext({registration}).forEach([&](const RangeType &range, Container &particles) {
+    if (range.getHi()[0] == 7 && range.getHi()[1] == 7) {
+      particles.push_back(TestParticle{{27.0, 7.5}, 43});
+    }
+  });
+
+  decomposition.migrate(registration);
+  int localParticleCount = 0;
+  int localBadParticleCount = 0;
+  decomposition.getGridContext({registration}).forEach([&](const RangeType &range, Container &particles) {
+    localParticleCount = static_cast<int>(particles.size());
+    const bool ownsWrappedParticle = range.getLo()[0] <= 3 && range.getHi()[0] >= 3 &&
+                                     range.getLo()[1] <= 7 && range.getHi()[1] >= 7;
+    BOOST_CHECK_EQUAL(particles.size(), ownsWrappedParticle ? 1u : 0u);
+    for (const auto &particle : particles) {
+      if (particle.id != 43 || std::abs(particle.pos[0] - 3.0) > 1e-12 ||
+          std::abs(particle.pos[1] - 7.5) > 1e-12) {
+        ++localBadParticleCount;
+      }
+    }
+  });
+
+  int globalParticleCount = 0;
+  int globalBadParticleCount = 0;
+  MPI_Allreduce(&localParticleCount, &globalParticleCount, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&localBadParticleCount, &globalBadParticleCount, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  BOOST_CHECK_EQUAL(globalParticleCount, 1);
+  BOOST_CHECK_EQUAL(globalBadParticleCount, 0);
+}
+
+BOOST_AUTO_TEST_CASE(particle_migration_rejects_global_exit_without_shift) {
+  using RangeType = Range<ptrdiff_t, 2>;
+  using DomainType = Range<double, 2>;
+  using Container = std::vector<TestParticle>;
+
+  const RangeType globalRange(Array<ptrdiff_t, 2>(0, 0), Array<ptrdiff_t, 2>(7, 7));
+  const DomainType globalDomain(Array<double, 2>(0.0, 0.0), Array<double, 2>(8.0, 8.0));
+  schnek::MpiContextImpl mpi(MPI_COMM_WORLD);
+  schnek::MpiCartesianDomainDecomposition<2> decomposition(mpi);
+  configure(decomposition, globalRange, globalDomain);
+
+  schnek::ParticleContainerFactory<Container> factory;
+  const auto registration = decomposition.registerParticleData(factory, NoShiftPositionAccessor{});
+  decomposition.getGridContext({registration}).forEach([&](const RangeType &range, Container &particles) {
+    if (range.getHi()[0] == 7 && range.getHi()[1] == 7) {
+      particles.push_back(TestParticle{{27.0, 7.5}, 44});
+    }
+  });
+
+  BOOST_CHECK_EXCEPTION(
+      decomposition.migrate(registration),
+      schnek::ScheckException,
+      [](const schnek::ScheckException &error) {
+        return std::string(error.what()).find(
+                   "Particle left the global domain and the position accessor has no shift(); either provide "
+                   "shift(p, dim, delta) for periodic wrapping or handle the boundary (absorb/reflect) before "
+                   "migrate()"
+               ) != std::string::npos;
+      }
+  );
 }
 
 BOOST_AUTO_TEST_CASE(subrange_field_keeps_data_after_local_weight_balance) {

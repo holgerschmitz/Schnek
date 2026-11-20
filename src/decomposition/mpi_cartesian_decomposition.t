@@ -1949,6 +1949,7 @@ namespace schnek {
     auto &sendScratchBuffer = bufferRegistry.send();
     auto &recvScratchBuffer = bufferRegistry.receive();
     auto &partitionScratchBuffer = bufferRegistry.partition();
+    bool invalidWrapMagnitude = false;
 
     // Sweep one dimension at a time. A particle bound for a diagonal neighbour
     // is forwarded dimension by dimension: received particles are re-inserted
@@ -2004,16 +2005,29 @@ namespace schnek {
       partitionScratchBuffer.reset();
 
       if constexpr (internal::has_position_shift<PositionAccessor, Particle>::value) {
-        if (myCoord[dim] == 0 || myCoord[dim] == dims[dim] - 1) {
+        const bool atPeriodicEdge = myCoord[dim] == 0 || myCoord[dim] == dims[dim] - 1;
+        if (atPeriodicEdge) {
           const ptrdiff_t globalLo = this->globalRange.getLo()[dim];
           const ptrdiff_t globalHi = this->globalRange.getHi()[dim];
-          Traits::forEachParticle(
+          const double length = static_cast<double>(globalHi - globalLo + 1);
+          const bool finitePositions = Traits::allOf(
+              container, internal::FinitePositionValue<Particle, PositionAccessor>{wrapper.accessor, dim}
+          );
+          const bool validPeriods = Traits::allOf(
               container,
-              internal::WrapDim<Particle, PositionAccessor>{
-                  wrapper.accessor, dim, static_cast<double>(globalLo), static_cast<double>(globalHi),
-                  static_cast<double>(globalHi - globalLo + 1)
+              internal::ValidWrapPeriods<Particle, PositionAccessor>{
+                  wrapper.accessor, dim, static_cast<double>(globalLo), length
               }
           );
+          invalidWrapMagnitude = invalidWrapMagnitude || (finitePositions && !validPeriods);
+          if (finitePositions && validPeriods) {
+            Traits::forEachParticle(
+                container,
+                internal::WrapDim<Particle, PositionAccessor>{
+                    wrapper.accessor, dim, static_cast<double>(globalLo), static_cast<double>(globalHi), length
+                }
+            );
+          }
         }
       }
     }
@@ -2022,10 +2036,13 @@ namespace schnek {
     // process at a time. Any stragglers are routed directly to their owner.
     int localStatus[2]{};
     if (particleChecks) {
-      localStatus[0] = !Traits::allOf(
+      const bool finitePositions = Traits::allOf(
           container,
           internal::mpi_cartesian_decomposition::FinitePosition<Particle, PositionAccessor, rank>{wrapper.accessor}
       );
+      localStatus[0] = finitePositions ? (invalidWrapMagnitude ? 1 : 0) : 2;
+    } else if (invalidWrapMagnitude) {
+      localStatus[0] = 1;
     }
     for (size_t d = 0; d < rank; ++d) {
       if (!Traits::allOf(
@@ -2043,8 +2060,11 @@ namespace schnek {
     if (errorCode != MPI_SUCCESS) {
       SCHNECK_FAIL("MPI_Allreduce failed while validating particle migration");
     }
-    if (globalStatus[0] != 0) {
+    if (globalStatus[0] == 2) {
       SCHNECK_FAIL("non-finite particle position");
+    }
+    if (globalStatus[0] == 1) {
+      SCHNECK_FAIL("Particle periodic wrap count exceeds the supported magnitude");
     }
     if (globalStatus[1] != 0) {
       routeStragglingParticles(wrapper);
@@ -2087,7 +2107,14 @@ namespace schnek {
       }
     }
     if (allReduce(localOutOfGlobal, MPI_MAX) != 0) {
-      SCHNECK_FAIL("Particle owning cell lies outside the global range during multi-hop migration");
+      if constexpr (!internal::has_position_shift<PositionAccessor, Particle>::value) {
+        SCHNECK_FAIL(
+            "Particle left the global domain and the position accessor has no shift(); either provide "
+            "shift(p, dim, delta) for periodic wrapping or handle the boundary (absorb/reflect) before migrate()"
+        );
+      } else {
+        SCHNECK_FAIL("Particle owning cell lies outside the global range during multi-hop migration");
+      }
     }
 
     std::vector<TransferBlockType> ownerPlan;

@@ -33,6 +33,17 @@ namespace {
       int id;
   };
 
+  struct SerialNoShiftParticle {
+      double position[1];
+      int id;
+  };
+
+  struct SerialNoShiftAccessor {
+      SCHNEK_FUNCTION schnek::Array<double, 1> operator()(const SerialNoShiftParticle &particle) const {
+        return schnek::Array<double, 1>(particle.position[0]);
+      }
+  };
+
   using SerialWrapAccessor = schnek::MemberPositionAccessor<&SerialWrapParticle::position>;
 
   template<typename T>
@@ -217,18 +228,83 @@ BOOST_AUTO_TEST_CASE( migrate_wraps_periodic_particle_positions )
       SerialWrapParticle{{-0.5}, 1},
       SerialWrapParticle{{-0.01}, 2},
       SerialWrapParticle{{9.99}, 3},
-      SerialWrapParticle{{10.3}, 4}
+      SerialWrapParticle{{10.3}, 4},
+      SerialWrapParticle{{34.0}, 5}
   };
   auto wrapper = std::make_shared<schnek::internal::ParticleWrapperImpl<Container, SerialWrapAccessor>>(
       std::move(particles), accessor
   );
   decomposition.migrateParticles(wrapper);
 
-  BOOST_REQUIRE_EQUAL(wrapper->container.size(), 4u);
+  BOOST_REQUIRE_EQUAL(wrapper->container.size(), 5u);
   BOOST_CHECK_CLOSE(wrapper->container[0].position[0], 9.5, 1e-12);
   BOOST_CHECK_CLOSE(wrapper->container[1].position[0], 9.99, 1e-12);
   BOOST_CHECK_CLOSE(wrapper->container[2].position[0], 9.99, 1e-12);
   BOOST_CHECK_CLOSE(wrapper->container[3].position[0], 0.3, 1e-12);
+  BOOST_CHECK_CLOSE(wrapper->container[4].position[0], 4.0, 1e-12);
+}
+
+BOOST_AUTO_TEST_CASE( migrate_rejects_out_of_domain_particle_without_shift )
+{
+  using Container = std::vector<SerialNoShiftParticle>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  const RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(9));
+  const schnek::Range<double, 1> globalDomain(
+      schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0)
+  );
+  schnek::SerialDomainDecomposition<1> decomposition;
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  schnek::ParticleContainerFactory<Container> factory;
+  const SerialNoShiftAccessor accessor;
+  decomposition.registerParticleData(factory, accessor);
+  auto wrapper = std::make_shared<schnek::internal::ParticleWrapperImpl<Container, SerialNoShiftAccessor>>(
+      Container{SerialNoShiftParticle{{10.5}, 1}}, accessor
+  );
+
+  BOOST_CHECK_EXCEPTION(
+      decomposition.migrateParticles(wrapper),
+      schnek::ScheckException,
+      [](const schnek::ScheckException &error) {
+        return std::string(error.what()).find(
+                   "Particle left the global domain and the position accessor has no shift()"
+               ) != std::string::npos;
+      }
+  );
+}
+
+BOOST_AUTO_TEST_CASE( migrate_rejects_excessive_periodic_wrap_count )
+{
+  using Container = std::vector<SerialWrapParticle>;
+  using RangeType = schnek::Range<ptrdiff_t, 1>;
+
+  const RangeType globalRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(9));
+  const schnek::Range<double, 1> globalDomain(
+      schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0)
+  );
+  schnek::SerialDomainDecomposition<1> decomposition;
+  decomposition.setGlobalRange(globalRange);
+  decomposition.setGlobalDomain(globalDomain);
+  decomposition.init();
+
+  schnek::ParticleContainerFactory<Container> factory;
+  const SerialWrapAccessor accessor;
+  decomposition.registerParticleData(factory, accessor);
+  auto wrapper = std::make_shared<schnek::internal::ParticleWrapperImpl<Container, SerialWrapAccessor>>(
+      Container{SerialWrapParticle{{10737418240.0}, 1}}, accessor
+  );
+
+  BOOST_CHECK_EXCEPTION(
+      decomposition.migrateParticles(wrapper),
+      schnek::ScheckException,
+      [](const schnek::ScheckException &error) {
+        return std::string(error.what()).find("Particle periodic wrap count exceeds the supported magnitude") !=
+               std::string::npos;
+      }
+  );
 }
 
 BOOST_AUTO_TEST_CASE( reductions_use_allreduce )

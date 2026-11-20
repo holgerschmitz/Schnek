@@ -24,6 +24,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 
 #include "../../macros.hpp"
 
@@ -39,12 +40,57 @@ namespace schnek {
         double length;
 
         SCHNEK_FUNCTION void operator()(Particle &particle) const {
-          const double cell = std::floor(accessor(particle)[dim]);
-          if (cell < glo) {
-            accessor.shift(particle, dim, length);
-          } else if (cell > ghi) {
-            accessor.shift(particle, dim, -length);
+          const double periods = std::floor((accessor(particle)[dim] - glo) / length);
+          if (periods != 0.0) {
+            accessor.shift(particle, dim, -periods * length);
           }
+        }
+    };
+
+    template<class Particle, class Accessor>
+    struct FinitePositionValue {
+        Accessor accessor;
+        std::size_t dim;
+
+        SCHNEK_FUNCTION bool operator()(const Particle &particle) const {
+          const double position = accessor(particle)[dim];
+          const double lowerBound = static_cast<double>(PTRDIFF_MIN);
+          const double upperBoundExclusive = -lowerBound;
+          return position >= lowerBound && position < upperBoundExclusive;
+        }
+    };
+
+    template<class Particle, class Accessor>
+    struct PositionCellInRange {
+        Accessor accessor;
+        std::size_t dim;
+        double lo;
+        double hi;
+
+        SCHNEK_FUNCTION bool operator()(const Particle &particle) const {
+          const double cell = std::floor(accessor(particle)[dim]);
+          return cell >= lo && cell <= hi;
+        }
+    };
+
+    template<class Particle, class Accessor>
+    struct ValidWrapPeriods {
+        Accessor accessor;
+        std::size_t dim;
+        double glo;
+        double length;
+
+        SCHNEK_FUNCTION bool operator()(const Particle &particle) const {
+          const double position = accessor(particle)[dim];
+          const double lowerBound = static_cast<double>(PTRDIFF_MIN);
+          const double upperBoundExclusive = -lowerBound;
+          if (position < lowerBound || position >= upperBoundExclusive) {
+            return false;
+          }
+
+          const double periods = std::floor((position - glo) / length);
+          constexpr double maxPeriods = 1073741824.0;
+          return periods > -maxPeriods && periods < maxPeriods;
         }
     };
 
