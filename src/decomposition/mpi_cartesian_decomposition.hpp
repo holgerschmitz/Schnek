@@ -156,6 +156,8 @@ namespace schnek {
 
       /**
        * Register a lower-rank projected grid or field by selecting axes from the full-rank domain.
+       * Ghost cells of projected grids are not redistributed or halo-exchanged and remain undefined after
+       * registration and load balancing; callers must initialize them before use.
        */
       template<class GridType>
       ProjectedRegistration<GridType::Rank> registerFieldProjection(

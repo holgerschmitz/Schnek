@@ -4422,7 +4422,7 @@ BOOST_FIXTURE_TEST_CASE(
   context.ret_MPI_Cart_sub.push_back(boost::make_tuple(MPI_SUCCESS, subComm));
 
   using GridType2D = schnek::Grid<double, 2>;
-  using GridType1D = schnek::Grid<double, 1>;
+  using GridType1D = schnek::Field<double, 1>;
   using RangeType2D = schnek::Range<ptrdiff_t, 2>;
   using RangeType1D = schnek::Range<ptrdiff_t, 1>;
 
@@ -4441,7 +4441,9 @@ BOOST_FIXTURE_TEST_CASE(
   schnek::GridFactory<GridType2D> factory2d;
   schnek::GridRegistration reg2d = decomposition.registerField(factory2d);
 
-  schnek::GridFactory<GridType1D> factory1d;
+  constexpr int ghostCells = 1;
+  schnek::Array<bool, 1> noStagger(false);
+  schnek::GridFactory<GridType1D> factory1d(noStagger, ghostCells);
   auto projReg = decomposition.registerFieldProjection(factory1d, std::array<size_t, 1>{0});
 
   // Fill the 2D grid.
@@ -4455,7 +4457,7 @@ BOOST_FIXTURE_TEST_CASE(
     }
   });
 
-  // Fill the projected grid (axis-0 local range [0..3]).
+  // Fill only the projected grid's inner range (axis-0 local range [0..3]).
   RangeType1D oldProjRange(
       schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(3));
   auto projCtx = decomposition.getProjectedGridContext<1>({projReg});
@@ -4497,7 +4499,7 @@ BOOST_FIXTURE_TEST_CASE(
   context.ret_MPI_Irecv.push_back(boost::make_tuple(MPI_SUCCESS, toByteVector(recv2d)));
 
   // Projected redistribution (broadcast path): canonical (0,0) broadcasts the
-  // new [0..5] shard on the replica sub-communicator -> 6 doubles.
+  // new inner range [0..5] on the replica sub-communicator -> 6 doubles.
   std::vector<double> projBcastData = {100.0, 101.0, 102.0, 103.0, 104.0, 105.0};
   context.ret_MPI_Bcast.push_back(boost::tuple<int, void*, size_t>(
       MPI_SUCCESS, projBcastData.data(), 6 * sizeof(double)));
@@ -4505,7 +4507,7 @@ BOOST_FIXTURE_TEST_CASE(
   decomposition.setGlobalWeights(weights);
   decomposition.balanceLoad();
 
-  // Projected grid must now span [0..5] with values from the broadcast.
+  // Projected grid's inner range must now span [0..5] with values from the broadcast.
   RangeType1D newProjRange(
       schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(5));
   auto newProjCtx = decomposition.getProjectedGridContext<1>({projReg});
@@ -4540,7 +4542,10 @@ BOOST_FIXTURE_TEST_CASE(
   // (No init Bcasts because calcGridDistributonUniform was used at init.)
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast.size(), static_cast<size_t>(4));
   // The last Bcast was the projected data on the replica sub-communicator.
-  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.back().get<0>(), 6);        // 6 elements
+  const size_t innerVolume = rangeVolume(newProjRange);
+  BOOST_CHECK_EQUAL(
+      static_cast<size_t>(context.args_MPI_Bcast.back().get<0>()) * sizeof(double), innerVolume * sizeof(double)
+  );
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast.back().get<2>(), 0);        // root = 0
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast.back().get<3>(), subComm);  // replica comm
 }
@@ -4584,7 +4589,7 @@ BOOST_FIXTURE_TEST_CASE(
   context.ret_MPI_Cart_sub.push_back(boost::make_tuple(MPI_SUCCESS, subComm));
 
   using GridType2D = schnek::Grid<double, 2>;
-  using GridType1D = schnek::Grid<double, 1>;
+  using GridType1D = schnek::Field<double, 1>;
   using RangeType2D = schnek::Range<ptrdiff_t, 2>;
   using RangeType1D = schnek::Range<ptrdiff_t, 1>;
 
@@ -4609,7 +4614,9 @@ BOOST_FIXTURE_TEST_CASE(
   schnek::GridFactory<GridType2D> factory2d;
   schnek::GridRegistration reg2d = decomposition.registerField(factory2d);
 
-  schnek::GridFactory<GridType1D> factory1d;
+  constexpr int ghostCells = 1;
+  schnek::Array<bool, 1> noStagger(false);
+  schnek::GridFactory<GridType1D> factory1d(noStagger, ghostCells);
   auto projReg = decomposition.registerFieldProjection(factory1d, std::array<size_t, 1>{0});
 
   // Fill the 2D grid; old range = [0..3]×[0..3].
@@ -4620,7 +4627,7 @@ BOOST_FIXTURE_TEST_CASE(
     }
   });
 
-  // Fill the 1D projected grid; old axis-0 range = [0..3].
+  // Fill the 1D projected grid's inner range; old axis-0 range = [0..3].
   auto projCtx = decomposition.getProjectedGridContext<1>({projReg});
   projCtx.forEach([&](const RangeType1D &range, GridType1D &grid) {
     for (auto it = range.begin(); it != range.end(); ++it) {
@@ -4644,7 +4651,7 @@ BOOST_FIXTURE_TEST_CASE(
   decomposition.setGlobalWeights(weights);
   decomposition.balanceLoad();
 
-  // Projected grid must now span [0..5] with the correct values.
+  // Projected grid's inner range must now span [0..5] with the correct values.
   RangeType1D newProjRange(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(5));
   auto newProjCtx = decomposition.getProjectedGridContext<1>({projReg});
   int projCallCount = 0;
@@ -4682,7 +4689,10 @@ BOOST_FIXTURE_TEST_CASE(
   //   [1,2]  : layout broadcasts (one per axis, count=4 each)
   //   [3]    : projected data broadcast to replica sub-comm, 6 doubles
   BOOST_REQUIRE_EQUAL(context.args_MPI_Bcast.size(), static_cast<size_t>(4));
-  BOOST_CHECK_EQUAL(context.args_MPI_Bcast.back().get<0>(), 6);        // 6 elements
+  const size_t innerVolume = rangeVolume(newProjRange);
+  BOOST_CHECK_EQUAL(
+      static_cast<size_t>(context.args_MPI_Bcast.back().get<0>()) * sizeof(double), innerVolume * sizeof(double)
+  );
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast.back().get<2>(), 0);        // root = 0
   BOOST_CHECK_EQUAL(context.args_MPI_Bcast.back().get<3>(), subComm);  // replica comm
 }
