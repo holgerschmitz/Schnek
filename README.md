@@ -101,6 +101,18 @@ A full list of available options written out with the --help option.
   ./configure --help
 ```
 
+### MPI end-to-end tests
+
+The real multi-rank integration tests are a separate target and are not built with the default test target:
+
+```
+cmake --build build --target schnek_mpi_tests
+mpiexec -n 1 ./build/schnek_mpi_tests
+ctest --test-dir build -R '^mpi_np(2|4)$' --output-on-failure
+```
+
+CTest registers two- and four-rank runs when MPI is available.
+
 ### Step 3: Building the library
 
 Once you have configured Schnek, type
