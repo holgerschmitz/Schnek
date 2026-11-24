@@ -516,13 +516,16 @@ namespace schnek {
        */
       virtual int numProcs() const = 0;
 
-      /// Return the average of a single value over all the processes
+      /**
+       * Return the average of a single value over all the processes.
+       * Reductions are supported for `double`, `int`, and `long`; integer averages round toward zero.
+       */
       virtual double avgReduce(double) const = 0;
 
-      /// Return the average of a single value over all the processes
+      /// Return the average of a single value over all the processes, rounded toward zero.
       virtual int avgReduce(int) const = 0;
 
-      /// Return the average of a single value over all the processes
+      /// Return the average of a single value over all the processes, rounded toward zero.
       virtual long avgReduce(long) const = 0;
 
       /// Return the sum of a single value over all the processes

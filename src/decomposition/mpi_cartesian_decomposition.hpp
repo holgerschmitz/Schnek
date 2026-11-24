@@ -277,6 +277,8 @@ namespace schnek {
 
       template<typename T>
       T allReduce(T value, MPI_Op op) const;
+      template<typename T>
+      T avgReduceInteger(T value) const;
 
       class ExchangeVisitor;
       class AccumulateVisitor;

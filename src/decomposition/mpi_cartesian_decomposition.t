@@ -55,6 +55,8 @@ namespace schnek {
         return MPI_UNSIGNED;
       } else if constexpr (std::is_same_v<T, unsigned long int>) {
         return MPI_UNSIGNED_LONG;
+      } else if constexpr (std::is_same_v<T, long long int>) {
+        return MPI_LONG_LONG_INT;
       } else if constexpr (std::is_same_v<T, float>) {
         return MPI_FLOAT;
       } else if constexpr (std::is_same_v<T, double>) {
@@ -93,6 +95,34 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename T>
+  T MpiCartesianDomainDecomposition<rank, CheckingPolicy>::avgReduceInteger(T value) const {
+    SCHNEK_ASSERT(initialised, "MpiCartesianDomainDecomposition has not been initialised");
+    SCHNEK_ASSERT(ComSize > 0, "MPI communicator size is zero");
+
+    const T processCount = static_cast<T>(ComSize);
+    const long localQuotient = static_cast<long>(value / processCount);
+    const long long localRemainder = static_cast<long long>(value % processCount);
+
+    // Reducing quotient and remainder separately avoids overflowing a direct
+    // sum of long values. Each quotient's magnitude is at most |value| /
+    // ComSize, so their sum fits in long. The remainders are smaller than
+    // ComSize and there are at most INT_MAX ranks, so their sum fits in long long.
+    const long quotientSum = allReduce(localQuotient, MPI_SUM);
+    const long long remainderSum = allReduce(localRemainder, MPI_SUM);
+
+    long result = quotientSum + static_cast<long>(remainderSum / ComSize);
+    const long long fractionalRemainder = remainderSum % ComSize;
+    if (fractionalRemainder > 0 && result < 0) {
+      ++result;
+    } else if (fractionalRemainder < 0 && result > 0) {
+      --result;
+    }
+
+    return static_cast<T>(result);
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   double MpiCartesianDomainDecomposition<rank, CheckingPolicy>::avgReduce(double value) const {
     SCHNEK_ASSERT(initialised, "MpiCartesianDomainDecomposition has not been initialised");
     SCHNEK_ASSERT(ComSize > 0, "MPI communicator size is zero");
@@ -101,16 +131,12 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   int MpiCartesianDomainDecomposition<rank, CheckingPolicy>::avgReduce(int value) const {
-    SCHNEK_ASSERT(initialised, "MpiCartesianDomainDecomposition has not been initialised");
-    SCHNEK_ASSERT(ComSize > 0, "MPI communicator size is zero");
-    return static_cast<int>(allReduce(value, MPI_SUM) / double(ComSize));
+    return avgReduceInteger(value);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   long MpiCartesianDomainDecomposition<rank, CheckingPolicy>::avgReduce(long value) const {
-    SCHNEK_ASSERT(initialised, "MpiCartesianDomainDecomposition has not been initialised");
-    SCHNEK_ASSERT(ComSize > 0, "MPI communicator size is zero");
-    return static_cast<long>(allReduce(value, MPI_SUM) / double(ComSize));
+    return avgReduceInteger(value);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -467,13 +493,19 @@ namespace schnek {
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonUniform(ProcRanges &ranges) {
     const LimitType lo = this->globalRange.getLo();
     const LimitType hi = this->globalRange.getHi();
-    const LimitType dm = hi - lo + 1;
 
     for (size_t d = 0; d < rank; ++d) {
       const ptrdiff_t processCount = static_cast<ptrdiff_t>(dims[d]);
-      if (dm[d] < processCount) {
+      const __int128 cellCountWide =
+          static_cast<__int128>(hi[d]) - static_cast<__int128>(lo[d]) + static_cast<__int128>(1);
+      SCHNEK_ASSERT(
+          cellCountWide > 0 && cellCountWide <= std::numeric_limits<ptrdiff_t>::max(),
+          "Uniform partition cell count exceeds ptrdiff_t range in dimension " << d
+      );
+      const ptrdiff_t cellCount = static_cast<ptrdiff_t>(cellCountWide);
+      if (cellCount < processCount) {
         SCHNECK_FAIL(
-            "Cannot partition dimension " << d << ": " << dm[d] << " cells for " << processCount << " processes"
+            "Cannot partition dimension " << d << ": " << cellCount << " cells for " << processCount << " processes"
         );
       }
 
@@ -485,7 +517,16 @@ namespace schnek {
       dimRanges(dims[d] - 1).getHi()[0] = hi[d];
 
       for (ptrdiff_t i = 1; i < dims[d]; ++i) {
-        int cut = lo[d] + (long(i) * long(dm[d])) / dims[d];
+        // Keep this historical lo + i*n/dims layout: the weighted-partition
+        // fallback uses glo + p*q + (p*r)/nProcs and can place cuts differently.
+        const __int128 cutOffset =
+            static_cast<__int128>(i) * static_cast<__int128>(cellCount) / static_cast<__int128>(dims[d]);
+        const __int128 cutWide = static_cast<__int128>(lo[d]) + cutOffset;
+        SCHNEK_ASSERT(
+            cutWide >= std::numeric_limits<ptrdiff_t>::min() && cutWide <= std::numeric_limits<ptrdiff_t>::max(),
+            "Uniform partition cut exceeds ptrdiff_t range"
+        );
+        const ptrdiff_t cut = static_cast<ptrdiff_t>(cutWide);
         dimRanges(i - 1).getHi()[0] = cut - 1;
         dimRanges(i).getLo()[0] = cut;
       }
