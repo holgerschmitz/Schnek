@@ -27,6 +27,49 @@
 
 namespace schnek {
 
+  namespace detail {
+    class ScopedComm {
+        MpiContext *mpi;
+        MPI_Comm comm;
+
+      public:
+        explicit ScopedComm(MpiContext &mpi) noexcept : mpi(&mpi), comm(MPI_COMM_NULL) {}
+
+        ~ScopedComm() noexcept { close(); }
+
+        ScopedComm(const ScopedComm &) = delete;
+        ScopedComm &operator=(const ScopedComm &) = delete;
+
+        ScopedComm(ScopedComm &&other) noexcept : mpi(other.mpi), comm(other.comm) { other.comm = MPI_COMM_NULL; }
+
+        ScopedComm &operator=(ScopedComm &&other) noexcept {
+          if (this != &other) {
+            if (close() != MPI_SUCCESS) return *this;
+            mpi = other.mpi;
+            comm = other.comm;
+            other.comm = MPI_COMM_NULL;
+          }
+          return *this;
+        }
+
+        MPI_Comm *address() noexcept { return &comm; }
+
+        MPI_Comm get() const noexcept { return comm; }
+
+        int close() noexcept {
+          if (comm == MPI_COMM_NULL) return MPI_SUCCESS;
+
+          try {
+            const int errorCode = mpi->MPI_Comm_free(&comm);
+            if (errorCode == MPI_SUCCESS) comm = MPI_COMM_NULL;
+            return errorCode;
+          } catch (...) {
+            return MPI_ERR_OTHER;
+          }
+        }
+    };
+  }  // namespace detail
+
   /**
    * MPI Cartesian domain decomposition backend.
    *

@@ -4994,6 +4994,42 @@ BOOST_FIXTURE_TEST_CASE(
 // Local weights load balancing
 // ==========================================================================
 
+BOOST_FIXTURE_TEST_CASE(
+    balance_load_local_weights_frees_axis_comm_when_mpi_call_fails, MpiCartesianDomainDecompositionTestFixture
+)
+{
+  const MPI_Comm testComm = (MPI_Comm)(void *)123;
+  const MPI_Comm sliceComm = (MPI_Comm)(void *)456;
+  const MPI_Comm axisComm = (MPI_Comm)(void *)789;
+  context.commWorld = (MPI_Comm)(void *)574;
+  context.ret_MPI_Comm_size.push_back(boost::make_tuple(MPI_SUCCESS, 2));
+  context.ret_MPI_Comm_rank.push_back(boost::make_tuple(MPI_SUCCESS, 0));
+  context.ret_MPI_Comm_rank.push_back(boost::make_tuple(MPI_ERR_OTHER, 0));
+  context.ret_MPI_Cart_create.push_back(boost::make_tuple(MPI_SUCCESS, testComm));
+  context.ret_MPI_Cart_coords.push_back(boost::make_tuple(MPI_SUCCESS, std::vector<int>{0}));
+  context.ret_MPI_Cart_sub.push_back(boost::make_tuple(MPI_SUCCESS, sliceComm));
+  context.ret_MPI_Comm_split.push_back(boost::make_tuple(MPI_SUCCESS, axisComm));
+
+  schnek::MpiCartesianDomainDecomposition<1> decomposition(context);
+  decomposition.setGlobalRange(
+      schnek::Range<ptrdiff_t, 1>(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(7))
+  );
+  decomposition.setGlobalDomain(
+      schnek::Range<double, 1>(schnek::Array<double, 1>(0.0), schnek::Array<double, 1>(1.0))
+  );
+  decomposition.init();
+
+  schnek::Grid<double, 1> localWeights(schnek::Array<ptrdiff_t, 1>(0), schnek::Array<ptrdiff_t, 1>(3));
+  localWeights = 1.0;
+  decomposition.setLocalWeights(localWeights);
+
+  BOOST_CHECK_THROW(decomposition.balanceLoad(), schnek::ScheckException);
+
+  BOOST_REQUIRE_EQUAL(context.args_MPI_Comm_free.size(), static_cast<size_t>(2));
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_free[0], sliceComm);
+  BOOST_CHECK_EQUAL(context.args_MPI_Comm_free[1], axisComm);
+}
+
 BOOST_FIXTURE_TEST_CASE( balance_load_local_weights_shifts_cuts_shrink_1d, MpiCartesianDomainDecompositionTestFixture )
 {
   // 2 processes, 1D, rank 0.

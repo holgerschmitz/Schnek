@@ -847,6 +847,9 @@ namespace schnek {
       SCHNECK_FAIL("Local weights must be finite and non-negative on every process");
     }
 
+    // An exception on only some ranks during these collective sequences is fatal;
+    // the application must MPI_Abort rather than attempt to recover. Scoped
+    // communicators below only guarantee local cleanup during exception unwinding.
     for (size_t d = 0; d < rank; ++d) {
       Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
 
@@ -868,7 +871,7 @@ namespace schnek {
       // 1. Reduce this coordinate segment over the perpendicular Cartesian slice.
       //    All ranks with the same coordinate in dimension d participate.
       // ---------------------------------------------------------------------
-      MPI_Comm sliceComm = MPI_COMM_NULL;
+      detail::ScopedComm sliceComm(mpi);
 
       {
         int remainDims[rank];
@@ -876,7 +879,7 @@ namespace schnek {
           remainDims[q] = (q == d) ? 0 : 1;
         }
 
-        errorCode = mpi.MPI_Cart_sub(comm, remainDims, &sliceComm);
+        errorCode = mpi.MPI_Cart_sub(comm, remainDims, sliceComm.address());
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Cart_sub failed while creating local-weight slice communicator");
       }
 
@@ -891,10 +894,11 @@ namespace schnek {
 
       {
         int errorCode =
-            mpi.MPI_Allreduce(&localBins, &minBins, 1, internal::mpiDatatypeFor<long>(), MPI_MIN, sliceComm);
+            mpi.MPI_Allreduce(&localBins, &minBins, 1, internal::mpiDatatypeFor<long>(), MPI_MIN, sliceComm.get());
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating local weight shape");
 
-        errorCode = mpi.MPI_Allreduce(&localBins, &maxBins, 1, internal::mpiDatatypeFor<long>(), MPI_MAX, sliceComm);
+        errorCode =
+            mpi.MPI_Allreduce(&localBins, &maxBins, 1, internal::mpiDatatypeFor<long>(), MPI_MAX, sliceComm.get());
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while validating local weight shape");
 
         if (minBins != maxBins) {
@@ -907,9 +911,9 @@ namespace schnek {
 #endif
 
       std::vector<double> reducedSegment(static_cast<size_t>(localBins), 0.0);
-      allreduceVectorSum(localMarginals[d], reducedSegment, sliceComm);
+      allreduceVectorSum(localMarginals[d], reducedSegment, sliceComm.get());
 
-      int errorCode = mpi.MPI_Comm_free(&sliceComm);
+      int errorCode = sliceComm.close();
       SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight slice communicator");
 
       double segmentTotal = 0.0;
@@ -921,22 +925,22 @@ namespace schnek {
       // 2. Build an axis communicator ordered by Cartesian coordinate d.
       //    MPI_Exscan now gives the cumulative weight before this segment.
       // ---------------------------------------------------------------------
-      MPI_Comm axisComm = MPI_COMM_NULL;
+      detail::ScopedComm axisComm(mpi);
 
       {
         const int color = flattenOrthogonalCoord(d);
         const int key = static_cast<int>(myCoord[d]);
 
-        errorCode = mpi.MPI_Comm_split(comm, color, key, &axisComm);
+        errorCode = mpi.MPI_Comm_split(comm, color, key, axisComm.address());
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_split failed while creating local-weight axis communicator");
       }
 
       int axisRank = 0;
-      errorCode = mpi.MPI_Comm_rank(axisComm, &axisRank);
+      errorCode = mpi.MPI_Comm_rank(axisComm.get(), &axisRank);
       SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_rank failed on local-weight axis communicator");
 
       double segmentOffset = 0.0;
-      errorCode = mpi.MPI_Exscan(&segmentTotal, &segmentOffset, 1, MPI_DOUBLE, MPI_SUM, axisComm);
+      errorCode = mpi.MPI_Exscan(&segmentTotal, &segmentOffset, 1, MPI_DOUBLE, MPI_SUM, axisComm.get());
       SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Exscan failed while scanning local-weight segments");
 
       if (axisRank == 0) {
@@ -944,13 +948,13 @@ namespace schnek {
       }
 
       double totalWeight = 0.0;
-      errorCode = mpi.MPI_Allreduce(&segmentTotal, &totalWeight, 1, MPI_DOUBLE, MPI_SUM, axisComm);
+      errorCode = mpi.MPI_Allreduce(&segmentTotal, &totalWeight, 1, MPI_DOUBLE, MPI_SUM, axisComm.get());
       SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while computing total local weight");
 
       if (!(totalWeight > 0.0)) {
         setUniformRangesForDim(d);
 
-        errorCode = mpi.MPI_Comm_free(&axisComm);
+        errorCode = axisComm.close();
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight axis communicator");
 
         continue;
@@ -990,11 +994,11 @@ namespace schnek {
 
       errorCode = mpi.MPI_Allreduce(
           localCuts.data(), globalCuts.data(), toIntCount(globalCuts.size(), "Number of local-weight cuts"),
-          internal::mpiDatatypeFor<long>(), MPI_MAX, axisComm
+          internal::mpiDatatypeFor<long>(), MPI_MAX, axisComm.get()
       );
       SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while collecting local-weight cuts");
 
-      errorCode = mpi.MPI_Comm_free(&axisComm);
+      errorCode = axisComm.close();
       SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Comm_free failed for local-weight axis communicator");
 
       // ---------------------------------------------------------------------
