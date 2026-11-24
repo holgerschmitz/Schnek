@@ -32,6 +32,8 @@ namespace {
       return sizeof(int);
     } else if (type == MPI_LONG) {
       return sizeof(long);
+    } else if (type == MPI_LONG_LONG_INT) {
+      return sizeof(long long);
     } else if (type == MPI_UNSIGNED_CHAR) {
       return sizeof(unsigned char);
     } else if (type == MPI_UNSIGNED_SHORT) {
