@@ -184,7 +184,6 @@ namespace {
       public:
         using value_type = T;
         using MemorySpace = Kokkos::CudaSpace;
-        static constexpr bool host_accessible = false;
 
         CudaDeviceVector() = default;
 
@@ -6950,26 +6949,26 @@ namespace {
 
 BOOST_AUTO_TEST_CASE(particle_migration_dense_host_memory_rounds_two_rank) {
   dense_migration::runMigrationRounds<
-      schnek::DenseKokkosParticleContainer<dense_migration::TestParticle, Kokkos::Serial, Kokkos::HostSpace>>();
+      schnek::DenseKokkosParticleContainer<schnek_test::TestParticle, Kokkos::Serial, Kokkos::HostSpace>>();
 }
 
 BOOST_AUTO_TEST_CASE(particle_migration_dense_default_space_rounds_two_rank) {
   if (std::getenv("SCHNEK_RUN_CUDA_DEVICE_TESTS") == nullptr) {
     return;
   }
-  dense_migration::runMigrationRounds<schnek::DenseKokkosParticleContainer<dense_migration::TestParticle>>();
+  dense_migration::runMigrationRounds<schnek::DenseKokkosParticleContainer<schnek_test::TestParticle>>();
 }
 
 BOOST_AUTO_TEST_CASE(particle_redistribution_dense_host_memory_two_rank) {
   dense_migration::runBalanceRedistribution<
-      schnek::DenseKokkosParticleContainer<dense_migration::TestParticle, Kokkos::Serial, Kokkos::HostSpace>>();
+      schnek::DenseKokkosParticleContainer<schnek_test::TestParticle, Kokkos::Serial, Kokkos::HostSpace>>();
 }
 
 BOOST_AUTO_TEST_CASE(particle_redistribution_dense_default_space_two_rank) {
   if (std::getenv("SCHNEK_RUN_CUDA_DEVICE_TESTS") == nullptr) {
     return;
   }
-  dense_migration::runBalanceRedistribution<schnek::DenseKokkosParticleContainer<dense_migration::TestParticle>>();
+  dense_migration::runBalanceRedistribution<schnek::DenseKokkosParticleContainer<schnek_test::TestParticle>>();
 }
 #endif
 

@@ -1027,7 +1027,8 @@ namespace schnek {
 #endif
         }
         auto args = internal::LocalArgumentBuilder<ParameterSeq>::build(registrationLists, entry);
-        std::apply([&](auto &&...localArgs) { func(rangeRef, std::forward<decltype(localArgs)>(localArgs)...); }, args);
+        auto callArgs = std::tuple_cat(std::make_tuple(rangeRef), args);
+        std::apply(func, callArgs);
       }
     }
   }

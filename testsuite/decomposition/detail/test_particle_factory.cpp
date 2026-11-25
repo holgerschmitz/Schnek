@@ -3,6 +3,7 @@
 #include <decomposition/detail/particle_factory.hpp>
 #include <decomposition/detail/particle_wrap.hpp>
 #include <util/exceptions.hpp>
+#include <grid/array.hpp>
 
 #include <boost/test/unit_test.hpp>
 
@@ -29,7 +30,7 @@ using VectorTraits = schnek::ParticleContainerTraits<std::vector<TestParticle>>;
 using WireFormat = schnek::ParticleSerializer<TestParticle>;
 
 struct WrapParticle {
-  std::array<double, 1> position;
+  schnek::Array<double, 1> position;
 };
 
 using WrapAccessor = schnek::MemberPositionAccessor<&WrapParticle::position>;
@@ -344,7 +345,6 @@ class CudaParticles {
   public:
     using value_type = T;
     using MemorySpace = Kokkos::CudaSpace;
-    static constexpr bool host_accessible = false;
 
     CudaParticles() = default;
 

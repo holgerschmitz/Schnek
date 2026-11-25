@@ -7,6 +7,7 @@
 
 #include "../utility.hpp"
 #include <grid/range.hpp>
+#include <grid/array.hpp>
 #include <grid/grid.hpp>
 #include <grid/field.hpp>
 #include <util/factor.hpp>
@@ -22,14 +23,13 @@ using namespace boost::assign; // bring 'operator+=()' into scope
 
 #include <sstream>
 #include <cstddef>
-#include <array>
 #include <cstring>
 #include <optional>
 
 namespace {
 
   struct SerialWrapParticle {
-      std::array<double, 1> position;
+      schnek::Array<double, 1> position;
       int id;
   };
 
