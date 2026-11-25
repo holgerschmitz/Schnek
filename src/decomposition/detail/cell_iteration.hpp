@@ -90,7 +90,6 @@ namespace schnek {
       struct PackElement {
           typename T::ExecutionViewType<void> value;
 
-          SCHNEK_INLINE
           explicit PackElement(T &v) : value(v.template getExecutionView<void>()) {}
       };
 
@@ -102,7 +101,6 @@ namespace schnek {
           : PackElement<Is, Grids>... {
           Kernel kernel;
 
-          SCHNEK_INLINE
           ForEachCellDeviceFunctorImpl(Kernel kernel_, Grids... grids_)
               : PackElement<Is, Grids>(grids_)..., kernel(kernel_) {}
 
