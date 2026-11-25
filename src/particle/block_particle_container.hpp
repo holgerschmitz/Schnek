@@ -23,8 +23,8 @@
  * along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SCHNEK_DECOMPOSITION_DETAIL_BLOCK_PARTICLE_CONTAINER_HPP_
-#define SCHNEK_DECOMPOSITION_DETAIL_BLOCK_PARTICLE_CONTAINER_HPP_
+#ifndef SCHNEK_PARTICLE_BLOCK_PARTICLE_CONTAINER_HPP_
+#define SCHNEK_PARTICLE_BLOCK_PARTICLE_CONTAINER_HPP_
 
 #include <algorithm>
 #include <cstddef>
@@ -34,9 +34,10 @@
 #include <utility>
 #include <vector>
 
-#include "../../grid/array.hpp"
-#include "../../grid/grid.hpp"
-#include "../../util/exceptions.hpp"
+#include "../grid/array.hpp"
+#include "../grid/grid.hpp"
+#include "../util/exceptions.hpp"
+#include "cell_binning.hpp"
 
 namespace schnek {
 
@@ -454,6 +455,18 @@ namespace schnek {
         rebuildPartial();
       }
 
+      /**
+       * Reorder particles using `CellBinning` as the binning policy.
+       *
+       * The position accessor returns the coordinate used by `CellBinning::bin()`. The bin
+       * count and mapping are derived from `binning`, so callers do not need to provide a
+       * separate bin count or bin-index callback.
+       */
+      template<std::size_t rank, typename PositionAccessor>
+      void rebin(const CellBinning<rank> &binning, PositionAccessor &&positionAccessor) {
+        rebin(binning.binCount(), [&](const Particle &particle) { return binning.bin(positionAccessor(particle)); });
+      }
+
     private:
       /// A single fixed-capacity block of particles.
       struct Block {
@@ -551,4 +564,4 @@ namespace schnek {
 
 }  // namespace schnek
 
-#endif /* SCHNEK_DECOMPOSITION_DETAIL_BLOCK_PARTICLE_CONTAINER_HPP_ */
+#endif /* SCHNEK_PARTICLE_BLOCK_PARTICLE_CONTAINER_HPP_ */

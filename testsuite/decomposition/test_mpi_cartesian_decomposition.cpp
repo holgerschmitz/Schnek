@@ -15,7 +15,7 @@
 #include <decomposition/mpi_cartesian_decomposition.hpp>
 #include <decomposition/detail/weighted_partition.hpp>
 #ifdef SCHNEK_HAVE_KOKKOS
-#include <decomposition/detail/dense_kokkos_particle_container.hpp>
+#include <particle/dense_kokkos_particle_container.hpp>
 #endif
 
 #include <util/array_io.hpp>

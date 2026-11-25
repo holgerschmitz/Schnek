@@ -1,5 +1,5 @@
 /*
- * particle_binning.hpp
+ * cell_binning.hpp
  *
  * Copyright 2026 Holger Schmitz
  *
@@ -19,8 +19,8 @@
  * along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SCHNEK_DECOMPOSITION_DETAIL_PARTICLE_BINNING_HPP_
-#define SCHNEK_DECOMPOSITION_DETAIL_PARTICLE_BINNING_HPP_
+#ifndef SCHNEK_PARTICLE_CELL_BINNING_HPP_
+#define SCHNEK_PARTICLE_CELL_BINNING_HPP_
 
 #include <algorithm>
 #include <array>
@@ -28,9 +28,9 @@
 #include <cstddef>
 #include <vector>
 
-#include "../../grid/array.hpp"
-#include "../../grid/range.hpp"
-#include "../../util/exceptions.hpp"
+#include "../grid/array.hpp"
+#include "../grid/range.hpp"
+#include "../util/exceptions.hpp"
 
 namespace schnek {
 
@@ -161,4 +161,4 @@ namespace schnek {
 
 }  // namespace schnek
 
-#endif /* SCHNEK_DECOMPOSITION_DETAIL_PARTICLE_BINNING_HPP_ */
+#endif /* SCHNEK_PARTICLE_CELL_BINNING_HPP_ */

@@ -1,4 +1,4 @@
-#include <decomposition/detail/particle_binning.hpp>
+#include <particle/cell_binning.hpp>
 #include <grid/array.hpp>
 #include <grid/range.hpp>
 #include <util/exceptions.hpp>

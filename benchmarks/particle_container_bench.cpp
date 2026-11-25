@@ -49,9 +49,9 @@
 #include <cuda_runtime.h>
 #endif
 
-#include <decomposition/detail/block_particle_container.hpp>
-#include <decomposition/detail/dense_kokkos_particle_container.hpp>
-#include <decomposition/detail/device_blocked_particle_container.hpp>
+#include <particle/block_particle_container.hpp>
+#include <particle/dense_kokkos_particle_container.hpp>
+#include <particle/device_blocked_particle_container.hpp>
 #include <decomposition/detail/particle_factory.hpp>
 
 #ifndef SCHNEK_BENCH_GIT_REVISION
