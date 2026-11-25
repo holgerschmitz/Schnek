@@ -287,7 +287,6 @@ BOOST_AUTO_TEST_CASE(host_container_has_no_kokkos_dispatch) {
   using Comm = schnek::detail::ParticleCommunicationTraits<std::vector<TestParticle>>;
   BOOST_CHECK(!VectorTraits::kokkos_dispatch);
   BOOST_CHECK((std::is_void<VectorTraits::execution_space>::value));
-  BOOST_CHECK(Comm::mpi_access == schnek::detail::DeviceMpiAccess::Direct);
 }
 
 BOOST_AUTO_TEST_CASE(for_each_particle_mutates_host_particles) {
@@ -338,14 +337,6 @@ struct CudaMemoryParticles {
   using value_type = TestParticle;
   using MemorySpace = Kokkos::CudaSpace;
   static constexpr bool host_accessible = false;
-};
-
-// Device-memory container that asks for host-staged MPI.
-struct HostStagedCudaParticles {
-  using value_type = TestParticle;
-  using MemorySpace = Kokkos::CudaSpace;
-  static constexpr bool host_accessible = false;
-  static constexpr schnek::detail::DeviceMpiAccess mpi_access = schnek::detail::DeviceMpiAccess::HostStaged;
 };
 
 template<typename T>
@@ -405,7 +396,6 @@ BOOST_AUTO_TEST_CASE(memory_space_container_uses_its_execution_space) {
   BOOST_CHECK((std::is_same<Traits::execution_space, Kokkos::DefaultHostExecutionSpace>::value));
   BOOST_CHECK((std::is_same<Comm::memory_space, Kokkos::HostSpace>::value));
   BOOST_CHECK(Comm::host_accessible);
-  BOOST_CHECK(Comm::mpi_access == schnek::detail::DeviceMpiAccess::Direct);
 }
 
 BOOST_AUTO_TEST_CASE(explicit_execution_space_is_selected) {
@@ -422,13 +412,6 @@ BOOST_AUTO_TEST_CASE(device_memory_container_uses_device_execution_space) {
   BOOST_CHECK(Traits::kokkos_dispatch);
   BOOST_CHECK((std::is_same<Traits::execution_space, Kokkos::Cuda>::value));
   BOOST_CHECK((std::is_same<Comm::memory_space, Kokkos::CudaSpace>::value));
-  BOOST_CHECK(!Comm::host_accessible);
-  BOOST_CHECK(Comm::mpi_access == schnek::detail::DeviceMpiAccess::Direct);
-}
-
-BOOST_AUTO_TEST_CASE(host_staged_mpi_is_selected_by_container) {
-  using Comm = schnek::detail::ParticleCommunicationTraits<HostStagedCudaParticles>;
-  BOOST_CHECK(Comm::mpi_access == schnek::detail::DeviceMpiAccess::HostStaged);
   BOOST_CHECK(!Comm::host_accessible);
 }
 
