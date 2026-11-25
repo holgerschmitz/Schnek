@@ -1963,11 +1963,6 @@ namespace schnek {
     using Serializer = ParticleSerializer<Particle>;
     using PositionAccessor = std::decay_t<decltype(wrapper.accessor)>;
 
-    static_assert(
-        detail::ParticleCommunicationTraits<ContainerType>::mpi_access == detail::DeviceMpiAccess::Direct,
-        "host-staged particle MPI communication is not implemented"
-    );
-
     auto &container = wrapper.container;
 
     const RangeType localRange = getLocalInnerRange();
@@ -2289,11 +2284,6 @@ namespace schnek {
     using PositionAccessor = std::decay_t<decltype(oldWrapper.accessor)>;
     using RouteBlockType = internal::mpi_cartesian_decomposition::RouteBlock<rank>;
     using internal::mpi_cartesian_decomposition::checkedParticleBytes;
-
-    static_assert(
-        detail::ParticleCommunicationTraits<ContainerType>::mpi_access == detail::DeviceMpiAccess::Direct,
-        "host-staged particle MPI communication is not implemented"
-    );
 
     auto &oldContainer = oldWrapper.container;
     auto &newContainer = newWrapper.container;
