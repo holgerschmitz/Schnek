@@ -8,9 +8,8 @@
  *  element movement through the `detail::GridTransfer` customisation point. On a
  *  host-only Kokkos build the grid's memory space is host-accessible, so the
  *  host transfer path is exercised; on a device build the same registration and
- *  exchange drive the device gather/scatter + host-staging path. Either way the
- *  test proves that a Kokkos storage policy composes with field registration and
- *  the MPI ghost exchange.
+ *  exchange drive the device gather/scatter. Either way the test proves that a 
+ *  Kokkos storage policy composes with field registration and the MPI ghost exchange.
  */
 
 #include "mpi_test_context.hpp"

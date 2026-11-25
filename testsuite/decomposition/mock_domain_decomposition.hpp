@@ -75,10 +75,6 @@ namespace schnek {
           this->clearLocalRanges();
         }
 
-        void testAddLocalIterationRange(RangeType range) {
-          this->addLocalIterationRange(range);
-        }
-
         template<class GridType>
         schnek::GridRegistration registerField(const schnek::GridFactory<GridType> &factory) {
           return this->registerFieldImpl(factory);

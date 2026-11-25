@@ -689,11 +689,6 @@ namespace schnek {
       std::map<long, std::vector<internal::pParticleWrapper>> &getParticleStorage();
 
       /**
-       * This allows implementations to add a local range for iteration
-       */
-      void addLocalIterationRange(RangeType range);
-
-      /**
        * Return the number of local ranges currently registered.
        *
        * Subclasses may use this to assert their own invariants (e.g. the
@@ -947,11 +942,6 @@ namespace schnek {
        * @brief Contains the local ranges for the grids.
        */
       std::list<LocalRangeInfo> ranges;
-
-      /**
-       * @brief Contains the local iteration ranges.
-       */
-      std::list<RangeType> iterationRanges;
 
       void checkGlobalWeights();
 
@@ -1554,11 +1544,6 @@ namespace schnek {
       long id = reg.first;
       particleContainers[id].push_back(reg.second->makeContainer(range, domain));
     }
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  void DomainDecomposition<rank, CheckingPolicy>::addLocalIterationRange(RangeType range) {
-    iterationRanges.push_back(range);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
