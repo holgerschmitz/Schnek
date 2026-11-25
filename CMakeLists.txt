@@ -146,6 +146,7 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/test_parser.cpp
     testsuite/test_range.cpp
     testsuite/utility.cpp
+    testsuite/computation/test_algorithm.cpp
     testsuite/decomposition/test_domaindecomposition.cpp
     testsuite/decomposition/mpi_test_context.cpp
     testsuite/decomposition/test_mpi_cartesian_decomposition.cpp
@@ -156,9 +157,6 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/decomposition/detail/test_grid_transfer.cpp
     testsuite/decomposition/detail/test_grid_visitor.cpp
     testsuite/decomposition/detail/test_particle_factory.cpp
-    testsuite/decomposition/detail/test_block_particle_container.cpp
-    testsuite/decomposition/detail/test_particle_binning.cpp
-    testsuite/computation/test_algorithm.cpp
     testsuite/diagnostic/test_hdfdiagnostic.cpp
     testsuite/generic/test_typelist.cpp
     testsuite/generic/test_static_range.cpp
@@ -169,13 +167,15 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/grid/test_range_fortran_iteration.cpp
     testsuite/grid/test_range_kokkos_iteration.cpp
     testsuite/grid/concepts/test_concepts.cpp
+    testsuite/particle/test_block_particle_container.cpp
+    testsuite/particle/test_cell_binning.cpp
 )
 
 if(Kokkos_FOUND)
   target_sources(schnek_tests PRIVATE
-      testsuite/decomposition/detail/test_dense_kokkos_particle_container.cpp
-      testsuite/decomposition/detail/test_device_blocked_particle_container.cpp
       testsuite/decomposition/test_kokkos_redistribution.cpp
+      testsuite/particle/test_dense_kokkos_particle_container.cpp
+      testsuite/particle/test_device_blocked_particle_container.cpp
   )
 
   set_source_files_properties(
@@ -190,9 +190,9 @@ if(Kokkos_FOUND)
       testsuite/decomposition/test_serial_decomposition.cpp
       testsuite/decomposition/detail/test_grid_transfer.cpp
       testsuite/decomposition/detail/test_particle_factory.cpp
-      testsuite/decomposition/detail/test_block_particle_container.cpp
-      testsuite/decomposition/detail/test_dense_kokkos_particle_container.cpp
-      testsuite/decomposition/detail/test_device_blocked_particle_container.cpp
+      testsuite/particle/test_block_particle_container.cpp
+      testsuite/particle/test_dense_kokkos_particle_container.cpp
+      testsuite/particle/test_device_blocked_particle_container.cpp
       testsuite/diagnostic/test_hdfdiagnostic.cpp
       testsuite/grid/test_kokkos_storage.cpp
       testsuite/grid/test_range_kokkos_iteration.cpp

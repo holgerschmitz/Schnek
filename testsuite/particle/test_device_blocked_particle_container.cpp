@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 #include <cstddef>
 #include <cstdlib>
-#include <decomposition/detail/device_blocked_particle_container.hpp>
+#include <particle/device_blocked_particle_container.hpp>
 #include <decomposition/detail/particle_factory.hpp>
 #include <decomposition/detail/particle_wrap.hpp>
 #include <random>

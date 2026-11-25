@@ -1,8 +1,8 @@
-#include "../../utility.hpp"
+#include "../utility.hpp"
 
 #include <decomposition/detail/particle_factory.hpp>
-#include <decomposition/detail/block_particle_container.hpp>
 #include <grid/range.hpp>
+#include <particle/particle.hpp>
 #include <util/exceptions.hpp>
 
 #include <boost/test/unit_test.hpp>
@@ -923,6 +923,36 @@ BOOST_AUTO_TEST_CASE(rebin_groups_particles_by_bin) {
   }
   BOOST_CHECK_EQUAL(container.binBlockRange(0).first, 0u);
   BOOST_CHECK_EQUAL(container.binBlockRange(bins - 1).second, container.activeBlockCount());
+}
+
+BOOST_AUTO_TEST_CASE(rebin_uses_cell_binning_with_position_accessor) {
+  const schnek::Range<std::ptrdiff_t, 1> region(
+      schnek::Array<std::ptrdiff_t, 1>(0), schnek::Array<std::ptrdiff_t, 1>(7)
+  );
+  const schnek::CellBinning<1> binning(region, schnek::Array<std::ptrdiff_t, 1>(2));
+  Container container(2);
+  for (const TestParticle particle : {
+           TestParticle{0, 0.1}, TestParticle{1, 1.9}, TestParticle{2, 2.0},
+           TestParticle{3, 5.9}, TestParticle{4, 6.0}, TestParticle{5, 8.5}}) {
+    container.push_back(particle);
+  }
+
+  container.rebin(binning, [](const TestParticle &particle) { return std::array<double, 1>{particle.x}; });
+
+  BOOST_CHECK_EQUAL(container.binCount(), 4u);
+  BOOST_CHECK_EQUAL(container.binSize(0), 2u);
+  BOOST_CHECK_EQUAL(container.binSize(1), 1u);
+  BOOST_CHECK_EQUAL(container.binSize(2), 1u);
+  BOOST_CHECK_EQUAL(container.binSize(3), 2u);
+  BOOST_CHECK_EQUAL(container.size(), 6u);
+  const std::vector<std::vector<int>> expectedIds{{0, 1}, {2}, {3}, {4, 5}};
+  for (std::size_t bin = 0; bin < expectedIds.size(); ++bin) {
+    std::vector<int> ids;
+    container.forEachInBin(bin, [&ids](const TestParticle &particle) { ids.push_back(particle.id); });
+    std::sort(ids.begin(), ids.end());
+    BOOST_CHECK(ids == expectedIds[bin]);
+  }
+  checkInvariants(container);
 }
 
 BOOST_AUTO_TEST_CASE(rebin_handles_empty_bins_and_empty_container) {

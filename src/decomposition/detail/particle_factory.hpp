@@ -42,11 +42,15 @@
 #include "../../grid/arraycheck.hpp"
 #include "../../grid/range.hpp"
 #include "../../macros.hpp"
+#include "../../particle/block_particle_container.hpp"
 #include "../../util/exceptions.hpp"
 #include "../../util/unique.hpp"
-#include "block_particle_container.hpp"
 #include "grid-communication-traits.hpp"
 #include "particle_visitor.hpp"
+
+#ifdef SCHNEK_HAVE_KOKKOS
+#include "../../particle/device_blocked_particle_container.hpp"
+#endif
 
 namespace schnek {
 
@@ -665,6 +669,79 @@ namespace schnek {
       }
   };
 
+#ifdef SCHNEK_HAVE_KOKKOS
+  /**
+   * Adapts `DeviceBlockedParticleContainer` to the particle operations the domain decomposition needs.
+   */
+  template<class Particle, class ExecSpace, class MemSpace>
+  struct ParticleContainerTraits<DeviceBlockedParticleContainer<Particle, ExecSpace, MemSpace>> {
+      using ContainerType = DeviceBlockedParticleContainer<Particle, ExecSpace, MemSpace>;
+      using value_type = Particle;
+      using execution_space = ExecSpace;
+      static constexpr bool kokkos_dispatch = true;
+
+      static std::size_t size(const ContainerType &c) { return c.size(); }
+      static void insert(ContainerType &c, const value_type &p) { c.push_back(p); }
+
+      template<class F>
+      static void forEach(const ContainerType &c, F &&f) {
+        c.forEach(std::forward<F>(f));
+      }
+
+      template<class Functor>
+      static void forEachParticle(ContainerType &c, Functor functor) {
+        c.parallelForEach(functor);
+      }
+
+      template<class Predicate>
+      static bool allOf(const ContainerType &c, Predicate pred) {
+        return c.allOf(pred);
+      }
+
+      template<class Classifier>
+      static void countBuckets(
+          const ContainerType &c, const Classifier &classify, std::size_t *counts, std::size_t numBuckets
+      ) {
+        c.countBuckets(classify, counts, numBuckets);
+      }
+
+      template<class Classifier, std::size_t NumBuckets>
+      static void countBuckets(
+          const ContainerType &c, const Classifier &classify, std::array<std::size_t, NumBuckets> &counts
+      ) {
+        c.countBuckets(classify, counts);
+      }
+
+      static std::size_t partitionScratchBytes(const ContainerType &c) { return c.partitionScratchBytes(); }
+
+      template<class Serializer, class Classifier>
+      static void partitionAndPack(
+          ContainerType &c,
+          const Classifier &classify,
+          std::byte *const *outPtrs,
+          std::size_t numBuckets,
+          std::byte *scratch
+      ) {
+        c.template partitionAndPack<Serializer>(classify, outPtrs, numBuckets, scratch);
+      }
+
+      template<class Serializer, class Classifier, std::size_t NumBuckets>
+      static void partitionAndPack(
+          ContainerType &c,
+          const Classifier &classify,
+          const std::array<std::byte *, NumBuckets> &outPtrs,
+          std::byte *scratch
+      ) {
+        c.template partitionAndPack<Serializer>(classify, outPtrs, scratch);
+      }
+
+      template<class Serializer>
+      static void bulkInsert(ContainerType &c, const std::byte *src, std::size_t count) {
+        c.template bulkInsert<Serializer>(src, count);
+      }
+  };
+#endif
+
   /**
    * @brief Fixed-size byte serialisation of a particle for MPI transport.
    *
@@ -869,6 +946,33 @@ namespace schnek {
       std::size_t blockCapacity_;
       std::size_t initialParticles_;
   };
+
+#ifdef SCHNEK_HAVE_KOKKOS
+  /**
+   * @brief Factory for `DeviceBlockedParticleContainer` with a configurable block size.
+   */
+  template<class Particle, class ExecSpace, class MemSpace>
+  class ParticleContainerFactory<DeviceBlockedParticleContainer<Particle, ExecSpace, MemSpace>> {
+    public:
+      using Container = DeviceBlockedParticleContainer<Particle, ExecSpace, MemSpace>;
+
+      explicit ParticleContainerFactory(std::size_t blockCapacity, std::size_t initialParticles = 0)
+          : blockCapacity_(blockCapacity), initialParticles_(initialParticles) {}
+
+      template<typename RangeType, typename DomainType>
+      Container makeContainer(const RangeType &range, const DomainType &domain) const {
+        (void)range;
+        (void)domain;
+        Container container(blockCapacity_);
+        container.reserve(initialParticles_);
+        return container;
+      }
+
+    private:
+      std::size_t blockCapacity_;
+      std::size_t initialParticles_;
+  };
+#endif
 
   /**
    * @brief Opaque handle returned by `registerParticleData`.

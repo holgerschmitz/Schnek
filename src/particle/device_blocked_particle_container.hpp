@@ -19,8 +19,8 @@
  * along with Schnek.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SCHNEK_DECOMPOSITION_DETAIL_DEVICE_BLOCKED_PARTICLE_CONTAINER_HPP_
-#define SCHNEK_DECOMPOSITION_DETAIL_DEVICE_BLOCKED_PARTICLE_CONTAINER_HPP_
+#ifndef SCHNEK_PARTICLE_DEVICE_BLOCKED_PARTICLE_CONTAINER_HPP_
+#define SCHNEK_PARTICLE_DEVICE_BLOCKED_PARTICLE_CONTAINER_HPP_
 
 #include <Kokkos_Core.hpp>
 #include <algorithm>
@@ -32,7 +32,8 @@
 #include <utility>
 #include <vector>
 
-#include "particle_factory.hpp"
+#include "../macros.hpp"
+#include "../util/exceptions.hpp"
 
 namespace schnek {
 
@@ -497,110 +498,6 @@ namespace schnek {
       mutable bool descriptorsDirty_ = true;
   };
 
-  /**
-   * Adapts `DeviceBlockedParticleContainer` to the particle operations the domain decomposition needs. Every operation
-   * runs on the device, so the particle values are never read on the host.
-   */
-  template<class Particle, class ExecSpace, class MemSpace>
-  struct ParticleContainerTraits<DeviceBlockedParticleContainer<Particle, ExecSpace, MemSpace>> {
-      using ContainerType = DeviceBlockedParticleContainer<Particle, ExecSpace, MemSpace>;
-      using value_type = Particle;
-      using execution_space = ExecSpace;
-      static constexpr bool kokkos_dispatch = true;
-
-      static std::size_t size(const ContainerType &c) { return c.size(); }
-
-      static void insert(ContainerType &c, const value_type &p) { c.push_back(p); }
-
-      template<class F>
-      static void forEach(const ContainerType &c, F &&f) {
-        c.forEach(std::forward<F>(f));
-      }
-
-      template<class Functor>
-      static void forEachParticle(ContainerType &c, Functor functor) {
-        c.parallelForEach(functor);
-      }
-
-      template<class Predicate>
-      static bool allOf(const ContainerType &c, Predicate pred) {
-        return c.allOf(pred);
-      }
-
-      template<class Classifier>
-      static void countBuckets(
-          const ContainerType &c, const Classifier &classify, std::size_t *counts, std::size_t numBuckets
-      ) {
-        c.countBuckets(classify, counts, numBuckets);
-      }
-
-      template<class Classifier, std::size_t NumBuckets>
-      static void countBuckets(
-          const ContainerType &c, const Classifier &classify, std::array<std::size_t, NumBuckets> &counts
-      ) {
-        c.countBuckets(classify, counts);
-      }
-
-      static std::size_t partitionScratchBytes(const ContainerType &c) { return c.partitionScratchBytes(); }
-
-      template<class Serializer, class Classifier>
-      static void partitionAndPack(
-          ContainerType &c,
-          const Classifier &classify,
-          std::byte *const *outPtrs,
-          std::size_t numBuckets,
-          std::byte *scratch
-      ) {
-        c.template partitionAndPack<Serializer>(classify, outPtrs, numBuckets, scratch);
-      }
-
-      template<class Serializer, class Classifier, std::size_t NumBuckets>
-      static void partitionAndPack(
-          ContainerType &c,
-          const Classifier &classify,
-          const std::array<std::byte *, NumBuckets> &outPtrs,
-          std::byte *scratch
-      ) {
-        c.template partitionAndPack<Serializer>(classify, outPtrs, scratch);
-      }
-
-      template<class Serializer>
-      static void bulkInsert(ContainerType &c, const std::byte *src, std::size_t count) {
-        c.template bulkInsert<Serializer>(src, count);
-      }
-  };
-
-  /**
-   * @brief Factory for `DeviceBlockedParticleContainer` with a configurable block size.
-   *
-   * Has no default constructor, so every registration states its block capacity.
-   */
-  template<class Particle, class ExecSpace, class MemSpace>
-  class ParticleContainerFactory<DeviceBlockedParticleContainer<Particle, ExecSpace, MemSpace>> {
-    public:
-      using Container = DeviceBlockedParticleContainer<Particle, ExecSpace, MemSpace>;
-
-      /**
-       * @param blockCapacity number of particle slots per block, must be positive
-       * @param initialParticles number of particle slots to reserve in each new container
-       */
-      explicit ParticleContainerFactory(std::size_t blockCapacity, std::size_t initialParticles = 0)
-          : blockCapacity_(blockCapacity), initialParticles_(initialParticles) {}
-
-      template<typename RangeType, typename DomainType>
-      Container makeContainer(const RangeType &range, const DomainType &domain) const {
-        (void)range;
-        (void)domain;
-        Container container(blockCapacity_);
-        container.reserve(initialParticles_);
-        return container;
-      }
-
-    private:
-      std::size_t blockCapacity_;
-      std::size_t initialParticles_;
-  };
-
 }  // namespace schnek
 
-#endif /* SCHNEK_DECOMPOSITION_DETAIL_DEVICE_BLOCKED_PARTICLE_CONTAINER_HPP_ */
+#endif /* SCHNEK_PARTICLE_DEVICE_BLOCKED_PARTICLE_CONTAINER_HPP_ */
