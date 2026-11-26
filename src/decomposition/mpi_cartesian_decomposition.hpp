@@ -435,6 +435,49 @@ namespace schnek {
       class RedistributeVisitor;
       template<class GridType>
       void registerRedistributeHandler();
+      struct RedistributionSlabBlock {
+          std::size_t planIndex;
+          std::size_t volume;
+          std::size_t offset;
+      };
+      template<typename PlanType, typename RangeVolume>
+      auto makeRedistributionSlabBlocks(const PlanType &plan, int localRank, RangeVolume rangeVolume) const {
+        std::vector<RedistributionSlabBlock> blocks;
+        std::size_t totalVolume = 0;
+        for (std::size_t i = 0; i < plan.size(); ++i) {
+          if (plan[i].mpiRank == localRank) continue;
+          const std::size_t volume = rangeVolume(plan[i]);
+          if (volume == 0) continue;
+          blocks.push_back({i, volume, totalVolume});
+          totalVolume += volume;
+        }
+        return std::make_pair(std::move(blocks), totalVolume);
+      }
+      template<
+          typename GridType,
+          typename PlanType,
+          typename RangeBuilder,
+          typename LocalCopy,
+          typename SendScratch,
+          typename RecvScratch>
+      void transferRedistributionSlabs(
+          GridType *oldGrid,
+          GridType *newGrid,
+          const std::vector<RedistributionSlabBlock> &sendBlocks,
+          const std::vector<RedistributionSlabBlock> &recvBlocks,
+          const PlanType &sendPlan,
+          const PlanType &recvPlan,
+          std::size_t sendTotal,
+          std::size_t recvTotal,
+          SendScratch &sendScratch,
+          RecvScratch &recvScratch,
+          MPI_Datatype mpiType,
+          int tag,
+          const char *countErrorMessage,
+          const char *operation,
+          RangeBuilder makeRange,
+          LocalCopy localCopy
+      );
       template<typename GridType>
       void redistributeTyped(
           GridType *oldGrid,
