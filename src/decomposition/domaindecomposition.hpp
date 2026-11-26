@@ -333,15 +333,13 @@ namespace schnek {
       typedef Array<size_t, rank> SizeType;
       template<size_t projRank>
       using ProjectedRegistration = ProjectedGridRegistration<projRank, rank>;
-      template<size_t FullRank, typename Seq>
-      struct RegistrationVariantBuilder;
-      template<size_t FullRank, size_t... Indices>
-      struct RegistrationVariantBuilder<FullRank, std::index_sequence<Indices...>> {
-          using type =
-              std::variant<GridRegistration, ProjectedGridRegistration<Indices + 1, FullRank>..., ParticleRegistration>;
+      struct ProjectedRegistrationId {
+          long id;
+
+          template<size_t projRank>
+          ProjectedRegistrationId(const ProjectedRegistration<projRank> &registration) : id(registration.id) {}
       };
-      using RegistrationVariant =
-          typename RegistrationVariantBuilder<rank, std::make_index_sequence<(rank > 1 ? rank - 1 : 0)>>::type;
+      using RegistrationVariant = std::variant<GridRegistration, ProjectedRegistrationId, ParticleRegistration>;
 
       class GridContext {
         private:
