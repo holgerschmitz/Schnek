@@ -26,6 +26,7 @@
 #include "../util/logger.hpp"
 #include "../util/volume.hpp"
 #include "detail/grid_transfer.hpp"
+#include "detail/halo_ranges.hpp"
 #include "detail/particle_wrap.hpp"
 #include "detail/redistribution.hpp"
 #include "detail/weighted_partition.hpp"
@@ -37,6 +38,13 @@
 namespace schnek {
 
   namespace internal {
+    inline int toMpiCount(size_t count, const char *operation) {
+      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
+        SCHNECK_FAIL("Halo " << operation << " block too large for MPI_Sendrecv count");
+      }
+      return static_cast<int>(count);
+    }
+
     template<typename T>
     MPI_Datatype mpiDatatypeFor() {
       if constexpr (std::is_same_v<T, signed char>) {
@@ -2642,7 +2650,6 @@ namespace schnek {
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchangeWithInteriorBounds(
       GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
   ) {
-    using IndexType = typename GridType::IndexType;
     using RangeTypeLocal = typename GridType::RangeType;
     using ValueType = typename GridType::value_type;
     using MemorySpace = detail::GridBufferMemorySpace<GridType>;
@@ -2651,30 +2658,9 @@ namespace schnek {
     auto &sendScratchBuffer = bufferRegistry.send();
     auto &recvScratchBuffer = bufferRegistry.receive();
 
-    const IndexType gridLo = grid.getLo();
-    const IndexType gridHi = grid.getHi();
+    const auto gridLo = grid.getLo();
+    const auto gridHi = grid.getHi();
     validateHaloWidths(gridLo, gridHi, innerLo, innerHi);
-
-    auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
-
-    // Helpers to pack/unpack a multi-dimensional range to/from a contiguous buffer for MPI communication.
-    // buffer is assumed to be pre-allocated to the correct size (range volume).
-    // The element movement is delegated to the GridTransfer customisation point so that the
-    // same code path works for host- and device-resident storage backends.
-    auto packRange = [&](RangeTypeLocal range, auto &buffer) {
-      detail::GridTransfer<GridType>::pack(grid, range, buffer.data());
-    };
-
-    auto unpackRange = [&](RangeTypeLocal range, const auto &buffer) {
-      detail::GridTransfer<GridType>::unpack(grid, range, buffer.data());
-    };
-
-    auto toIntCount = [](size_t count) -> int {
-      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
-        SCHNECK_FAIL("Halo exchange block too large for MPI_Sendrecv count");
-      }
-      return static_cast<int>(count);
-    };
 
     const MPI_Datatype mpiType = internal::mpiDatatypeFor<ValueType>();
 
@@ -2683,53 +2669,22 @@ namespace schnek {
       int nextRank = MPI_PROC_NULL;
       this->mpi.MPI_Cart_shift(comm, static_cast<int>(dim), 1, &prevRank, &nextRank);
 
-      ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
-      ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
+      const auto ranges = detail::haloRanges<RangeTypeLocal>(dim, gridLo, gridHi, innerLo, innerHi);
       SCHNEK_ASSERT(
-          lowerHalo == upperHalo, "MPI halo exchange requires symmetric halo widths in dimension "
-                                      << dim << " (lower=" << lowerHalo << ", upper=" << upperHalo << ")"
+          ranges.lowerHalo == ranges.upperHalo, "MPI halo exchange requires symmetric halo widths in dimension "
+                                                    << dim << " (lower=" << ranges.lowerHalo
+                                                    << ", upper=" << ranges.upperHalo << ")"
       );
 
-      std::optional<RangeTypeLocal> loGhostRange;
-      if (lowerHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        hi[dim] = gridLo[dim] + lowerHalo - 1;
-        loGhostRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> hiGhostRange;
-      if (upperHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = gridHi[dim] - upperHalo + 1;
-        hi[dim] = gridHi[dim];
-        hiGhostRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> loSourceRange;
-      if (lowerHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = innerLo[dim];
-        hi[dim] = innerLo[dim] + lowerHalo - 1;
-        loSourceRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> hiSourceRange;
-      if (upperHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = innerHi[dim] - upperHalo + 1;
-        hi[dim] = innerHi[dim];
-        hiSourceRange = makeRange(lo, hi);
-      }
-
-      size_t sendLowerCount = hiSourceRange ? schnek::volume(*hiSourceRange) : 0;
-      size_t recvLowerCount = loGhostRange ? schnek::volume(*loGhostRange) : 0;
-
-      size_t sendUpperCount = loSourceRange ? schnek::volume(*loSourceRange) : 0;
-      size_t recvUpperCount = hiGhostRange ? schnek::volume(*hiGhostRange) : 0;
+      const auto counts = detail::haloRangeCounts(ranges);
+      const auto &loGhostRange = ranges.loGhostRange;
+      const auto &hiGhostRange = ranges.hiGhostRange;
+      const auto &loSourceRange = ranges.loSourceRange;
+      const auto &hiSourceRange = ranges.hiSourceRange;
+      const size_t sendLowerCount = counts.sendLowerCount;
+      const size_t recvLowerCount = counts.recvLowerCount;
+      const size_t sendUpperCount = counts.sendUpperCount;
+      const size_t recvUpperCount = counts.recvUpperCount;
 
       size_t maxSendCount = std::max(sendLowerCount, sendUpperCount);
       size_t maxRecvCount = std::max(recvLowerCount, recvUpperCount);
@@ -2742,30 +2697,30 @@ namespace schnek {
 
       // Exchange to fill lower ghost cells (receive from prev, send to next)
       if (hiSourceRange && sendLowerCount > 0) {
-        packRange(*hiSourceRange, sendBuffer);
+        detail::packGridRange(grid, *hiSourceRange, sendBuffer);
       }
 
       this->mpi.MPI_Sendrecv(
-          sendLowerCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType, nextRank, 0,
-          recvLowerCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType, prevRank, 0, comm,
-          MPI_STATUS_IGNORE
+          sendLowerCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(sendLowerCount, "exchange"), mpiType,
+          nextRank, 0, recvLowerCount > 0 ? recvBuffer.data() : nullptr,
+          internal::toMpiCount(recvLowerCount, "exchange"), mpiType, prevRank, 0, comm, MPI_STATUS_IGNORE
       );
       if (loGhostRange && recvLowerCount > 0) {
-        unpackRange(*loGhostRange, recvBuffer);
+        detail::unpackGridRange(grid, *loGhostRange, recvBuffer);
       }
 
       // Exchange to fill upper ghost cells (receive from next, send to prev)
       if (loSourceRange && sendUpperCount > 0) {
-        packRange(*loSourceRange, sendBuffer);
+        detail::packGridRange(grid, *loSourceRange, sendBuffer);
       }
 
       this->mpi.MPI_Sendrecv(
-          sendUpperCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType, prevRank, 0,
-          recvUpperCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType, nextRank, 0, comm,
-          MPI_STATUS_IGNORE
+          sendUpperCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(sendUpperCount, "exchange"), mpiType,
+          prevRank, 0, recvUpperCount > 0 ? recvBuffer.data() : nullptr,
+          internal::toMpiCount(recvUpperCount, "exchange"), mpiType, nextRank, 0, comm, MPI_STATUS_IGNORE
       );
       if (hiGhostRange && recvUpperCount > 0) {
-        unpackRange(*hiGhostRange, recvBuffer);
+        detail::unpackGridRange(grid, *hiGhostRange, recvBuffer);
       }
       sendScratchBuffer.reset();
       recvScratchBuffer.reset();
@@ -2781,7 +2736,6 @@ namespace schnek {
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::accumulateWithInteriorBounds(
       GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
   ) {
-    using IndexType = typename GridType::IndexType;
     using RangeTypeLocal = typename GridType::RangeType;
     using ValueType = typename GridType::value_type;
     using MemorySpace = detail::GridBufferMemorySpace<GridType>;
@@ -2790,30 +2744,9 @@ namespace schnek {
     auto &sendScratchBuffer = bufferRegistry.send();
     auto &recvScratchBuffer = bufferRegistry.receive();
 
-    const IndexType gridLo = grid.getLo();
-    const IndexType gridHi = grid.getHi();
+    const auto gridLo = grid.getLo();
+    const auto gridHi = grid.getHi();
     validateHaloWidths(gridLo, gridHi, innerLo, innerHi);
-
-    auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
-
-    auto packRange = [&](RangeTypeLocal range, auto &buffer) {
-      detail::GridTransfer<GridType>::pack(grid, range, buffer.data());
-    };
-
-    auto assignRange = [&](RangeTypeLocal range, const auto &buffer) {
-      detail::GridTransfer<GridType>::unpack(grid, range, buffer.data());
-    };
-
-    auto addIntoRange = [&](RangeTypeLocal range, const auto &buffer, auto &out) {
-      detail::GridTransfer<GridType>::accumulate(grid, range, buffer.data(), out.data());
-    };
-
-    auto toIntCount = [](size_t count) -> int {
-      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
-        SCHNECK_FAIL("Halo accumulate block too large for MPI_Sendrecv count");
-      }
-      return static_cast<int>(count);
-    };
 
     const MPI_Datatype mpiType = internal::mpiDatatypeFor<ValueType>();
 
@@ -2822,52 +2755,22 @@ namespace schnek {
       int nextRank = MPI_PROC_NULL;
       this->mpi.MPI_Cart_shift(comm, static_cast<int>(dim), 1, &prevRank, &nextRank);
 
-      ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
-      ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
+      const auto ranges = detail::haloRanges<RangeTypeLocal>(dim, gridLo, gridHi, innerLo, innerHi);
       SCHNEK_ASSERT(
-          lowerHalo == upperHalo, "MPI halo accumulate requires symmetric halo widths in dimension "
-                                      << dim << " (lower=" << lowerHalo << ", upper=" << upperHalo << ")"
+          ranges.lowerHalo == ranges.upperHalo, "MPI halo accumulate requires symmetric halo widths in dimension "
+                                                    << dim << " (lower=" << ranges.lowerHalo
+                                                    << ", upper=" << ranges.upperHalo << ")"
       );
 
-      std::optional<RangeTypeLocal> loGhostRange;
-      if (lowerHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        hi[dim] = gridLo[dim] + lowerHalo - 1;
-        loGhostRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> hiGhostRange;
-      if (upperHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = gridHi[dim] - upperHalo + 1;
-        hi[dim] = gridHi[dim];
-        hiGhostRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> loSourceRange;
-      if (lowerHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = innerLo[dim];
-        hi[dim] = innerLo[dim] + lowerHalo - 1;
-        loSourceRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> hiSourceRange;
-      if (upperHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = innerHi[dim] - upperHalo + 1;
-        hi[dim] = innerHi[dim];
-        hiSourceRange = makeRange(lo, hi);
-      }
-
-      const size_t sendLowerCount = hiSourceRange ? schnek::volume(*hiSourceRange) : 0;
-      const size_t recvLowerCount = loGhostRange ? schnek::volume(*loGhostRange) : 0;
-      const size_t sendUpperCount = loSourceRange ? schnek::volume(*loSourceRange) : 0;
-      const size_t recvUpperCount = hiGhostRange ? schnek::volume(*hiGhostRange) : 0;
+      const auto counts = detail::haloRangeCounts(ranges);
+      const auto &loGhostRange = ranges.loGhostRange;
+      const auto &hiGhostRange = ranges.hiGhostRange;
+      const auto &loSourceRange = ranges.loSourceRange;
+      const auto &hiSourceRange = ranges.hiSourceRange;
+      const size_t sendLowerCount = counts.sendLowerCount;
+      const size_t recvLowerCount = counts.recvLowerCount;
+      const size_t sendUpperCount = counts.sendUpperCount;
+      const size_t recvUpperCount = counts.recvUpperCount;
 
       const size_t maxSendCount = std::max(sendLowerCount, sendUpperCount);
       const size_t maxRecvCount = std::max(recvLowerCount, recvUpperCount);
@@ -2881,50 +2784,50 @@ namespace schnek {
 
       // Lower side: add incoming data to lower ghost cells, then return result to update upper inner cells in prev.
       if (hiSourceRange && sendLowerCount > 0) {
-        packRange(*hiSourceRange, sendBuffer);
+        detail::packGridRange(grid, *hiSourceRange, sendBuffer);
       }
 
       this->mpi.MPI_Sendrecv(
-          sendLowerCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType, nextRank, 0,
-          recvLowerCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType, prevRank, 0, comm,
-          MPI_STATUS_IGNORE
+          sendLowerCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(sendLowerCount, "accumulate"), mpiType,
+          nextRank, 0, recvLowerCount > 0 ? recvBuffer.data() : nullptr,
+          internal::toMpiCount(recvLowerCount, "accumulate"), mpiType, prevRank, 0, comm, MPI_STATUS_IGNORE
       );
 
       if (loGhostRange && recvLowerCount > 0) {
-        addIntoRange(*loGhostRange, recvBuffer, sendBuffer);
+        detail::accumulateGridRange(grid, *loGhostRange, recvBuffer, sendBuffer);
       }
 
       this->mpi.MPI_Sendrecv(
-          recvLowerCount > 0 ? sendBuffer.data() : nullptr, toIntCount(recvLowerCount), mpiType, prevRank, 0,
-          sendLowerCount > 0 ? recvBuffer.data() : nullptr, toIntCount(sendLowerCount), mpiType, nextRank, 0, comm,
-          MPI_STATUS_IGNORE
+          recvLowerCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(recvLowerCount, "accumulate"), mpiType,
+          prevRank, 0, sendLowerCount > 0 ? recvBuffer.data() : nullptr,
+          internal::toMpiCount(sendLowerCount, "accumulate"), mpiType, nextRank, 0, comm, MPI_STATUS_IGNORE
       );
       if (hiSourceRange && sendLowerCount > 0) {
-        assignRange(*hiSourceRange, recvBuffer);
+        detail::unpackGridRange(grid, *hiSourceRange, recvBuffer);
       }
 
       // Upper side: add incoming data to upper ghost cells, then return result to update lower inner cells in next.
       if (loSourceRange && sendUpperCount > 0) {
-        packRange(*loSourceRange, sendBuffer);
+        detail::packGridRange(grid, *loSourceRange, sendBuffer);
       }
 
       this->mpi.MPI_Sendrecv(
-          sendUpperCount > 0 ? sendBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType, prevRank, 0,
-          recvUpperCount > 0 ? recvBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType, nextRank, 0, comm,
-          MPI_STATUS_IGNORE
+          sendUpperCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(sendUpperCount, "accumulate"), mpiType,
+          prevRank, 0, recvUpperCount > 0 ? recvBuffer.data() : nullptr,
+          internal::toMpiCount(recvUpperCount, "accumulate"), mpiType, nextRank, 0, comm, MPI_STATUS_IGNORE
       );
 
       if (hiGhostRange && recvUpperCount > 0) {
-        addIntoRange(*hiGhostRange, recvBuffer, sendBuffer);
+        detail::accumulateGridRange(grid, *hiGhostRange, recvBuffer, sendBuffer);
       }
 
       this->mpi.MPI_Sendrecv(
-          recvUpperCount > 0 ? sendBuffer.data() : nullptr, toIntCount(recvUpperCount), mpiType, nextRank, 0,
-          sendUpperCount > 0 ? recvBuffer.data() : nullptr, toIntCount(sendUpperCount), mpiType, prevRank, 0, comm,
-          MPI_STATUS_IGNORE
+          recvUpperCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(recvUpperCount, "accumulate"), mpiType,
+          nextRank, 0, sendUpperCount > 0 ? recvBuffer.data() : nullptr,
+          internal::toMpiCount(sendUpperCount, "accumulate"), mpiType, prevRank, 0, comm, MPI_STATUS_IGNORE
       );
       if (loSourceRange && sendUpperCount > 0) {
-        assignRange(*loSourceRange, recvBuffer);
+        detail::unpackGridRange(grid, *loSourceRange, recvBuffer);
       }
 
       sendScratchBuffer.reset();

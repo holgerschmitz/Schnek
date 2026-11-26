@@ -16,6 +16,7 @@
 #include "../util/exceptions.hpp"
 #include "config.hpp"
 #include "detail/grid_visitor.hpp"
+#include "detail/halo_ranges.hpp"
 #include "detail/particle_visitor.hpp"
 #include "detail/particle_wrap.hpp"
 #include "domaindecomposition.hpp"
@@ -201,6 +202,13 @@ namespace schnek {
       template<typename GridType>
       void accumulateWithInteriorBounds(
           GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
+      );
+      template<typename GridType, typename Operation>
+      void applyWithInteriorBounds(
+          GridType &grid,
+          const typename GridType::IndexType &innerLo,
+          const typename GridType::IndexType &innerHi,
+          Operation operation
       );
 
       std::unique_ptr<ExchangeVisitor> exchangeVisitor;
@@ -535,69 +543,7 @@ namespace schnek {
   void SerialDomainDecomposition<rank, CheckingPolicy>::exchangeWithInteriorBounds(
       GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
   ) {
-    using IndexType = typename GridType::IndexType;
-    using RangeTypeLocal = typename GridType::RangeType;
-
-    const IndexType gridLo = grid.getLo();
-    const IndexType gridHi = grid.getHi();
-
-    auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
-
-    for (size_t dim = 0; dim < rank; ++dim) {
-      ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
-      ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
-
-      std::optional<RangeTypeLocal> loGhostRange;
-      if (lowerHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        hi[dim] = gridLo[dim] + lowerHalo - 1;
-        loGhostRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> hiGhostRange;
-      if (upperHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = gridHi[dim] - upperHalo + 1;
-        hi[dim] = gridHi[dim];
-        hiGhostRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> loSourceRange;
-      if (upperHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = innerLo[dim];
-        hi[dim] = innerLo[dim] + upperHalo - 1;
-        loSourceRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> hiSourceRange;
-      if (lowerHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = innerHi[dim] - lowerHalo + 1;
-        hi[dim] = innerHi[dim];
-        hiSourceRange = makeRange(lo, hi);
-      }
-
-      if (loGhostRange && hiSourceRange) {
-        auto itGhost = loGhostRange->begin();
-        auto itSource = hiSourceRange->begin();
-        for (; itGhost != loGhostRange->end() && itSource != hiSourceRange->end(); ++itGhost, ++itSource) {
-          grid[*itGhost] = grid[*itSource];
-        }
-      }
-
-      if (hiGhostRange && loSourceRange) {
-        auto itGhost = hiGhostRange->begin();
-        auto itSource = loSourceRange->begin();
-        for (; itGhost != hiGhostRange->end() && itSource != loSourceRange->end(); ++itGhost, ++itSource) {
-          grid[*itGhost] = grid[*itSource];
-        }
-      }
-    }
+    applyWithInteriorBounds(grid, innerLo, innerHi, [](auto &ghost, auto &source) { ghost = source; });
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -605,70 +551,45 @@ namespace schnek {
   void SerialDomainDecomposition<rank, CheckingPolicy>::accumulateWithInteriorBounds(
       GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
   ) {
+    // Periodic ghost cells and their matching interior images both receive the accumulated sum.
+    applyWithInteriorBounds(grid, innerLo, innerHi, [](auto &ghost, auto &source) {
+      ghost += source;
+      source = ghost;
+    });
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
+  template<typename GridType, typename Operation>
+  void SerialDomainDecomposition<rank, CheckingPolicy>::applyWithInteriorBounds(
+      GridType &grid,
+      const typename GridType::IndexType &innerLo,
+      const typename GridType::IndexType &innerHi,
+      Operation operation
+  ) {
     using IndexType = typename GridType::IndexType;
     using RangeTypeLocal = typename GridType::RangeType;
 
     const IndexType gridLo = grid.getLo();
     const IndexType gridHi = grid.getHi();
 
-    auto makeRange = [](const IndexType &loIdx, const IndexType &hiIdx) { return RangeTypeLocal(loIdx, hiIdx); };
-
-    // Periodic ghost cells and their matching interior images both receive the accumulated sum.
-
     for (size_t dim = 0; dim < rank; ++dim) {
-      ptrdiff_t lowerHalo = innerLo[dim] - gridLo[dim];
-      ptrdiff_t upperHalo = gridHi[dim] - innerHi[dim];
+      const auto ranges = detail::haloRanges<RangeTypeLocal>(dim, gridLo, gridHi, innerLo, innerHi);
 
-      std::optional<RangeTypeLocal> loGhostRange;
-      if (lowerHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        hi[dim] = gridLo[dim] + lowerHalo - 1;
-        loGhostRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> hiGhostRange;
-      if (upperHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = gridHi[dim] - upperHalo + 1;
-        hi[dim] = gridHi[dim];
-        hiGhostRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> loSourceRange;
-      if (upperHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = innerLo[dim];
-        hi[dim] = innerLo[dim] + upperHalo - 1;
-        loSourceRange = makeRange(lo, hi);
-      }
-
-      std::optional<RangeTypeLocal> hiSourceRange;
-      if (lowerHalo > 0) {
-        IndexType lo = gridLo;
-        IndexType hi = gridHi;
-        lo[dim] = innerHi[dim] - lowerHalo + 1;
-        hi[dim] = innerHi[dim];
-        hiSourceRange = makeRange(lo, hi);
-      }
-
-      if (loGhostRange && hiSourceRange) {
-        auto itGhost = loGhostRange->begin();
-        auto itSource = hiSourceRange->begin();
-        for (; itGhost != loGhostRange->end() && itSource != hiSourceRange->end(); ++itGhost, ++itSource) {
-          grid[*itGhost] += grid[*itSource];
-          grid[*itSource] = grid[*itGhost];
+      if (ranges.loGhostRange && ranges.hiSourceRange) {
+        auto itGhost = ranges.loGhostRange->begin();
+        auto itSource = ranges.hiSourceRange->begin();
+        for (; itGhost != ranges.loGhostRange->end() && itSource != ranges.hiSourceRange->end();
+             ++itGhost, ++itSource) {
+          operation(grid[*itGhost], grid[*itSource]);
         }
       }
 
-      if (hiGhostRange && loSourceRange) {
-        auto itGhost = hiGhostRange->begin();
-        auto itSource = loSourceRange->begin();
-        for (; itGhost != hiGhostRange->end() && itSource != loSourceRange->end(); ++itGhost, ++itSource) {
-          grid[*itGhost] += grid[*itSource];
-          grid[*itSource] = grid[*itGhost];
+      if (ranges.hiGhostRange && ranges.loSourceRange) {
+        auto itGhost = ranges.hiGhostRange->begin();
+        auto itSource = ranges.loSourceRange->begin();
+        for (; itGhost != ranges.hiGhostRange->end() && itSource != ranges.loSourceRange->end();
+             ++itGhost, ++itSource) {
+          operation(grid[*itGhost], grid[*itSource]);
         }
       }
     }
