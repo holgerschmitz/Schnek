@@ -15,6 +15,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdlib>
+#include <limits>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -312,6 +313,17 @@ BOOST_AUTO_TEST_CASE(periodic_wrap_functor_wraps_only_outside_global_cells) {
   BOOST_CHECK_CLOSE(particles[2].position[0], 9.99, 1e-12);
   BOOST_CHECK_CLOSE(particles[3].position[0], 0.3, 1e-12);
   static_assert(schnek::internal::has_position_shift<WrapAccessor, WrapParticle>::value);
+}
+
+BOOST_AUTO_TEST_CASE(finite_cell_bounds_and_owning_cell_conversion) {
+  const double lowerBound = static_cast<double>(std::numeric_limits<std::ptrdiff_t>::min());
+  const double upperBoundExclusive = -lowerBound;
+  BOOST_CHECK(schnek::internal::isFiniteCell(lowerBound));
+  BOOST_CHECK(!schnek::internal::isFiniteCell(upperBoundExclusive));
+  BOOST_CHECK(!schnek::internal::isFiniteCell(std::numeric_limits<double>::infinity()));
+  BOOST_CHECK(!schnek::internal::isFiniteCell(std::numeric_limits<double>::quiet_NaN()));
+
+  BOOST_CHECK_EQUAL(schnek::internal::owningCell(-0.25), -1);
 }
 
 #ifdef SCHNEK_HAVE_KOKKOS

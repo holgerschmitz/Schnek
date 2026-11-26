@@ -31,6 +31,41 @@
 namespace schnek {
   namespace internal {
 
+    SCHNEK_FUNCTION inline bool isFiniteCell(double value) {
+      const double lowerBound = static_cast<double>(PTRDIFF_MIN);
+      const double upperBoundExclusive = -lowerBound;
+      return value >= lowerBound && value < upperBoundExclusive;
+    }
+
+    /// Converts a coordinate already validated by isFiniteCell.
+    SCHNEK_FUNCTION inline ptrdiff_t owningCell(double position) {
+      return static_cast<ptrdiff_t>(std::floor(position));
+    }
+
+    template<class Particle, class Accessor, std::size_t rank>
+    struct FinitePosition {
+        Accessor accessor;
+
+        SCHNEK_FUNCTION bool operator()(const Particle &particle) const {
+          for (std::size_t dim = 0; dim < rank; ++dim) {
+            if (!isFiniteCell(accessor(particle)[dim])) {
+              return false;
+            }
+          }
+          return true;
+        }
+    };
+
+    template<class Particle, class Accessor>
+    struct FinitePositionValue {
+        Accessor accessor;
+        std::size_t dim;
+
+        SCHNEK_FUNCTION bool operator()(const Particle &particle) const {
+          return isFiniteCell(accessor(particle)[dim]);
+        }
+    };
+
     template<class Particle, class Accessor>
     struct WrapDim {
         Accessor accessor;
@@ -48,27 +83,18 @@ namespace schnek {
     };
 
     template<class Particle, class Accessor>
-    struct FinitePositionValue {
-        Accessor accessor;
-        std::size_t dim;
-
-        SCHNEK_FUNCTION bool operator()(const Particle &particle) const {
-          const double position = accessor(particle)[dim];
-          const double lowerBound = static_cast<double>(PTRDIFF_MIN);
-          const double upperBoundExclusive = -lowerBound;
-          return position >= lowerBound && position < upperBoundExclusive;
-        }
-    };
-
-    template<class Particle, class Accessor>
     struct PositionCellInRange {
         Accessor accessor;
         std::size_t dim;
-        double lo;
-        double hi;
+        ptrdiff_t lo;
+        ptrdiff_t hi;
 
         SCHNEK_FUNCTION bool operator()(const Particle &particle) const {
-          const double cell = std::floor(accessor(particle)[dim]);
+          const double position = accessor(particle)[dim];
+          if (!isFiniteCell(position)) {
+            return false;
+          }
+          const ptrdiff_t cell = owningCell(position);
           return cell >= lo && cell <= hi;
         }
     };
@@ -82,9 +108,7 @@ namespace schnek {
 
         SCHNEK_FUNCTION bool operator()(const Particle &particle) const {
           const double position = accessor(particle)[dim];
-          const double lowerBound = static_cast<double>(PTRDIFF_MIN);
-          const double upperBoundExclusive = -lowerBound;
-          if (position < lowerBound || position >= upperBoundExclusive) {
+          if (!isFiniteCell(position)) {
             return false;
           }
 
