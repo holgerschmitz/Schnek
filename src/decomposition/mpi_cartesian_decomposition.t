@@ -1668,37 +1668,6 @@ namespace schnek {
   }
 
   namespace internal::mpi_cartesian_decomposition {
-    SCHNEK_FUNCTION inline bool finitePositionValue(double value) {
-      const double lowerBound = static_cast<double>(PTRDIFF_MIN);
-      const double upperBoundExclusive = -lowerBound;
-      return value >= lowerBound && value < upperBoundExclusive;
-    }
-
-    template<typename Particle, typename PositionAccessor, size_t rank>
-    struct FinitePosition {
-        PositionAccessor accessor;
-        SCHNEK_FUNCTION bool operator()(const Particle &p) const {
-          for (size_t d = 0; d < rank; ++d) {
-            if (!finitePositionValue(accessor(p)[d])) {
-              return false;
-            }
-          }
-          return true;
-        }
-    };
-
-    template<typename Particle, typename PositionAccessor>
-    struct OwningCellDim {
-        PositionAccessor accessor;
-        SCHNEK_FUNCTION ptrdiff_t operator()(const Particle &p, size_t dim) const {
-          const double value = accessor(p)[dim];
-          if (!finitePositionValue(value)) {
-            return PTRDIFF_MIN;
-          }
-          return static_cast<ptrdiff_t>(std::floor(value));
-        }
-    };
-
     /**
      * Classifies a particle along a single dimension into a migration bucket:
      *   - `0` keep (owning cell inside `[lo, hi]`),
@@ -1710,15 +1679,16 @@ namespace schnek {
      */
     template<typename Particle, typename PositionAccessor>
     struct DimBucketClassifier {
-        OwningCellDim<Particle, PositionAccessor> owningCell;
+        PositionAccessor accessor;
         ptrdiff_t lo;
         ptrdiff_t hi;
         size_t dim;
         SCHNEK_FUNCTION int operator()(const Particle &p) const {
-          if (!finitePositionValue(owningCell.accessor(p)[dim])) {
+          const double position = accessor(p)[dim];
+          if (!::schnek::internal::isFiniteCell(position)) {
             return 0;
           }
-          const ptrdiff_t cell = owningCell(p, dim);
+          const ptrdiff_t cell = ::schnek::internal::owningCell(position);
           if (cell < lo) {
             return 1;
           }
@@ -1732,15 +1702,16 @@ namespace schnek {
     /// Device-callable predicate: the owning cell of a particle along `dim` lies in `[lo, hi]`.
     template<typename Particle, typename PositionAccessor>
     struct DimInRange {
-        OwningCellDim<Particle, PositionAccessor> owningCell;
+        PositionAccessor accessor;
         ptrdiff_t lo;
         ptrdiff_t hi;
         size_t dim;
         SCHNEK_FUNCTION bool operator()(const Particle &p) const {
-          if (!finitePositionValue(owningCell.accessor(p)[dim])) {
+          const double position = accessor(p)[dim];
+          if (!::schnek::internal::isFiniteCell(position)) {
             return false;
           }
-          const ptrdiff_t cell = owningCell(p, dim);
+          const ptrdiff_t cell = ::schnek::internal::owningCell(position);
           return cell >= lo && cell <= hi;
         }
     };
@@ -1840,7 +1811,7 @@ namespace schnek {
       // container's memory space: bucket 0 travels down to `prevRank`, bucket 1
       // travels up to `nextRank`. Survivors are compacted in place.
       internal::mpi_cartesian_decomposition::DimBucketClassifier<Particle, PositionAccessor> classify{
-          {wrapper.accessor}, lo[dim], hi[dim], dim
+          wrapper.accessor, lo[dim], hi[dim], dim
       };
 
       std::array<std::size_t, 2> counts{};
@@ -1912,10 +1883,8 @@ namespace schnek {
     // process at a time. Any stragglers are routed directly to their owner.
     int localStatus[2]{};
     if (particleChecks) {
-      const bool finitePositions = Traits::allOf(
-          container,
-          internal::mpi_cartesian_decomposition::FinitePosition<Particle, PositionAccessor, rank>{wrapper.accessor}
-      );
+      const bool finitePositions =
+          Traits::allOf(container, internal::FinitePosition<Particle, PositionAccessor, rank>{wrapper.accessor});
       localStatus[0] = finitePositions ? (invalidWrapMagnitude ? 1 : 0) : 2;
     } else if (invalidWrapMagnitude) {
       localStatus[0] = 1;
@@ -1924,7 +1893,7 @@ namespace schnek {
       if (!Traits::allOf(
               container,
               internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{
-                  {wrapper.accessor}, lo[d], hi[d], d
+                  wrapper.accessor, lo[d], hi[d], d
               }
           )) {
         localStatus[1] = 1;
@@ -1959,8 +1928,7 @@ namespace schnek {
     // collectively before the owner router classifies them.
     if (!particleChecks) {
       const bool allFinite = ParticleContainerTraits<ContainerType>::allOf(
-          wrapper.container,
-          internal::mpi_cartesian_decomposition::FinitePosition<Particle, PositionAccessor, rank>{wrapper.accessor}
+          wrapper.container, internal::FinitePosition<Particle, PositionAccessor, rank>{wrapper.accessor}
       );
       const int localInvalid = allFinite ? 0 : 1;
       const int globalInvalid = allReduce(localInvalid, MPI_MAX);
@@ -1976,7 +1944,7 @@ namespace schnek {
       if (!ParticleContainerTraits<ContainerType>::allOf(
               wrapper.container,
               internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{
-                  {wrapper.accessor}, globalLo[d], globalHi[d], d
+                  wrapper.accessor, globalLo[d], globalHi[d], d
               }
           )) {
         localOutOfGlobal = 1;
@@ -2089,17 +2057,18 @@ namespace schnek {
      */
     template<size_t rank, typename Particle, typename PositionAccessor>
     struct RouteClassifier {
-        OwningCellDim<Particle, PositionAccessor> owningCell;
+        PositionAccessor accessor;
         const RouteBlock<rank> *blocks;
         std::size_t numBlocks;
 
         SCHNEK_FUNCTION int operator()(const Particle &p) const {
           ptrdiff_t cell[rank];
           for (size_t d = 0; d < rank; ++d) {
-            if (!FinitePosition<Particle, PositionAccessor, rank>{owningCell.accessor}(p)) {
+            const double position = accessor(p)[d];
+            if (!::schnek::internal::isFiniteCell(position)) {
               return 0;
             }
-            cell[d] = owningCell(p, d);
+            cell[d] = ::schnek::internal::owningCell(position);
           }
           for (std::size_t b = 0; b < numBlocks; ++b) {
             bool inside = true;
@@ -2202,7 +2171,7 @@ namespace schnek {
       const RouteBlockType *routeBlocks = numRouteBlocks > 0 ? routeVec.data() : nullptr;
 
       internal::mpi_cartesian_decomposition::RouteClassifier<rank, Particle, PositionAccessor> classify{
-          {oldWrapper.accessor}, routeBlocks, numRouteBlocks
+          oldWrapper.accessor, routeBlocks, numRouteBlocks
       };
 
       std::vector<std::size_t> counts(numBuckets, 0);
@@ -2354,7 +2323,7 @@ namespace schnek {
         const bool inside = Traits::allOf(
             newContainer,
             internal::mpi_cartesian_decomposition::DimInRange<Particle, PositionAccessor>{
-                {oldWrapper.accessor}, newLo[d], newHi[d], d
+                oldWrapper.accessor, newLo[d], newHi[d], d
             }
         );
         SCHNEK_ASSERT(inside, "Redistributed particle is not owned by the new local range in dimension " << d);

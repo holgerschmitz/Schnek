@@ -317,12 +317,10 @@ namespace schnek {
     using Particle = typename Traits::value_type;
     using PositionAccessor = std::decay_t<decltype(wrapper.accessor)>;
 
-    for (std::size_t dim = 0; dim < rank; ++dim) {
-      if (!Traits::allOf(
-              wrapper.container, internal::FinitePositionValue<Particle, PositionAccessor>{wrapper.accessor, dim}
-          )) {
-        SCHNECK_FAIL("non-finite particle position");
-      }
+    if (!Traits::allOf(
+            wrapper.container, internal::FinitePosition<Particle, PositionAccessor, rank>{wrapper.accessor}
+        )) {
+      SCHNECK_FAIL("non-finite particle position");
     }
 
     if constexpr (internal::has_position_shift<PositionAccessor, Particle>::value) {
@@ -351,9 +349,7 @@ namespace schnek {
         const ptrdiff_t globalHi = this->globalRange.getHi()[dim];
         if (!Traits::allOf(
                 wrapper.container,
-                internal::PositionCellInRange<Particle, PositionAccessor>{
-                    wrapper.accessor, dim, static_cast<double>(globalLo), static_cast<double>(globalHi)
-                }
+                internal::PositionCellInRange<Particle, PositionAccessor>{wrapper.accessor, dim, globalLo, globalHi}
             )) {
           SCHNECK_FAIL(
               "Particle left the global domain and the position accessor has no shift(); either provide "
