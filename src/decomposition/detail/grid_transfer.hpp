@@ -324,6 +324,23 @@ namespace schnek {
 
 #endif  // SCHNEK_HAVE_KOKKOS
 
+    template<class GridType, class Buffer>
+    void packGridRange(const GridType &grid, const typename GridType::RangeType &range, Buffer &buffer) {
+      GridTransfer<GridType>::pack(grid, range, buffer.data());
+    }
+
+    template<class GridType, class Buffer>
+    void unpackGridRange(GridType &grid, const typename GridType::RangeType &range, const Buffer &buffer) {
+      GridTransfer<GridType>::unpack(grid, range, buffer.data());
+    }
+
+    template<class GridType, class SourceBuffer, class ResultBuffer>
+    void accumulateGridRange(
+        GridType &grid, const typename GridType::RangeType &range, const SourceBuffer &source, ResultBuffer &result
+    ) {
+      GridTransfer<GridType>::accumulate(grid, range, source.data(), result.data());
+    }
+
   }  // namespace detail
 }  // namespace schnek
 
