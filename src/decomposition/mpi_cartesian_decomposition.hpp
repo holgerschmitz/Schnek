@@ -10,6 +10,8 @@
 
 #include "config.hpp"
 #include "detail/grid-communication-traits.hpp"
+#include "detail/grid_visitor.hpp"
+#include "detail/particle_visitor.hpp"
 #include "detail/redistribution.hpp"
 #include "detail/visitor_handler_registry.hpp"
 #include "domaindecomposition.hpp"
@@ -192,8 +194,8 @@ namespace schnek {
       template<class GridType>
       GridRegistration registerField(const GridFactory<GridType> &factory) {
         auto registration = this->registerFieldImpl(factory);
-        registerExchangeHandler<GridType>();
-        registerAccumulateHandler<GridType>();
+        exchangeVisitor.template ensureHandler<GridType>(*this);
+        accumulateVisitor.template ensureHandler<GridType>(*this);
         registerRedistributeHandler<GridType>();
         return registration;
       }
@@ -223,8 +225,8 @@ namespace schnek {
           const typename DomainDecomposition<rank, CheckingPolicy>::RangeType &subRange
       ) {
         auto registration = this->registerFieldImpl(factory, subRange);
-        registerExchangeHandler<GridType>();
-        registerAccumulateHandler<GridType>();
+        exchangeVisitor.template ensureHandler<GridType>(*this);
+        accumulateVisitor.template ensureHandler<GridType>(*this);
         registerRedistributeHandler<GridType>();
         return registration;
       }
@@ -247,7 +249,7 @@ namespace schnek {
           const ParticleContainerFactory<ContainerType> &factory, PositionAccessor accessor
       ) {
         auto registration = this->registerParticleDataImpl(factory, accessor);
-        registerMigrateHandler<ContainerType, PositionAccessor>();
+        migrateVisitor.template ensureHandler<internal::ParticleWrapperImpl<ContainerType, PositionAccessor>>(*this);
         registerRedistributeParticleHandler<ContainerType, PositionAccessor>();
         return registration;
       }
@@ -324,16 +326,31 @@ namespace schnek {
       template<typename T>
       T avgReduceInteger(T value) const;
 
-      class ExchangeVisitor;
-      class AccumulateVisitor;
-      template<class GridType>
-      void registerExchangeHandler();
-      template<class GridType>
-      void registerAccumulateHandler();
       template<typename GridType>
       void exchangeTyped(GridType &grid, bool useFieldInfo);
       template<typename GridType>
       void accumulateTyped(GridType &grid, bool useFieldInfo);
+      template<typename GridType>
+      struct ExchangeOp {
+          static void invoke(MpiCartesianDomainDecomposition &parent, GridType &grid, bool useFieldInfo) {
+            parent.template exchangeTyped<GridType>(grid, useFieldInfo);
+          }
+      };
+      template<typename GridType>
+      struct AccumulateOp {
+          static void invoke(MpiCartesianDomainDecomposition &parent, GridType &grid, bool useFieldInfo) {
+            parent.template accumulateTyped<GridType>(grid, useFieldInfo);
+          }
+      };
+      template<typename WrapperImpl>
+      struct MigrateOp {
+          static void invoke(MpiCartesianDomainDecomposition &parent, WrapperImpl &wrapper) {
+            parent.template migrateTyped<WrapperImpl>(wrapper);
+          }
+      };
+      using ExchangeVisitor = internal::ForwardingGridVisitor<MpiCartesianDomainDecomposition, ExchangeOp>;
+      using AccumulateVisitor = internal::ForwardingGridVisitor<MpiCartesianDomainDecomposition, AccumulateOp>;
+      using MigrateVisitor = internal::ForwardingParticleVisitor<MpiCartesianDomainDecomposition, MigrateOp>;
       template<typename GridType>
       std::pair<typename GridType::IndexType, typename GridType::IndexType> innerBounds(
           GridType &grid, bool useFieldInfo
@@ -352,23 +369,20 @@ namespace schnek {
           GridType &grid, const typename GridType::IndexType &innerLo, const typename GridType::IndexType &innerHi
       );
 
-      std::unique_ptr<ExchangeVisitor> exchangeVisitor;
-      std::unique_ptr<AccumulateVisitor> accumulateVisitor;
+      internal::LazyVisitor<ExchangeVisitor> exchangeVisitor;
+      internal::LazyVisitor<AccumulateVisitor> accumulateVisitor;
 
       /**
        * Migrate particles of a single container to the processes that now own
        * them. The visitor recovers the concrete container/accessor types so the
        * per-particle bounds test, serialisation and movement are inlined.
        */
-      class MigrateVisitor;
-      template<class ContainerType, class PositionAccessor>
-      void registerMigrateHandler();
       template<typename WrapperImpl>
       void migrateTyped(WrapperImpl &wrapper);
       template<typename WrapperImpl>
       void routeStragglingParticles(WrapperImpl &wrapper);
 
-      std::unique_ptr<MigrateVisitor> migrateVisitor;
+      internal::LazyVisitor<MigrateVisitor> migrateVisitor;
 
       /**
        * Redistribute the particles of a single container between the old and

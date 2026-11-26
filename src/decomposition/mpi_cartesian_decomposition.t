@@ -1045,87 +1045,6 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::ExchangeVisitor
-      : public internal::GridVisitor<typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::ExchangeVisitor> {
-    public:
-      explicit ExchangeVisitor(MpiCartesianDomainDecomposition &parentIn) : parent(parentIn) {}
-
-      template<typename GridType>
-      void handle(GridType &grid, bool flag) {
-        parent.template exchangeTyped<GridType>(grid, flag);
-      }
-
-    private:
-      MpiCartesianDomainDecomposition &parent;
-  };
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::AccumulateVisitor
-      : public internal::GridVisitor<
-            typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::AccumulateVisitor> {
-    public:
-      explicit AccumulateVisitor(MpiCartesianDomainDecomposition &parentIn) : parent(parentIn) {}
-
-      template<typename GridType>
-      void handle(GridType &grid, bool flag) {
-        parent.template accumulateTyped<GridType>(grid, flag);
-      }
-
-    private:
-      MpiCartesianDomainDecomposition &parent;
-  };
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  template<class GridType>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerExchangeHandler() {
-    if (exchangeVisitor.get() == nullptr) {
-      exchangeVisitor = std::make_unique<ExchangeVisitor>(*this);
-    }
-    if (!exchangeVisitor->template hasHandler<GridType>()) {
-      exchangeVisitor->template registerHandler<GridType>();
-    }
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  template<class GridType>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerAccumulateHandler() {
-    if (accumulateVisitor.get() == nullptr) {
-      accumulateVisitor = std::make_unique<AccumulateVisitor>(*this);
-    }
-    if (!accumulateVisitor->template hasHandler<GridType>()) {
-      accumulateVisitor->template registerHandler<GridType>();
-    }
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::MigrateVisitor
-      : public internal::ParticleVisitor<
-            typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::MigrateVisitor> {
-    public:
-      explicit MigrateVisitor(MpiCartesianDomainDecomposition &parentIn) : parent(parentIn) {}
-
-      template<typename WrapperImpl>
-      void handle(WrapperImpl &wrapper) {
-        parent.template migrateTyped<WrapperImpl>(wrapper);
-      }
-
-    private:
-      MpiCartesianDomainDecomposition &parent;
-  };
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  template<class ContainerType, class PositionAccessor>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::registerMigrateHandler() {
-    if (migrateVisitor.get() == nullptr) {
-      migrateVisitor = std::make_unique<MigrateVisitor>(*this);
-    }
-    using WrapperImpl = internal::ParticleWrapperImpl<ContainerType, PositionAccessor>;
-    if (!migrateVisitor->template hasHandler<WrapperImpl>()) {
-      migrateVisitor->template registerHandler<WrapperImpl>();
-    }
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
   class MpiCartesianDomainDecomposition<rank, CheckingPolicy>::RedistributeVisitor
       : public internal::GridVisitor<
             typename MpiCartesianDomainDecomposition<rank, CheckingPolicy>::RedistributeVisitor> {
@@ -1775,7 +1694,7 @@ namespace schnek {
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchangeGrid(
       const internal::pGridWrapper &wrapper, bool useFieldInfo
   ) {
-    if (exchangeVisitor.get() == nullptr || exchangeVisitor->empty()) {
+    if (exchangeVisitor.empty()) {
       SCHNECK_FAIL("No registered grids available for exchange");
     }
 
@@ -1786,7 +1705,7 @@ namespace schnek {
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::accumulate(
       const internal::pGridWrapper &wrapper, bool useFieldInfo
   ) {
-    if (accumulateVisitor.get() == nullptr || accumulateVisitor->empty()) {
+    if (accumulateVisitor.empty()) {
       SCHNECK_FAIL("No registered grids available for accumulate");
     }
 
@@ -1810,7 +1729,7 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::migrateParticles(const internal::pParticleWrapper &wrapper
   ) {
-    if (migrateVisitor.get() == nullptr || migrateVisitor->empty()) {
+    if (migrateVisitor.empty()) {
       SCHNECK_FAIL("No registered particle containers available for migration");
     }
 

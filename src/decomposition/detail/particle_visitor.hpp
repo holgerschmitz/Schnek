@@ -26,12 +26,7 @@
 #ifndef SCHNEK_DECOMPOSITION_DETAIL_PARTICLE_VISITOR_HPP_
 #define SCHNEK_DECOMPOSITION_DETAIL_PARTICLE_VISITOR_HPP_
 
-#include <functional>
-#include <typeindex>
-#include <typeinfo>
-#include <unordered_map>
-
-#include "../../util/exceptions.hpp"
+#include "type_indexed_visitor.hpp"
 
 namespace schnek {
   namespace internal {
@@ -60,34 +55,25 @@ namespace schnek {
      * @tparam Derived the concrete visitor type
      */
     template<typename Derived>
-    class ParticleVisitor : public ParticleVisitorBase {
+    class ParticleVisitor : public ParticleVisitorBase, public TypeIndexedVisitor<Derived> {
       public:
         void visit(const std::type_info &type, void *wrapperPtr) override {
-          auto it = dispatchers.find(std::type_index(type));
-          if (it == dispatchers.end()) {
-            SCHNECK_FAIL("No particle visitor registered for wrapper type " << type.name());
-          }
-          it->second(static_cast<Derived &>(*this), wrapperPtr);
+          this->dispatch(type, wrapperPtr, "No particle visitor registered for wrapper type ");
         }
+    };
+
+    template<typename Parent, template<typename> class Operation>
+    class ForwardingParticleVisitor : public ParticleVisitor<ForwardingParticleVisitor<Parent, Operation>> {
+      public:
+        explicit ForwardingParticleVisitor(Parent &parentIn) : parent(parentIn) {}
 
         template<typename WrapperImpl>
-        void registerHandler() {
-          auto key = std::type_index(typeid(WrapperImpl));
-          dispatchers.emplace(key, [](Derived &visitor, void *wrapperPtr) {
-            visitor.template handle<WrapperImpl>(*static_cast<WrapperImpl *>(wrapperPtr));
-          });
+        void handle(WrapperImpl &wrapper) {
+          Operation<WrapperImpl>::invoke(parent, wrapper);
         }
-
-        template<typename WrapperImpl>
-        bool hasHandler() const {
-          return dispatchers.find(std::type_index(typeid(WrapperImpl))) != dispatchers.end();
-        }
-
-        bool empty() const { return dispatchers.empty(); }
 
       private:
-        using Dispatcher = std::function<void(Derived &, void *)>;
-        std::unordered_map<std::type_index, Dispatcher> dispatchers;
+        Parent &parent;
     };
 
   }  // namespace internal

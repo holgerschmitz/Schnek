@@ -26,15 +26,11 @@
 #ifndef SCHNEK_DECOMPOSITION_DETAIL_GRID_VISITOR_HPP_
 #define SCHNEK_DECOMPOSITION_DETAIL_GRID_VISITOR_HPP_
 
-#include <functional>
 #include <type_traits>
-#include <typeindex>
-#include <typeinfo>
-#include <unordered_map>
 
 #include "../../grid/field.hpp"
 #include "../../grid/grid.hpp"
-#include "../../util/exceptions.hpp"
+#include "type_indexed_visitor.hpp"
 
 namespace schnek {
   namespace internal {
@@ -46,34 +42,25 @@ namespace schnek {
     };
 
     template<typename Derived>
-    class GridVisitor : public GridVisitorBase {
+    class GridVisitor : public GridVisitorBase, public TypeIndexedVisitor<Derived, bool> {
       public:
         void visit(const std::type_info &type, void *gridPtr, bool useFieldInfo) override {
-          auto it = dispatchers.find(std::type_index(type));
-          if (it == dispatchers.end()) {
-            SCHNECK_FAIL("No visitor registered for grid type " << type.name());
-          }
-          it->second(static_cast<Derived &>(*this), gridPtr, useFieldInfo);
+          this->dispatch(type, gridPtr, "No visitor registered for grid type ", useFieldInfo);
         }
+    };
+
+    template<typename Parent, template<typename> class Operation>
+    class ForwardingGridVisitor : public GridVisitor<ForwardingGridVisitor<Parent, Operation>> {
+      public:
+        explicit ForwardingGridVisitor(Parent &parentIn) : parent(parentIn) {}
 
         template<typename GridType>
-        void registerHandler() {
-          auto key = std::type_index(typeid(GridType));
-          dispatchers.emplace(key, [](Derived &visitor, void *gridPtr, bool useFieldInfo) {
-            visitor.template handle<GridType>(*static_cast<GridType *>(gridPtr), useFieldInfo);
-          });
+        void handle(GridType &grid, bool useFieldInfo) {
+          Operation<GridType>::invoke(parent, grid, useFieldInfo);
         }
-
-        template<typename GridType>
-        bool hasHandler() const {
-          return dispatchers.find(std::type_index(typeid(GridType))) != dispatchers.end();
-        }
-
-        bool empty() const { return dispatchers.empty(); }
 
       private:
-        using Dispatcher = std::function<void(Derived &, void *, bool)>;
-        std::unordered_map<std::type_index, Dispatcher> dispatchers;
+        Parent &parent;
     };
 
     template<typename T>
