@@ -126,8 +126,44 @@ namespace schnek {
       return std::visit([](const auto *entries) { return entries->size(); }, list);
     }
 
+    inline std::size_t listSize(const std::vector<pGridWrapper> *entries) {
+      return entries->size();
+    }
+
     inline bool isNull(const RegistrationList &list, std::size_t entry) {
       return std::visit([entry](const auto *entries) { return !(*entries)[entry]; }, list);
+    }
+
+    inline bool isNull(const std::vector<pGridWrapper> *entries, std::size_t entry) {
+      return !(*entries)[entry];
+    }
+
+    template<typename Lists>
+    std::size_t validateEntryCount(const Lists &lists, std::size_t rangeCount, const char *registrationKind) {
+      if (lists.empty()) {
+        return rangeCount;
+      }
+
+      const std::size_t entryCount = listSize(lists.front());
+      for (std::size_t i = 1; i < lists.size(); ++i) {
+        if (listSize(lists[i]) != entryCount) {
+          SCHNECK_FAIL("Grid list size mismatch for registration index " << i);
+        }
+      }
+      if (rangeCount != entryCount) {
+        SCHNECK_FAIL("Range list size mismatch with registered " << registrationKind);
+      }
+      return entryCount;
+    }
+
+    template<typename Lists>
+    bool hasNullEntry(const Lists &lists, std::size_t entry) {
+      for (const auto &list : lists) {
+        if (isNull(list, entry)) {
+          return true;
+        }
+      }
+      return false;
     }
 
     template<typename Param>
@@ -981,29 +1017,9 @@ namespace schnek {
     }
 
     // Every registration list must have one entry per local range.
-    std::size_t entryCount = ranges.size();
-    if (!registrationLists.empty()) {
-      entryCount = internal::listSize(registrationLists.front());
-      for (std::size_t i = 1; i < registrationLists.size(); ++i) {
-        if (internal::listSize(registrationLists[i]) != entryCount) {
-          SCHNECK_FAIL("Grid list size mismatch for registration index " << i);
-        }
-      }
-      if (ranges.size() != entryCount) {
-        SCHNECK_FAIL("Range list size mismatch with registered registrations");
-      }
-    }
-
+    const std::size_t entryCount = internal::validateEntryCount(registrationLists, ranges.size(), "registrations");
     for (std::size_t entry = 0; entry < entryCount; ++entry) {
-      bool hasNullRegistration = false;
-      for (const auto &list : registrationLists) {
-        if (internal::isNull(list, entry)) {
-          hasNullRegistration = true;
-          break;
-        }
-      }
-
-      if (!hasNullRegistration) {
+      if (!internal::hasNullEntry(registrationLists, entry)) {
         RangeType rangeRef = ranges[entry];
         bool hasFullRange = false;
         if constexpr (paramCount > 0) {
@@ -1074,29 +1090,10 @@ namespace schnek {
       selectedLists.push_back(*gridList);
     }
 
-    std::size_t entryCount = ranges.size();
-    if (!selectedLists.empty()) {
-      entryCount = selectedLists.front()->size();
-      for (std::size_t i = 1; i < selectedLists.size(); ++i) {
-        if (selectedLists[i]->size() != entryCount) {
-          SCHNECK_FAIL("Grid list size mismatch for registration index " << i);
-        }
-      }
-      if (ranges.size() != entryCount) {
-        SCHNECK_FAIL("Range list size mismatch with registered grids");
-      }
-    }
+    const std::size_t entryCount = internal::validateEntryCount(selectedLists, ranges.size(), "grids");
 
     for (std::size_t entry = 0; entry < entryCount; ++entry) {
-      bool hasNullGrid = false;
-      for (const auto *list : selectedLists) {
-        if (!(*list)[entry]) {
-          hasNullGrid = true;
-          break;
-        }
-      }
-
-      if (!hasNullGrid) {
+      if (!internal::hasNullEntry(selectedLists, entry)) {
         RangeType rangeRef = ranges[entry];
         std::vector<internal::pGridWrapper> entryGrids;
         entryGrids.reserve(paramCount);
