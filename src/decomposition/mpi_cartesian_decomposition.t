@@ -1796,21 +1796,15 @@ namespace schnek {
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::exchangeTyped(GridType &grid, bool useFieldInfo) {
-    if constexpr (internal::is_field_v<GridType>) {
-      handleFieldExchange(grid, useFieldInfo);
-    } else {
-      handleGridExchange(grid, useFieldInfo);
-    }
+    const auto [innerLo, innerHi] = innerBounds(grid, useFieldInfo);
+    exchangeWithInteriorBounds(grid, innerLo, innerHi);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::accumulateTyped(GridType &grid, bool useFieldInfo) {
-    if constexpr (internal::is_field_v<GridType>) {
-      handleFieldAccumulate(grid, useFieldInfo);
-    } else {
-      handleGridAccumulate(grid, useFieldInfo);
-    }
+    const auto [innerLo, innerHi] = innerBounds(grid, useFieldInfo);
+    accumulateWithInteriorBounds(grid, innerLo, innerHi);
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -2537,59 +2531,17 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
-  void
-  MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleGridExchange(GridType &grid, bool /*useFieldInfo*/) {
-    const auto localRange = getLocalInnerRange();
-    typename GridType::IndexType innerLo(localRange.getLo());
-    typename GridType::IndexType innerHi(localRange.getHi());
-    exchangeWithInteriorBounds(grid, innerLo, innerHi);
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  template<typename GridType>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleGridAccumulate(
-      GridType &grid, bool /*useFieldInfo*/
-  ) {
-    const auto localRange = getLocalInnerRange();
-    typename GridType::IndexType innerLo(localRange.getLo());
-    typename GridType::IndexType innerHi(localRange.getHi());
-    accumulateWithInteriorBounds(grid, innerLo, innerHi);
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  template<typename FieldType>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleFieldExchange(FieldType &field, bool useFieldInfo) {
-    typename FieldType::IndexType innerLo;
-    typename FieldType::IndexType innerHi;
+  std::pair<typename GridType::IndexType, typename GridType::IndexType>
+  MpiCartesianDomainDecomposition<rank, CheckingPolicy>::innerBounds(GridType &grid, bool useFieldInfo) const {
+    using IndexType = typename GridType::IndexType;
     if (useFieldInfo) {
-      auto innerRange = field.getInnerRange();
-      innerLo = innerRange.getLo();
-      innerHi = innerRange.getHi();
-    } else {
-      const auto localRange = getLocalInnerRange();
-      innerLo = localRange.getLo();
-      innerHi = localRange.getHi();
+      if constexpr (internal::is_field_v<GridType>) {
+        const auto innerRange = grid.getInnerRange();
+        return {IndexType(innerRange.getLo()), IndexType(innerRange.getHi())};
+      }
     }
-    exchangeWithInteriorBounds(field, innerLo, innerHi);
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  template<typename FieldType>
-  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::handleFieldAccumulate(
-      FieldType &field, bool useFieldInfo
-  ) {
-    typename FieldType::IndexType innerLo;
-    typename FieldType::IndexType innerHi;
-    if (useFieldInfo) {
-      auto innerRange = field.getInnerRange();
-      innerLo = innerRange.getLo();
-      innerHi = innerRange.getHi();
-    } else {
-      const auto localRange = getLocalInnerRange();
-      innerLo = localRange.getLo();
-      innerHi = localRange.getHi();
-    }
-    accumulateWithInteriorBounds(field, innerLo, innerHi);
+    const auto localRange = getLocalInnerRange();
+    return {IndexType(localRange.getLo()), IndexType(localRange.getHi())};
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
