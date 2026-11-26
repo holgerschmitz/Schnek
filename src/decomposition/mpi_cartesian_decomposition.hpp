@@ -23,6 +23,7 @@
 #include <cstddef>
 #include <map>
 #include <set>
+#include <utility>
 #include <vector>
 
 namespace schnek {
@@ -334,13 +335,9 @@ namespace schnek {
       template<typename GridType>
       void accumulateTyped(GridType &grid, bool useFieldInfo);
       template<typename GridType>
-      void handleGridExchange(GridType &grid, bool useFieldInfo);
-      template<typename FieldType>
-      void handleFieldExchange(FieldType &field, bool useFieldInfo);
-      template<typename GridType>
-      void handleGridAccumulate(GridType &grid, bool useFieldInfo);
-      template<typename FieldType>
-      void handleFieldAccumulate(FieldType &field, bool useFieldInfo);
+      std::pair<typename GridType::IndexType, typename GridType::IndexType> innerBounds(
+          GridType &grid, bool useFieldInfo
+      ) const;
       RangeType getLocalInnerRange() const;
       template<typename IndexType>
       void validateHaloWidths(
