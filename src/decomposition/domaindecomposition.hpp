@@ -37,12 +37,6 @@
 #define SCHNEK_DOMAINDECOMPOSITION_HPP
 
 #include <array>
-#include <boost/function_types/parameter_types.hpp>
-#include <boost/mpl/at.hpp>
-#include <boost/mpl/front.hpp>
-#include <boost/mpl/pop_front.hpp>
-#include <boost/mpl/size.hpp>
-#include <boost/mpl/vector.hpp>
 #include <iostream>
 #include <iterator>
 #include <list>
@@ -67,28 +61,61 @@
 
 namespace schnek {
   namespace internal {
-    template<typename Callable, typename Enable = void>
-    struct FunctionParameterTypesImpl;
-
     template<typename Callable>
-    struct FunctionParameterTypesImpl<Callable, typename std::enable_if<!std::is_class<Callable>::value>::type> {
-        using type = typename boost::function_types::parameter_types<Callable>::type;
+    struct FunctionTraits : FunctionTraits<decltype(&Callable::operator())> {};
+
+    template<typename Return, typename... Args>
+    struct FunctionTraits<Return(Args...)> {
+        using ArgumentTypes = std::tuple<Args...>;
     };
 
-    template<typename Callable>
-    struct FunctionParameterTypesImpl<Callable, typename std::enable_if<std::is_class<Callable>::value>::type> {
-        using RawTypes = typename FunctionParameterTypesImpl<decltype(&Callable::operator())>::type;
-        static_assert(boost::mpl::size<RawTypes>::value > 0, "Callable must have operator() parameters");
-        using type = typename boost::mpl::pop_front<RawTypes>::type;
-    };
+    template<typename Return, typename... Args>
+    struct FunctionTraits<Return (*)(Args...)> : FunctionTraits<Return(Args...)> {};
+
+    template<typename Return, typename... Args>
+    struct FunctionTraits<Return (*)(Args...) noexcept> : FunctionTraits<Return(Args...)> {};
+
+    template<typename Class, typename Return, typename... Args>
+    struct FunctionTraits<Return (Class::*)(Args...)> : FunctionTraits<Return(Args...)> {};
+
+    template<typename Class, typename Return, typename... Args>
+    struct FunctionTraits<Return (Class::*)(Args...) const> : FunctionTraits<Return(Args...)> {};
+
+    template<typename Class, typename Return, typename... Args>
+    struct FunctionTraits<Return (Class::*)(Args...) noexcept> : FunctionTraits<Return(Args...)> {};
+
+    template<typename Class, typename Return, typename... Args>
+    struct FunctionTraits<Return (Class::*)(Args...) const noexcept> : FunctionTraits<Return(Args...)> {};
 
     template<typename Callable>
-    struct FunctionParameterTypes {
-        using type = typename FunctionParameterTypesImpl<typename std::decay<Callable>::type>::type;
+    using FunctionParameterTypesT = typename FunctionTraits<std::decay_t<Callable>>::ArgumentTypes;
+
+    template<typename Tuple>
+    struct TupleTail;
+
+    template<typename First, typename... Rest>
+    struct TupleTail<std::tuple<First, Rest...>> {
+        using type = std::tuple<Rest...>;
     };
 
-    template<typename Callable>
-    using FunctionParameterTypesT = typename FunctionParameterTypes<Callable>::type;
+    template<typename Tuple>
+    using TupleTailT = typename TupleTail<Tuple>::type;
+
+    template<typename T, typename = void>
+    struct is_grid_argument : std::false_type {};
+
+    template<typename T>
+    struct is_grid_argument<T, std::void_t<decltype(std::remove_cv_t<std::remove_reference_t<T>>::Rank)>>
+        : std::true_type {};
+
+    template<typename ParameterSeq, typename Indices>
+    struct AreGridArguments;
+
+    template<typename ParameterSeq, std::size_t... Is>
+    struct AreGridArguments<ParameterSeq, std::index_sequence<Is...>>
+        : std::conjunction<is_grid_argument<std::tuple_element_t<Is, ParameterSeq>>...> {};
+
+    using RegistrationList = std::variant<const std::vector<pGridWrapper> *, const std::vector<pParticleWrapper> *>;
 
     template<typename Param>
     struct GridReferenceExtractor {
@@ -105,22 +132,6 @@ namespace schnek {
           return typedWrapper->grid;
         }
     };
-
-    template<typename T, typename = void>
-    struct is_grid_argument : std::false_type {};
-
-    template<typename T>
-    struct is_grid_argument<T, std::void_t<decltype(std::remove_cv_t<std::remove_reference_t<T>>::Rank)>>
-        : std::true_type {};
-
-    template<typename ParameterSeq, typename Indices>
-    struct AreGridArguments;
-
-    template<typename ParameterSeq, std::size_t... Is>
-    struct AreGridArguments<ParameterSeq, std::index_sequence<Is...>>
-        : std::conjunction<is_grid_argument<typename boost::mpl::at_c<ParameterSeq, Is>::type>...> {};
-
-    using RegistrationList = std::variant<const std::vector<pGridWrapper> *, const std::vector<pParticleWrapper> *>;
 
     inline std::size_t listSize(const RegistrationList &list) {
       return std::visit([](const auto *entries) { return entries->size(); }, list);
@@ -205,16 +216,14 @@ namespace schnek {
     struct LocalArgumentBuilder {
         template<typename ListVec, std::size_t... Is>
         static auto buildImpl(const ListVec &lists, std::size_t entry, std::index_sequence<Is...>) {
-          return std::tuple<typename boost::mpl::at_c<ParameterSeq, Is>::type...>(
-              LocalArgumentExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(
-                  lists[Is], entry, Is
-              )...
+          return std::tuple<std::tuple_element_t<Is, ParameterSeq>...>(
+              LocalArgumentExtractor<std::tuple_element_t<Is, ParameterSeq>>::extract(lists[Is], entry, Is)...
           );
         }
 
         template<typename ListVec>
         static auto build(const ListVec &lists, std::size_t entry) {
-          return buildImpl(lists, entry, std::make_index_sequence<boost::mpl::size<ParameterSeq>::value>{});
+          return buildImpl(lists, entry, std::make_index_sequence<std::tuple_size<ParameterSeq>::value>{});
         }
     };
 
@@ -222,14 +231,14 @@ namespace schnek {
     struct GridArgumentBuilderFromWrappers {
         template<typename WrapperVec, std::size_t... Is>
         static auto buildImpl(const WrapperVec &wrappers, std::index_sequence<Is...>) {
-          return std::tuple<typename boost::mpl::at_c<ParameterSeq, Is>::type...>(
-              GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(wrappers[Is])...
+          return std::tuple<std::tuple_element_t<Is, ParameterSeq>...>(
+              GridReferenceExtractor<std::tuple_element_t<Is, ParameterSeq>>::extract(wrappers[Is])...
           );
         }
 
         template<typename WrapperVec>
         static auto build(const WrapperVec &wrappers) {
-          return buildImpl(wrappers, std::make_index_sequence<boost::mpl::size<ParameterSeq>::value>{});
+          return buildImpl(wrappers, std::make_index_sequence<std::tuple_size<ParameterSeq>::value>{});
         }
     };
 
@@ -246,8 +255,8 @@ namespace schnek {
 
         template<std::size_t I, typename ListVec>
         static void check(const RangeType &rangeRef, const ListVec &lists, std::size_t entry) {
-          if constexpr (I < boost::mpl::size<ParameterSeq>::value) {
-            using Param = typename boost::mpl::at_c<ParameterSeq, I>::type;
+          if constexpr (I < std::tuple_size<ParameterSeq>::value) {
+            using Param = std::tuple_element_t<I, ParameterSeq>;
             if constexpr (is_grid_argument<Param>::value) {
               const auto &gridRef = LocalArgumentExtractor<Param>::extract(lists[I], entry, I);
               using GridType = std::decay_t<decltype(gridRef)>;
@@ -283,21 +292,20 @@ namespace schnek {
     void
     launchCellEntry(const RangeType &range, Kernel &kernel, const IteratorVec &iterators, std::index_sequence<Is...>) {
       static_assert(
-          ((detail::IterationPolicyFor<typename std::remove_const<typename std::remove_reference<
-                typename boost::mpl::at_c<ParameterSeq, Is>::type>::type>::type>::device_capture == deviceCapture) &&
+          ((detail::IterationPolicyFor<typename std::remove_const<
+                typename std::remove_reference<std::tuple_element_t<Is, ParameterSeq>>::type>::type>::device_capture ==
+            deviceCapture) &&
            ...),
           "All grids registered in a GridContext::forEachCell must share the same execution space"
       );
 
       if constexpr (deviceCapture) {
         detail::internal::forEachCellDevice<IterationPolicy>(
-            range, kernel,
-            GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(iterators[Is])...
+            range, kernel, GridReferenceExtractor<std::tuple_element_t<Is, ParameterSeq>>::extract(iterators[Is])...
         );
       } else {
         detail::internal::forEachCellHost<IterationPolicy>(
-            range, kernel,
-            GridReferenceExtractor<typename boost::mpl::at_c<ParameterSeq, Is>::type>::extract(iterators[Is])...
+            range, kernel, GridReferenceExtractor<std::tuple_element_t<Is, ParameterSeq>>::extract(iterators[Is])...
         );
       }
     }
@@ -995,10 +1003,10 @@ namespace schnek {
     SCHNEK_ASSERT(generation == *ownerGeneration, "GridContext is stale: recreate it after balanceLoad()");
 
     using AllParameters = internal::FunctionParameterTypesT<Func>;
-    constexpr std::size_t totalParams = boost::mpl::size<AllParameters>::value;
+    constexpr std::size_t totalParams = std::tuple_size<AllParameters>::value;
     static_assert(totalParams >= 1, "Function must take at least a RangeType argument");
 
-    using RangeParam = typename boost::mpl::front<AllParameters>::type;
+    using RangeParam = std::tuple_element_t<0, AllParameters>;
     using RangeDecay = typename std::remove_reference<RangeParam>::type;
     using RangeBase = typename std::remove_const<RangeDecay>::type;
     static_assert(
@@ -1006,8 +1014,8 @@ namespace schnek {
         "First function argument must be DomainDecomposition::RangeType (by reference)"
     );
 
-    using ParameterSeq = typename boost::mpl::pop_front<AllParameters>::type;
-    constexpr std::size_t paramCount = boost::mpl::size<ParameterSeq>::value;
+    using ParameterSeq = internal::TupleTailT<AllParameters>;
+    constexpr std::size_t paramCount = std::tuple_size<ParameterSeq>::value;
 
     if (registrationLists.size() != paramCount) {
       SCHNECK_FAIL(
@@ -1023,7 +1031,7 @@ namespace schnek {
         RangeType rangeRef = ranges[entry];
         bool hasFullRange = false;
         if constexpr (paramCount > 0) {
-          using FirstParam = typename boost::mpl::at_c<ParameterSeq, 0>::type;
+          using FirstParam = std::tuple_element_t<0, ParameterSeq>;
           if constexpr (internal::is_grid_argument<FirstParam>::value) {
             const auto &firstGrid =
                 internal::LocalArgumentExtractor<FirstParam>::extract(registrationLists.front(), entry, 0);
@@ -1055,7 +1063,7 @@ namespace schnek {
     SCHNEK_ASSERT(generation == *ownerGeneration, "GridContext is stale: recreate it after balanceLoad()");
 
     static_assert(sizeof...(GridTypes) > 0, "GridContext::forEachCell requires at least one grid type");
-    using ParameterSeq = boost::mpl::vector<GridTypes &...>;
+    using ParameterSeq = std::tuple<GridTypes &...>;
     constexpr std::size_t paramCount = sizeof...(GridTypes);
 
     static_assert(
@@ -1114,10 +1122,10 @@ namespace schnek {
     SCHNEK_ASSERT(generation == *ownerGeneration, "GridContext is stale: recreate it after balanceLoad()");
 
     using AllParameters = internal::FunctionParameterTypesT<Func>;
-    constexpr std::size_t totalParams = boost::mpl::size<AllParameters>::value;
+    constexpr std::size_t totalParams = std::tuple_size<AllParameters>::value;
     static_assert(totalParams >= 1, "Function must take at least a RangeType argument");
 
-    using RangeParam = typename boost::mpl::front<AllParameters>::type;
+    using RangeParam = std::tuple_element_t<0, AllParameters>;
     using RangeDecay = typename std::remove_reference<RangeParam>::type;
     using RangeBase = typename std::remove_const<RangeDecay>::type;
     static_assert(
@@ -1125,8 +1133,8 @@ namespace schnek {
         "First function argument must be DomainDecomposition::ProjectedRangeType (by reference)"
     );
 
-    using ParameterSeq = typename boost::mpl::pop_front<AllParameters>::type;
-    constexpr std::size_t paramCount = boost::mpl::size<ParameterSeq>::value;
+    using ParameterSeq = internal::TupleTailT<AllParameters>;
+    constexpr std::size_t paramCount = std::tuple_size<ParameterSeq>::value;
 
     if (!gridEntries.empty()) {
       for (std::size_t i = 0; i < gridEntries.size(); ++i) {
