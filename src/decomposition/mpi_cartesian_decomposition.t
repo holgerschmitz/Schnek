@@ -38,9 +38,9 @@
 namespace schnek {
 
   namespace internal {
-    inline int toMpiCount(size_t count, const char *operation) {
-      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
-        SCHNECK_FAIL("Halo " << operation << " block too large for MPI_Sendrecv count");
+    inline int toIntCount(std::size_t count, const char *errorMessage, const char *suffix = "") {
+      if (count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+        SCHNECK_FAIL(errorMessage << suffix);
       }
       return static_cast<int>(count);
     }
@@ -716,10 +716,10 @@ namespace schnek {
     size_t offset = 0;
     for (size_t d = 0; d < rank; ++d) {
       const size_t count = 2 * static_cast<size_t>(dims[d]);
-      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
-        SCHNECK_FAIL("Global-weight process ranges exceed the MPI count limit");
-      }
-      errorCode = mpi.MPI_Bcast(transfer.data() + offset, static_cast<int>(count), MPI_LONG, 0, comm);
+      errorCode = mpi.MPI_Bcast(
+          transfer.data() + offset,
+          internal::toIntCount(count, "Global-weight process ranges exceed the MPI count limit"), MPI_LONG, 0, comm
+      );
       SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Bcast failed while distributing global-weight ranges");
 
       Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
@@ -735,13 +735,6 @@ namespace schnek {
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::calcGridDistributonLocalWeights(ProcRanges &ranges) {
     const LimitType glo = this->globalRange.getLo();
     const LimitType ghi = this->globalRange.getHi();
-
-    auto toIntCount = [](size_t count, const char *what) -> int {
-      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
-        SCHNECK_FAIL(what << " is too large for an MPI int count");
-      }
-      return static_cast<int>(count);
-    };
 
     auto flattenOrthogonalCoord = [this](size_t excludedDim) -> int {
       long color = 0;
@@ -1001,7 +994,8 @@ namespace schnek {
       }
 
       errorCode = mpi.MPI_Allreduce(
-          localCuts.data(), globalCuts.data(), toIntCount(globalCuts.size(), "Number of local-weight cuts"),
+          localCuts.data(), globalCuts.data(),
+          internal::toIntCount(globalCuts.size(), "Number of local-weight cuts", " is too large for an MPI int count"),
           internal::mpiDatatypeFor<long>(), MPI_MAX, axisComm.get()
       );
       SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Allreduce failed while collecting local-weight cuts");
@@ -1131,13 +1125,6 @@ namespace schnek {
 
     const MPI_Datatype mpiType = internal::mpiDatatypeFor<ValueType>();
 
-    auto toIntCount = [](size_t count) -> int {
-      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
-        SCHNECK_FAIL("Redistribution block too large for MPI count");
-      }
-      return static_cast<int>(count);
-    };
-
     // Separate local copy blocks from remote transfers
     const int localRank = ComRank;
 
@@ -1199,8 +1186,9 @@ namespace schnek {
       for (const auto &block : recvBlocks) {
         MPI_Request req;
         int errorCode = mpi.MPI_Irecv(
-            recvSlab.data() + block.offset, toIntCount(block.volume), mpiType, recvPlan[block.planIndex].mpiRank, 0,
-            comm, &req
+            recvSlab.data() + block.offset,
+            internal::toIntCount(block.volume, "Redistribution block too large for MPI count"), mpiType,
+            recvPlan[block.planIndex].mpiRank, 0, comm, &req
         );
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during redistribution");
         requests.push_back(req);
@@ -1216,7 +1204,8 @@ namespace schnek {
         // GridTransfer::pack fences device work before MPI reads this slab.
         MPI_Request req;
         int errorCode = mpi.MPI_Isend(
-            blockData, toIntCount(block.volume), mpiType, sendPlan[block.planIndex].mpiRank, 0, comm, &req
+            blockData, internal::toIntCount(block.volume, "Redistribution block too large for MPI count"), mpiType,
+            sendPlan[block.planIndex].mpiRank, 0, comm, &req
         );
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during redistribution");
         requests.push_back(req);
@@ -1343,13 +1332,6 @@ namespace schnek {
 
     const MPI_Datatype mpiType = internal::mpiDatatypeFor<ValueType>();
 
-    auto toIntCount = [](size_t count) -> int {
-      if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
-        SCHNECK_FAIL("Projected redistribution block too large for MPI count");
-      }
-      return static_cast<int>(count);
-    };
-
     auto makeTypedRange = [](const DynProjTransferBlock &block) {
       typename GridType::IndexType lo, hi;
       for (size_t d = 0; d < projRank; ++d) {
@@ -1406,8 +1388,9 @@ namespace schnek {
         for (const auto &block : recvBlocks) {
           MPI_Request req;
           int errorCode = mpi.MPI_Irecv(
-              recvSlab.data() + block.offset, toIntCount(block.volume), mpiType, recvPlan[block.planIndex].mpiRank, 1,
-              comm, &req
+              recvSlab.data() + block.offset,
+              internal::toIntCount(block.volume, "Projected redistribution block too large for MPI count"), mpiType,
+              recvPlan[block.planIndex].mpiRank, 1, comm, &req
           );
           SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during projected redistribution");
           requests.push_back(req);
@@ -1420,7 +1403,8 @@ namespace schnek {
           // GridTransfer::pack fences device work before MPI reads this slab.
           MPI_Request req;
           int errorCode = mpi.MPI_Isend(
-              blockData, toIntCount(block.volume), mpiType, sendPlan[block.planIndex].mpiRank, 1, comm, &req
+              blockData, internal::toIntCount(block.volume, "Projected redistribution block too large for MPI count"),
+              mpiType, sendPlan[block.planIndex].mpiRank, 1, comm, &req
           );
           SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during projected redistribution");
           requests.push_back(req);
@@ -1459,7 +1443,10 @@ namespace schnek {
           if (isCanonical) {
             detail::GridTransfer<GridType>::pack(newGrid, innerRange, buf.data());
           }
-          int errorCode = mpi.MPI_Bcast(buf.data(), toIntCount(volume), mpiType, 0, replicaComm);
+          int errorCode = mpi.MPI_Bcast(
+              buf.data(), internal::toIntCount(volume, "Projected redistribution block too large for MPI count"),
+              mpiType, 0, replicaComm
+          );
           SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Bcast failed during projected redistribution");
           if (!isCanonical) {
             detail::GridTransfer<GridType>::unpack(newGrid, innerRange, buf.data());
@@ -1831,20 +1818,14 @@ namespace schnek {
         ContainerType &container;
         schnek::detail::ParticleCommunicationBuffer<ContainerType> &recvScratchBuffer;
 
-        int toIntCount(std::size_t count) {
-          if (count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
-            SCHNECK_FAIL("Particle migration block too large for MPI_Sendrecv count");
-          }
-          return static_cast<int>(count);
-        }
-
         // Phase A: upward movement. Send to `nextRank`, receive from `prevRank`.
         // Phase B: downward movement. Send to `prevRank`, receive from `nextRank`.
         // Each phase first exchanges the particle count, then the payload, and
         // finally deserialises arrivals back into the container.
         // A zero count is valid: the payload exchange still runs with null buffers.
         void operator()(const std::byte *sendBuffer, std::size_t sendCount, int sendRank, int recvRank) {
-          int sendCountInt = toIntCount(sendCount);
+          int sendCountInt =
+              schnek::internal::toIntCount(sendCount, "Particle migration block too large for MPI_Sendrecv count");
           int recvCountInt = 0;
           this->mpi.MPI_Sendrecv(
               &sendCountInt, 1, MPI_INT, sendRank, 0, &recvCountInt, 1, MPI_INT, recvRank, 0, comm, MPI_STATUS_IGNORE
@@ -1855,9 +1836,13 @@ namespace schnek {
             SCHNECK_FAIL("Particle migration received a negative particle count");
           }
           const std::size_t recvCount = static_cast<std::size_t>(recvCountInt);
-          const int sendByteCount = toIntCount(checkedParticleBytes(sendCount, particleBytes));
+          const int sendByteCount = schnek::internal::toIntCount(
+              checkedParticleBytes(sendCount, particleBytes),
+              "Particle migration block too large for MPI_Sendrecv count"
+          );
           const std::size_t recvBytes = checkedParticleBytes(recvCount, particleBytes);
-          const int recvByteCount = toIntCount(recvBytes);
+          const int recvByteCount =
+              schnek::internal::toIntCount(recvBytes, "Particle migration block too large for MPI_Sendrecv count");
           recvScratchBuffer.reserve_bytes(recvBytes);
           recvScratchBuffer.reset();
           auto recvBuffer = recvScratchBuffer.template make_vector<std::byte>(recvBytes);
@@ -2212,13 +2197,6 @@ namespace schnek {
     constexpr std::size_t particleBytes = Serializer::size();
     const int localRank = ComRank;
 
-    auto toIntCount = [](std::size_t count) -> int {
-      if (count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
-        SCHNECK_FAIL("Particle redistribution block too large for MPI count");
-      }
-      return static_cast<int>(count);
-    };
-
     // Destination ranks are the distinct owners in the send plan, this process included.
     // Destination i is removed into bucket i + 1, so every particle leaves the old container.
     std::vector<int> destRanks;
@@ -2329,7 +2307,7 @@ namespace schnek {
         if (destRanks[i] == localRank) {
           continue;
         }
-        countMessages[i] = toIntCount(counts[i]);
+        countMessages[i] = internal::toIntCount(counts[i], "Particle redistribution block too large for MPI count");
         MPI_Request req;
         int errorCode = mpi.MPI_Isend(&countMessages[i], 1, MPI_INT, destRanks[i], 0, comm, &req);
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during particle redistribution");
@@ -2360,7 +2338,10 @@ namespace schnek {
         MPI_Request req;
         int errorCode = mpi.MPI_Irecv(
             recvBytes.data() + checkedParticleBytes(recvStart[p], particleBytes),
-            toIntCount(checkedParticleBytes(count, particleBytes)), MPI_BYTE, recvPartners[p], 1, comm, &req
+            internal::toIntCount(
+                checkedParticleBytes(count, particleBytes), "Particle redistribution block too large for MPI count"
+            ),
+            MPI_BYTE, recvPartners[p], 1, comm, &req
         );
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during particle redistribution");
         requests.push_back(req);
@@ -2373,7 +2354,10 @@ namespace schnek {
         MPI_Request req;
         int errorCode = mpi.MPI_Isend(
             sendBytes.data() + checkedParticleBytes(bucketStart[i], particleBytes),
-            toIntCount(checkedParticleBytes(counts[i], particleBytes)), MPI_BYTE, destRanks[i], 1, comm, &req
+            internal::toIntCount(
+                checkedParticleBytes(counts[i], particleBytes), "Particle redistribution block too large for MPI count"
+            ),
+            MPI_BYTE, destRanks[i], 1, comm, &req
         );
         SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during particle redistribution");
         requests.push_back(req);
@@ -2572,9 +2556,11 @@ namespace schnek {
       }
 
       this->mpi.MPI_Sendrecv(
-          sendLowerCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(sendLowerCount, "exchange"), mpiType,
+          sendLowerCount > 0 ? sendBuffer.data() : nullptr,
+          internal::toIntCount(sendLowerCount, "Halo exchange block too large for MPI_Sendrecv count"), mpiType,
           nextRank, 0, recvLowerCount > 0 ? recvBuffer.data() : nullptr,
-          internal::toMpiCount(recvLowerCount, "exchange"), mpiType, prevRank, 0, comm, MPI_STATUS_IGNORE
+          internal::toIntCount(recvLowerCount, "Halo exchange block too large for MPI_Sendrecv count"), mpiType,
+          prevRank, 0, comm, MPI_STATUS_IGNORE
       );
       if (loGhostRange && recvLowerCount > 0) {
         detail::unpackGridRange(grid, *loGhostRange, recvBuffer);
@@ -2586,9 +2572,11 @@ namespace schnek {
       }
 
       this->mpi.MPI_Sendrecv(
-          sendUpperCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(sendUpperCount, "exchange"), mpiType,
+          sendUpperCount > 0 ? sendBuffer.data() : nullptr,
+          internal::toIntCount(sendUpperCount, "Halo exchange block too large for MPI_Sendrecv count"), mpiType,
           prevRank, 0, recvUpperCount > 0 ? recvBuffer.data() : nullptr,
-          internal::toMpiCount(recvUpperCount, "exchange"), mpiType, nextRank, 0, comm, MPI_STATUS_IGNORE
+          internal::toIntCount(recvUpperCount, "Halo exchange block too large for MPI_Sendrecv count"), mpiType,
+          nextRank, 0, comm, MPI_STATUS_IGNORE
       );
       if (hiGhostRange && recvUpperCount > 0) {
         detail::unpackGridRange(grid, *hiGhostRange, recvBuffer);
@@ -2659,9 +2647,11 @@ namespace schnek {
       }
 
       this->mpi.MPI_Sendrecv(
-          sendLowerCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(sendLowerCount, "accumulate"), mpiType,
+          sendLowerCount > 0 ? sendBuffer.data() : nullptr,
+          internal::toIntCount(sendLowerCount, "Halo accumulate block too large for MPI_Sendrecv count"), mpiType,
           nextRank, 0, recvLowerCount > 0 ? recvBuffer.data() : nullptr,
-          internal::toMpiCount(recvLowerCount, "accumulate"), mpiType, prevRank, 0, comm, MPI_STATUS_IGNORE
+          internal::toIntCount(recvLowerCount, "Halo accumulate block too large for MPI_Sendrecv count"), mpiType,
+          prevRank, 0, comm, MPI_STATUS_IGNORE
       );
 
       if (loGhostRange && recvLowerCount > 0) {
@@ -2669,9 +2659,11 @@ namespace schnek {
       }
 
       this->mpi.MPI_Sendrecv(
-          recvLowerCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(recvLowerCount, "accumulate"), mpiType,
+          recvLowerCount > 0 ? sendBuffer.data() : nullptr,
+          internal::toIntCount(recvLowerCount, "Halo accumulate block too large for MPI_Sendrecv count"), mpiType,
           prevRank, 0, sendLowerCount > 0 ? recvBuffer.data() : nullptr,
-          internal::toMpiCount(sendLowerCount, "accumulate"), mpiType, nextRank, 0, comm, MPI_STATUS_IGNORE
+          internal::toIntCount(sendLowerCount, "Halo accumulate block too large for MPI_Sendrecv count"), mpiType,
+          nextRank, 0, comm, MPI_STATUS_IGNORE
       );
       if (hiSourceRange && sendLowerCount > 0) {
         detail::unpackGridRange(grid, *hiSourceRange, recvBuffer);
@@ -2683,9 +2675,11 @@ namespace schnek {
       }
 
       this->mpi.MPI_Sendrecv(
-          sendUpperCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(sendUpperCount, "accumulate"), mpiType,
+          sendUpperCount > 0 ? sendBuffer.data() : nullptr,
+          internal::toIntCount(sendUpperCount, "Halo accumulate block too large for MPI_Sendrecv count"), mpiType,
           prevRank, 0, recvUpperCount > 0 ? recvBuffer.data() : nullptr,
-          internal::toMpiCount(recvUpperCount, "accumulate"), mpiType, nextRank, 0, comm, MPI_STATUS_IGNORE
+          internal::toIntCount(recvUpperCount, "Halo accumulate block too large for MPI_Sendrecv count"), mpiType,
+          nextRank, 0, comm, MPI_STATUS_IGNORE
       );
 
       if (hiGhostRange && recvUpperCount > 0) {
@@ -2693,9 +2687,11 @@ namespace schnek {
       }
 
       this->mpi.MPI_Sendrecv(
-          recvUpperCount > 0 ? sendBuffer.data() : nullptr, internal::toMpiCount(recvUpperCount, "accumulate"), mpiType,
+          recvUpperCount > 0 ? sendBuffer.data() : nullptr,
+          internal::toIntCount(recvUpperCount, "Halo accumulate block too large for MPI_Sendrecv count"), mpiType,
           nextRank, 0, sendUpperCount > 0 ? recvBuffer.data() : nullptr,
-          internal::toMpiCount(sendUpperCount, "accumulate"), mpiType, prevRank, 0, comm, MPI_STATUS_IGNORE
+          internal::toIntCount(sendUpperCount, "Halo accumulate block too large for MPI_Sendrecv count"), mpiType,
+          prevRank, 0, comm, MPI_STATUS_IGNORE
       );
       if (loSourceRange && sendUpperCount > 0) {
         detail::unpackGridRange(grid, *loSourceRange, recvBuffer);
