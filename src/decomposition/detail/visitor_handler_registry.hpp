@@ -21,6 +21,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
@@ -49,6 +50,27 @@ namespace schnek {
 
       private:
         std::unordered_map<std::type_index, std::function<void(VisitorType &)>> initializers;
+    };
+
+    template<typename VisitorType>
+    class LazyVisitor {
+      public:
+        template<typename HandlerType, typename Parent>
+        void ensureHandler(Parent &parent) {
+          if (!visitor) {
+            visitor = std::make_unique<VisitorType>(parent);
+          }
+          if (!visitor->template hasHandler<HandlerType>()) {
+            visitor->template registerHandler<HandlerType>();
+          }
+        }
+
+        bool empty() const { return !visitor || visitor->empty(); }
+
+        VisitorType &operator*() { return *visitor; }
+
+      private:
+        std::unique_ptr<VisitorType> visitor;
     };
 
   }  // namespace internal

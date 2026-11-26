@@ -20,6 +20,7 @@
 #include "detail/halo_ranges.hpp"
 #include "detail/particle_visitor.hpp"
 #include "detail/particle_wrap.hpp"
+#include "detail/visitor_handler_registry.hpp"
 #include "domaindecomposition.hpp"
 
 namespace schnek {
@@ -114,8 +115,8 @@ namespace schnek {
       template<class GridType>
       GridRegistration registerField(const GridFactory<GridType> &factory) {
         auto registration = this->registerFieldImpl(factory);
-        registerExchangeHandler<GridType>();
-        registerAccumulateHandler<GridType>();
+        exchangeVisitor.template ensureHandler<GridType>(*this);
+        accumulateVisitor.template ensureHandler<GridType>(*this);
         return registration;
       }
 
@@ -141,8 +142,8 @@ namespace schnek {
           const typename DomainDecomposition<rank, CheckingPolicy>::RangeType &subRange
       ) {
         auto registration = this->registerFieldImpl(factory, subRange);
-        registerExchangeHandler<GridType>();
-        registerAccumulateHandler<GridType>();
+        exchangeVisitor.template ensureHandler<GridType>(*this);
+        accumulateVisitor.template ensureHandler<GridType>(*this);
         return registration;
       }
 
@@ -163,34 +164,48 @@ namespace schnek {
           const ParticleContainerFactory<ContainerType> &factory, PositionAccessor accessor
       ) {
         auto registration = this->registerParticleDataImpl(factory, std::move(accessor));
-        registerMigrateHandler<ContainerType, PositionAccessor>();
+        migrateVisitor.template ensureHandler<internal::ParticleWrapperImpl<ContainerType, PositionAccessor>>(*this);
         return registration;
       }
 
       void migrateParticles(const internal::pParticleWrapper &wrapper) override;
 
     private:
-      class ExchangeVisitor;
-      class AccumulateVisitor;
-      template<class GridType>
-      void registerExchangeHandler();
-      template<class GridType>
-      void registerAccumulateHandler();
       template<typename GridType>
       void exchangeTyped(GridType &grid, bool useFieldInfo);
       template<typename GridType>
       void accumulateTyped(GridType &grid, bool useFieldInfo);
       template<typename GridType>
+      struct ExchangeOp {
+          static void invoke(SerialDomainDecomposition &parent, GridType &grid, bool useFieldInfo) {
+            parent.template exchangeTyped<GridType>(grid, useFieldInfo);
+          }
+      };
+      template<typename GridType>
+      struct AccumulateOp {
+          static void invoke(SerialDomainDecomposition &parent, GridType &grid, bool useFieldInfo) {
+            parent.template accumulateTyped<GridType>(grid, useFieldInfo);
+          }
+      };
+      template<typename WrapperImpl>
+      struct MigrateOp {
+          static void invoke(SerialDomainDecomposition &parent, WrapperImpl &wrapper) {
+            parent.template migrateTyped<WrapperImpl>(wrapper);
+          }
+      };
+      using ExchangeVisitor = internal::ForwardingGridVisitor<SerialDomainDecomposition, ExchangeOp>;
+      using AccumulateVisitor = internal::ForwardingGridVisitor<SerialDomainDecomposition, AccumulateOp>;
+      using MigrateVisitor = internal::ForwardingParticleVisitor<SerialDomainDecomposition, MigrateOp>;
+      template<typename GridType>
       std::pair<typename GridType::IndexType, typename GridType::IndexType> innerBounds(
           GridType &grid, bool useFieldInfo
       ) const;
-      class MigrateVisitor;
-      template<class ContainerType, class PositionAccessor>
-      void registerMigrateHandler();
       template<typename WrapperImpl>
       void migrateTyped(WrapperImpl &wrapper);
 
-      std::unique_ptr<MigrateVisitor> migrateVisitor;
+      internal::LazyVisitor<ExchangeVisitor> exchangeVisitor;
+      internal::LazyVisitor<AccumulateVisitor> accumulateVisitor;
+      internal::LazyVisitor<MigrateVisitor> migrateVisitor;
       RangeType getLocalInnerRange() const;
       template<typename GridType>
       void exchangeWithInteriorBounds(
@@ -207,9 +222,6 @@ namespace schnek {
           const typename GridType::IndexType &innerHi,
           Operation operation
       );
-
-      std::unique_ptr<ExchangeVisitor> exchangeVisitor;
-      std::unique_ptr<AccumulateVisitor> accumulateVisitor;
   };
 
   template<size_t rank, template<size_t> class CheckingPolicy>
@@ -298,60 +310,6 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  class SerialDomainDecomposition<rank, CheckingPolicy>::ExchangeVisitor
-      : public internal::GridVisitor<typename SerialDomainDecomposition<rank, CheckingPolicy>::ExchangeVisitor> {
-    public:
-      explicit ExchangeVisitor(SerialDomainDecomposition &parentIn) : parent(parentIn) {}
-
-      template<typename GridType>
-      void handle(GridType &grid, bool flag) {
-        parent.template exchangeTyped<GridType>(grid, flag);
-      }
-
-    private:
-      SerialDomainDecomposition &parent;
-  };
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  class SerialDomainDecomposition<rank, CheckingPolicy>::AccumulateVisitor
-      : public internal::GridVisitor<typename SerialDomainDecomposition<rank, CheckingPolicy>::AccumulateVisitor> {
-    public:
-      explicit AccumulateVisitor(SerialDomainDecomposition &parentIn) : parent(parentIn) {}
-
-      template<typename GridType>
-      void handle(GridType &grid, bool flag) {
-        parent.template accumulateTyped<GridType>(grid, flag);
-      }
-
-    private:
-      SerialDomainDecomposition &parent;
-  };
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  class SerialDomainDecomposition<rank, CheckingPolicy>::MigrateVisitor
-      : public internal::ParticleVisitor<typename SerialDomainDecomposition<rank, CheckingPolicy>::MigrateVisitor> {
-    public:
-      explicit MigrateVisitor(SerialDomainDecomposition &parentIn) : parent(parentIn) {}
-
-      template<typename WrapperImpl>
-      void handle(WrapperImpl &wrapper) {
-        parent.template migrateTyped<WrapperImpl>(wrapper);
-      }
-
-    private:
-      SerialDomainDecomposition &parent;
-  };
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  template<class ContainerType, class PositionAccessor>
-  void SerialDomainDecomposition<rank, CheckingPolicy>::registerMigrateHandler() {
-    if (migrateVisitor.get() == nullptr) {
-      migrateVisitor = std::make_unique<MigrateVisitor>(*this);
-    }
-    migrateVisitor->template registerHandler<internal::ParticleWrapperImpl<ContainerType, PositionAccessor>>();
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename WrapperImpl>
   void SerialDomainDecomposition<rank, CheckingPolicy>::migrateTyped(WrapperImpl &wrapper) {
     using ContainerType = std::decay_t<decltype(wrapper.container)>;
@@ -407,28 +365,10 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
-  template<class GridType>
-  void SerialDomainDecomposition<rank, CheckingPolicy>::registerExchangeHandler() {
-    if (exchangeVisitor.get() == nullptr) {
-      exchangeVisitor = std::make_unique<ExchangeVisitor>(*this);
-    }
-    exchangeVisitor->template registerHandler<GridType>();
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
-  template<class GridType>
-  void SerialDomainDecomposition<rank, CheckingPolicy>::registerAccumulateHandler() {
-    if (accumulateVisitor.get() == nullptr) {
-      accumulateVisitor = std::make_unique<AccumulateVisitor>(*this);
-    }
-    accumulateVisitor->template registerHandler<GridType>();
-  }
-
-  template<size_t rank, template<size_t> class CheckingPolicy>
   void SerialDomainDecomposition<rank, CheckingPolicy>::exchangeGrid(
       const internal::pGridWrapper &wrapper, bool useFieldInfo
   ) {
-    if (exchangeVisitor.get() == nullptr || exchangeVisitor->empty()) {
+    if (exchangeVisitor.empty()) {
       SCHNECK_FAIL("No registered grids available for exchange");
     }
 
@@ -439,7 +379,7 @@ namespace schnek {
   void SerialDomainDecomposition<rank, CheckingPolicy>::accumulate(
       const internal::pGridWrapper &wrapper, bool useFieldInfo
   ) {
-    if (accumulateVisitor.get() == nullptr || accumulateVisitor->empty()) {
+    if (accumulateVisitor.empty()) {
       SCHNECK_FAIL("No registered grids available for accumulate");
     }
 
@@ -448,7 +388,7 @@ namespace schnek {
 
   template<size_t rank, template<size_t> class CheckingPolicy>
   void SerialDomainDecomposition<rank, CheckingPolicy>::migrateParticles(const internal::pParticleWrapper &wrapper) {
-    if (migrateVisitor.get() == nullptr || migrateVisitor->empty()) {
+    if (migrateVisitor.empty()) {
       SCHNECK_FAIL("No registered particle containers available for migration");
     }
 
