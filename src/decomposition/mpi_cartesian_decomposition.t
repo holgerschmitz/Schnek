@@ -1105,6 +1105,82 @@ namespace schnek {
   }
 
   template<size_t rank, template<size_t> class CheckingPolicy>
+  template<
+      typename GridType,
+      typename PlanType,
+      typename RangeBuilder,
+      typename LocalCopy,
+      typename SendScratch,
+      typename RecvScratch>
+  void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::transferRedistributionSlabs(
+      GridType *oldGrid,
+      GridType *newGrid,
+      const std::vector<RedistributionSlabBlock> &sendBlocks,
+      const std::vector<RedistributionSlabBlock> &recvBlocks,
+      const PlanType &sendPlan,
+      const PlanType &recvPlan,
+      std::size_t sendTotal,
+      std::size_t recvTotal,
+      SendScratch &sendScratch,
+      RecvScratch &recvScratch,
+      MPI_Datatype mpiType,
+      int tag,
+      const char *countErrorMessage,
+      const char *operation,
+      RangeBuilder makeRange,
+      LocalCopy localCopy
+  ) {
+    using ValueType = typename GridType::value_type;
+
+    sendScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(sendTotal, sizeof(ValueType)));
+    recvScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(recvTotal, sizeof(ValueType)));
+
+    auto sendSlab = sendScratch.template make_vector<ValueType>(sendTotal);
+    auto recvSlab = recvScratch.template make_vector<ValueType>(recvTotal);
+    std::vector<MPI_Request> requests;
+
+    // Block vectors preserve plan order so same-source/tag messages match by MPI's non-overtaking rule.
+    for (const auto &block : recvBlocks) {
+      MPI_Request req;
+      const int errorCode = mpi.MPI_Irecv(
+          recvSlab.data() + block.offset, internal::toIntCount(block.volume, countErrorMessage), mpiType,
+          recvPlan[block.planIndex].mpiRank, tag, comm, &req
+      );
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during " << operation);
+      requests.push_back(req);
+    }
+
+    for (const auto &block : sendBlocks) {
+      SCHNEK_ASSERT(oldGrid != nullptr, "Send plan requires an old grid during redistribution");
+      auto *blockData = sendSlab.data() + block.offset;
+      detail::GridTransfer<GridType>::pack(*oldGrid, makeRange(sendPlan[block.planIndex]), blockData);
+
+      // GridTransfer::pack fences device work before MPI reads this slab.
+      MPI_Request req;
+      const int errorCode = mpi.MPI_Isend(
+          blockData, internal::toIntCount(block.volume, countErrorMessage), mpiType, sendPlan[block.planIndex].mpiRank,
+          tag, comm, &req
+      );
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during " << operation);
+      requests.push_back(req);
+    }
+
+    localCopy();
+
+    if (!requests.empty()) {
+      const int errorCode = mpi.MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
+      SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during " << operation);
+    }
+
+    for (const auto &block : recvBlocks) {
+      SCHNEK_ASSERT(newGrid != nullptr, "Receive plan requires a new grid during redistribution");
+      detail::GridTransfer<GridType>::unpack(
+          *newGrid, makeRange(recvPlan[block.planIndex]), recvSlab.data() + block.offset
+      );
+    }
+  }
+
+  template<size_t rank, template<size_t> class CheckingPolicy>
   template<typename GridType>
   void MpiCartesianDomainDecomposition<rank, CheckingPolicy>::redistributeTyped(
       GridType *oldGrid,
@@ -1129,89 +1205,19 @@ namespace schnek {
     const int localRank = ComRank;
 
     // Remote blocks are stored back to back in one slab per direction, in plan order.
-    struct SlabBlock {
-        size_t planIndex;
-        size_t volume;
-        size_t offset;
-    };
-
-    std::vector<SlabBlock> recvBlocks;
-    size_t recvTotal = 0;
-    for (size_t i = 0; i < recvPlan.size(); ++i) {
-      if (recvPlan[i].mpiRank == localRank) {
-        continue;  // local copy handled separately
-      }
-      size_t volume = schnek::volume(RangeTypeLocal(recvPlan[i].range));
-      if (volume == 0) {
-        continue;
-      }
-      recvBlocks.push_back({i, volume, recvTotal});
-      recvTotal += volume;
-    }
-
-    std::vector<SlabBlock> sendBlocks;
-    size_t sendTotal = 0;
-    for (size_t i = 0; i < sendPlan.size(); ++i) {
-      if (sendPlan[i].mpiRank == localRank) {
-        continue;  // local copy handled separately
-      }
-      size_t volume = schnek::volume(RangeTypeLocal(sendPlan[i].range));
-      if (volume == 0) {
-        continue;
-      }
-      sendBlocks.push_back({i, volume, sendTotal});
-      sendTotal += volume;
-    }
+    auto rangeVolume = [](const auto &block) { return schnek::volume(RangeTypeLocal(block.range)); };
+    auto [recvBlocks, recvTotal] = makeRedistributionSlabBlocks(recvPlan, localRank, rangeVolume);
+    auto [sendBlocks, sendTotal] = makeRedistributionSlabBlocks(sendPlan, localRank, rangeVolume);
 
     auto &bufferRegistry = mpiBufferRegistry.template get<MemorySpace>();
     auto &sendScratch = bufferRegistry.send();
     auto &recvScratch = bufferRegistry.receive();
 
-    // Capacity must be reserved before any view is created, because growth invalidates earlier views.
     sendScratch.reset();
     recvScratch.reset();
-    sendScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(sendTotal, sizeof(ValueType)));
-    recvScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(recvTotal, sizeof(ValueType)));
 
-    {
-      // One slab per direction. The views are only used inside this block.
-      auto sendSlab = sendScratch.template make_vector<ValueType>(sendTotal);
-      auto recvSlab = recvScratch.template make_vector<ValueType>(recvTotal);
-
-      // Post non-blocking receives for remote blocks
-      std::vector<MPI_Request> requests;
-
-      // MPI's non-overtaking rule matches same-source/tag messages by order; keep
-      // recvPlan order aligned with each sender's sendPlan.
-      for (const auto &block : recvBlocks) {
-        MPI_Request req;
-        int errorCode = mpi.MPI_Irecv(
-            recvSlab.data() + block.offset,
-            internal::toIntCount(block.volume, "Redistribution block too large for MPI count"), mpiType,
-            recvPlan[block.planIndex].mpiRank, 0, comm, &req
-        );
-        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during redistribution");
-        requests.push_back(req);
-      }
-
-      // Pack and post non-blocking sends for remote blocks
-      for (const auto &block : sendBlocks) {
-        RangeTypeLocal sendRange(sendPlan[block.planIndex].range);
-        ValueType *blockData = sendSlab.data() + block.offset;
-        SCHNEK_ASSERT(oldGrid != nullptr, "Send plan requires an old grid during redistribution");
-        detail::GridTransfer<GridType>::pack(*oldGrid, sendRange, blockData);
-
-        // GridTransfer::pack fences device work before MPI reads this slab.
-        MPI_Request req;
-        int errorCode = mpi.MPI_Isend(
-            blockData, internal::toIntCount(block.volume, "Redistribution block too large for MPI count"), mpiType,
-            sendPlan[block.planIndex].mpiRank, 0, comm, &req
-        );
-        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during redistribution");
-        requests.push_back(req);
-      }
-
-      // Copy local data (blocks where source == destination == this process)
+    auto copyLocalBlocks = [&]() {
+      // Copy local data (blocks where source == destination == this process).
       for (size_t i = 0; i < recvPlan.size(); ++i) {
         if (recvPlan[i].mpiRank != localRank) {
           continue;
@@ -1221,20 +1227,13 @@ namespace schnek {
         SCHNEK_ASSERT(oldGrid != nullptr && newGrid != nullptr, "Local copy requires both grids");
         detail::GridTransfer<GridType>::copy(*oldGrid, *newGrid, copyRange);
       }
+    };
 
-      // Wait for all non-blocking operations to complete
-      if (!requests.empty()) {
-        int errorCode = mpi.MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
-        SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during redistribution");
-      }
-
-      // Unpack received data into the new grid
-      for (const auto &block : recvBlocks) {
-        RangeTypeLocal recvRange(recvPlan[block.planIndex].range);
-        SCHNEK_ASSERT(newGrid != nullptr, "Receive plan requires a new grid during redistribution");
-        detail::GridTransfer<GridType>::unpack(*newGrid, recvRange, recvSlab.data() + block.offset);
-      }
-    }
+    auto makeRange = [](const auto &block) { return RangeTypeLocal(block.range); };
+    transferRedistributionSlabs(
+        oldGrid, newGrid, sendBlocks, recvBlocks, sendPlan, recvPlan, sendTotal, recvTotal, sendScratch, recvScratch,
+        mpiType, 0, "Redistribution block too large for MPI count", "redistribution", makeRange, copyLocalBlocks
+    );
 
     sendScratch.reset();
     recvScratch.reset();
@@ -1351,81 +1350,23 @@ namespace schnek {
     if (isCanonical) {
       const int localRank = ComRank;
 
-      struct SlabBlock {
-          size_t planIndex;
-          size_t volume;
-          size_t offset;
-      };
+      auto rangeVolume = [](const auto &block) { return schnek::volume(std::pair{block.lo, block.hi}); };
+      auto [recvBlocks, recvTotal] = makeRedistributionSlabBlocks(recvPlan, localRank, rangeVolume);
+      auto [sendBlocks, sendTotal] = makeRedistributionSlabBlocks(sendPlan, localRank, rangeVolume);
 
-      std::vector<SlabBlock> recvBlocks;
-      size_t recvTotal = 0;
-      for (size_t i = 0; i < recvPlan.size(); ++i) {
-        if (recvPlan[i].mpiRank == localRank) continue;
-        size_t volume = schnek::volume(std::pair{recvPlan[i].lo, recvPlan[i].hi});
-        if (volume == 0) continue;
-        recvBlocks.push_back({i, volume, recvTotal});
-        recvTotal += volume;
-      }
-
-      std::vector<SlabBlock> sendBlocks;
-      size_t sendTotal = 0;
-      for (size_t i = 0; i < sendPlan.size(); ++i) {
-        if (sendPlan[i].mpiRank == localRank) continue;
-        size_t volume = schnek::volume(std::pair{sendPlan[i].lo, sendPlan[i].hi});
-        if (volume == 0) continue;
-        sendBlocks.push_back({i, volume, sendTotal});
-        sendTotal += volume;
-      }
-
-      sendScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(sendTotal, sizeof(ValueType)));
-      recvScratch.reserve_bytes(detail::checkedCommunicationBufferBytes(recvTotal, sizeof(ValueType)));
-
-      {
-        auto sendSlab = sendScratch.template make_vector<ValueType>(sendTotal);
-        auto recvSlab = recvScratch.template make_vector<ValueType>(recvTotal);
-        std::vector<MPI_Request> requests;
-
-        for (const auto &block : recvBlocks) {
-          MPI_Request req;
-          int errorCode = mpi.MPI_Irecv(
-              recvSlab.data() + block.offset,
-              internal::toIntCount(block.volume, "Projected redistribution block too large for MPI count"), mpiType,
-              recvPlan[block.planIndex].mpiRank, 1, comm, &req
-          );
-          SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Irecv failed during projected redistribution");
-          requests.push_back(req);
-        }
-
-        for (const auto &block : sendBlocks) {
-          ValueType *blockData = sendSlab.data() + block.offset;
-          auto sendRange = makeTypedRange(sendPlan[block.planIndex]);
-          detail::GridTransfer<GridType>::pack(oldGrid, sendRange, blockData);
-          // GridTransfer::pack fences device work before MPI reads this slab.
-          MPI_Request req;
-          int errorCode = mpi.MPI_Isend(
-              blockData, internal::toIntCount(block.volume, "Projected redistribution block too large for MPI count"),
-              mpiType, sendPlan[block.planIndex].mpiRank, 1, comm, &req
-          );
-          SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Isend failed during projected redistribution");
-          requests.push_back(req);
-        }
-
+      auto copyLocalBlocks = [&]() {
         for (size_t i = 0; i < recvPlan.size(); ++i) {
           if (recvPlan[i].mpiRank != localRank) continue;
           auto copyRange = makeTypedRange(recvPlan[i]);
           detail::GridTransfer<GridType>::copy(oldGrid, newGrid, copyRange);
         }
+      };
 
-        if (!requests.empty()) {
-          int errorCode = mpi.MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
-          SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Waitall failed during projected redistribution");
-        }
-
-        for (const auto &block : recvBlocks) {
-          auto recvRange = makeTypedRange(recvPlan[block.planIndex]);
-          detail::GridTransfer<GridType>::unpack(newGrid, recvRange, recvSlab.data() + block.offset);
-        }
-      }
+      transferRedistributionSlabs(
+          &oldGrid, &newGrid, sendBlocks, recvBlocks, sendPlan, recvPlan, sendTotal, recvTotal, sendScratch,
+          recvScratch, mpiType, 1, "Projected redistribution block too large for MPI count", "projected redistribution",
+          makeTypedRange, copyLocalBlocks
+      );
     }
 
     sendScratch.reset();
