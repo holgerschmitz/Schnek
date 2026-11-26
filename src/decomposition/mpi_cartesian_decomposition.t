@@ -38,6 +38,19 @@
 namespace schnek {
 
   namespace internal {
+    inline void fillRangesFromCuts(
+        Grid<Range<ptrdiff_t, 1>, 1> &dimRanges, ptrdiff_t lo, ptrdiff_t hi, const std::vector<ptrdiff_t> &cuts
+    ) {
+      dimRanges.resize(0, static_cast<ptrdiff_t>(cuts.size()));
+      dimRanges(0).getLo()[0] = lo;
+      dimRanges(static_cast<ptrdiff_t>(cuts.size())).getHi()[0] = hi;
+
+      for (size_t i = 0; i < cuts.size(); ++i) {
+        dimRanges(static_cast<ptrdiff_t>(i)).getHi()[0] = cuts[i] - 1;
+        dimRanges(static_cast<ptrdiff_t>(i + 1)).getLo()[0] = cuts[i];
+      }
+    }
+
     inline int toIntCount(std::size_t count, const char *errorMessage, const char *suffix = "") {
       if (count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
         SCHNECK_FAIL(errorMessage << suffix);
@@ -517,16 +530,11 @@ namespace schnek {
         );
       }
 
-      // finding cut points in the cumulative weights
-      Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
-
-      dimRanges.resize(0, dims[d] - 1);
-      dimRanges(0).getLo()[0] = lo[d];
-      dimRanges(dims[d] - 1).getHi()[0] = hi[d];
+      std::vector<ptrdiff_t> cuts;
+      cuts.reserve(static_cast<size_t>(dims[d] - 1));
 
       for (ptrdiff_t i = 1; i < dims[d]; ++i) {
-        // Keep this historical lo + i*n/dims layout: the weighted-partition
-        // fallback uses glo + p*q + (p*r)/nProcs and can place cuts differently.
+        // Keep the same balanced layout as the local-weight uniform fallback.
         const __int128 cutOffset =
             static_cast<__int128>(i) * static_cast<__int128>(cellCount) / static_cast<__int128>(dims[d]);
         const __int128 cutWide = static_cast<__int128>(lo[d]) + cutOffset;
@@ -535,9 +543,10 @@ namespace schnek {
             "Uniform partition cut exceeds ptrdiff_t range"
         );
         const ptrdiff_t cut = static_cast<ptrdiff_t>(cutWide);
-        dimRanges(i - 1).getHi()[0] = cut - 1;
-        dimRanges(i).getLo()[0] = cut;
+        cuts.push_back(cut);
       }
+
+      internal::fillRangesFromCuts(ranges[d], lo[d], hi[d], cuts);
     }
   }
 
@@ -688,15 +697,9 @@ namespace schnek {
           continue;
         }
 
-        Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
-        dimRanges.resize(0, dims[d] - 1);
-        dimRanges(0).getLo()[0] = glo[d];
-        dimRanges(dims[d] - 1).getHi()[0] = ghi[d];
-        for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(cuts.size()); ++i) {
-          dimRanges(i).getHi()[0] = cuts[static_cast<size_t>(i)] - 1;
-          dimRanges(i + 1).getLo()[0] = cuts[static_cast<size_t>(i)];
-        }
+        internal::fillRangesFromCuts(ranges[d], glo[d], ghi[d], cuts);
 
+        const auto &dimRanges = ranges[d];
         for (ptrdiff_t i = 0; i < dims[d]; ++i) {
           transfer[transferOffset++] = static_cast<long>(dimRanges(i).getLo()[0]);
           transfer[transferOffset++] = static_cast<long>(dimRanges(i).getHi()[0]);
@@ -722,12 +725,20 @@ namespace schnek {
       );
       SCHNEK_ASSERT(errorCode == MPI_SUCCESS, "MPI_Bcast failed while distributing global-weight ranges");
 
-      Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
-      dimRanges.resize(0, dims[d] - 1);
+      std::vector<ptrdiff_t> cuts;
+      cuts.reserve(static_cast<size_t>(dims[d] - 1));
+      ptrdiff_t lo = 0;
+      ptrdiff_t hi = 0;
       for (ptrdiff_t i = 0; i < dims[d]; ++i) {
-        dimRanges(i).getLo()[0] = static_cast<ptrdiff_t>(transfer[offset++]);
-        dimRanges(i).getHi()[0] = static_cast<ptrdiff_t>(transfer[offset++]);
+        const ptrdiff_t rangeLo = static_cast<ptrdiff_t>(transfer[offset++]);
+        hi = static_cast<ptrdiff_t>(transfer[offset++]);
+        if (i == 0) {
+          lo = rangeLo;
+        } else {
+          cuts.push_back(rangeLo);
+        }
       }
+      internal::fillRangesFromCuts(ranges[d], lo, hi, cuts);
     }
   }
 
@@ -751,26 +762,22 @@ namespace schnek {
     };
 
     auto setUniformRangesForDim = [&](size_t d) {
-      Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
-
       const ptrdiff_t nProcs = dims[d];
       const ptrdiff_t globalCells = ghi[d] - glo[d] + 1;
 
       SCHNEK_ASSERT(nProcs > 0, "Invalid Cartesian process-grid dimension");
       SCHNEK_ASSERT(globalCells >= nProcs, "Cannot assign non-empty ranges: more processes than cells");
 
-      dimRanges.resize(0, nProcs - 1);
-      dimRanges(0).getLo()[0] = glo[d];
-      dimRanges(nProcs - 1).getHi()[0] = ghi[d];
-
       const ptrdiff_t q = globalCells / nProcs;
       const ptrdiff_t r = globalCells % nProcs;
+      std::vector<ptrdiff_t> cuts;
+      cuts.reserve(static_cast<size_t>(nProcs - 1));
 
       for (ptrdiff_t p = 1; p < nProcs; ++p) {
         const ptrdiff_t cut = glo[d] + p * q + (p * r) / nProcs;
-        dimRanges(p - 1).getHi()[0] = cut - 1;
-        dimRanges(p).getLo()[0] = cut;
+        cuts.push_back(cut);
       }
+      internal::fillRangesFromCuts(ranges[d], glo[d], ghi[d], cuts);
     };
 
     auto allreduceVectorSum = [&](const std::vector<double> &local, std::vector<double> &reduced, MPI_Comm c) {
@@ -852,19 +859,14 @@ namespace schnek {
     // the application must MPI_Abort rather than attempt to recover. Scoped
     // communicators below only guarantee local cleanup during exception unwinding.
     for (size_t d = 0; d < rank; ++d) {
-      Grid<Range<ptrdiff_t, 1>, 1> &dimRanges = ranges[d];
-
       const ptrdiff_t nProcs = dims[d];
       const ptrdiff_t globalCells = ghi[d] - glo[d] + 1;
 
       SCHNEK_ASSERT(nProcs > 0, "Invalid Cartesian process-grid dimension");
       SCHNEK_ASSERT(globalCells >= nProcs, "Cannot assign non-empty ranges: more processes than cells");
 
-      dimRanges.resize(0, nProcs - 1);
-      dimRanges(0).getLo()[0] = glo[d];
-      dimRanges(nProcs - 1).getHi()[0] = ghi[d];
-
       if (nProcs == 1) {
+        internal::fillRangesFromCuts(ranges[d], glo[d], ghi[d], {});
         continue;
       }
 
@@ -1009,6 +1011,8 @@ namespace schnek {
       //    in one bin.
       // ---------------------------------------------------------------------
       ptrdiff_t previousCut = glo[d];
+      std::vector<ptrdiff_t> cuts;
+      cuts.reserve(static_cast<size_t>(numCuts));
 
       for (ptrdiff_t cutIndex = 1; cutIndex < nProcs; ++cutIndex) {
         long rawCut = globalCuts[static_cast<size_t>(cutIndex - 1)];
@@ -1030,11 +1034,10 @@ namespace schnek {
         cut = std::min(cut, maxCut);
         cut = std::max(cut, previousCut + 1);
 
-        dimRanges(cutIndex - 1).getHi()[0] = cut - 1;
-        dimRanges(cutIndex).getLo()[0] = cut;
-
+        cuts.push_back(cut);
         previousCut = cut;
       }
+      internal::fillRangesFromCuts(ranges[d], glo[d], ghi[d], cuts);
     }
   }
 
