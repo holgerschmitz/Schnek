@@ -28,35 +28,37 @@
 
 #include <cstddef>
 #include <tuple>
+#include <type_traits>
+#include <utility>
 
 namespace schnek::generic {
   template<typename... Types>
   struct TypeList;
 
   namespace internal {
+    template<typename... Lists>
+    struct TypeListConcat;
 
-    template<long n, typename T, typename... Types>
-    struct TypeListGet {
-        typedef typename TypeListGet<n - 1, Types...>::type type;
-        static constexpr long value = TypeListGet<n - 1, Types...>::value + 1;
+    template<>
+    struct TypeListConcat<> {
+        using type = TypeList<>;
     };
 
-    template<typename T, typename... Types>
-    struct TypeListGet<0, T, Types...> {
-        typedef T type;
-        static constexpr long value = 1;
+    template<typename... Ts>
+    struct TypeListConcat<TypeList<Ts...>> {
+        using type = TypeList<Ts...>;
     };
-  }  // namespace internal
 
-  namespace internal {
-    template<template<typename T> typename mapper, typename TypeListType, typename... InputTypes>
-    struct TypeListMapper {};
-
-    template<template<typename T> typename conditional, typename TypeListType, typename... InputTypes>
-    struct TypeListFilter {};
+    template<typename... Ts, typename... Us, typename... Rest>
+    struct TypeListConcat<TypeList<Ts...>, TypeList<Us...>, Rest...> {
+        using type = typename TypeListConcat<TypeList<Ts..., Us...>, Rest...>::type;
+    };
 
     template<typename TypeListType, typename DefaultType>
     struct TypeSingleElementOrDefault;
+
+    template<typename>
+    inline constexpr bool always_false = false;
   }  // namespace internal
 
   /**
@@ -82,7 +84,7 @@ namespace schnek::generic {
       template<size_t n>
       struct get {
           static_assert(n < size, "Index out of bounds");
-          typedef typename internal::TypeListGet<n, Types...>::type type;
+          using type = std::tuple_element_t<n, std::tuple<Types...>>;
       };
 
       /**
@@ -93,82 +95,61 @@ namespace schnek::generic {
       template<typename T>
       using push_back = TypeList<Types..., T>;
 
+      /**
+       * @brief Push a type to the front of the type list
+       *
+       * @tparam T The type to push
+       */
       template<typename T>
       using push_front = TypeList<T, Types...>;
 
+      /**
+       * @brief Apply a metafunction to every type in the list
+       *
+       * @tparam mapper A template with a nested `type` for each element
+       */
       template<template<typename T> typename mapper>
-      using map = typename internal::TypeListMapper<mapper, TypeList<>, Types...>::type;
+      using map = TypeList<typename mapper<Types>::type...>;
 
+      /**
+       * @brief Keep only the types for which `conditional<T>::value` is true
+       */
       template<template<typename T> typename conditional>
-      using filter = typename internal::TypeListFilter<conditional, TypeList<>, Types...>::type;
+      using filter = typename internal::TypeListConcat<
+          std::conditional_t<conditional<Types>::value, TypeList<Types>, TypeList<>>...>::type;
 
+      /**
+       * @brief Get the single type satisfying the condition, or the default if there is none
+       *
+       * It is an error if more than one type satisfies the condition.
+       */
       template<template<typename T> typename conditional, typename DefaultType>
-      using getWithDefault = typename internal::TypeSingleElementOrDefault<
-          typename internal::TypeListFilter<conditional, TypeList<>, Types...>::type,
-          DefaultType>::type;
+      using getWithDefault = typename internal::TypeSingleElementOrDefault<filter<conditional>, DefaultType>::type;
 
       template<template<typename... T> typename Dest>
       using apply = Dest<Types...>;
   };
 
   namespace internal {
-    template<template<typename T> typename mapper, typename TypeListType, typename Head, typename... InputTypes>
-    struct TypeListMapper<mapper, TypeListType, Head, InputTypes...> {
-        typedef typename TypeListMapper<
-            mapper,
-            typename TypeListType::push_back<typename mapper<Head>::type>,
-            InputTypes...>::type type;
+    template<typename DefaultType>
+    struct TypeSingleElementOrDefault<TypeList<>, DefaultType> {
+        using type = DefaultType;
     };
 
-    template<template<typename T> typename mapper, typename TypeListType>
-    struct TypeListMapper<mapper, TypeListType> {
-        typedef TypeListType type;
+    template<typename T, typename DefaultType>
+    struct TypeSingleElementOrDefault<TypeList<T>, DefaultType> {
+        using type = T;
     };
 
-    template<bool condition, typename TypeListType, typename Head>
-    struct TypeListFilterSelect {};
-
-    template<typename TypeListType, typename Head>
-    struct TypeListFilterSelect<true, TypeListType, Head> {
-        typedef typename TypeListType::push_back<Head> type;
+    template<typename T1, typename T2, typename... Ts, typename DefaultType>
+    struct TypeSingleElementOrDefault<TypeList<T1, T2, Ts...>, DefaultType> {
+        static_assert(always_false<TypeList<T1, T2, Ts...>>, "TypeList must have at most one unique element");
     };
 
-    template<typename TypeListType, typename Head>
-    struct TypeListFilterSelect<false, TypeListType, Head> {
-        typedef TypeListType type;
-    };
-
-    template<template<typename T> typename conditional, typename TypeListType, typename Head, typename... InputTypes>
-    struct TypeListFilter<conditional, TypeListType, Head, InputTypes...> {
-        typedef typename TypeListFilter<
-            conditional,
-            typename TypeListFilterSelect<conditional<Head>::value, TypeListType, Head>::type,
-            InputTypes...>::type type;
-    };
-
-    template<template<typename T> typename conditional, typename TypeListType>
-    struct TypeListFilter<conditional, TypeListType> {
-        typedef TypeListType type;
-    };
-
-    template<typename TypeListType, typename DefaultType>
-    struct TypeSingleElementOrDefault {
-        static_assert(TypeListType::size < 2, "TypeList must have at most one unique element");
-        typedef typename TypeListType::push_back<DefaultType>::get<0>::type type;
-    };
-
-    template<typename SourceTuple, typename DestTuple, size_t index>
-    struct TupleAssignImpl {
-        static void assign(const SourceTuple &source, DestTuple &dest) {
-          TupleAssignImpl<SourceTuple, DestTuple, index - 1>::assign(source, dest);
-          std::get<index - 1>(dest) = std::get<index - 1>(source);
-        }
-    };
-
-    template<typename SourceTuple, typename DestTuple>
-    struct TupleAssignImpl<SourceTuple, DestTuple, 0> {
-        static void assign(const SourceTuple &, DestTuple &) {}
-    };
+    template<typename SourceTuple, typename DestTuple, size_t... indices>
+    void tupleAssignImpl(const SourceTuple &source, DestTuple &dest, std::index_sequence<indices...>) {
+      ((std::get<indices>(dest) = std::get<indices>(source)), ...);
+    }
   }  // namespace internal
 
   /**
@@ -184,7 +165,7 @@ namespace schnek::generic {
   template<typename SourceTuple, typename DestTuple>
   DestTuple tupleAssign(SourceTuple source) {
     DestTuple dest;
-    internal::TupleAssignImpl<SourceTuple, DestTuple, std::tuple_size<SourceTuple>::value>::assign(source, dest);
+    internal::tupleAssignImpl(source, dest, std::make_index_sequence<std::tuple_size<SourceTuple>::value>{});
     return dest;
   }
 }  // namespace schnek::generic

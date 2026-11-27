@@ -27,45 +27,45 @@
 #define SCHNEK_GENERIC_FUNCTION_TRAITS_HPP_
 
 namespace schnek::generic {
-      template<typename Callable>
-    struct FunctionTraits : FunctionTraits<decltype(&Callable::operator())> {};
+  template<typename Callable>
+  struct FunctionTraits : FunctionTraits<decltype(&Callable::operator())> {};
 
-    template<typename Return, typename... Args>
-    struct FunctionTraits<Return(Args...)> {
-        using ArgumentTypes = std::tuple<Args...>;
-    };
+  template<typename Return, typename... Args>
+  struct FunctionTraits<Return(Args...)> {
+      using ArgumentTypes = std::tuple<Args...>;
+  };
 
-    template<typename Return, typename... Args>
-    struct FunctionTraits<Return (*)(Args...)> : FunctionTraits<Return(Args...)> {};
+  template<typename Return, typename... Args>
+  struct FunctionTraits<Return (*)(Args...)> : FunctionTraits<Return(Args...)> {};
 
-    template<typename Return, typename... Args>
-    struct FunctionTraits<Return (*)(Args...) noexcept> : FunctionTraits<Return(Args...)> {};
+  template<typename Return, typename... Args>
+  struct FunctionTraits<Return (*)(Args...) noexcept> : FunctionTraits<Return(Args...)> {};
 
-    template<typename Class, typename Return, typename... Args>
-    struct FunctionTraits<Return (Class::*)(Args...)> : FunctionTraits<Return(Args...)> {};
+  template<typename Class, typename Return, typename... Args>
+  struct FunctionTraits<Return (Class::*)(Args...)> : FunctionTraits<Return(Args...)> {};
 
-    template<typename Class, typename Return, typename... Args>
-    struct FunctionTraits<Return (Class::*)(Args...) const> : FunctionTraits<Return(Args...)> {};
+  template<typename Class, typename Return, typename... Args>
+  struct FunctionTraits<Return (Class::*)(Args...) const> : FunctionTraits<Return(Args...)> {};
 
-    template<typename Class, typename Return, typename... Args>
-    struct FunctionTraits<Return (Class::*)(Args...) noexcept> : FunctionTraits<Return(Args...)> {};
+  template<typename Class, typename Return, typename... Args>
+  struct FunctionTraits<Return (Class::*)(Args...) noexcept> : FunctionTraits<Return(Args...)> {};
 
-    template<typename Class, typename Return, typename... Args>
-    struct FunctionTraits<Return (Class::*)(Args...) const noexcept> : FunctionTraits<Return(Args...)> {};
+  template<typename Class, typename Return, typename... Args>
+  struct FunctionTraits<Return (Class::*)(Args...) const noexcept> : FunctionTraits<Return(Args...)> {};
 
-    template<typename Callable>
-    using FunctionParameterTypesT = typename FunctionTraits<std::decay_t<Callable>>::ArgumentTypes;
+  template<typename Callable>
+  using FunctionParameterTypesT = typename FunctionTraits<std::decay_t<Callable>>::ArgumentTypes;
 
-    template<typename Tuple>
-    struct TupleTail;
+  template<typename Tuple>
+  struct TupleTail;
 
-    template<typename First, typename... Rest>
-    struct TupleTail<std::tuple<First, Rest...>> {
-        using type = std::tuple<Rest...>;
-    };
+  template<typename First, typename... Rest>
+  struct TupleTail<std::tuple<First, Rest...>> {
+      using type = std::tuple<Rest...>;
+  };
 
-    template<typename Tuple>
-    using TupleTailT = typename TupleTail<Tuple>::type;
+  template<typename Tuple>
+  using TupleTailT = typename TupleTail<Tuple>::type;
 }  // namespace schnek::generic
 
 #endif  // SCHNEK_GENERIC_FUNCTION_TRAITS_HPP_
