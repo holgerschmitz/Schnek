@@ -55,52 +55,13 @@
 #include "../grid/boundary.hpp"
 #include "../grid/range.hpp"
 #include "../util/exceptions.hpp"
+#include "../generic/function_traits.hpp"
 #include "detail/cell_iteration.hpp"
 #include "detail/grid_factory.hpp"
 #include "detail/particle_factory.hpp"
 
 namespace schnek {
   namespace internal {
-    template<typename Callable>
-    struct FunctionTraits : FunctionTraits<decltype(&Callable::operator())> {};
-
-    template<typename Return, typename... Args>
-    struct FunctionTraits<Return(Args...)> {
-        using ArgumentTypes = std::tuple<Args...>;
-    };
-
-    template<typename Return, typename... Args>
-    struct FunctionTraits<Return (*)(Args...)> : FunctionTraits<Return(Args...)> {};
-
-    template<typename Return, typename... Args>
-    struct FunctionTraits<Return (*)(Args...) noexcept> : FunctionTraits<Return(Args...)> {};
-
-    template<typename Class, typename Return, typename... Args>
-    struct FunctionTraits<Return (Class::*)(Args...)> : FunctionTraits<Return(Args...)> {};
-
-    template<typename Class, typename Return, typename... Args>
-    struct FunctionTraits<Return (Class::*)(Args...) const> : FunctionTraits<Return(Args...)> {};
-
-    template<typename Class, typename Return, typename... Args>
-    struct FunctionTraits<Return (Class::*)(Args...) noexcept> : FunctionTraits<Return(Args...)> {};
-
-    template<typename Class, typename Return, typename... Args>
-    struct FunctionTraits<Return (Class::*)(Args...) const noexcept> : FunctionTraits<Return(Args...)> {};
-
-    template<typename Callable>
-    using FunctionParameterTypesT = typename FunctionTraits<std::decay_t<Callable>>::ArgumentTypes;
-
-    template<typename Tuple>
-    struct TupleTail;
-
-    template<typename First, typename... Rest>
-    struct TupleTail<std::tuple<First, Rest...>> {
-        using type = std::tuple<Rest...>;
-    };
-
-    template<typename Tuple>
-    using TupleTailT = typename TupleTail<Tuple>::type;
-
     template<typename T, typename = void>
     struct is_grid_argument : std::false_type {};
 
@@ -1000,7 +961,7 @@ namespace schnek {
   void DomainDecomposition<rank, CheckingPolicy>::GridContext::forEach(Func func) {
     SCHNEK_ASSERT(generation == *ownerGeneration, "GridContext is stale: recreate it after balanceLoad()");
 
-    using AllParameters = internal::FunctionParameterTypesT<Func>;
+    using AllParameters = generic::FunctionParameterTypesT<Func>;
     constexpr std::size_t totalParams = std::tuple_size<AllParameters>::value;
     static_assert(totalParams >= 1, "Function must take at least a RangeType argument");
 
@@ -1012,7 +973,7 @@ namespace schnek {
         "First function argument must be DomainDecomposition::RangeType (by reference)"
     );
 
-    using ParameterSeq = internal::TupleTailT<AllParameters>;
+    using ParameterSeq = generic::TupleTailT<AllParameters>;
     constexpr std::size_t paramCount = std::tuple_size<ParameterSeq>::value;
 
     if (registrationLists.size() != paramCount) {
@@ -1119,7 +1080,7 @@ namespace schnek {
   void DomainDecomposition<rank, CheckingPolicy>::ProjectedGridContext<projRank>::forEach(Func func) {
     SCHNEK_ASSERT(generation == *ownerGeneration, "GridContext is stale: recreate it after balanceLoad()");
 
-    using AllParameters = internal::FunctionParameterTypesT<Func>;
+    using AllParameters = generic::FunctionParameterTypesT<Func>;
     constexpr std::size_t totalParams = std::tuple_size<AllParameters>::value;
     static_assert(totalParams >= 1, "Function must take at least a RangeType argument");
 
@@ -1131,7 +1092,7 @@ namespace schnek {
         "First function argument must be DomainDecomposition::ProjectedRangeType (by reference)"
     );
 
-    using ParameterSeq = internal::TupleTailT<AllParameters>;
+    using ParameterSeq = generic::TupleTailT<AllParameters>;
     constexpr std::size_t paramCount = std::tuple_size<ParameterSeq>::value;
 
     if (!gridEntries.empty()) {
