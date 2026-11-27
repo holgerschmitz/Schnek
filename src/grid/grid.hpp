@@ -32,7 +32,6 @@
 
 #include "../generic/is-detected.hpp"
 #include "../macros.hpp"
-#include "../typetools.hpp"
 #include "array.hpp"
 #include "gridcheck/grid-check-concept.hpp"
 #include "gridcheck/gridcheck.hpp"

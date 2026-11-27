@@ -50,12 +50,12 @@
 #include <variant>
 #include <vector>
 
+#include "../generic/function_traits.hpp"
 #include "../grid/array.hpp"
 #include "../grid/arraycheck.hpp"
 #include "../grid/boundary.hpp"
 #include "../grid/range.hpp"
 #include "../util/exceptions.hpp"
-#include "../generic/function_traits.hpp"
 #include "detail/cell_iteration.hpp"
 #include "detail/grid_factory.hpp"
 #include "detail/particle_factory.hpp"
