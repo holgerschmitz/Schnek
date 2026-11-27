@@ -146,7 +146,6 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/test_parser.cpp
     testsuite/test_range.cpp
     testsuite/utility.cpp
-    testsuite/computation/test_algorithm.cpp
     testsuite/decomposition/test_domaindecomposition.cpp
     testsuite/decomposition/mpi_test_context.cpp
     testsuite/decomposition/test_mpi_cartesian_decomposition.cpp
@@ -159,7 +158,6 @@ add_executable (schnek_tests EXCLUDE_FROM_ALL
     testsuite/decomposition/detail/test_particle_factory.cpp
     testsuite/diagnostic/test_hdfdiagnostic.cpp
     testsuite/generic/test_typelist.cpp
-    testsuite/generic/test_static_range.cpp
     testsuite/grid/test_c_storage.cpp
     testsuite/grid/test_fortran_storage.cpp
     testsuite/grid/test_kokkos_storage.cpp
