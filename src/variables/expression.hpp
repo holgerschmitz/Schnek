@@ -36,14 +36,7 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-copy"
 
 #include <boost/function.hpp>
-#include <boost/fusion/include/cons.hpp>
-#include <boost/fusion/include/invoke.hpp>
-#include <boost/fusion/include/push_back.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/mpl/begin.hpp>
-#include <boost/mpl/deref.hpp>
-#include <boost/mpl/end.hpp>
-#include <boost/mpl/next.hpp>
 
 #pragma GCC diagnostic pop
 #pragma GCC diagnostic pop
@@ -55,10 +48,6 @@
 
 #undef LOGLEVEL
 #define LOGLEVEL 0
-
-namespace fusion = boost::fusion;
-namespace mpl = boost::mpl;
-namespace bft = boost::function_types;
 
 namespace schnek {
 

@@ -26,12 +26,16 @@
 #ifndef SCHNEK_GENERIC_FUNCTION_TRAITS_HPP_
 #define SCHNEK_GENERIC_FUNCTION_TRAITS_HPP_
 
+#include <tuple>
+#include <type_traits>
+
 namespace schnek::generic {
   template<typename Callable>
   struct FunctionTraits : FunctionTraits<decltype(&Callable::operator())> {};
 
   template<typename Return, typename... Args>
   struct FunctionTraits<Return(Args...)> {
+      using ReturnType = Return;
       using ArgumentTypes = std::tuple<Args...>;
   };
 
@@ -55,6 +59,9 @@ namespace schnek::generic {
 
   template<typename Callable>
   using FunctionParameterTypesT = typename FunctionTraits<std::decay_t<Callable>>::ArgumentTypes;
+
+  template<typename Callable>
+  using FunctionReturnTypeT = typename FunctionTraits<std::decay_t<Callable>>::ReturnType;
 
   template<typename Tuple>
   struct TupleTail;
